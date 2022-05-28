@@ -2,9 +2,14 @@
 
 #include <rendering.glsl>
 
-out vec4 vertColor;
+out vec4	 vertColor;
+uniform mat4 worldMatrix;
 
 void main() {
 	vertColor = color;
-	gl_Position =  vec4(position.xyz, 1.0);
+
+	vec4 mvPos	= worldMatrix * vec4(position.xyz, 1.0);
+	gl_Position = projectionMatrix * viewMatrix * mvPos;
+
+	// gl_Position = worldMatrix * vec4(position.xyz, 1.0);
 }

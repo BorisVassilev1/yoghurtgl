@@ -6,7 +6,7 @@ ygl::Camera::Camera(float fov, float aspect, float zNear, float zFar) : fov(fov)
 	viewMatrix = glm::mat4x4(1.0);
 }
 
-inline void ygl::Camera::updateProjectionMatrix() {
+void ygl::Camera::updateProjectionMatrix() {
 	projectionMatrix = glm::perspective(fov, aspect, zNear, zFar);
 }
 
@@ -29,10 +29,10 @@ void ygl::Camera::createMatricesUBO() {
 	enable();
 }
 
-inline void ygl::Camera::enable() {
+void ygl::Camera::enable() {
 	ygl::Shader::setUBO(uboMatrices, 0);
 }
-inline void ygl::Camera::disable() {
+void ygl::Camera::disable() {
 	ygl::Shader::setUBO(0, 0);
 }
 void ygl::Camera::updateMatricesUBO(glm::mat4 worldMatrix) {
@@ -48,11 +48,11 @@ void ygl::Camera::updateMatricesUBO(glm::mat4 worldMatrix) {
 glm::mat4x4 ygl::Camera::getProjectionMatrix() { return projectionMatrix; }
 glm::mat4x4 ygl::Camera::getViewMatrix() { return viewMatrix; }
 
-inline float ygl::Camera::getFov() { return fov; }
-inline void	 ygl::Camera::setFov(float fov) { this->fov = fov; }
-inline float ygl::Camera::getAspect() { return aspect; }
-inline void	 ygl::Camera::setAspect(float aspect) { this->aspect = aspect; }
-inline float ygl::Camera::getZNear() { return zNear; }
-inline void	 ygl::Camera::setZNear(float zNear) { this->zNear = zNear; }
-inline float ygl::Camera::getZFar() { return zFar; }
-inline void	 ygl::Camera::setZFar(float zFar) { this->zFar = zFar; }
+float ygl::Camera::getFov() { return fov; }
+void  ygl::Camera::setFov(float fov) { this->fov = fov; }
+float ygl::Camera::getAspect() { return aspect; }
+void  ygl::Camera::setAspect(float aspect) { this->aspect = aspect; }
+float ygl::Camera::getZNear() { return zNear; }
+void  ygl::Camera::setZNear(float zNear) { this->zNear = zNear; }
+float ygl::Camera::getZFar() { return zFar; }
+void  ygl::Camera::setZFar(float zFar) { this->zFar = zFar; }

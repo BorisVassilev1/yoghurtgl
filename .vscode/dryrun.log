@@ -1,6 +1,0 @@
-make.exe --dry-run --keep-going --print-directory
-make.exe: Entering directory `d:/Boby/programming/Standalone/yoghurtgl'
-g++  main.cpp ./src/camera.cpp ./src/mesh.cpp ./src/shader.cpp ./src/window.cpp ./src/yoghurtgl.cpp -g -o main.exe  -L"D:/cpp_libraries/glfw-3.3.5-compiled/src" -L"D:/cpp_libraries/glew-2.1.0-compiled/lib" -lglfw3 -lglew32 -lopengl32 -I"./include" -I"D:/cpp_libraries/glfw-3.3.5-source/include" -I"D:/cpp_libraries/glew-2.1.0-source/include" -I"D:/cpp_libraries/glm" -std=c++2a -Wall
- 
-make.exe: Leaving directory `d:/Boby/programming/Standalone/yoghurtgl'
- 

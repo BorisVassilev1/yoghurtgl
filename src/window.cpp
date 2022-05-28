@@ -6,7 +6,7 @@
 #define GL_CONTEXT_VERSION_MAJOR 4
 #define GL_CONTEXT_VERSION_MINOR 6
 
-ygl::Window::Window(int width, int height, const char *name, bool vsync, GLFWmonitor *monitor) {
+ygl::Window::Window(int width, int height, const char *name, bool vsync, GLFWmonitor *monitor) : width(width), height(height) {
 	const GLFWvidmode *mode = glfwGetVideoMode(monitor ? monitor : glfwGetPrimaryMonitor());
 
 	glfwWindowHint(GLFW_RED_BITS, mode->redBits);

@@ -6,11 +6,12 @@
 			"label": "make project",
 			"command": "make",
 			"args": [
-				"clean",
+				//"clean",
 				"all"
 			],
 			"options": {
-				"cwd": "${workspaceFolder}"
+				"cwd": "${workspaceFolder}/build",
+				"shell": "/bin/bash"
 			},
 			"problemMatcher": [
 				"$gcc"

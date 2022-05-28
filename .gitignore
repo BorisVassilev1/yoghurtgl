@@ -3,7 +3,10 @@
 !*.*
 !makefile
 !Makefile
+!Makefile-manual
 
 /obj
+/build
 *.exe
+*.log
 

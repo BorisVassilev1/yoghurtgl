@@ -6,7 +6,6 @@ SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
 DEP_FILES := $(wildcard ./include/*.h)
 #OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
 
-
 result_file := main
 libs :=
 includes := -I"./include"

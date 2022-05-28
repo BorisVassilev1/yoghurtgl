@@ -79,7 +79,7 @@ bool ygl::Shader::checkLinkStatus() {
 		std::cerr << "Error: Program Linking: \n"
 				  << programLog << std::endl;
 
-		delete programLog;
+		delete [] programLog;
 		return false;
 	}
 	return true;
@@ -98,7 +98,7 @@ bool ygl::Shader::checkValidateStatus() {
 		std::cerr << "Error: Program Validation: \n"
 				  << programLog << std::endl;
 
-		delete programLog;
+		delete [] programLog;
 		return false;
 	}
 	return true;
@@ -117,7 +117,7 @@ bool ygl::Shader::checkCompileStatus(int target) {
 		std::cerr << "Error: Shader Compilation - \n"
 				  << fileNames[target] << " - " << shaderLog << std::endl;
 
-		delete shaderLog;
+		delete [] shaderLog;
 		return false;
 	}
 	return true;
@@ -167,7 +167,7 @@ void ygl::Shader::loadSourceRecursively(std::vector<std::string> &lines, const c
 			char *fullPath		 = new char[fullPathLength];
 			snprintf(fullPath, fullPathLength, "%s/%s", includeDir, file.c_str());
 			loadSourceRecursively(lines, fullPath, includeDir, includeDirLength);
-			delete fullPath;
+			delete [] fullPath;
 		} else {
 			lines.push_back(line);
 		}
@@ -225,7 +225,7 @@ void ygl::Shader::detectUniforms() {
 		// std::cout << name << " " << values[1] << " "<< values[3] << std::endl;
 
 		createUniform(name);
-		delete name;
+		delete [] name;
 	}
 }
 

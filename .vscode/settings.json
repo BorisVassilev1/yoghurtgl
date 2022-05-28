@@ -79,5 +79,6 @@
             "binaryPath": "d:\\Boby\\programming\\CPP\\openGL\\opengl_test\\main.exe",
             "binaryArgs": []
         }
-    ]
+    ],
+    "cmake.configureOnOpen": true
 }

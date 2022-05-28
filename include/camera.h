@@ -4,7 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <transformation.hpp>
+#include <transformation.h>
 
 namespace ygl {
 class Camera {
@@ -20,23 +20,23 @@ class Camera {
    public:
 	Camera(float fov, float aspect, float zNear, float zFar);
 
-	inline void updateProjectionMatrix();
+	void updateProjectionMatrix();
 	void updateViewMatrix(ygl::Transformation &transform);
 	void createMatricesUBO();
-	inline void enable();
-	inline void disable();
+	void enable();
+	void disable();
 	void updateMatricesUBO(glm::mat4 worldMatrix);
 
 	glm::mat4x4 getProjectionMatrix();
 	glm::mat4x4 getViewMatrix();
 
-	inline float getFov();
-	inline void	 setFov(float fOV);
-	inline float getAspect();
-	inline void	 setAspect(float aspect);
-	inline float getZNear();
-	inline void	 setZNear(float zNear);
-	inline float getZFar();
-	inline void	 setZFar(float zFar);
+	float getFov();
+	void  setFov(float fOV);
+	float getAspect();
+	void  setAspect(float aspect);
+	float getZNear();
+	void  setZNear(float zNear);
+	float getZFar();
+	void  setZFar(float zFar);
 };
 }	  // namespace ygl
