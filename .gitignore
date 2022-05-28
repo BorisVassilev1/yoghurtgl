@@ -1,0 +1,9 @@
+*
+!/**/
+!*.*
+!makefile
+!Makefile
+
+/obj
+*.exe
+
