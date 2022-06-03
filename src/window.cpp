@@ -6,7 +6,8 @@
 #define GL_CONTEXT_VERSION_MAJOR 4
 #define GL_CONTEXT_VERSION_MINOR 6
 
-ygl::Window::Window(int width, int height, const char *name, bool vsync, GLFWmonitor *monitor) : width(width), height(height) {
+ygl::Window::Window(int width, int height, const char *name, bool vsync, GLFWmonitor *monitor)
+	: width(width), height(height) {
 	const GLFWvidmode *mode = glfwGetVideoMode(monitor ? monitor : glfwGetPrimaryMonitor());
 
 	glfwWindowHint(GLFW_RED_BITS, mode->redBits);
@@ -27,18 +28,15 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, GLFWmon
 		exit(1);
 	}
 
-	glfwSetWindowCloseCallback(window, [](GLFWwindow *window) {
-		std::cerr << "closing window!";
-	});
+	glfwSetWindowCloseCallback(window, [](GLFWwindow *window) { std::cerr << "closing window!"; });
 	glfwSetKeyCallback(window, [](GLFWwindow *window, int key, int scancode, int action, int mods) {
-		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-			glfwSetWindowShouldClose(window, GLFW_TRUE);
-		}
+		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) { glfwSetWindowShouldClose(window, GLFW_TRUE); }
 	});
-	glfwSetWindowSizeCallback(window, [](GLFWwindow *window, int width, int height) {
-		glViewport(0, 0, width, height);
-		width  = width;
-		height = height;
+	glfwSetWindowSizeCallback(window, handleResize);
+	addResizeCallback([this](GLFWwindow *window, int width, int height) {
+		if (window != getHandle()) return;
+		this->width	 = width;
+		this->height = height;
 	});
 
 	glfwMakeContextCurrent(window);
@@ -57,10 +55,12 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, GLFWmon
 
 ygl::Window::Window(int width, int height, const char *name, bool vsync) : Window(width, height, name, vsync, NULL) {}
 
-ygl::Window::Window(int width, int height, const char *name) : Window(width, height, name, 0) {}
+ygl::Window::Window(int width, int height, const char *name) : Window(width, height, name, 1) {}
 
 int ygl::Window::getWidth() { return width; }
 int ygl::Window::getHeight() { return height; }
+
+GLFWwindow *ygl::Window::getHandle() { return window; }
 
 bool ygl::Window::shouldClose() { return glfwWindowShouldClose(window); }
 
@@ -72,6 +72,7 @@ void ygl::Window::swapBuffers() {
 
 	timeNow		   = std::chrono::high_resolution_clock::now();
 	long fullDelta = std::chrono::duration_cast<std::chrono::nanoseconds>(timeNow - lastSwapTime).count();
+	deltaTime	   = fullDelta / 1e9;
 
 	double glfwNow	= glfwGetTime();
 	double logDelta = glfwNow - lastPrintTime;
@@ -86,10 +87,22 @@ void ygl::Window::swapBuffers() {
 
 void ygl::Window::destroy() { glfwDestroyWindow(window); }
 
-void ygl::Window::defaultFrameCallback(long draw_time, long frame_time) {
-	std::cout << std::fixed << std::setprecision(2) << "\rdraw time: " << (draw_time / 1e6) << "ms, FPS: " << int(1e9 / frame_time) << std::endl;
+bool ygl::Window::isFocused() { return glfwGetWindowAttrib(window, GLFW_FOCUSED) == GLFW_TRUE; }
+
+void ygl::Window::handleResize(GLFWwindow *window, int width, int height) {
+	glViewport(0, 0, width, height);
+	for (auto callback : resizeCallbacks) {
+		callback(window, width, height);
+	}
 }
 
-void ygl::Window::setFrameCallback(void (*callback)(long, long)) {
-	frameCallback = callback;
+void ygl::Window::addResizeCallback(std::function<void(GLFWwindow *, int, int)> callback) {
+	resizeCallbacks.push_back(callback);
 }
+
+void ygl::Window::defaultFrameCallback(long draw_time, long frame_time) {
+	std::cout << std::fixed << std::setprecision(2) << "\rdraw time: " << (draw_time / 1e6)
+			  << "ms, FPS: " << int(1e9 / frame_time) << std::flush;	 //<< std::endl;
+}
+
+void ygl::Window::setFrameCallback(void (*callback)(long, long)) { frameCallback = callback; }

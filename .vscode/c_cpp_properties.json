@@ -30,7 +30,6 @@
                 "_UNICODE"
             ],
             "compilerPath": "C:/MinGW/bin/g++.exe",
-            //"compilerPath": "/usr/bin/g++",
             "cStandard": "gnu17",
             "cppStandard": "c++20",
             "intelliSenseMode": "windows-gcc-x64",
@@ -66,7 +65,6 @@
                 "UNICODE",
                 "_UNICODE"
             ],
-            //"compilerPath": "C:/MinGW/bin/g++.exe",
             "compilerPath": "/usr/bin/g++",
             "cStandard": "gnu17",
             "cppStandard": "c++20",

@@ -43,7 +43,8 @@ class Mesh {
 		const GLuint location;
 		const GLuint bufferId;
 		const GLuint coordSize;
-		VBO(GLuint location, GLuint bufferId, int coordSize) : location(location), bufferId(bufferId), coordSize(coordSize) {}
+		VBO(GLuint location, GLuint bufferId, int coordSize)
+			: location(location), bufferId(bufferId), coordSize(coordSize) {}
 	};
 };
 
@@ -61,7 +62,8 @@ class MultiBufferMesh : public Mesh {
 
 class BasicMesh : public MultiBufferMesh {
    public:
-	BasicMesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors, GLuint indicesCount, GLuint *indices);
+	BasicMesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
+			  GLuint indicesCount, GLuint *indices);
 	ygl::Mesh::VBO getVertices();
 	ygl::Mesh::VBO getNormals();
 	ygl::Mesh::VBO getTexCoords();
@@ -69,25 +71,28 @@ class BasicMesh : public MultiBufferMesh {
 };
 
 inline BasicMesh makeTriangle() {
+	// clang-format off
 	GLfloat vertices[] = {
 		-0.5, -0.5, -0.,
-		0.5, -0.5, -0.,
-		0.0, 0.5, -0.};
-	GLfloat normals[] = {
+		 0.5, -0.5, -0.,
+		 0.0,  0.5, -0.};
+	GLfloat normals[]  = {
 		0.0, 0.0, 1.0,
 		0.0, 0.0, 1.0,
 		0.0, 0.0, 1.0};
-	GLfloat colors[] = {
-		1.0, 0.0, 0.0, 1.0,
-		0.0, 1.0, 0.0, 1.0,
-		0.0, 0.0, 1.0, 1.0};
-	GLuint indices[] = {
-		0, 1, 2};
+	GLfloat colors[]   = {
+		1.0, 0.0, 0.0,
+		1.0, 0.0, 1.0,
+		0.0, 1.0, 0.0,
+		0.0, 1.0, 1.0};
+	GLuint	indices[]  = {0, 1, 2};
+	// clang-format on
 	return BasicMesh((GLuint)9, vertices, normals, (GLfloat *)nullptr, colors, (GLuint)3, indices);
 }
 
-inline BasicMesh makeCube() {
-	float	sx = 0.5, sy = 0.5, sz = 0.5;
+inline BasicMesh makeBox(float x, float y, float z) {
+	float sx = x / 2, sy = y / 2, sz = z / 2;
+	// clang-format off
 	GLfloat vertices[] = {
 		sx, -sy, sz,
 		-sx, -sy, sz,
@@ -138,7 +143,6 @@ inline BasicMesh makeCube() {
 		-0.0f, 0.0f, 1.0f,
 		-1.0f, -0.0f, -0.0f,
 		0.0f, 0.0f, -1.0f};
-
 	GLfloat texCoords[] = {
 		1.0f     , 0.333333f,
 		1.0f     , 0.666667f,
@@ -203,7 +207,14 @@ inline BasicMesh makeCube() {
 		21, 9, 11,
 		22, 12, 14,
 		23, 15, 17};
-	return BasicMesh((GLuint)24 * 3, vertices, normals, (GLfloat *)nullptr, colors, (GLuint)12 * 3, indices);
+	// clang-format on
+	return BasicMesh((GLuint)24 * 3, vertices, normals, texCoords, colors, (GLuint)12 * 3, indices);
 }
+
+inline BasicMesh makeBox(glm::vec3 dim) { return makeBox(dim.x, dim.y, dim.z); }
+
+inline BasicMesh makeCube(float size) { return makeBox(size, size, size); }
+
+inline BasicMesh makeCube() { return makeBox(1, 1, 1); }
 
 }	  // namespace ygl

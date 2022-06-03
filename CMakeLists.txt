@@ -6,7 +6,7 @@ project(YoghurtGL)
 SET(OUT_FILE main)
 
 file(GLOB_RECURSE SOURCES
-    ./include/*
+    #./include/*
     ./src/*.cpp
     ./main.cpp
 )
@@ -15,7 +15,7 @@ add_executable(${OUT_FILE} ${SOURCES})
 target_include_directories(${OUT_FILE} PRIVATE include)
 
 set_target_properties(${OUT_FILE} PROPERTIES
-                      RUNTIME_OUTPUT_DIRECTORY ../
+    RUNTIME_OUTPUT_DIRECTORY ../
 )
 
 

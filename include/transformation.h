@@ -14,8 +14,7 @@ class Transformation {
 	Transformation();
 	Transformation(const glm::vec3 &, const glm::vec3 &, const glm::vec3 &);
 
-	glm::mat4x4 getWorldMatrix() const;
-	void		updateWorldMatrix();
+	glm::mat4 getWorldMatrix() const;
+	void	  updateWorldMatrix();
 };
 }	  // namespace ygl
-

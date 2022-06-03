@@ -34,7 +34,7 @@ endif
 
 all: $(result_file)
 
-$(result_file): main.cpp makefile $(SRC_FILES) $(DEP_FILES)
+$(result_file): main.cpp Makefile-manual $(SRC_FILES) $(DEP_FILES)
 	$(CC) main.cpp $(SRC_FILES) -g -o $(result_file) $(libs) $(includes) $(std) -Wall
 
 .PHONY : clean
