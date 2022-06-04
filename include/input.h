@@ -18,8 +18,10 @@ class Mouse {
    public:
 	bool visible = false;
 	bool lock	 = false;
+	bool disableMouseWhenLockedAndHidden = false;
 
-	Mouse(ygl::Window &window);
+	Mouse(ygl::Window &, bool);
+	Mouse(ygl::Window &);
 	void update();
 	void hide();
 	void show();
@@ -34,14 +36,14 @@ class Keyboard {
 	inline static ygl::Window														  *window = nullptr;
 	inline static std::vector<std::function<void(GLFWwindow *, int, int, int, int)>> callbacks;
 
-	static void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods);
+	static void handleInput(GLFWwindow *, int, int, int, int);
 	Keyboard();
 
    public:
-	static void init(ygl::Window *window);
-	static int	getKey(ygl::Window &window, int key);
-	static int	getKey(int key);
-	static void addKeyCallback(std::function<void(GLFWwindow *, int, int, int, int)> callback);
+	static void init(ygl::Window *);
+	static int	getKey(ygl::Window &, int);
+	static int	getKey(int);
+	static void addKeyCallback(std::function<void(GLFWwindow *, int, int, int, int)>);
 };
 
 class FPController {
@@ -56,9 +58,8 @@ class FPController {
    public:
 	float speed		= 4;
 	bool  active	= true;
-	bool  lockMouse = true;
-	FPController(ygl::Window &window, ygl::Mouse &mouse, ygl::Transformation &transform);
+	FPController(ygl::Window &, ygl::Mouse &, ygl::Transformation &);
 
-	void update(double deltaTime);
+	void update(double);
 };
 }	  // namespace ygl

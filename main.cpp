@@ -35,7 +35,6 @@ int main(int argc, char *argv[]) {
 	Mouse mouse(window);
 	Keyboard::init(&window);
 	FPController controller(window, mouse, cam.transform);
-	mouse.lock = true;
 
 	Scene scene;
 	Entity e = scene.createEntity();
@@ -44,9 +43,6 @@ int main(int argc, char *argv[]) {
 
 	scene.addComponent<Transformation>(e, Transformation());
 	scene.removeComponent<Transformation>(e);
-
-
-
 
 	shader.bind();
 	cube.bind();

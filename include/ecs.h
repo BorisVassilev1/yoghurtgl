@@ -189,4 +189,12 @@ class Scene {
 	}
 };
 
+class MeshComoponent {
+
+};
+
+class ShaderComponent {
+
+};
+
 }	  // namespace ygl
