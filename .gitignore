@@ -5,8 +5,8 @@
 !Makefile
 !Makefile-manual
 
-/obj
-/build
+/build/*
 *.exe
 *.log
 
+/models/*

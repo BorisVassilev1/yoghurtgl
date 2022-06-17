@@ -4,9 +4,12 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 #include <glm/vec3.hpp>
+#include <string>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
 
 namespace ygl {
-class Mesh {
+class IMesh {
    protected:
 	GLuint vao = -1;
 	GLuint ibo = -1;
@@ -19,10 +22,10 @@ class Mesh {
 	GLuint createVAO();
 	GLuint createIBO(GLuint *data, int size);
 
-	Mesh(){};	  // protected constructor so that noone can instantiate this
+	IMesh(){};	  // protected constructor so that noone can instantiate this
 
    public:
-	virtual ~Mesh();
+	virtual ~IMesh();
 
 	void bind();
 	void unbind();
@@ -40,15 +43,15 @@ class Mesh {
 
 	class VBO {
 	   public:
-		const GLuint location;
-		const GLuint bufferId;
-		const GLuint coordSize;
+		GLuint location;
+		GLuint bufferId;
+		GLuint coordSize;
 		VBO(GLuint location, GLuint bufferId, int coordSize)
 			: location(location), bufferId(bufferId), coordSize(coordSize) {}
 	};
 };
 
-class MultiBufferMesh : public Mesh {
+class MultiBufferMesh : public IMesh {
    protected:
 	std::vector<VBO> vbos;
 	void			 addVBO(GLuint location, GLuint coordSize, GLfloat *data, GLuint count);
@@ -60,17 +63,17 @@ class MultiBufferMesh : public Mesh {
 	void disableVBOs();
 };
 
-class BasicMesh : public MultiBufferMesh {
+class Mesh : public MultiBufferMesh {
    public:
-	BasicMesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
+	Mesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
 			  GLuint indicesCount, GLuint *indices);
-	ygl::Mesh::VBO getVertices();
-	ygl::Mesh::VBO getNormals();
-	ygl::Mesh::VBO getTexCoords();
-	ygl::Mesh::VBO getColors();
+	ygl::IMesh::VBO getVertices();
+	ygl::IMesh::VBO getNormals();
+	ygl::IMesh::VBO getTexCoords();
+	ygl::IMesh::VBO getColors();
 };
 
-inline BasicMesh makeTriangle() {
+inline Mesh makeTriangle() {
 	// clang-format off
 	GLfloat vertices[] = {
 		-0.5, -0.5, -0.,
@@ -87,10 +90,10 @@ inline BasicMesh makeTriangle() {
 		0.0, 1.0, 1.0};
 	GLuint	indices[]  = {0, 1, 2};
 	// clang-format on
-	return BasicMesh((GLuint)9, vertices, normals, (GLfloat *)nullptr, colors, (GLuint)3, indices);
+	return Mesh((GLuint)9, vertices, normals, (GLfloat *)nullptr, colors, (GLuint)3, indices);
 }
 
-inline BasicMesh makeBox(float x, float y, float z) {
+inline Mesh makeBox(float x, float y, float z) {
 	float sx = x / 2, sy = y / 2, sz = z / 2;
 	// clang-format off
 	GLfloat vertices[] = {
@@ -208,13 +211,18 @@ inline BasicMesh makeBox(float x, float y, float z) {
 		22, 12, 14,
 		23, 15, 17};
 	// clang-format on
-	return BasicMesh((GLuint)24 * 3, vertices, normals, texCoords, colors, (GLuint)12 * 3, indices);
+	return Mesh((GLuint)24 * 3, vertices, normals, texCoords, colors, (GLuint)12 * 3, indices);
 }
 
-inline BasicMesh makeBox(glm::vec3 dim) { return makeBox(dim.x, dim.y, dim.z); }
+inline Mesh makeBox(glm::vec3 dim) { return makeBox(dim.x, dim.y, dim.z); }
 
-inline BasicMesh makeCube(float size) { return makeBox(size, size, size); }
+inline Mesh makeCube(float size) { return makeBox(size, size, size); }
 
-inline BasicMesh makeCube() { return makeBox(1, 1, 1); }
+inline Mesh makeCube() { return makeBox(1, 1, 1); }
+
+extern Assimp::Importer *importer;
+
+const aiScene	  *loadScene(const std::string &);
+const Mesh *getModel(const aiScene *);
 
 }	  // namespace ygl

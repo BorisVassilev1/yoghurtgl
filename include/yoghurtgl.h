@@ -7,16 +7,20 @@
 //
 #endif
 
-#define _USE_MATH_DEFINES
-
 //#define GLEW_NO_GLU
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-
 namespace ygl {
-    int init();
-    int initDebug();
-    void GLAPIENTRY yglDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam);
-    void glfwErrorCallback(int code, const char *err_msg);
-}
+
+extern bool gl_init;
+extern bool glfw_init;
+extern bool gl_debug_init;
+
+int				init();
+int				initDebug();
+void GLAPIENTRY yglDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
+										const GLchar *message, const void *userParam);
+void			glfwErrorCallback(int code, const char *err_msg);
+void			terminate();
+}	  // namespace ygl

@@ -53,7 +53,7 @@ void ygl::Shader::createShader(GLenum type, GLuint target) {
 	loadSource(file, source, length);
 
 	glShaderSource(sh, 1, &source, &length);
-	delete source;
+	delete [] source;
 	glCompileShader(sh);
 	shaders[target] = sh;
 

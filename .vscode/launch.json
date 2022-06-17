@@ -17,26 +17,26 @@
 				"command": "${workspaceRoot}/main.exe"
 			}
 		},
-		// {
-		// 	"name": "Launch debug",
-		// 	"type": "cppvsdbg",
-		// 	"request": "launch",
-		// 	"program": "${workspaceFolder}/main.exe",
-		// 	"args": [],
-		// 	"stopAtEntry": false,
-		// 	"cwd": "${workspaceFolder}/",
-		// 	"environment": [],
-		// 	"preLaunchTask": "make project",
-		// 	"linux": {
-		// 		"type": "cppvsdbg",
-		// 		"program": "${workspaceRoot}/main",
-		// 		"externalConsole": false,
-		// 	},
-		// 	"windows": {
-		// 		"console": "integratedTerminal",
-		// 		"type": "cppvsdbg",
-		// 		"program": "${workspaceRoot}/main.exe"
-		// 	},
-		// },
+		{
+			"name": "Launch debug",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/main.exe",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/",
+			"environment": [],
+			"preLaunchTask": "make project",
+			"linux": {
+				"type": "cppdbg",
+				"program": "${workspaceRoot}/main",
+				"externalConsole": false,
+			},
+			"windows": {
+				"console": "integratedTerminal",
+				"type": "cppvsdbg",
+				"program": "${workspaceRoot}/main.exe"
+			},
+		},
 	]
 }

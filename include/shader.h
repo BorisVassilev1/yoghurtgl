@@ -45,7 +45,7 @@ class Shader {
 	~Shader();
 
 	void bind();
-	void unbind();
+	static void unbind();
 
 	void createUniform(const char *uniformName);
 	void registerUniform(const std::string &name, int location);

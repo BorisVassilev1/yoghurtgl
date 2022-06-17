@@ -24,11 +24,14 @@ class Window {
 	Window(int, int, const char *, bool);
 	Window(int, int, const char *);
 
+	~Window();
+
 	int			getWidth();
 	int			getHeight();
 	GLFWwindow *getHandle();
 	bool		shouldClose();
 	void		swapBuffers();
+	void		beginFrame();
 	void		setFrameCallback(void (*callback)(long, long));
 	void		destroy();
 	bool		isFocused();

@@ -15,8 +15,6 @@ ygl::Camera::Camera(float fov, ygl::Window &from_window, float zNear, float zFar
 	: Camera(fov, (float)from_window.getWidth() / from_window.getHeight(), zNear, zFar, transform) {
 	from_window.addResizeCallback([&, this](GLFWwindow *window, int width, int height) {
 		this->aspect = (float)width / height;
-		std::cout << width << " " << height << std::endl;
-		std::cout << from_window.getWidth() << " " << from_window.getHeight() << std::endl;
 		updateProjectionMatrix();
 	});
 }

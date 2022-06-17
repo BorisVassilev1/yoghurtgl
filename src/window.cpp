@@ -1,4 +1,5 @@
 #include <window.h>
+#include <yoghurtgl.h>
 
 #include <iostream>
 #include <iomanip>
@@ -40,13 +41,18 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, GLFWmon
 	});
 
 	glfwMakeContextCurrent(window);
+	ygl::gl_init = true;
 
 	glfwSwapInterval(vsync);
 
 	if (glewInit() != GLEW_OK) {
 		std::cerr << "glewInit failed." << std::endl;
-		destroy();
+		this->~Window();
 	}
+
+#ifndef NDEBUG
+	ygl::initDebug();
+#endif
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -55,7 +61,7 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, GLFWmon
 
 ygl::Window::Window(int width, int height, const char *name, bool vsync) : Window(width, height, name, vsync, NULL) {}
 
-ygl::Window::Window(int width, int height, const char *name) : Window(width, height, name, 1) {}
+ygl::Window::Window(int width, int height, const char *name) : Window(width, height, name, true) {}
 
 int ygl::Window::getWidth() { return width; }
 int ygl::Window::getHeight() { return height; }
@@ -85,7 +91,20 @@ void ygl::Window::swapBuffers() {
 	lastSwapTime = timeNow;
 }
 
-void ygl::Window::destroy() { glfwDestroyWindow(window); }
+void ygl::Window::beginFrame() {
+	glfwPollEvents();
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+ygl::Window::~Window() {
+	if(!ygl::glfw_init) return;
+	if (window != nullptr) {
+		glfwDestroyWindow(window);
+		ygl::gl_init = false;
+		window = nullptr;
+	}
+}
 
 bool ygl::Window::isFocused() { return glfwGetWindowAttrib(window, GLFW_FOCUSED) == GLFW_TRUE; }
 

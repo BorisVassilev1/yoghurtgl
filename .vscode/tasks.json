@@ -6,7 +6,6 @@
 			"label": "make project",
 			"command": "make",
 			"args": [
-				//"clean",
 				"all"
 			],
 			"options": {

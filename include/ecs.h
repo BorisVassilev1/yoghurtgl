@@ -7,10 +7,11 @@
 #include <typeinfo>
 #include <assert.h>
 #include <iostream>
+#include <set>
 
 namespace ygl {
 
-const int MAX_COMPONENTS = 8;
+const int MAX_COMPONENTS = 16;
 
 typedef uint32_t					Entity;
 typedef std::bitset<MAX_COMPONENTS> Signature;
@@ -34,6 +35,7 @@ class IComponentArray {
    public:
 	IComponentArray();
 	virtual void deleteEntity(Entity e) = 0;
+	virtual ~IComponentArray() {}
 };
 
 template <class T>
@@ -48,13 +50,14 @@ class ComponentArray : public IComponentArray {
 
 	size_t count() { return components.size(); }
 
-	void addComponent(Entity e, T component) {
+	T &addComponent(Entity e, T component) {
 		assert(entityToIndexMap.find(e) == entityToIndexMap.end() && "This entity already has that component");
 
 		int index				= components.size();
 		entityToIndexMap[e]		= index;
 		indexToEntityMap[index] = e;
 		components.push_back(component);
+		return components.back();
 	}
 
 	void removeComponent(Entity e) {
@@ -125,8 +128,8 @@ class ComponentManager {
 	}
 
 	template <typename T>
-	void addComponent(Entity e, T component) {
-		getComponentArray<T>()->addComponent(e, component);
+	T &addComponent(Entity e, T component) {
+		return getComponentArray<T>()->addComponent(e, component);
 	}
 
 	template <typename T>
@@ -146,13 +149,20 @@ class Scene {
 	EntityManager	 entityManager;
 
    public:
+	std::set<Entity> entities;
+
 	Scene() {}
 
-	Entity createEntity() { return entityManager.createEntity(); }
+	Entity createEntity() {
+		Entity res = entityManager.createEntity();
+		entities.insert(res);
+		return res;
+	}
 
 	void destroyEntity(Entity e) {
 		componentManager.deleteEntity(e);
 		entityManager.destroyEntity(e);
+		entities.erase(e);
 	}
 
 	template <typename T>
@@ -161,12 +171,14 @@ class Scene {
 	}
 
 	template <typename T>
-	void addComponent(Entity e, T component) {
-		componentManager.addComponent<T>(e, component);
+	T &addComponent(Entity e, T component) {
+		T &res = componentManager.addComponent<T>(e, component);
 
 		auto signature = entityManager.getSignature(e);
 		signature.set(componentManager.getComponentType<T>(), true);
 		entityManager.setSignature(e, signature);
+
+		return res;
 	}
 
 	template <typename T>
@@ -178,6 +190,8 @@ class Scene {
 		entityManager.setSignature(e, signature);
 	}
 
+	Signature getSignature(Entity e) { return entityManager.getSignature(e); }
+
 	template <typename T>
 	T &getComponent(Entity e) {
 		return componentManager.getComponent<T>(e);
@@ -187,14 +201,6 @@ class Scene {
 	ComponentType getComponentType() {
 		return componentManager.getComponentType<T>();
 	}
-};
-
-class MeshComoponent {
-
-};
-
-class ShaderComponent {
-
 };
 
 }	  // namespace ygl
