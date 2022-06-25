@@ -24,7 +24,6 @@ vec3 calcLight(Light light, in vec3 position, in vec3 normal, in float attenuati
 	
 	float dist = length(toLight);
 	
-	
 	float diffuse = 0, specular = 0;
 	vec3 diffuseColor, specularColor;
 	
@@ -64,6 +63,8 @@ void main()
 	for(int i = 0; i < lights.length(); i ++) {
 		light += calcLight(lights[i], mvVertexPos, mvVertexNormal, 2.0, materials[material_index]);
 	}
+
+	//light = vec3(materials[material_index].albedo);
 	
 	fragColor = vec4(light, 1.0);
 }

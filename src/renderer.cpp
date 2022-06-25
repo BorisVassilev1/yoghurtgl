@@ -21,6 +21,9 @@ ygl::Light::Light(glm::mat4 transform, glm::vec3 color, float intensity, ygl::Li
 ygl::Light::Light(ygl::Transformation transformation, glm::vec3 color, float intensity, ygl::Light::Type type)
 	: transform(transformation.getWorldMatrix()), color(color), intensity(intensity), type(type) {}
 
+ygl::RendererComponent::RendererComponent(unsigned int shaderIndex, unsigned int meshIndex, unsigned int materialIndex)
+	: shaderIndex(shaderIndex), meshIndex(meshIndex), materialIndex(materialIndex) {}
+
 ygl::Shader *ygl::Renderer::getShader(RendererComponent &comp) {
 	assert(comp.shaderIndex >= 0 && "invalid index");
 	return shaders[comp.shaderIndex];

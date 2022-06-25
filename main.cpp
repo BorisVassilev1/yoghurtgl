@@ -10,6 +10,8 @@
 #include <renderer.h>
 
 #include <iostream>
+#include <random>
+#include <time.h>
 
 using namespace ygl;
 using namespace std;
@@ -20,6 +22,8 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
+	srand(time(NULL));
+
 	Window window = Window(800, 600, "Test Window", true);
 
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -28,7 +32,7 @@ int main(int argc, char *argv[]) {
 	Mesh			 *bunnyMesh = (Mesh *)getModel(sc);
 	Mesh			 *cubeMesh	 = makeCube();
 	VFShader	   shader("./shaders/simple.vs", "./shaders/simple.fs");
-	Camera		   cam(glm::radians(70.f), window, 0.0001, 1000);
+	Camera		   cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse mouse(window);
 	Keyboard::init(&window);
@@ -41,43 +45,46 @@ int main(int argc, char *argv[]) {
 	Renderer *renderer = scene.registerSystem<Renderer>();
 	scene.setSystemSignature<Renderer, Transformation, RendererComponent>();
 
-	Entity cube = scene.createEntity();
-	scene.addComponent<Transformation>(cube, Transformation());
-	RendererComponent cubeRenderer;
-
 	Entity			bunny	  = scene.createEntity();
 	Transformation &transform = scene.addComponent<Transformation>(bunny, Transformation());
 	transform.position.y	  = 1;
 	transform.updateWorldMatrix();
 	RendererComponent bunnyRenderer;
 
-	bunnyRenderer.meshIndex = renderer->addMesh(bunnyMesh);
-	cubeRenderer.meshIndex	= renderer->addMesh(cubeMesh);
+	unsigned int shaderIndex = renderer->addShader(&shader);
 
-	bunnyRenderer.shaderIndex = cubeRenderer.shaderIndex = renderer->addShader(&shader);
+	bunnyRenderer.meshIndex = renderer->addMesh(bunnyMesh);
+
+	bunnyRenderer.shaderIndex = shaderIndex;
 	bunnyRenderer.materialIndex =
 		renderer->addMaterial(Material(glm::vec3(1., 1., 0.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, 0.0, 0.1));
-	cubeRenderer.materialIndex = renderer->addMaterial(
-		Material(glm::vec3(1.0, 1.0, 1.0), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, 0.0, 0.1));
 
-	scene.addComponent<RendererComponent>(cube, cubeRenderer);
 	scene.addComponent<RendererComponent>(bunny, bunnyRenderer);
+
+	unsigned int cubeMeshIndex = renderer->addMesh(cubeMesh);
 
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
 							 0.7, Light::Type::DIRECTIONAL));
 	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.1, Light::Type::AMBIENT));
 
-	renderer->loadData();
+	
 
 	for (int i = 0; i < 20; ++i) {
-		for (int j = 0; j < 100; ++j) {
+		for (int j = 0; j < 20; ++j) {
 			Entity curr = scene.createEntity();
 
 			scene.addComponent<Transformation>(curr,
 											   Transformation(glm::vec3(i * 2, -1, j * 2), glm::vec3(), glm::vec3(1)));
-			scene.addComponent<RendererComponent>(curr, cubeRenderer);
+			RendererComponent rc(
+				shaderIndex, cubeMeshIndex,
+				renderer->addMaterial(Material(glm::vec3(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.),
+											   .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, 0.0, 0.1)));
+
+			scene.addComponent<RendererComponent>(curr, rc);
 		}
 	}
+
+renderer->loadData();
 
 	glClearColor(0, 0, 0, 0);
 	while (!window.shouldClose()) {

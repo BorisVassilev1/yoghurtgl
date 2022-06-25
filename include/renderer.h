@@ -51,6 +51,7 @@ struct RendererComponent {
 	unsigned int meshIndex;
 	unsigned int materialIndex;
 	RendererComponent() : shaderIndex(-1), meshIndex(-1), materialIndex(-1) {}
+	RendererComponent(unsigned int shaderIndex, unsigned int meshIndex, unsigned int materialIndex);
 };
 
 class Renderer : public ygl::ISystem {
