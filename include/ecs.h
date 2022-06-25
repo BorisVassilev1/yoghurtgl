@@ -17,6 +17,13 @@ typedef uint32_t					Entity;
 typedef std::bitset<MAX_COMPONENTS> Signature;
 typedef uint8_t						ComponentType;
 
+class EntityManager;
+template <class T>
+class ComponentArray;
+class ComponentManager;
+class ISystem;
+class Scene;
+
 class EntityManager {
 	std::vector<Signature> signatures;
 	std::queue<Entity>	   freePositions;
@@ -144,9 +151,70 @@ class ComponentManager {
 	}
 };
 
+class ISystem {
+   public:
+	std::set<Entity> entities;
+	Scene			  *scene = nullptr;
+
+	ISystem() {}
+
+	virtual void doWork() = 0;
+};
+
+class SystemManager {
+	std::unordered_map<const char *, ISystem *> systems;
+	std::unordered_map<const char *, Signature> signatures;		// TODO: FINISH THIS
+
+   public:
+	template <class T>
+	T *registerSystem() {
+		const char *type = typeid(T).name();
+
+		assert(systems.find(type) == systems.end() && "system type already registered");
+
+		T *sys		  = new T();
+		systems[type] = sys;
+		return sys;
+	}
+
+	template <class T>
+	T* getSystem() {
+		const char *type = typeid(T).name();
+
+		assert(systems.find(type) != systems.end() && "system type has not been registered");
+
+		return (T*)(systems[type]);
+	}
+
+	template <class T>
+	void setSignature(Signature signature) {
+		const char *type = typeid(T).name();
+		assert(systems.find(type) != systems.end() && "System not registered");
+
+		signatures[type] = signature;
+	}
+
+	void updateEntitySignature(Entity e, Signature signature) {
+		for (auto pair : systems) {
+			if (signature == signatures[pair.first]) {
+				pair.second->entities.insert(e);
+			} else {
+				pair.second->entities.erase(e);
+			}
+		}
+	}
+
+	void destroyEntity(Entity e) {
+		for (auto pair : systems) {
+			pair.second->entities.erase(e);
+		}
+	}
+};
+
 class Scene {
 	ComponentManager componentManager;
 	EntityManager	 entityManager;
+	SystemManager	 systemManager;
 
    public:
 	std::set<Entity> entities;
@@ -162,6 +230,7 @@ class Scene {
 	void destroyEntity(Entity e) {
 		componentManager.deleteEntity(e);
 		entityManager.destroyEntity(e);
+		systemManager.destroyEntity(e);
 		entities.erase(e);
 	}
 
@@ -177,6 +246,7 @@ class Scene {
 		auto signature = entityManager.getSignature(e);
 		signature.set(componentManager.getComponentType<T>(), true);
 		entityManager.setSignature(e, signature);
+		systemManager.updateEntitySignature(e, signature);
 
 		return res;
 	}
@@ -188,9 +258,22 @@ class Scene {
 		auto signature = entityManager.getSignature(e);
 		signature.set(componentManager.getComponentType<T>(), false);
 		entityManager.setSignature(e, signature);
+		systemManager.updateEntitySignature(e, signature);
 	}
 
 	Signature getSignature(Entity e) { return entityManager.getSignature(e); }
+
+	template <class System, class... T>
+	void setSystemSignature() {
+		Signature s;
+		(s.set(componentManager.getComponentType<T>()), ...);
+		systemManager.setSignature<System>(s);
+	}
+
+	template<class T>
+	T *getSystem() {
+		return systemManager.getSystem<T>();
+	}
 
 	template <typename T>
 	T &getComponent(Entity e) {
@@ -201,6 +284,12 @@ class Scene {
 	ComponentType getComponentType() {
 		return componentManager.getComponentType<T>();
 	}
-};
 
+	template <class T>
+	T *registerSystem() {
+		T *sys	   = systemManager.registerSystem<T>();
+		sys->scene = this;
+		return sys;
+	}
+};
 }	  // namespace ygl

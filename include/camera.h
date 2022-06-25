@@ -10,8 +10,10 @@
 namespace ygl {
 class Camera {
 
+	struct matrices {
 	glm::mat4x4 projectionMatrix;
 	glm::mat4x4 viewMatrix;
+	} matrices;
 
 	GLuint uboMatrices;
 	float  fov;

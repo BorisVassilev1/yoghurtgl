@@ -8,9 +8,7 @@
 #include <string_view>
 
 ygl::Shader::~Shader() {
-	if (shaders != nullptr) {
-		deleteShaders();
-	}
+	if (shaders != nullptr) { deleteShaders(); }
 	glDeleteProgram(program);
 
 	if (fileNames != nullptr) {
@@ -43,9 +41,7 @@ ygl::Shader::Shader(std::initializer_list<const char *> files) {
 void ygl::Shader::createShader(GLenum type, GLuint target) {
 	const char   *file = fileNames[target];
 	std::ifstream in(file);
-	if (in.fail()) {
-		std::cerr << "Error: failed opening file: " << file << std::endl;
-	}
+	if (in.fail()) { std::cerr << "Error: failed opening file: " << file << std::endl; }
 
 	int	  sh = glCreateShader(type);
 	char *source;
@@ -53,7 +49,7 @@ void ygl::Shader::createShader(GLenum type, GLuint target) {
 	loadSource(file, source, length);
 
 	glShaderSource(sh, 1, &source, &length);
-	delete [] source;
+	delete[] source;
 	glCompileShader(sh);
 	shaders[target] = sh;
 
@@ -76,10 +72,9 @@ bool ygl::Shader::checkLinkStatus() {
 		char *programLog = new char[programLogLength + 1];
 		glGetProgramInfoLog(program, programLogLength, NULL, programLog);
 
-		std::cerr << "Error: Program Linking: \n"
-				  << programLog << std::endl;
+		std::cerr << "Error: Program Linking: \n" << programLog << std::endl;
 
-		delete [] programLog;
+		delete[] programLog;
 		return false;
 	}
 	return true;
@@ -95,10 +90,9 @@ bool ygl::Shader::checkValidateStatus() {
 		char *programLog = new char[programLogLength + 1];
 		glGetProgramInfoLog(program, programLogLength, NULL, programLog);
 
-		std::cerr << "Error: Program Validation: \n"
-				  << programLog << std::endl;
+		std::cerr << "Error: Program Validation: \n" << programLog << std::endl;
 
-		delete [] programLog;
+		delete[] programLog;
 		return false;
 	}
 	return true;
@@ -114,10 +108,9 @@ bool ygl::Shader::checkCompileStatus(int target) {
 		char *shaderLog = new char[shaderLogLength + 1];
 		glGetShaderInfoLog(shader, shaderLogLength, NULL, shaderLog);
 
-		std::cerr << "Error: Shader Compilation - \n"
-				  << fileNames[target] << " - " << shaderLog << std::endl;
+		std::cerr << "Error: Shader Compilation - \n" << fileNames[target] << " - " << shaderLog << std::endl;
 
-		delete [] shaderLog;
+		delete[] shaderLog;
 		return false;
 	}
 	return true;
@@ -148,7 +141,8 @@ void ygl::Shader::loadSource(const char *file, char *&source, int &length) {
 	loadSource(file, ygl::Shader::DEFAULT_INCLUDE_DIRECTORY, source, length);
 }
 
-void ygl::Shader::loadSourceRecursively(std::vector<std::string> &lines, const char *file, const char *includeDir, int includeDirLength) {
+void ygl::Shader::loadSourceRecursively(std::vector<std::string> &lines, const char *file, const char *includeDir,
+										int includeDirLength) {
 	std::ifstream in(file);
 	if (in.fail()) {
 		std::cerr << "Error: cannot open file: \"" << file << "\"" << std::endl;
@@ -167,7 +161,7 @@ void ygl::Shader::loadSourceRecursively(std::vector<std::string> &lines, const c
 			char *fullPath		 = new char[fullPathLength];
 			snprintf(fullPath, fullPathLength, "%s/%s", includeDir, file.c_str());
 			loadSourceRecursively(lines, fullPath, includeDir, includeDirLength);
-			delete [] fullPath;
+			delete[] fullPath;
 		} else {
 			lines.push_back(line);
 		}
@@ -179,28 +173,22 @@ void ygl::Shader::finishProgramCreation() {
 	assert(checkLinkStatus() && checkValidateStatus());
 	deleteShaders();
 	detectUniforms();
+	detectBlockUniforms();
+	detectStorageBlocks();
 }
 
-void ygl::Shader::bind() {
-	glUseProgram(program);
-}
+void ygl::Shader::bind() { glUseProgram(program); }
 
-void ygl::Shader::unbind() {
-	glUseProgram(0);
-}
+void ygl::Shader::unbind() { glUseProgram(0); }
 
 void ygl::Shader::createUniform(const char *uniformName) {
 	GLint uniformLocation = glGetUniformLocation(program, uniformName);
-	if (uniformLocation < 0) {
-		std::cerr << "Could not find uniform: " << uniformName;
-	}
+	if (uniformLocation < 0) { std::cerr << "Could not find uniform: " << uniformName; }
 	registerUniform(uniformName, uniformLocation);
 }
 
 void ygl::Shader::registerUniform(const std::string &name, int location) {
-	if (hasUniform(name)) {
-		std::cerr << "That uniform already exists" << std::endl;
-	}
+	if (hasUniform(name)) { std::cerr << "That uniform already exists" << std::endl; }
 	uniforms.insert(std::pair(name, location));
 }
 
@@ -216,20 +204,60 @@ void ygl::Shader::detectUniforms() {
 		GLint values[4];
 		glGetProgramResourceiv(program, GL_UNIFORM, unif, 4, properties, 4, nullptr, values);
 
-		if (values[0] != -1) {
-			continue;
-		}
+		if (values[0] != -1) { continue; }
 
 		char *name = new char[values[2]];
 		glGetProgramResourceName(program, GL_UNIFORM, unif, (GLsizei)values[2], nullptr, name);
 		// std::cout << name << " " << values[1] << " "<< values[3] << std::endl;
 
 		createUniform(name);
-		delete [] name;
+		delete[] name;
 	}
 }
 
-int ygl::Shader::getUniformLocation(const std::string &uniformName) {
+void ygl::Shader::detectBlockUniforms() {
+	GLint numBlocks;
+	glGetProgramInterfaceiv(program, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES, &numBlocks);
+
+	GLenum blockProperties[] = {GL_NUM_ACTIVE_VARIABLES, GL_BUFFER_BINDING, GL_NAME_LENGTH};
+	// GLenum activeUnifProp[]	 = {GL_ACTIVE_VARIABLES};
+	// GLenum unifProperties[]	 = {GL_TYPE, GL_LOCATION, GL_OFFSET};
+
+	for (int blockIx = 0; blockIx < numBlocks; ++blockIx) {
+		GLint result[3];
+		glGetProgramResourceiv(program, GL_UNIFORM_BLOCK, blockIx, 3, blockProperties, 3, nullptr, result);
+
+		GLchar *blockName = new GLchar[result[2]];
+		glGetProgramResourceName(program, GL_UNIFORM_BLOCK, blockIx, result[2], nullptr, blockName);
+		std::string blockNameString(blockName);
+		// std::cout << blockName << " " << blockIx << " " << result[1] << " " << result[0] << std::endl;
+
+		createUBO(blockNameString, result[1]);
+	}
+}
+
+void ygl::Shader::detectStorageBlocks() {
+	GLint numSSBOs;
+	glGetProgramInterfaceiv(program, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &numSSBOs);
+
+	GLenum blockProperties[] = {GL_NUM_ACTIVE_VARIABLES, GL_BUFFER_BINDING, GL_NAME_LENGTH};
+	// GLenum activeUnifProp[]  = {GL_ACTIVE_VARIABLES};
+	// GLenum unifProperties[]  = {GL_TYPE, GL_OFFSET};
+
+	for (int block = 0; block < numSSBOs; block++) {
+		int blockInfo[3];
+		glGetProgramResourceiv(program, GL_SHADER_STORAGE_BLOCK, block, 3, blockProperties, 3, nullptr, blockInfo);
+
+		GLchar *blockName = new GLchar[blockInfo[2]];
+		glGetProgramResourceName(program, GL_SHADER_STORAGE_BLOCK, block, blockInfo[2], nullptr, blockName);
+		std::string blockNameString(blockName);
+		// System.out.println(blockName + " " + block + " " + blockInfo[0] + " " + blockInfo[1]);
+
+		createSSBO(blockNameString, blockInfo[1]);
+	}
+}
+
+GLuint ygl::Shader::getUniformLocation(const std::string &uniformName) {
 	if (!hasUniform(uniformName)) {
 		std::cerr << "the uniform " << uniformName << " does not exist in this shader." << std::endl;
 	}
@@ -237,9 +265,7 @@ int ygl::Shader::getUniformLocation(const std::string &uniformName) {
 	return location;
 }
 
-bool ygl::Shader::hasUniform(const std::string &uniformName) {
-	return uniforms.find(uniformName) != uniforms.end();
-}
+bool ygl::Shader::hasUniform(const std::string &uniformName) { return uniforms.find(uniformName) != uniforms.end(); }
 
 void ygl::Shader::setUniform(const std::string &uniformName, GLboolean value) {
 	glUniform1i(getUniformLocation(uniformName), value ? 1 : 0);
@@ -321,9 +347,7 @@ void ygl::Shader::setSSBO(GLuint bufferId, GLuint binding) {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, bufferId);
 }
 
-void ygl::Shader::setUBO(GLuint bufferId, GLuint binding) {
-	glBindBufferBase(GL_UNIFORM_BUFFER, binding, bufferId);
-}
+void ygl::Shader::setUBO(GLuint bufferId, GLuint binding) { glBindBufferBase(GL_UNIFORM_BUFFER, binding, bufferId); }
 
 ygl::VFShader::VFShader(const char *vertex, const char *fragment) : Shader({vertex, fragment}) {
 	createShader(GL_VERTEX_SHADER, 0);

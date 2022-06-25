@@ -23,7 +23,8 @@ class Shader {
 
 	static constexpr const char *DEFAULT_INCLUDE_DIRECTORY = "./shaders/include/";
 
-	void loadSourceRecursively(std::vector<std::string> &lines, const char *file, const char *includeDir, int includeDirLength);
+	void loadSourceRecursively(std::vector<std::string> &lines, const char *file, const char *includeDir,
+							   int includeDirLength);
 
    protected:
 	Shader(std::initializer_list<const char *> files);
@@ -44,16 +45,18 @@ class Shader {
    public:
 	~Shader();
 
-	void bind();
+	void		bind();
 	static void unbind();
 
 	void createUniform(const char *uniformName);
 	void registerUniform(const std::string &name, int location);
 
 	void detectUniforms();
+	void detectBlockUniforms();
+	void detectStorageBlocks();
 
-	int	 getUniformLocation(const std::string &uniformName);
-	bool hasUniform(const std::string &uniformName);
+	GLuint getUniformLocation(const std::string &uniformName);
+	bool   hasUniform(const std::string &uniformName);
 
 	void setUniform(const std::string &uniformName, GLboolean value);
 	void setUniform(const std::string &uniformName, GLint value);

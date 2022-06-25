@@ -28,13 +28,21 @@ struct Light {
 };
 
 struct Material {
-	//sampler2D texture;
-	vec3 color;
-	bool use_texture;
+	vec3 albedo;
+	float	  specular_chance;
+	// 16
 	
-	float diffuse_power;
-	float specular_power;
-	float specular_exponent;
+	vec3 emission;
+	float	  ior;
+	// 32
+	
+	vec3 transparency_color;
+	float	  refraction_chance;
+	// 48
+	
+	float refraction_roughness;
+	float specular_roughness;
+	// 56 but is aligned to 64
 };
 
 layout(std140, binding=0) uniform Matrices {
@@ -51,4 +59,4 @@ layout(std140, binding=1) buffer Lights{
 	Light lights[];
 };
 
-uniform int material_index = 0;
+uniform unsigned int material_index = 0;

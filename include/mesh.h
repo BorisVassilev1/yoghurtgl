@@ -93,7 +93,7 @@ inline Mesh makeTriangle() {
 	return Mesh((GLuint)9, vertices, normals, (GLfloat *)nullptr, colors, (GLuint)3, indices);
 }
 
-inline Mesh makeBox(float x, float y, float z) {
+inline Mesh *makeBox(float x, float y, float z) {
 	float sx = x / 2, sy = y / 2, sz = z / 2;
 	// clang-format off
 	GLfloat vertices[] = {
@@ -211,14 +211,14 @@ inline Mesh makeBox(float x, float y, float z) {
 		22, 12, 14,
 		23, 15, 17};
 	// clang-format on
-	return Mesh((GLuint)24 * 3, vertices, normals, texCoords, colors, (GLuint)12 * 3, indices);
+	return new Mesh((GLuint)24 * 3, vertices, normals, texCoords, colors, (GLuint)12 * 3, indices);
 }
 
-inline Mesh makeBox(glm::vec3 dim) { return makeBox(dim.x, dim.y, dim.z); }
+inline Mesh *makeBox(glm::vec3 dim) { return makeBox(dim.x, dim.y, dim.z); }
 
-inline Mesh makeCube(float size) { return makeBox(size, size, size); }
+inline Mesh *makeCube(float size) { return makeBox(size, size, size); }
 
-inline Mesh makeCube() { return makeBox(1, 1, 1); }
+inline Mesh *makeCube() { return makeBox(1, 1, 1); }
 
 extern Assimp::Importer *importer;
 
