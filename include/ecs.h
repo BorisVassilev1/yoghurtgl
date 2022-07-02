@@ -157,13 +157,14 @@ class ISystem {
 	Scene			  *scene = nullptr;
 
 	ISystem() {}
+	virtual ~ISystem() {};
 
 	virtual void doWork() = 0;
 };
 
 class SystemManager {
 	std::unordered_map<const char *, ISystem *> systems;
-	std::unordered_map<const char *, Signature> signatures;		// TODO: FINISH THIS
+	std::unordered_map<const char *, Signature> signatures;
 
    public:
 	template <class T>
@@ -207,6 +208,12 @@ class SystemManager {
 	void destroyEntity(Entity e) {
 		for (auto pair : systems) {
 			pair.second->entities.erase(e);
+		}
+	}
+
+	~SystemManager() {
+		for(auto pair : systems) {
+			delete pair.second;
 		}
 	}
 };

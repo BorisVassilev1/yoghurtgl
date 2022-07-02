@@ -22,12 +22,16 @@ struct Material {
 	float refraction_roughness;
 	float specular_roughness;
 
+	unsigned int texture_sampler;
+	float			 texture_influence;
+
    private:
-	char padding[8];
+	// char padding[8];
 
    public:
 	Material(glm::vec3 albedo, float specular_chance, glm::vec3 emission, float ior, glm::vec3 transparency_color,
-			 float refraction_chance, float refraction_roughness, float specular_roughness);
+			 float refraction_chance, float refraction_roughness, float specular_roughness,
+			 unsigned int texture_sampler, float texture_influence);
 };
 
 struct Light {
@@ -76,6 +80,8 @@ class Renderer : public ygl::ISystem {
 	void loadData();
 
 	void doWork() override;
+
+	~Renderer() override;
 };
 
 }	  // namespace ygl

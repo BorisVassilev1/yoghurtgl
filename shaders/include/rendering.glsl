@@ -42,8 +42,11 @@ struct Material {
 	
 	float refraction_roughness;
 	float specular_roughness;
-	// 56 but is aligned to 64
-};
+	// 56 
+
+	int texture_sampler; // useless but here for alignment
+	float texture_influence;
+}; // 64 bytes all
 
 layout(std140, binding=0) uniform Matrices {
 	mat4 projectionMatrix;

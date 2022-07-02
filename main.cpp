@@ -8,6 +8,7 @@
 #include <input.h>
 #include <ecs.h>
 #include <renderer.h>
+#include <texture.h>
 
 #include <iostream>
 #include <random>
@@ -26,13 +27,12 @@ int main(int argc, char *argv[]) {
 
 	Window window = Window(800, 600, "Test Window", true);
 
-	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	const aiScene *sc		 = loadScene("./models/bunny.obj");
+	const aiScene *sc		 = loadScene("./res/models/bunny.obj");
 	Mesh			 *bunnyMesh = (Mesh *)getModel(sc);
-	Mesh			 *cubeMesh	 = makeCube();
-	VFShader	   shader("./shaders/simple.vs", "./shaders/simple.fs");
-	Camera		   cam(glm::radians(70.f), window, 0.01, 1000);
+
+	Mesh	 *cubeMesh = makeCube();
+	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
+	Camera	 cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse mouse(window);
 	Keyboard::init(&window);
@@ -41,6 +41,9 @@ int main(int argc, char *argv[]) {
 	Scene scene;
 	scene.registerComponent<Transformation>();
 	scene.registerComponent<RendererComponent>();
+
+	Texture2d *tex = new Texture2d("./res/images/uv_checker.png");
+	((ITexture*)tex)->bind();
 
 	Renderer *renderer = scene.registerSystem<Renderer>();
 	scene.setSystemSignature<Renderer, Transformation, RendererComponent>();
@@ -51,13 +54,13 @@ int main(int argc, char *argv[]) {
 	transform.updateWorldMatrix();
 	RendererComponent bunnyRenderer;
 
-	unsigned int shaderIndex = renderer->addShader(&shader);
+	unsigned int shaderIndex = renderer->addShader(shader);
 
 	bunnyRenderer.meshIndex = renderer->addMesh(bunnyMesh);
 
 	bunnyRenderer.shaderIndex = shaderIndex;
 	bunnyRenderer.materialIndex =
-		renderer->addMaterial(Material(glm::vec3(1., 1., 0.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, 0.0, 0.1));
+		renderer->addMaterial(Material(glm::vec3(1., 1., 0.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, 0.0, 0.1, 0, 0.0));
 
 	scene.addComponent<RendererComponent>(bunny, bunnyRenderer);
 
@@ -67,7 +70,8 @@ int main(int argc, char *argv[]) {
 							 0.7, Light::Type::DIRECTIONAL));
 	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.1, Light::Type::AMBIENT));
 
-	
+	renderer->addLight(Light(Transformation(glm::vec3(15, 4, 15), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 100,
+	Light::Type::POINT));
 
 	for (int i = 0; i < 20; ++i) {
 		for (int j = 0; j < 20; ++j) {
@@ -78,13 +82,13 @@ int main(int argc, char *argv[]) {
 			RendererComponent rc(
 				shaderIndex, cubeMeshIndex,
 				renderer->addMaterial(Material(glm::vec3(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.),
-											   .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, 0.0, 0.1)));
+											   .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, 0.0, 0.1, 0, 0.5)));
 
 			scene.addComponent<RendererComponent>(curr, rc);
 		}
 	}
 
-renderer->loadData();
+	renderer->loadData();
 
 	glClearColor(0, 0, 0, 0);
 	while (!window.shouldClose()) {
@@ -102,6 +106,7 @@ renderer->loadData();
 
 		window.swapBuffers();
 	}
+
 
 	// clean up and exit
 	window.~Window();

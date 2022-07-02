@@ -10,34 +10,38 @@
                 "UNICODE",
                 "_UNICODE"
             ],
-            "compilerPath": "C:/MinGW/bin/g++.exe",
+            "compilerPath": "C:/msys64/mingw64/bin/g++.exe",
             "cStandard": "gnu17",
             "cppStandard": "gnu++14",
             "intelliSenseMode": "windows-gcc-x86",
             "compilerArgs": [],
-            "configurationProvider": "ms-vscode.makefile-tools"
+            "configurationProvider": "ms-vscode.makefile-tools",
+            "mergeConfigurations": false,
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/**"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
         },
         {
             "name": "win_opengl",
             "includePath": [
                 "${workspaceFolder}/**",
-                "D:/cpp_libraries/glew-2.1.0-source/include/**",
-                "D:/cpp_libraries/glfw-3.3.5-source/include/**"
+                "C:/msys64/mingw64/include"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
             ],
-            "compilerPath": "C:/MinGW/bin/g++.exe",
+            "compilerPath": "C:/msys64/mingw64/bin/g++.exe",
             "cStandard": "gnu17",
             "cppStandard": "c++20",
             "intelliSenseMode": "windows-gcc-x64",
             "compilerArgs": [
-                "-I\"D:/cpp_libraries/glfw-3.3.5-source/include\"",
-                "-I\"D:/cpp_libraries/glew-2.1.0-source/include\"",
-                "-L\"D:/cpp_libraries/glfw-3.3.5-compiled/src\"",
-                "-L\"D:/cpp_libraries/glew-2.1.0-compiled/lib\"",
+                "-I\"C:/msys64/mingw64/include\"",
+                "-L\"C:/msys64/mingw64/lib\"",
                 "-lglfw3",
                 "-lglew32",
                 "-lopengl32"
@@ -46,10 +50,7 @@
             "browse": {
                 "path": [
                     "${workspaceFolder}/***",
-                    "D:/cpp_libraries/glfw-3.3.5-source/include",
-                    "D:/cpp_libraries/glew-2.1.0-source/include",
-                    "D:/cpp_libraries/glfw-3.3.5-compiled/src",
-                    "D:/cpp_libraries/glew-2.1.0-compiled/lib"
+                    "C:/msys64/mingw64/include"
                 ],
                 "limitSymbolsToIncludedHeaders": false
             },

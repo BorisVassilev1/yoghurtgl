@@ -88,3 +88,4 @@ void ygl::terminate() {
 	ygl::gl_init	   = false;
 	ygl::glfw_init	   = false;
 }
+

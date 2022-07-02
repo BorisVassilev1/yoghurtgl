@@ -6,7 +6,6 @@ project(YoghurtGL)
 SET(OUT_FILE main)
 
 file(GLOB_RECURSE SOURCES
-	#./include/*
 	./src/*.cpp
 	./main.cpp
 )
@@ -21,13 +20,11 @@ set_target_properties(${OUT_FILE} PROPERTIES
 
 if (WIN32)
 set(LIBS 
-	-L\"D:/cpp_libraries/glfw-3.3.5-compiled/src\" 
-	-L\"D:/cpp_libraries/glew-2.1.0-compiled/lib\" 
-	-lglfw3 -lglew32 -lopengl32)
+	-L\"C:/msys64/mingw64/lib\" 
+	-lglfw3 -lglew32 -lopengl32 -lassimp)
 	set(INCLUDES
-	D:/cpp_libraries/glfw-3.3.5-source/include
-	D:/cpp_libraries/glew-2.1.0-source/include
-	D:/cpp_libraries/glm)
+	C:/msys64/mingw64/include
+	)
 target_include_directories(${OUT_FILE} PRIVATE ${INCLUDES})
 endif (WIN32)
 	
@@ -38,5 +35,5 @@ endif (UNIX)
 
 target_link_libraries(${OUT_FILE} ${LIBS})
 
-set(CMAKE_CXX_FLAGS "-O0 -std=c++17 -Wall")
+set(CMAKE_CXX_FLAGS "-g -std=c++23 -Wall")
 

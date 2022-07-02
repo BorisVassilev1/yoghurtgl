@@ -58,15 +58,20 @@ class Shader {
 	GLuint getUniformLocation(const std::string &uniformName);
 	bool   hasUniform(const std::string &uniformName);
 
-	void setUniform(const std::string &uniformName, GLboolean value);
-	void setUniform(const std::string &uniformName, GLint value);
-	void setUniform(const std::string &uniformName, GLuint value);
-	void setUniform(const std::string &uniformName, glm::mat4x4 value);
-	void setUniform(const std::string &uniformName, glm::vec4 value);
-	void setUniform(const std::string &uniformName, glm::vec3 value);
-	void setUniform(const std::string &uniformName, glm::vec2 value);
-	void setUniform(const std::string &uniformName, glm::ivec2 value);
-	void setUniform(const std::string &uniformName, GLfloat value);
+	template <class T>
+	void setUniform(const std::string &uniformName, T value) {
+		setUniform(getUniformLocation(uniformName), value);
+	}
+
+	void setUniform(GLuint location, GLboolean value);
+	void setUniform(GLuint location, GLint value);
+	void setUniform(GLuint location, GLuint value);
+	void setUniform(GLuint location, glm::mat4x4 value);
+	void setUniform(GLuint location, glm::vec4 value);
+	void setUniform(GLuint location, glm::vec3 value);
+	void setUniform(GLuint location, glm::vec2 value);
+	void setUniform(GLuint location, glm::ivec2 value);
+	void setUniform(GLuint location, GLfloat value);
 
 	void  createSSBO(std::string &name, GLuint binding);
 	void  createUBO(std::string &name, GLuint binding);

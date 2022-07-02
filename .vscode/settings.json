@@ -75,8 +75,13 @@
     "C_Cpp.errorSquiggles": "Disabled",
     "makefile.launchConfigurations": [
         {
-            "cwd": "d:\\Boby\\programming\\CPP\\openGL\\opengl_test",
-            "binaryPath": "d:\\Boby\\programming\\CPP\\openGL\\opengl_test\\main.exe",
+            "cwd": "${workspaceRoot}/build",
+            "windows" : {
+                "binaryPath": "${workspaceRoot}/main.exe",
+            },
+            "linux" : {
+                "binaryPath": "${workspaceRoot}/main",
+            },
             "binaryArgs": []
         }
     ],

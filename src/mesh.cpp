@@ -5,6 +5,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <yoghurtgl.h>
 
 GLuint ygl::IMesh::createVAO() {
 	glGenVertexArrays(1, &vao);
@@ -141,8 +142,21 @@ const ygl::Mesh *ygl::getModel(const aiScene *scene) {
 		indices[indexCounter++] = mesh->mFaces[i].mIndices[2];
 	}
 
+	assert(indexCounter == indicesCount && "something went very wrong");
+	
+	if(!(mesh->HasTextureCoords(0))) {
+		dbLog(ygl::LOG_DEBUG, "tex coords cannot be loaded for model!");
+	}
+	if(!(mesh->HasVertexColors(0))) {
+		dbLog(ygl::LOG_DEBUG, "warning: colors cannot be loaded for model!");
+	}
+
 	ygl::Mesh *result = new ygl::Mesh(verticesCount, (GLfloat *)mesh->mVertices, (GLfloat *)mesh->mNormals,
-									  (GLfloat *)mesh->mTextureCoords, (GLfloat *)mesh->mColors, indicesCount, indices);
+									  (GLfloat *)mesh->mTextureCoords[0], (GLfloat *)mesh->mColors[0], indicesCount, indices);
+
+	delete [] indices;
+
+	delete ygl::importer;
 
 	return result;
 }

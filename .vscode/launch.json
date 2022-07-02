@@ -9,33 +9,32 @@
 			"type": "f5anything",
 			"request": "launch",
 			"command": "${workspaceFolder}/main.exe",
-			"preLaunchTask": "make project",
 			"linux": {
+				"preLaunchTask": "make project (Linux)",
 				"command": "cd ${workspaceRoot} && ${workspaceRoot}/main",
 			},
 			"windows": {
-				"command": "${workspaceRoot}/main.exe"
+				"preLaunchTask": "make project (Windows)",
+				"command": "cd ${workspaceRoot} && ${workspaceRoot}/main.exe"
 			}
 		},
 		{
 			"name": "Launch debug",
-			"type": "cppvsdbg",
+			"type": "cppdbg",
 			"request": "launch",
 			"program": "${workspaceFolder}/main.exe",
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}/",
 			"environment": [],
-			"preLaunchTask": "make project",
+			"console": "integratedTerminal",
 			"linux": {
+				"preLaunchTask": "make project (Linux)",
 				"type": "cppdbg",
 				"program": "${workspaceRoot}/main",
-				"externalConsole": false,
 			},
 			"windows": {
-				"console": "integratedTerminal",
-				"type": "cppvsdbg",
-				"program": "${workspaceRoot}/main.exe"
+				"preLaunchTask": "make project (Windows)",
 			},
 		},
 	]

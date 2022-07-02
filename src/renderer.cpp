@@ -5,7 +5,7 @@
 
 ygl::Material::Material(glm::vec3 albedo, float specular_chance, glm::vec3 emission, float ior,
 						glm::vec3 transparency_color, float refraction_chance, float refraction_roughness,
-						float specular_roughness)
+						float specular_roughness, unsigned int texture_sampler, float texture_influence)
 	: albedo(albedo),
 	  specular_chance(specular_chance),
 	  emission(emission),
@@ -13,7 +13,9 @@ ygl::Material::Material(glm::vec3 albedo, float specular_chance, glm::vec3 emiss
 	  transparency_color(transparency_color),
 	  refraction_chance(refraction_chance),
 	  refraction_roughness(refraction_roughness),
-	  specular_roughness(specular_roughness) {}
+	  specular_roughness(specular_roughness),
+	  texture_sampler(texture_sampler),
+	  texture_influence(texture_influence) {}
 
 ygl::Light::Light(glm::mat4 transform, glm::vec3 color, float intensity, ygl::Light::Type type)
 	: transform(transform), color(color), intensity(intensity), type(type) {}
@@ -74,7 +76,6 @@ void ygl::Renderer::loadData() {
 }
 
 void ygl::Renderer::doWork() {
-	using namespace std;
 
 	for (Entity e : scene->entities) {
 		ygl::Transformation	   transform = scene->getComponent<Transformation>(e);
@@ -85,13 +86,20 @@ void ygl::Renderer::doWork() {
 		sh->bind();
 
 		mesh->bind();
-		assert(sh->hasUniform("worldMatrix"));
 		sh->setUniform("worldMatrix", transform.getWorldMatrix());
-		assert(sh->hasUniform("material_index"));
 		sh->setUniform("material_index", ecr.materialIndex);
 
 		glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
 		mesh->unbind();
 	}
 	Shader::unbind();
+}
+
+ygl::Renderer::~Renderer() {
+	for(Shader *sh : shaders) {
+		delete sh;
+	}
+	for(Mesh *mesh : meshes) {
+		delete mesh;
+	}
 }
