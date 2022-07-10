@@ -20,9 +20,10 @@ class Window {
 
    public:
 	double deltaTime = 0;
-	Window(int, int, const char *, bool, GLFWmonitor *);
-	Window(int, int, const char *, bool);
-	Window(int, int, const char *);
+	Window(int width, int height, const char *name, bool vsync, bool resizable, GLFWmonitor *monitor);
+	Window(int width, int height, const char *name, bool vsync, bool resizable);
+	Window(int width, int height, const char *name, bool vsync);
+	Window(int width, int height, const char *name);
 
 	~Window();
 

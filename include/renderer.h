@@ -6,6 +6,7 @@
 #include <mesh.h>
 #include <ecs.h>
 #include <transformation.h>
+#include <texture.h>
 
 namespace ygl {
 
@@ -23,12 +24,13 @@ struct Material {
 	float specular_roughness;
 
 	unsigned int texture_sampler;
-	float			 texture_influence;
+	float		 texture_influence;
 
    private:
-	// char padding[8];
+	char padding[0];
 
    public:
+	Material();
 	Material(glm::vec3 albedo, float specular_chance, glm::vec3 emission, float ior, glm::vec3 transparency_color,
 			 float refraction_chance, float refraction_roughness, float specular_roughness,
 			 unsigned int texture_sampler, float texture_influence);
@@ -51,9 +53,9 @@ struct Light {
 };
 
 struct RendererComponent {
-	unsigned int shaderIndex;
-	unsigned int meshIndex;
-	unsigned int materialIndex;
+	int shaderIndex;
+	int meshIndex;
+	int materialIndex;
 	RendererComponent() : shaderIndex(-1), meshIndex(-1), materialIndex(-1) {}
 	RendererComponent(unsigned int shaderIndex, unsigned int meshIndex, unsigned int materialIndex);
 };
@@ -67,6 +69,9 @@ class Renderer : public ygl::ISystem {
 	GLuint materialsBuffer = 0;
 	GLuint lightsBuffer	   = 0;
 
+	int	 defaultShader = -1;
+	bool useTexture	   = false;
+
    public:
 	Shader   *getShader(RendererComponent &);
 	Material &getMaterial(RendererComponent &);
@@ -77,11 +82,23 @@ class Renderer : public ygl::ISystem {
 	unsigned int addMesh(Mesh *);
 	Light		  &addLight(const Light &);
 
+	void setDefaultShader(int defaultShader);
+	void setUseTexture(bool useTexture);
+
 	void loadData();
 
 	void doWork() override;
 
 	~Renderer() override;
+
+	static void drawObject(Transformation &transform, Shader *shader, Mesh *mesh, GLuint materialIndex,
+						   bool useTexture);
+	static void drawObject(Shader *sh, Mesh *mesh);
+
+	static void compute(ComputeShader *shader, int numGroupsX,  int numGroupsY,  int numGroupsZ);
+
+	static GLuint loadMaterials(int count, Material *materials);
+	static GLuint loadLights(int count, Light *materials);
 };
 
 }	  // namespace ygl

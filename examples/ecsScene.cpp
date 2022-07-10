@@ -19,7 +19,7 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
 	if (init()) {
-		std::cerr << "ygl failed to init" << std::endl;
+		dbLog(ygl::LOG_ERROR, "ygl failed to init");
 		exit(1);
 	}
 
@@ -27,8 +27,7 @@ int main(int argc, char *argv[]) {
 
 	Window window = Window(800, 600, "Test Window", true);
 
-	const aiScene *sc		 = loadScene("./res/models/bunny.obj");
-	Mesh			 *bunnyMesh = (Mesh *)getModel(sc);
+	Mesh			 *bunnyMesh = (Mesh *)getModel(loadScene("./res/models/bunny.obj"));
 
 	Mesh	 *cubeMesh = makeCube();
 	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
@@ -36,7 +35,7 @@ int main(int argc, char *argv[]) {
 
 	Mouse mouse(window);
 	Keyboard::init(&window);
-	FPController controller(window, mouse, cam.transform);
+	FPController controller(&window, &mouse, cam.transform);
 
 	Scene scene;
 	scene.registerComponent<Transformation>();
@@ -47,6 +46,7 @@ int main(int argc, char *argv[]) {
 
 	Renderer *renderer = scene.registerSystem<Renderer>();
 	scene.setSystemSignature<Renderer, Transformation, RendererComponent>();
+	renderer->setUseTexture(true);
 
 	Entity			bunny	  = scene.createEntity();
 	Transformation &transform = scene.addComponent<Transformation>(bunny, Transformation());

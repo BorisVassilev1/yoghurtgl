@@ -12,10 +12,10 @@
 
 namespace ygl {
 class Shader {
-	GLuint		 program;
-	int			 shadersCount;
-	GLuint	   *shaders;
-	const char **fileNames;
+	GLuint		 program	  = 0;
+	int			 shadersCount = 0;
+	GLuint	   *shaders	  = nullptr;
+	const char **fileNames	  = nullptr;
 
 	std::unordered_map<std::string, GLint> uniforms;
 	std::unordered_map<std::string, GLint> SSBOs;
@@ -25,6 +25,7 @@ class Shader {
 
 	void loadSourceRecursively(std::vector<std::string> &lines, const char *file, const char *includeDir,
 							   int includeDirLength);
+	Shader() {}
 
    protected:
 	Shader(std::initializer_list<const char *> files);
@@ -87,5 +88,10 @@ class Shader {
 class VFShader : public Shader {
    public:
 	VFShader(const char *vertex, const char *fragment);
+};
+
+class ComputeShader : public Shader {
+   public:
+	ComputeShader(const char *source);
 };
 }	  // namespace ygl

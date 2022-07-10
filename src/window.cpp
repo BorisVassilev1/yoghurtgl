@@ -3,12 +3,14 @@
 
 #include <iostream>
 #include <iomanip>
+#include <assert.h>
 
 #define GL_CONTEXT_VERSION_MAJOR 4
 #define GL_CONTEXT_VERSION_MINOR 6
 
-ygl::Window::Window(int width, int height, const char *name, bool vsync, GLFWmonitor *monitor)
+ygl::Window::Window(int width, int height, const char *name, bool vsync, bool resizable,  GLFWmonitor *monitor)
 	: width(width), height(height) {
+	assert(glfwGetPrimaryMonitor() != NULL);
 	const GLFWvidmode *mode = glfwGetVideoMode(monitor ? monitor : glfwGetPrimaryMonitor());
 
 	glfwWindowHint(GLFW_RED_BITS, mode->redBits);
@@ -21,6 +23,9 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, GLFWmon
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, GL_CONTEXT_VERSION_MAJOR);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GL_CONTEXT_VERSION_MINOR);
+
+	if (resizable) glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+	else glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 	window = glfwCreateWindow(width, height, name, monitor, NULL);
 	if (!window) {
@@ -59,7 +64,9 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, GLFWmon
 	glEnable(GL_DEPTH_TEST);
 }
 
-ygl::Window::Window(int width, int height, const char *name, bool vsync) : Window(width, height, name, vsync, NULL) {}
+ygl::Window::Window(int width, int height, const char *name, bool vsync, bool resizable) : Window(width, height, name, vsync, resizable, NULL) {}
+
+ygl::Window::Window(int width, int height, const char *name, bool vsync) : Window(width, height, name, vsync, true) {}
 
 ygl::Window::Window(int width, int height, const char *name) : Window(width, height, name, true) {}
 
@@ -98,11 +105,11 @@ void ygl::Window::beginFrame() {
 }
 
 ygl::Window::~Window() {
-	if(!ygl::glfw_init) return;
+	if (!ygl::glfw_init) return;
 	if (window != nullptr) {
 		glfwDestroyWindow(window);
 		ygl::gl_init = false;
-		window = nullptr;
+		window		 = nullptr;
 	}
 }
 
@@ -121,7 +128,7 @@ void ygl::Window::addResizeCallback(std::function<void(GLFWwindow *, int, int)> 
 
 void ygl::Window::defaultFrameCallback(long draw_time, long frame_time) {
 	std::cout << std::fixed << std::setprecision(2) << "\rdraw time: " << (draw_time / 1e6)
-			  << "ms, FPS: " << int(1e9 / frame_time) << std::flush;	 //<< std::endl;
+			  << "ms, FPS: " << int(1e9 / frame_time) << "         " << std::flush;	 //<< std::endl;
 }
 
 void ygl::Window::setFrameCallback(void (*callback)(long, long)) { frameCallback = callback; }

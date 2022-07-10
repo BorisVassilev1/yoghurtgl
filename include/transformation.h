@@ -12,7 +12,7 @@ class Transformation {
 	glm::vec3 scale;
 
 	Transformation();
-	Transformation(const glm::vec3 &, const glm::vec3 &, const glm::vec3 &);
+	Transformation(const glm::vec3 &position, const glm::vec3 &rotation, const glm::vec3 &scale);
 
 	glm::mat4 getWorldMatrix() const;
 	void	  updateWorldMatrix();

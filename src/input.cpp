@@ -6,7 +6,7 @@
 #include <iostream>
 #include <math.h>
 
-ygl::Mouse::Mouse(ygl::Window &window, bool lock) : window(window), lock(lock), delta(0) {
+ygl::Mouse::Mouse(ygl::Window &window, bool lock) : delta(0), window(window), lock(lock) {
 	position.x = window.getWidth() / 2.;
 	position.y = window.getHeight() / 2.;
 	glfwSetCursorPos(window.getHandle(), position.x, position.y);
@@ -66,18 +66,18 @@ void ygl::Keyboard::addKeyCallback(std::function<void(GLFWwindow *, int, int, in
 	callbacks.push_back(callback);
 }
 
-ygl::FPController::FPController(ygl::Window &window, ygl::Mouse &mouse, ygl::Transformation &transform)
+ygl::FPController::FPController(ygl::Window *window, ygl::Mouse *mouse, ygl::Transformation &transform)
 	: window(window), mouse(mouse), transform(transform) {
-	mouse.lock = true;
-	mouse.hide();
+	mouse->lock = true;
+	mouse->hide();
 	Keyboard::addKeyCallback([this](GLFWwindow *window, int key, int scancode, int action, int mods) {
-		if (window != this->window.getHandle()) return;
+		if (window != this->window->getHandle()) return;
 		if (key == GLFW_KEY_1 && action == GLFW_RELEASE) {
-			this->mouse.lock = !active;
+			this->mouse->lock = !active;
 			if (active) {
-				this->mouse.show();
+				this->mouse->show();
 			} else {
-				this->mouse.hide();
+				this->mouse->hide();
 			}
 			active = !active;
 		}
@@ -88,10 +88,10 @@ void ygl::FPController::update(double deltaTime) {
 	if (!active) return;
 	changed = false;
 
-	if (mouse.getDelta().x != 0.0 || mouse.getDelta().y != 0.0) { changed = true; }
+	if (mouse->getDelta().x != 0.0 || mouse->getDelta().y != 0.0) { changed = true; }
 
-	transform.rotation.x -= mouse.getDelta().y / 500;
-	transform.rotation.y -= mouse.getDelta().x / 500;
+	transform.rotation.x -= mouse->getDelta().y / 500;
+	transform.rotation.y -= mouse->getDelta().x / 500;
 
 	if (transform.rotation.x > M_PI / 2) {
 		transform.rotation.x = M_PI / 2;

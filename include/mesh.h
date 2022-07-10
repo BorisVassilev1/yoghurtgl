@@ -220,9 +220,34 @@ inline Mesh *makeCube(float size) { return makeBox(size, size, size); }
 
 inline Mesh *makeCube() { return makeBox(1, 1, 1); }
 
+inline Mesh *makeScreenQuad() {
+	// clang-format off
+	GLfloat vertices[] = {
+		-1.0,  1.0, -0.,
+		 1.0,  1.0, -0.,
+		 1.0, -1.0, -0.,
+		-1.0, -1.0, -0.};
+	GLfloat texCoords[]  = {
+		0.0, 0.0,
+		1.0, 0.0,
+		1.0, 1.0, 
+		0.0, 1.0};
+	GLfloat colors[]   = {
+		1.0, 0.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 0.0, 1.0, 1.0,
+		0.0, 1.0, 1.0, 1.0
+		};
+	GLuint	indices[]  = {2, 1, 0, 3, 2, 0};
+	// clang-format on
+	return new Mesh((GLuint)12, vertices, (GLfloat *) nullptr, texCoords, colors, (GLuint)6, indices);
+}
+
 extern Assimp::Importer *importer;
 
 const aiScene	  *loadScene(const std::string &);
 const Mesh *getModel(const aiScene *);
+
+void terminateLoader();
 
 }	  // namespace ygl

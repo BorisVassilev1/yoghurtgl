@@ -47,8 +47,8 @@ class Keyboard {
 };
 
 class FPController {
-	ygl::Window			&window;
-	ygl::Mouse		   &mouse;
+	ygl::Window			*window;
+	ygl::Mouse		   *mouse;
 	ygl::Transformation &transform;
 
 	bool changed = false;
@@ -58,8 +58,9 @@ class FPController {
    public:
 	float speed		= 4;
 	bool  active	= true;
-	FPController(ygl::Window &, ygl::Mouse &, ygl::Transformation &);
+	FPController(ygl::Window *, ygl::Mouse *, ygl::Transformation &);
 
 	void update(double);
+	bool hasChanged() { return changed; }
 };
 }	  // namespace ygl

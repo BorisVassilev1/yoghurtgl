@@ -6,10 +6,14 @@
 #include <string>
 #include <string.h>
 #include <string_view>
+#include <yoghurtgl.h>
 
 ygl::Shader::~Shader() {
 	if (shaders != nullptr) { deleteShaders(); }
-	glDeleteProgram(program);
+	if(program != 0) {
+		glDeleteProgram(program); 
+		program = 0;
+	}
 
 	if (fileNames != nullptr) {
 		delete [] fileNames; 
@@ -20,6 +24,7 @@ ygl::Shader::~Shader() {
 void ygl::Shader::deleteShaders() {
 	for (int i = 0; i < shadersCount; ++i) {
 		glDeleteShader(shaders[i]);
+		shaders[i] = 0;
 	}
 	delete [] shaders;
 	shaders = nullptr;
@@ -49,6 +54,7 @@ void ygl::Shader::createShader(GLenum type, GLuint target) {
 	loadSource(file, source, length);
 
 	glShaderSource(sh, 1, &source, &length);
+
 	delete[] source;
 	glCompileShader(sh);
 	shaders[target] = sh;
@@ -355,5 +361,11 @@ ygl::VFShader::VFShader(const char *vertex, const char *fragment) : Shader({vert
 	createShader(GL_VERTEX_SHADER, 0);
 	createShader(GL_FRAGMENT_SHADER, 1);
 
+	finishProgramCreation();
+}
+
+
+ygl::ComputeShader::ComputeShader(const char *source) : Shader({source}) {
+	createShader(GL_COMPUTE_SHADER, 0);
 	finishProgramCreation();
 }

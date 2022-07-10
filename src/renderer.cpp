@@ -3,6 +3,9 @@
 #include <transformation.h>
 #include <assert.h>
 
+ygl::Material::Material()
+	: Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, 0.0, 0.1, 0, 0.0) {}
+
 ygl::Material::Material(glm::vec3 albedo, float specular_chance, glm::vec3 emission, float ior,
 						glm::vec3 transparency_color, float refraction_chance, float refraction_roughness,
 						float specular_roughness, unsigned int texture_sampler, float texture_influence)
@@ -62,6 +65,7 @@ ygl::Light &ygl::Renderer::addLight(const Light &light) {
 }
 
 void ygl::Renderer::loadData() {
+	// send material and light data to the GPU through SSBOs
 	if (materialsBuffer == 0) { glGenBuffers(1, &materialsBuffer); }
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, materialsBuffer);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, materials.size() * sizeof(Material), materials.data(), GL_DYNAMIC_DRAW);
@@ -75,31 +79,104 @@ void ygl::Renderer::loadData() {
 	Shader::setSSBO(lightsBuffer, 1);
 }
 
+void ygl::Renderer::setDefaultShader(int defaultShader) { this->defaultShader = defaultShader; }
+
+void ygl::Renderer::setUseTexture(bool useTexture) { this->useTexture = useTexture; }
+
 void ygl::Renderer::doWork() {
+	// bind default shader
+	if (defaultShader != -1) { shaders[defaultShader]->bind(); }
+	int prevShaderIndex = defaultShader;
 
 	for (Entity e : scene->entities) {
-		ygl::Transformation	   transform = scene->getComponent<Transformation>(e);
-		ygl::RendererComponent ecr		 = scene->getComponent<RendererComponent>(e);
+		ygl::Transformation	&transform = scene->getComponent<Transformation>(e);
+		ygl::RendererComponent &ecr		  = scene->getComponent<RendererComponent>(e);
 
-		Shader *sh	 = shaders[ecr.shaderIndex];
-		Mesh	 *mesh = meshes[ecr.meshIndex];
-		sh->bind();
+		Shader *sh;
+		// binds the object's own shader if present.
+		// Oherwise checks if the default shader has been bound by the previous object
+		// and binds it only if needed
+		if (ecr.shaderIndex != -1) {
+			sh				= shaders[ecr.shaderIndex];
+			prevShaderIndex = ecr.shaderIndex;
+			sh->bind();
+		} else {
+			assert(defaultShader != -1 && "cannot use default shader when it is not defined");
+			sh = shaders[defaultShader];
+			if (prevShaderIndex != -1) { sh->bind(); }
+		}
 
+		Mesh *mesh = meshes[ecr.meshIndex];
+
+		// always bind the mesh.
+		// TODO: instancing
 		mesh->bind();
+
 		sh->setUniform("worldMatrix", transform.getWorldMatrix());
-		sh->setUniform("material_index", ecr.materialIndex);
+		sh->setUniform("material_index", (GLuint)ecr.materialIndex);
+		// always allow use of texture. this might be subject to change for optimisation
+		sh->setUniform("use_texture", useTexture);
 
 		glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
-		mesh->unbind();
+
+		// mesh->unbind();
 	}
 	Shader::unbind();
 }
 
 ygl::Renderer::~Renderer() {
-	for(Shader *sh : shaders) {
+	for (Shader *sh : shaders) {
 		delete sh;
 	}
-	for(Mesh *mesh : meshes) {
+	for (Mesh *mesh : meshes) {
 		delete mesh;
 	}
+}
+
+void ygl::Renderer::drawObject(Transformation &transform, Shader *sh, Mesh *mesh, GLuint materialIndex,
+							   bool useTexture) {
+	sh->bind();
+
+	mesh->bind();
+	sh->setUniform("worldMatrix", transform.getWorldMatrix());
+	sh->setUniform("material_index", materialIndex);
+	sh->setUniform("use_texture", useTexture);
+
+	glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
+	mesh->unbind();
+}
+
+void ygl::Renderer::drawObject(Shader *sh, Mesh *mesh) {
+	sh->bind();
+
+	mesh->bind();
+	// sh->setUniform("worldMatrix", transform.getWorldMatrix());
+	
+	glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
+	mesh->unbind();
+}
+
+void ygl::Renderer::compute(ComputeShader *shader, int numGroupsX,  int numGroupsY,  int numGroupsZ) {
+	shader->bind();
+	glDispatchCompute(numGroupsX, numGroupsY, numGroupsZ);
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+}
+
+GLuint ygl::Renderer::loadMaterials(int count, Material *materials) {
+	GLuint materialsBuffer;
+	glGenBuffers(1, &materialsBuffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, materialsBuffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, count * sizeof(Material), materials, GL_DYNAMIC_DRAW);
+	Shader::setSSBO(materialsBuffer, 0);
+	return materialsBuffer;
+}
+
+GLuint ygl::Renderer::loadLights(int count, Light *lights) {
+	GLuint lightsBuffer;
+	glGenBuffers(1, &lightsBuffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightsBuffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, count * sizeof(Light), lights, GL_DYNAMIC_DRAW);
+
+	Shader::setSSBO(lightsBuffer, 1);
+	return lightsBuffer;
 }

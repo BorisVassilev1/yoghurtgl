@@ -37,13 +37,13 @@ ygl::Texture2d::Texture2d(std::string fileName) {
 	glTexImage2D(GL_TEXTURE_2D, (GLuint)0, GL_RGBA32F, width, height, (GLint)0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 	glGenerateMipmap(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, 0);	
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	stbi_image_free(data);
 }
 
 void ygl::Texture2d::save(std::string fileName) {
-	float *buff = new float[width * height * channelCount];
+	float* buff = new float[width * height * channelCount];
 
 	glBindTexture(GL_TEXTURE_2D, id);
 	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, buff);
@@ -58,12 +58,76 @@ void ygl::Texture2d::bind(int textureUnit) {
 	glBindTexture(GL_TEXTURE_2D, id);
 }
 
+void ygl::Texture2d::bind() { bind(GL_TEXTURE0); }
+
 void ygl::Texture2d::unbind(int textureUnit) {
 	glActiveTexture(textureUnit);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+void ygl::Texture2d::unbind() { unbind(GL_TEXTURE0); }
+
 void ygl::Texture2d::bindImage(int unit) { glBindImageTexture(unit, id, 0, false, 0, GL_READ_WRITE, GL_RGBA32F); }
 void ygl::Texture2d::unbindImage(int unit) { glBindImageTexture(unit, 0, 0, false, 0, GL_READ_WRITE, GL_RGBA32F); }
 int	 ygl::Texture2d::getID() { return id; }
 ygl::Texture2d::~Texture2d() { glDeleteTextures(1, &id); }
+
+// const constexpr char* ygl::TextureCubemap::faces[] = {"right", "left", "top", "bottom", "front", "back"};
+
+ygl::TextureCubemap::TextureCubemap(std::string path, std::string format) {
+	glGenTextures(1, &id);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
+
+	for (int i = 0; i < 6; i++) {
+		std::string wholePath = path + "/" + faces[i] + format;
+		stbi_set_flip_vertically_on_load(false);
+		auto buff = stbi_load(wholePath.c_str(), &width, &height, &channels, 4);
+		if (buff == nullptr) {
+			dbLog(ygl::LOG_ERROR, "Image file [" + wholePath + "] failed to load: " + stbi_failure_reason());
+		}
+
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB_ALPHA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+					 buff);
+
+		stbi_image_free(buff);
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+}
+
+void ygl::TextureCubemap::save(std::string fileName) {
+	// TODO: implement this
+}
+
+void ygl::TextureCubemap::bind(int textureUnit) {
+	glActiveTexture(textureUnit);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
+}
+
+void ygl::TextureCubemap::bind() { bind(GL_TEXTURE0); }
+
+void ygl::TextureCubemap::unbind(int textureUnit) {
+	glActiveTexture(textureUnit);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+}
+
+void ygl::TextureCubemap::unbind() { unbind(GL_TEXTURE0); }
+
+void ygl::TextureCubemap::bindImage(int textureUnit) {
+	glBindImageTexture(textureUnit, id, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+}
+
+void ygl::TextureCubemap::unbindImage(int textureUnit) {
+	glBindImageTexture(textureUnit, 0, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+}
+
+int ygl::TextureCubemap::getID() { return id; }
+
+// ygl::TextureCubemap::~TextureCubemap() { glDeleteTextures(1, &id); }

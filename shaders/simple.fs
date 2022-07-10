@@ -9,14 +9,18 @@ in vec3 mvVertexPos;
 
 out vec4 fragColor;
 
+uniform bool	  use_texture;
 uniform sampler2D texture_sampler;
 
 vec3 calcLight(Light light, in vec3 position, in vec3 normal, in vec2 texCoord, in float attenuationExp, Material mat) {
 	vec3 lightPosition = (light.transform * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	vec3 lightForward  = (light.transform * vec4(0.0, 0.0, 1.0, 0.0)).xyz;
 
-	vec3 albedo =
-		mat.texture_influence * texture(texture_sampler, texCoord).xyz + (1 - mat.texture_influence) * mat.albedo;
+	vec3 albedo = mat.albedo;
+	if (use_texture) {
+		albedo =
+			mat.texture_influence * texture(texture_sampler, texCoord).xyz + (1 - mat.texture_influence) * mat.albedo;
+	}
 
 	if (light.type == 0) return light.color * albedo * light.intensity;
 
