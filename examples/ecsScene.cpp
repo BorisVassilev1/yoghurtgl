@@ -34,7 +34,6 @@ int main(int argc, char *argv[]) {
 	Camera	 cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse mouse(window);
-	Keyboard::init(&window);
 	FPController controller(&window, &mouse, cam.transform);
 
 	Scene scene;

@@ -73,177 +73,19 @@ class Mesh : public MultiBufferMesh {
 	ygl::IMesh::VBO getColors();
 };
 
-inline Mesh makeTriangle() {
-	// clang-format off
-	GLfloat vertices[] = {
-		-0.5, -0.5, -0.,
-		 0.5, -0.5, -0.,
-		 0.0,  0.5, -0.};
-	GLfloat normals[]  = {
-		0.0, 0.0, 1.0,
-		0.0, 0.0, 1.0,
-		0.0, 0.0, 1.0};
-	GLfloat colors[]   = {
-		1.0, 0.0, 0.0,
-		1.0, 0.0, 1.0,
-		0.0, 1.0, 0.0,
-		0.0, 1.0, 1.0};
-	GLuint	indices[]  = {0, 1, 2};
-	// clang-format on
-	return Mesh((GLuint)9, vertices, normals, (GLfloat *)nullptr, colors, (GLuint)3, indices);
-}
+Mesh *makeTriangle();
 
-inline Mesh *makeBox(float x, float y, float z) {
-	float sx = x / 2, sy = y / 2, sz = z / 2;
-	// clang-format off
-	GLfloat vertices[] = {
-		sx, -sy, sz,
-		-sx, -sy, sz,
-		-sx, -sy, -sz,
-		-sx, sy, -sz,
-		-sx, sy, sz,
-		sx, sy, sz,
-		sx, sy, -sz,
-		sx, sy, sz,
-		sx, -sy, sz,
-		sx, sy, sz,
-		-sx, sy, sz,
-		-sx, -sy, sz,
-		-sx, -sy, sz,
-		-sx, sy, sz,
-		-sx, sy, -sz,
-		sx, -sy, -sz,
-		-sx, -sy, -sz,
-		-sx, sy, -sz,
-		sx, -sy, -sz,
-		sx, sy, -sz,
-		sx, -sy, -sz,
-		sx, -sy, sz,
-		-sx, -sy, -sz,
-		sx, sy, -sz};
-	GLfloat normals[] = {
-		0.0f, -1.0f, 0.0f,
-		0.0f, -1.0f, 0.0f,
-		0.0f, -1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		-0.0f, 0.0f, 1.0f,
-		-0.0f, 0.0f, 1.0f,
-		-0.0f, 0.0f, 1.0f,
-		-1.0f, -0.0f, -0.0f,
-		-1.0f, -0.0f, -0.0f,
-		-1.0f, -0.0f, -0.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, -1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		-0.0f, 0.0f, 1.0f,
-		-1.0f, -0.0f, -0.0f,
-		0.0f, 0.0f, -1.0f};
-	GLfloat texCoords[] = {
-		1.0f     , 0.333333f,
-		1.0f     , 0.666667f,
-		0.666667f, 0.666667f,
-		1.0f     , 0.333333f,
-		0.666667f, 0.333333f,
-		0.666667f, 0.0f     ,
-		0.0f     , 0.333333f,
-		0.0f     , 0.0f     ,
-		0.333333f, 0.0f     ,
-		0.333333f, 0.0f     ,
-		0.666667f, 0.0f     ,
-		0.666667f, 0.333333f,
-		0.333333f, 1.0f     ,
-		0.0f     , 1.0f     ,
-		0.0f     , 0.666667f,
-		0.333333f, 0.333333f,
-		0.333333f, 0.666667f,
-		0.0f     , 0.666667f,
-		0.666667f, 0.333333f,
-		1.0f     , 0.0f     ,
-		0.333333f, 0.333333f,
-		0.333333f, 0.333333f,
-		0.333333f, 0.666667f,
-		0.0f     , 0.333333f
-	};
-	GLfloat colors[] = {
-		1, 0, 0, 1,
-		0, 1, 0, 1,
-		0, 0, 1, 1,
-		1, 1, 0, 1,
-		0, 1, 1, 1,
-		1, 0, 1, 1,
-		1, 1, 1, 1,
-		1, 0, 0, 1,
-		1, 0, 0, 1,
-		0, 1, 0, 1,
-		0, 0, 1, 1,
-		1, 1, 0, 1,
-		0, 1, 1, 1,
-		1, 0, 1, 1,
-		1, 1, 1, 1,
-		1, 0, 0, 1,
-		1, 0, 0, 1,
-		0, 1, 0, 1,
-		0, 0, 1, 1,
-		1, 1, 0, 1,
-		0, 1, 1, 1,
-		1, 0, 1, 1,
-		1, 1, 1, 1,
-		1, 0, 0, 1,};
-	GLuint indices[] = {
-		0, 1, 2,
-		3, 4, 5,
-		6, 7, 8,
-		9, 10, 11,
-		12, 13, 14,
-		15, 16, 17,
-		18, 0, 2,
-		19, 3, 5,
-		20, 6, 8,
-		21, 9, 11,
-		22, 12, 14,
-		23, 15, 17};
-	// clang-format on
-	return new Mesh((GLuint)24 * 3, vertices, normals, texCoords, colors, (GLuint)12 * 3, indices);
-}
+Mesh *makeBox(const glm::vec3 &size, const glm::vec3 &detail);
+Mesh *makeBox(float x, float y, float z);
+Mesh *makeBox(const glm::vec3 &dim);
+Mesh *makeCube(float size);
+Mesh *makeCube();
 
-inline Mesh *makeBox(glm::vec3 dim) { return makeBox(dim.x, dim.y, dim.z); }
+Mesh *makeScreenQuad();
 
-inline Mesh *makeCube(float size) { return makeBox(size, size, size); }
-
-inline Mesh *makeCube() { return makeBox(1, 1, 1); }
-
-inline Mesh *makeScreenQuad() {
-	// clang-format off
-	GLfloat vertices[] = {
-		-1.0,  1.0, -0.,
-		 1.0,  1.0, -0.,
-		 1.0, -1.0, -0.,
-		-1.0, -1.0, -0.};
-	GLfloat texCoords[]  = {
-		0.0, 0.0,
-		1.0, 0.0,
-		1.0, 1.0, 
-		0.0, 1.0};
-	GLfloat colors[]   = {
-		1.0, 0.0, 0.0, 1.0,
-		0.0, 1.0, 0.0, 1.0,
-		0.0, 0.0, 1.0, 1.0,
-		0.0, 1.0, 1.0, 1.0
-		};
-	GLuint	indices[]  = {2, 1, 0, 3, 2, 0};
-	// clang-format on
-	return new Mesh((GLuint)12, vertices, (GLfloat *) nullptr, texCoords, colors, (GLuint)6, indices);
-}
-
-Mesh *makeSphere();
+Mesh *makeSphere(float radius, uint detailX, uint detailY);
+Mesh *makeSphere(float radius);
+Mesh *makeUnitSphere();
 
 extern Assimp::Importer *importer;
 

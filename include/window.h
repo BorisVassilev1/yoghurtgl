@@ -8,13 +8,16 @@
 
 namespace ygl {
 class Window {
-	GLFWwindow									   *window = nullptr;
+	GLFWwindow									  *window = nullptr;
 	int											   width = -1, height = -1;
 	std::chrono::high_resolution_clock::time_point lastSwapTime	 = std::chrono::high_resolution_clock::now();
 	double										   lastPrintTime = 0;
 	void (*frameCallback)(long, long)							 = &defaultFrameCallback;
 
 	inline static std::vector<std::function<void(GLFWwindow *, int, int)>> resizeCallbacks;
+
+	bool shade = true;
+	bool cullFace = true;
 
 	Window(){};
 

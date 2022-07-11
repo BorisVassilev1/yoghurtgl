@@ -103,22 +103,272 @@ ygl::IMesh::VBO ygl::Mesh::getTexCoords() { return vbos[2]; }
 
 ygl::IMesh::VBO ygl::Mesh::getColors() { return vbos[3]; }
 
-ygl::Mesh *ygl::makeSphere() {
-	int	  detailX = 20;
-	int	  detailY = 20;
-	float radius  = 1;
+ygl::Mesh *ygl::makeTriangle() {
+	// clang-format off
+	GLfloat vertices[] = {
+		-0.5, -0.5, -0.,
+		 0.5, -0.5, -0.,
+		 0.0,  0.5, -0.};
+	GLfloat normals[]  = {
+		0.0, 0.0, 1.0,
+		0.0, 0.0, 1.0,
+		0.0, 0.0, 1.0};
+	GLfloat colors[]   = {
+		1.0, 0.0, 0.0,
+		1.0, 0.0, 1.0,
+		0.0, 1.0, 0.0,
+		0.0, 1.0, 1.0};
+	GLuint	indices[]  = {0, 1, 2};
+	// clang-format on
+	return new Mesh((GLuint)9, vertices, normals, (GLfloat *)nullptr, colors, (GLuint)3, indices);
+}
 
-	uint vertexCount = detailX * 2 * detailY;
+// TODO: this must have better texture coords;
+ygl::Mesh *ygl::makeBox(const glm::vec3 &size, const glm::vec3 &detail) {
+	uint vertexCount =
+		(detail.x + 1) * (detail.y + 1) + (detail.x + 1) * (detail.z + 1) + (detail.y + 1) * (detail.z + 1);
+	vertexCount <<= 1;	   // 2 sides per axis
 
 	GLfloat *vertices = new GLfloat[vertexCount * 3];
 	GLfloat *normals  = new GLfloat[vertexCount * 3];
 	GLfloat *colors	  = new GLfloat[vertexCount * 4];
-	for (int i = 0; i < detailX; ++i) {
-		float lon = i * M_PI / (detailX -1);
-		for (int j = 0; j < detailY * 2; ++j) {
+	GLfloat *uvs	  = new GLfloat[vertexCount * 2];
+
+	uint faceCount = detail.x * detail.y + detail.x * detail.z + detail.y * detail.z;
+	faceCount <<= 1;	 // 2 faces per axis
+
+	GLuint *indices = new GLuint[faceCount * 6];
+
+	// count offset for writing
+	uint vertexOffset = 0;
+	uint indexOffset  = 0;
+	for (uint axis0 = 0; axis0 < 3; ++axis0) {
+		// calculate replacements for x,y,z
+		uint axis1 = (axis0 + 1) % 3;
+		uint axis2 = (axis0 + 2) % 3;
+
+		// vertex count for current face
+		uint faceVertices = (detail[axis0] + 1) * (detail[axis1] + 1);
+		for (uint i = 0; i < detail[axis0] + 1; ++i) {
+			for (uint j = 0; j < detail[axis1] + 1; ++j) {
+				uint k = i * (detail[axis1] + 1) + j + vertexOffset;
+				for (uint u = 0; u < 2; ++u, k += faceVertices) {
+					vertices[k * 3 + axis0] = i * size[axis0] / detail[axis0] - size[axis0] / 2;
+					vertices[k * 3 + axis1] = j * size[axis1] / detail[axis1] - size[axis1] / 2;
+					vertices[k * 3 + axis2] = u * size[axis2] - size[axis2] / 2;
+
+					normals[k * 3 + axis0] = 0;
+					normals[k * 3 + axis1] = 0;
+					normals[k * 3 + axis2] = (u * 2 - 1);
+
+					colors[k * 4]	  = i / detail[axis0];
+					colors[k * 4 + 1] = j / detail[axis1];
+					colors[k * 4 + 2] = 1;
+					colors[k * 4 + 3] = 1;
+
+					uvs[k * 2] = i / detail[axis0];
+					uvs[k * 2 + 1] = j / detail[axis1];
+				}
+			}
+		}
+
+		uint faceIndices = detail[axis0] * detail[axis1];
+		for (uint i = 0; i < detail[axis0]; ++i) {
+			for (uint j = 0; j < detail[axis1]; ++j) {
+				uint ki = i * detail[axis1] + j + indexOffset;
+				uint kv = i * (detail[axis1] + 1) + j + vertexOffset;
+
+				for (uint u = 0; u < 2; ++u, ki += faceIndices, kv += faceVertices) {
+					int norm						   = (-u * 2 + 1);
+					indices[ki * 6 + 5 * u + 0 * norm] = kv;
+					indices[ki * 6 + 5 * u + 1 * norm] = kv + 1;
+					indices[ki * 6 + 5 * u + 2 * norm] = kv + detail[axis1] + 1;
+					indices[ki * 6 + 5 * u + 3 * norm] = kv + detail[axis1] + 1;
+					indices[ki * 6 + 5 * u + 4 * norm] = kv + 1;
+					indices[ki * 6 + 5 * u + 5 * norm] = kv + detail[axis1] + 2;
+				}
+			}
+		}
+
+		// add to the offset
+		vertexOffset += faceVertices * 2;
+		indexOffset += faceIndices * 2;
+	}
+
+	Mesh *mesh = new Mesh(vertexCount, vertices, normals, uvs, colors, faceCount * 6, indices);
+
+	delete[] vertices;
+	delete[] normals;
+	delete[] colors;
+	delete[] indices;
+	delete[] uvs;
+
+	return mesh;
+}
+
+ygl::Mesh *ygl::makeBox(float x, float y, float z) {
+	float sx = x / 2, sy = y / 2, sz = z / 2;
+	// clang-format off
+	GLfloat vertices[] = {
+		sx, -sy, sz,
+		-sx, -sy, sz,
+		-sx, -sy, -sz,
+		-sx, sy, -sz,
+		-sx, sy, sz,
+		sx, sy, sz,
+		sx, sy, -sz,
+		sx, sy, sz,
+		sx, -sy, sz,
+		sx, sy, sz,
+		-sx, sy, sz,
+		-sx, -sy, sz,
+		-sx, -sy, sz,
+		-sx, sy, sz,
+		-sx, sy, -sz,
+		sx, -sy, -sz,
+		-sx, -sy, -sz,
+		-sx, sy, -sz,
+		sx, -sy, -sz,
+		sx, sy, -sz,
+		sx, -sy, -sz,
+		sx, -sy, sz,
+		-sx, -sy, -sz,
+		sx, sy, -sz};
+	GLfloat normals[] = {
+		0.0f, -1.0f, 0.0f,
+		0.0f, -1.0f, 0.0f,
+		0.0f, -1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		-0.0f, 0.0f, 1.0f,
+		-0.0f, 0.0f, 1.0f,
+		-0.0f, 0.0f, 1.0f,
+		-1.0f, -0.0f, -0.0f,
+		-1.0f, -0.0f, -0.0f,
+		-1.0f, -0.0f, -0.0f,
+		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, -1.0f,
+		0.0f, -1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		-0.0f, 0.0f, 1.0f,
+		-1.0f, -0.0f, -0.0f,
+		0.0f, 0.0f, -1.0f};
+	GLfloat texCoords[] = {
+		1.0f     , 0.333333f,
+		1.0f     , 0.666667f,
+		0.666667f, 0.666667f,
+		1.0f     , 0.333333f,
+		0.666667f, 0.333333f,
+		0.666667f, 0.0f     ,
+		0.0f     , 0.333333f,
+		0.0f     , 0.0f     ,
+		0.333333f, 0.0f     ,
+		0.333333f, 0.0f     ,
+		0.666667f, 0.0f     ,
+		0.666667f, 0.333333f,
+		0.333333f, 1.0f     ,
+		0.0f     , 1.0f     ,
+		0.0f     , 0.666667f,
+		0.333333f, 0.333333f,
+		0.333333f, 0.666667f,
+		0.0f     , 0.666667f,
+		0.666667f, 0.333333f,
+		1.0f     , 0.0f     ,
+		0.333333f, 0.333333f,
+		0.333333f, 0.333333f,
+		0.333333f, 0.666667f,
+		0.0f     , 0.333333f
+	};
+	GLfloat colors[] = {
+		1, 0, 0, 1,
+		0, 1, 0, 1,
+		0, 0, 1, 1,
+		1, 1, 0, 1,
+		0, 1, 1, 1,
+		1, 0, 1, 1,
+		1, 1, 1, 1,
+		1, 0, 0, 1,
+		1, 0, 0, 1,
+		0, 1, 0, 1,
+		0, 0, 1, 1,
+		1, 1, 0, 1,
+		0, 1, 1, 1,
+		1, 0, 1, 1,
+		1, 1, 1, 1,
+		1, 0, 0, 1,
+		1, 0, 0, 1,
+		0, 1, 0, 1,
+		0, 0, 1, 1,
+		1, 1, 0, 1,
+		0, 1, 1, 1,
+		1, 0, 1, 1,
+		1, 1, 1, 1,
+		1, 0, 0, 1,};
+	GLuint indices[] = {
+		0, 1, 2,
+		3, 4, 5,
+		6, 7, 8,
+		9, 10, 11,
+		12, 13, 14,
+		15, 16, 17,
+		18, 0, 2,
+		19, 3, 5,
+		20, 6, 8,
+		21, 9, 11,
+		22, 12, 14,
+		23, 15, 17};
+	// clang-format on
+	return new Mesh((GLuint)24 * 3, vertices, normals, texCoords, colors, (GLuint)12 * 3, indices);
+}
+
+ygl::Mesh *ygl::makeBox(const glm::vec3 &dim) { return makeBox(dim.x, dim.y, dim.z); }
+
+ygl::Mesh *ygl::makeCube(float size) { return makeBox(size, size, size); }
+
+ygl::Mesh *ygl::makeCube() { return makeBox(1, 1, 1); }
+
+ygl::Mesh *ygl::makeScreenQuad() {
+	// clang-format off
+	GLfloat vertices[] = {
+		-1.0,  1.0, -0.,
+		 1.0,  1.0, -0.,
+		 1.0, -1.0, -0.,
+		-1.0, -1.0, -0.};
+	GLfloat texCoords[]  = {
+		0.0, 0.0,
+		1.0, 0.0,
+		1.0, 1.0, 
+		0.0, 1.0};
+	GLfloat colors[]   = {
+		1.0, 0.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 0.0, 1.0, 1.0,
+		0.0, 1.0, 1.0, 1.0
+		};
+	GLuint	indices[]  = {2, 1, 0, 3, 2, 0};
+	// clang-format on
+	return new Mesh((GLuint)12, vertices, (GLfloat *)nullptr, texCoords, colors, (GLuint)6, indices);
+}
+
+ygl::Mesh *ygl::makeSphere(float radius, uint detailX, uint detailY) {
+	uint vertexCount = (detailX * 2 + 1) * detailY;
+
+	GLfloat *vertices = new GLfloat[vertexCount * 3];
+	GLfloat *normals  = new GLfloat[vertexCount * 3];
+	GLfloat *colors	  = new GLfloat[vertexCount * 4];
+	GLfloat *uvs	  = new GLfloat[vertexCount * 2];
+	for (uint i = 0; i < detailX; ++i) {
+		float lon = i * M_PI / (detailX - 1);
+		for (uint j = 0; j < detailY * 2 + 1; ++j) {
 			float lat = j * M_PI / (detailY);
 
-			int index = j + i * detailY * 2;
+			int index = j + i * (detailY * 2 + 1);
 
 			vertices[index * 3]		= radius * sin(lon) * cos(lat);
 			vertices[index * 3 + 1] = radius * cos(lon);
@@ -132,26 +382,44 @@ ygl::Mesh *ygl::makeSphere() {
 			colors[index * 4 + 1] = j / (float)detailY / 2.;
 			colors[index * 4 + 2] = 1.0;
 			colors[index * 4 + 3] = 1.0;
+
+			uvs[index * 2]	   = i / (float)detailX;
+			uvs[index * 2 + 1] = j / (float)(detailY * 2 + 1);
 		}
 	}
 
-	uint faceCount = (detailX - 1) * (detailY * 2);
+	uint faceCount = (detailX - 1) * (detailY * 2 + 1);
 
 	GLuint *indices = new GLuint[faceCount * 2 * 3];
-	for (int i = 0; i < faceCount; ++i) {
-		indices[i * 6]	   = i;
-		indices[i * 6 + 1] = i + 1;
-		indices[i * 6 + 2] = i + detailY * 2;
 
-		indices[i * 6 + 3] = i + 1;
-		indices[i * 6 + 4] = i + detailY * 2;
-		indices[i * 6 + 5] = i + detailY * 2 + 1;
+	for (uint x = 0; x < detailX - 1; ++x) {
+		for (uint y = 0; y < detailY * 2; ++y) {
+			uint i = x * (detailY * 2 + 1) + y;
+
+			indices[i * 6]	   = i;
+			indices[i * 6 + 1] = i + 1;
+			indices[i * 6 + 2] = i + (detailY * 2 + 1);
+
+			indices[i * 6 + 3] = i + 1;
+			indices[i * 6 + 4] = i + (detailY * 2 + 1) + 1;
+			indices[i * 6 + 5] = i + (detailY * 2 + 1);
+		}
 	}
 
-	Mesh *mesh = new Mesh(vertexCount, vertices, normals, (GLfloat *)nullptr, colors, faceCount * 6, indices);
-	
+	Mesh *mesh = new Mesh(vertexCount, vertices, normals, uvs, colors, faceCount * 6, indices);
+
+	delete[] vertices;
+	delete[] normals;
+	delete[] colors;
+	delete[] indices;
+	delete[] uvs;
+
 	return mesh;
 }
+
+ygl::Mesh *ygl::makeSphere(float radius) { return makeSphere(radius, 20, 20); }
+
+ygl::Mesh *ygl::makeUnitSphere() { return makeSphere(1.); }
 
 Assimp::Importer *ygl::importer = nullptr;
 

@@ -1,5 +1,6 @@
 #include <window.h>
 #include <yoghurtgl.h>
+#include <input.h>
 
 #include <iostream>
 #include <iomanip>
@@ -34,9 +35,30 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 		exit(1);
 	}
 
+	ygl::Keyboard::init(this);
+
 	glfwSetWindowCloseCallback(window, [](GLFWwindow *window) { std::cerr << "closing window!"; });
-	glfwSetKeyCallback(window, [](GLFWwindow *window, int key, int scancode, int action, int mods) {
-		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) { glfwSetWindowShouldClose(window, GLFW_TRUE); }
+	Keyboard::addKeyCallback([&](GLFWwindow *window, int key, int scancode, int action, int mods) {
+		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+			glfwSetWindowShouldClose(window, GLFW_TRUE);
+		}
+#ifndef NDEBUG
+		else if (key == GLFW_KEY_R && action == GLFW_RELEASE) {
+			shade = !shade;
+			if (shade) {
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			} else {
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			}
+		} else if (key == GLFW_KEY_C && action == GLFW_RELEASE) {
+			cullFace = !cullFace;
+			if (cullFace) {
+				glEnable(GL_CULL_FACE);
+			} else {
+				glDisable(GL_CULL_FACE);
+			}
+		}
+#endif
 	});
 	glfwSetWindowSizeCallback(window, handleResize);
 	addResizeCallback([this](GLFWwindow *window, int width, int height) {
@@ -63,6 +85,7 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_PROGRAM_POINT_SIZE);
+	glEnable(GL_CULL_FACE);
 }
 
 ygl::Window::Window(int width, int height, const char *name, bool vsync, bool resizable)

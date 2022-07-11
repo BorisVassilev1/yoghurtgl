@@ -51,8 +51,6 @@ void ygl::Keyboard::init(ygl::Window *window) {
 }
 
 void ygl::Keyboard::handleInput(GLFWwindow *window, int key, int scancode, int action, int mods) {
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
-		glfwSetWindowShouldClose(window, true);		// We will detect this in the rendering loop
 	for (auto fun : callbacks) {
 		fun(window, key, scancode, action, mods);
 	}
