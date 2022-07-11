@@ -243,6 +243,8 @@ inline Mesh *makeScreenQuad() {
 	return new Mesh((GLuint)12, vertices, (GLfloat *) nullptr, texCoords, colors, (GLuint)6, indices);
 }
 
+Mesh *makeSphere();
+
 extern Assimp::Importer *importer;
 
 const aiScene	  *loadScene(const std::string &);

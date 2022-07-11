@@ -103,6 +103,56 @@ ygl::IMesh::VBO ygl::Mesh::getTexCoords() { return vbos[2]; }
 
 ygl::IMesh::VBO ygl::Mesh::getColors() { return vbos[3]; }
 
+ygl::Mesh *ygl::makeSphere() {
+	int	  detailX = 20;
+	int	  detailY = 20;
+	float radius  = 1;
+
+	uint vertexCount = detailX * 2 * detailY;
+
+	GLfloat *vertices = new GLfloat[vertexCount * 3];
+	GLfloat *normals  = new GLfloat[vertexCount * 3];
+	GLfloat *colors	  = new GLfloat[vertexCount * 4];
+	for (int i = 0; i < detailX; ++i) {
+		float lon = i * M_PI / (detailX -1);
+		for (int j = 0; j < detailY * 2; ++j) {
+			float lat = j * M_PI / (detailY);
+
+			int index = j + i * detailY * 2;
+
+			vertices[index * 3]		= radius * sin(lon) * cos(lat);
+			vertices[index * 3 + 1] = radius * cos(lon);
+			vertices[index * 3 + 2] = radius * sin(lon) * sin(lat);
+
+			normals[index * 3]	   = sin(lon) * cos(lat);
+			normals[index * 3 + 1] = cos(lon);
+			normals[index * 3 + 2] = sin(lon) * sin(lat);
+
+			colors[index * 4]	  = i / (float)detailX;
+			colors[index * 4 + 1] = j / (float)detailY / 2.;
+			colors[index * 4 + 2] = 1.0;
+			colors[index * 4 + 3] = 1.0;
+		}
+	}
+
+	uint faceCount = (detailX - 1) * (detailY * 2);
+
+	GLuint *indices = new GLuint[faceCount * 2 * 3];
+	for (int i = 0; i < faceCount; ++i) {
+		indices[i * 6]	   = i;
+		indices[i * 6 + 1] = i + 1;
+		indices[i * 6 + 2] = i + detailY * 2;
+
+		indices[i * 6 + 3] = i + 1;
+		indices[i * 6 + 4] = i + detailY * 2;
+		indices[i * 6 + 5] = i + detailY * 2 + 1;
+	}
+
+	Mesh *mesh = new Mesh(vertexCount, vertices, normals, (GLfloat *)nullptr, colors, faceCount * 6, indices);
+	
+	return mesh;
+}
+
 Assimp::Importer *ygl::importer = nullptr;
 
 const aiScene *ygl::loadScene(const std::string &file) {
@@ -130,10 +180,10 @@ const ygl::Mesh *ygl::getModel(const aiScene *scene) {
 
 	assert(numMeshes >= 1 && "no meshes in the scene?");
 
-	aiMesh	   *mesh		   = meshes[0];
+	aiMesh		*mesh		   = meshes[0];
 	unsigned int verticesCount = mesh->mNumVertices;
 	unsigned int indicesCount  = mesh->mNumFaces * 3;
-	GLuint	   *indices	   = new GLuint[indicesCount * sizeof(GLuint)];
+	GLuint		*indices	   = new GLuint[indicesCount * sizeof(GLuint)];
 
 	unsigned int indexCounter = 0;
 	for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
@@ -143,18 +193,16 @@ const ygl::Mesh *ygl::getModel(const aiScene *scene) {
 	}
 
 	assert(indexCounter == indicesCount && "something went very wrong");
-	
-	if(!(mesh->HasTextureCoords(0))) {
-		dbLog(ygl::LOG_DEBUG, "tex coords cannot be loaded for model!");
-	}
-	if(!(mesh->HasVertexColors(0))) {
-		dbLog(ygl::LOG_DEBUG, "warning: colors cannot be loaded for model!");
-	}
 
-	ygl::Mesh *result = new ygl::Mesh(verticesCount, (GLfloat *)mesh->mVertices, (GLfloat *)mesh->mNormals,
-									  (GLfloat *)mesh->mTextureCoords[0], (GLfloat *)mesh->mColors[0], indicesCount, indices);
+	if (!(mesh->HasTextureCoords(0))) { dbLog(ygl::LOG_WARNING, "tex coords cannot be loaded for model!"); }
+	if (!(mesh->HasVertexColors(0))) { dbLog(ygl::LOG_WARNING, "colors cannot be loaded for model!"); }
 
-	delete [] indices;
+	ygl::Mesh *result =
+		new ygl::Mesh(verticesCount, (GLfloat *)mesh->mVertices, (GLfloat *)mesh->mNormals,
+					  (GLfloat *)mesh->mTextureCoords[0], (GLfloat *)mesh->mColors[0], indicesCount, indices);
+	// result->setDrawMode(GL_POINTS);
+
+	delete[] indices;
 
 	delete ygl::importer;
 

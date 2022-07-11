@@ -88,7 +88,7 @@ void ygl::Renderer::doWork() {
 	if (defaultShader != -1) { shaders[defaultShader]->bind(); }
 	int prevShaderIndex = defaultShader;
 
-	for (Entity e : scene->entities) {
+	for (Entity e : entities) {
 		ygl::Transformation	&transform = scene->getComponent<Transformation>(e);
 		ygl::RendererComponent &ecr		  = scene->getComponent<RendererComponent>(e);
 
@@ -113,9 +113,9 @@ void ygl::Renderer::doWork() {
 		mesh->bind();
 
 		sh->setUniform("worldMatrix", transform.getWorldMatrix());
-		sh->setUniform("material_index", (GLuint)ecr.materialIndex);
+		if(sh->hasUniform("material_index")) sh->setUniform("material_index", (GLuint)ecr.materialIndex);
 		// always allow use of texture. this might be subject to change for optimisation
-		sh->setUniform("use_texture", useTexture);
+		if(sh->hasUniform("use_texture")) sh->setUniform("use_texture", useTexture);
 
 		glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
 

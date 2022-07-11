@@ -8,7 +8,7 @@
 #define GL_CONTEXT_VERSION_MAJOR 4
 #define GL_CONTEXT_VERSION_MINOR 6
 
-ygl::Window::Window(int width, int height, const char *name, bool vsync, bool resizable,  GLFWmonitor *monitor)
+ygl::Window::Window(int width, int height, const char *name, bool vsync, bool resizable, GLFWmonitor *monitor)
 	: width(width), height(height) {
 	assert(glfwGetPrimaryMonitor() != NULL);
 	const GLFWvidmode *mode = glfwGetVideoMode(monitor ? monitor : glfwGetPrimaryMonitor());
@@ -62,9 +62,11 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_PROGRAM_POINT_SIZE);
 }
 
-ygl::Window::Window(int width, int height, const char *name, bool vsync, bool resizable) : Window(width, height, name, vsync, resizable, NULL) {}
+ygl::Window::Window(int width, int height, const char *name, bool vsync, bool resizable)
+	: Window(width, height, name, vsync, resizable, NULL) {}
 
 ygl::Window::Window(int width, int height, const char *name, bool vsync) : Window(width, height, name, vsync, true) {}
 
@@ -128,7 +130,7 @@ void ygl::Window::addResizeCallback(std::function<void(GLFWwindow *, int, int)> 
 
 void ygl::Window::defaultFrameCallback(long draw_time, long frame_time) {
 	std::cout << std::fixed << std::setprecision(2) << "\rdraw time: " << (draw_time / 1e6)
-			  << "ms, FPS: " << int(1e9 / frame_time) << "         " << std::flush;	 //<< std::endl;
+			  << "ms, FPS: " << int(1e9 / frame_time) << "         " << std::flush;		//<< std::endl;
 }
 
 void ygl::Window::setFrameCallback(void (*callback)(long, long)) { frameCallback = callback; }

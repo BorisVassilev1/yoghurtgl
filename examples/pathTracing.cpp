@@ -29,21 +29,25 @@ struct Sphere {
 Window *window;
 Mouse  *mouse;
 
-Texture2d	  *tex;
-Scene		  *scene;
+Texture2d	 *tex;
+Scene		 *scene;
 Renderer	 *renderer;
 VFShader	 *shader;
-Camera	   *camera;
+VFShader	 *unlitShader;
+Camera		 *camera;
 FPController *controller;
+Mesh		 *sphereMesh;
+Mesh		 *bunnyMesh;
 
 Entity bunny;
+Entity sphere;
 
 ComputeShader  *pathTracer;
 ComputeShader  *normalizer;
-Texture2d	  *renderTexture;
-Texture2d	  *rawTexture;
-VFShader		 *textureOnScreen;
-Mesh			 *screenQuad;
+Texture2d	   *renderTexture;
+Texture2d	   *rawTexture;
+VFShader	   *textureOnScreen;
+Mesh		   *screenQuad;
 TextureCubemap *skybox;
 
 Sphere *spheres;
@@ -69,12 +73,14 @@ void cleanup() {
 }
 
 void initScene() {
-	Mesh *bunnyMesh = (Mesh *)getModel(loadScene("./res/models/bunny.obj"));
+	bunnyMesh = (Mesh *)getModel(loadScene("./res/models/bunny.obj"));
 	// Mesh *bunnyMesh = makeScreenQuad();
+	sphereMesh = makeSphere();
 
-	shader	   = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
-	camera	   = new Camera(glm::radians(70.f), *window, 0.01, 1000);
-	controller = new FPController(window, mouse, camera->transform);
+	shader		= new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
+	unlitShader = new VFShader("./shaders/unlit.vs", "./shaders/unlit.fs");
+	camera		= new Camera(glm::radians(70.f), *window, 0.01, 1000);
+	controller	= new FPController(window, mouse, camera->transform);
 
 	tex = new Texture2d(1, 1);	   // just create some texture so that the shader does not complain
 	tex->bind();
@@ -94,10 +100,8 @@ void initScene() {
 	renderer->setDefaultShader(shaderIndex);
 	scene->addComponent<RendererComponent>(
 		bunny, RendererComponent(-1, renderer->addMesh(bunnyMesh),
-								 renderer->addMaterial(Material(glm::vec3(1., 1., 0.), .2, glm::vec3(0.), 0.99,
-																glm::vec3(0.1), 0.0, 0.0, 0.1, 0, 0.0))
-
-									 ));
+								 renderer->addMaterial(Material(glm::vec3(1., 1., 0.), .2, glm::vec3(0.), 0.0,
+																glm::vec3(0.1), 0.0, 0.0, 0.1, 0, 0.0))));
 
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(-1, -2.9, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
 							 0.7, Light::Type::DIRECTIONAL));
@@ -110,6 +114,7 @@ void initSpheres() {
 	sphereCount = 25 + 4;
 	spheres		= new Sphere[sphereCount];
 
+	Entity sphere;
 	spheres[0] = Sphere(glm::vec3(0.2, 1.8, 0.2), 0.5,
 						Material(glm::vec3(1.0, 1.0, 0.5), 1.0, glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(0.0, 0.0, 0.0),
 								 0.0, 0.00, 0.05, 0, 0));
@@ -122,16 +127,27 @@ void initSpheres() {
 	spheres[3] = Sphere(glm::vec3(-0.1, 1.8, 1.7), 0.4,
 						Material(glm::vec3(1.0, 1.0, 1.0), 0.0, glm::vec3(10.0, 10.0, 10.0), 0.0,
 								 glm::vec3(0.0, 0.0, 0.0), 0.0, 0.00, 0.00, 0, 0));
+	renderer->addLight(Light(Transformation(spheres[3].position), glm::vec3(1.), 1, Light::POINT));
 
 	for (int i = 0; i < 5; ++i) {
 		for (int j = 0; j < 5; ++j) {
 			glm::vec3 randomColor(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.);
-			
+
 			spheres[i * 5 + j + 4] = Sphere(glm::vec3(i * 1.5 - 5, 0., 3 + j * 1.5), 0.5,
-								Material(randomColor, rand() % 10 / 10., glm::vec3(0.0, 0.0, 0.0), 1.7, randomColor, 0.0,
-										 0.00, 0.05, 0, 0));
+											Material(randomColor, rand() % 10 / 10., glm::vec3(0.0, 0.0, 0.0), 1.7,
+													 randomColor, 0.0, 0.00, 0.05, 0, 0));
 		}
 	}
+
+	uint meshIndex = renderer->addMesh(sphereMesh);
+	for (int i = 0; i < sphereCount; ++i) {
+		sphere = scene->createEntity();
+		scene->addComponent<Transformation>(
+			sphere, Transformation(spheres[i].position, glm::vec3(0), glm::vec3(spheres[i].radius)));
+		scene->addComponent<RendererComponent>(sphere,
+											   RendererComponent(-1, meshIndex, renderer->addMaterial(spheres[i].mat)));
+	}
+	renderer->loadData();
 }
 
 void initPathTracer() {
@@ -158,6 +174,7 @@ void initPathTracer() {
 	pathTracer->setUniform("spheres_count", sphereCount);
 	pathTracer->setUniform("max_bounces", 5);
 	pathTracer->setUniform("do_trace_spheres", true);
+	pathTracer->setUniform("fov", glm::radians(70.f));
 	// pathTracer->unbind();
 
 	renderTexture->bind(GL_TEXTURE0);
@@ -200,7 +217,7 @@ int main(int argc, char *argv[]) {
 
 	initPathTracer();
 
-	glClearColor(0, 0, 0, 0);
+	glClearColor(0, 0, 0, 1);
 	while (!window->shouldClose()) {
 		window->beginFrame();
 		mouse->update();

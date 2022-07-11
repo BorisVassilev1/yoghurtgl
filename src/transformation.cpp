@@ -2,6 +2,8 @@
 
 ygl::Transformation::Transformation() : Transformation(glm::vec3(0), glm::vec3(0), glm::vec3(1)) {}
 
+ygl::Transformation::Transformation(const glm::vec3 &position) : Transformation(position, glm::vec3(0), glm::vec3(1)) {}
+
 ygl::Transformation::Transformation(const glm::vec3 &position, const glm::vec3 &rotation, const glm::vec3 &scale)
 	: position(position), rotation(rotation), scale(scale) {
 	updateWorldMatrix();
