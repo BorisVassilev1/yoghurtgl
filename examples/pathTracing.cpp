@@ -20,10 +20,13 @@ using namespace std;
 struct Sphere {
 	glm::vec3 position;
 	float	  radius = 1;
-	Material  mat;
+	uint	  matIdx;
 
 	Sphere(){};
-	Sphere(glm::vec3 position, float radius, Material mat) : position(position), radius(radius), mat(mat) {}
+	Sphere(glm::vec3 position, float radius, uint matIdx) : position(position), radius(radius), matIdx(matIdx) {}
+
+   private:
+	char padding[12];
 };
 
 Window *window;
@@ -34,7 +37,7 @@ Scene		 *scene;
 Renderer	 *renderer;
 VFShader	 *shader;
 VFShader	 *unlitShader;
-uint unlitShaderIndex = -1;
+uint		  unlitShaderIndex = -1;
 Camera		 *camera;
 FPController *controller;
 Mesh		 *sphereMesh;
@@ -58,7 +61,7 @@ GLuint	spheresBuff;
 
 bool pathTrace = false;
 bool shade	   = true;
-bool cullFace = true;
+bool cullFace  = true;
 
 int sampleCount = 0;
 
@@ -80,7 +83,7 @@ void initScene() {
 	bunnyMesh = (Mesh *)getModel(loadScene("./res/models/bunny.obj"));
 	// Mesh *bunnyMesh = makeScreenQuad();
 	sphereMesh = makeUnitSphere();
-	testMesh = makeBox(glm::vec3(1,1,1), glm::vec3(10, 10, 10));
+	testMesh   = makeBox(glm::vec3(1, 1, 1), glm::vec3(10, 10, 10));
 
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -89,8 +92,7 @@ void initScene() {
 	camera		= new Camera(glm::radians(70.f), *window, 0.01, 1000);
 	controller	= new FPController(window, mouse, camera->transform);
 
-	tex = new Texture2d(
-		"./res/images/uv_checker.png");
+	tex = new Texture2d("./res/images/uv_checker.png");
 	tex->bind();
 
 	scene = new Scene();
@@ -109,11 +111,11 @@ void initScene() {
 	renderer->setDefaultShader(shaderIndex);
 	scene->addComponent<RendererComponent>(
 		bunny, RendererComponent(-1, renderer->addMesh(bunnyMesh),
-								 renderer->addMaterial(Material(glm::vec3(1., 1., 0.), .2, glm::vec3(0.), 0.0,
-																glm::vec3(0.1), 0.0, 0.0, 0.1, 0, 0.0))));
+								 renderer->addMaterial(Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.0,
+																glm::vec3(0.0), 0.0, 0.0, 0.1, 0, 0.0))));
 
 	unlitShaderIndex = renderer->addShader(unlitShader);
-	test = scene->createEntity();
+	test			 = scene->createEntity();
 	scene->addComponent<Transformation>(test, Transformation(glm::vec3(1, 3, 3)));
 	scene->addComponent<RendererComponent>(
 		test, RendererComponent(-1, renderer->addMesh(testMesh),
@@ -132,17 +134,17 @@ void initSpheres() {
 	spheres		= new Sphere[sphereCount];
 
 	spheres[0] = Sphere(glm::vec3(0.2, 1.8, 0.2), 0.5,
-						Material(glm::vec3(1.0, 1.0, 0.5), 1.0, glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(0.0, 0.0, 0.0),
-								 0.0, 0.00, 0.05, 0, 0));
+						renderer->addMaterial(Material(glm::vec3(1.0, 1.0, 0.5), 1.0, glm::vec3(0.0, 0.0, 0.0), 0.0,
+													   glm::vec3(0.0, 0.0, 0.0), 0.0, 0.00, 0.05, 0, 0)));
 	spheres[1] = Sphere(glm::vec3(1.0, 0.7, 0.7), 0.7,
-						Material(glm::vec3(0.1, 1.0, 0.1), 0.2, glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(0.0, 0.0, 0.0),
-								 0.0, 0.00, 0.03, 0, 0));
+						renderer->addMaterial(Material(glm::vec3(0.1, 1.0, 0.1), 0.2, glm::vec3(0.0, 0.0, 0.0), 0.0,
+													   glm::vec3(0.0, 0.0, 0.0), 0.0, 0.00, 0.03, 0, 0)));
 	spheres[2] = Sphere(glm::vec3(-0.7, 1.0, 0.2), 0.5,
-						Material(glm::vec3(0.9, 0.9, 1.0), 0.0, glm::vec3(0.0, 0.0, 0.0), 1.7,
-								 glm::vec3(10.0, 0.0, 0.0), 1.0, 0.05, 0.05, 0, 0));
+						renderer->addMaterial(Material(glm::vec3(0.0, 1.0, 1.0), 0.0, glm::vec3(0.0, 0.0, 0.0), 1.7,
+													   glm::vec3(1.0, 0.0, 0.0), 1.0, 0.05, 0.05, 0, 0)));
 	spheres[3] = Sphere(glm::vec3(-0.1, 1.8, 1.7), 0.4,
-						Material(glm::vec3(1.0, 1.0, 1.0), 0.0, glm::vec3(10.0, 10.0, 10.0), 0.0,
-								 glm::vec3(0.0, 0.0, 0.0), 0.0, 0.00, 0.00, 0, 0));
+						renderer->addMaterial(Material(glm::vec3(1.0, 1.0, 1.0), 0.0, glm::vec3(10.0, 10.0, 10.0), 0.0,
+													   glm::vec3(0.0, 0.0, 0.0), 0.0, 0.00, 0.00, 0, 0)));
 
 	renderer->addLight(Light(Transformation(spheres[3].position), glm::vec3(1.), 1, Light::POINT));
 
@@ -151,20 +153,21 @@ void initSpheres() {
 		for (int j = 0; j < 5; ++j) {
 			glm::vec3 randomColor(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.);
 
-			spheres[i * 5 + j + 4] = Sphere(glm::vec3(i * 1.5 - 5, 0., 3 + j * 1.5), 0.5,
-											Material(randomColor, rand() % 10 / 10., glm::vec3(0.0, 0.0, 0.0), 1.7,
-													 randomColor, 0.0, 0.00, 0.05, 0, 0.0));
+			spheres[i * 5 + j + 4] =
+				Sphere(glm::vec3(i * 1.5 - 5, 0.5, 3 + j * 1.5), 0.5,
+					   renderer->addMaterial(Material(randomColor, rand() % 10 / 10., glm::vec3(0.0, 0.0, 0.0), 1.7,
+													  glm::vec3(1.0) - randomColor, 1.0, 0.05, 0.05, 0, 0.0)));
 		}
 	}
 
-	uint		 meshIndex		  = renderer->addMesh(sphereMesh);
+	uint meshIndex = renderer->addMesh(sphereMesh);
 	for (int i = 0; i < sphereCount; ++i) {
 		sphere = scene->createEntity();
 		scene->addComponent<Transformation>(
 			sphere, Transformation(spheres[i].position, glm::vec3(0), glm::vec3(spheres[i].radius)));
-		scene->addComponent<RendererComponent>(sphere,
-											   RendererComponent(-1, meshIndex, renderer->addMaterial(spheres[i].mat)));
+		scene->addComponent<RendererComponent>(sphere, RendererComponent(-1, meshIndex, spheres[i].matIdx));
 	}
+
 	renderer->loadData();
 }
 
@@ -190,7 +193,7 @@ void initPathTracer() {
 	if (pathTracer->hasUniform("skybox")) pathTracer->setUniform("skybox", 0);
 	pathTracer->setUniform("fov", camera->getFov());
 	pathTracer->setUniform("spheres_count", sphereCount);
-	pathTracer->setUniform("max_bounces", 5);
+	pathTracer->setUniform("max_bounces", 6);
 	pathTracer->setUniform("do_trace_spheres", true);
 	pathTracer->setUniform("fov", glm::radians(70.f));
 	// pathTracer->unbind();
@@ -208,7 +211,7 @@ void initPathTracer() {
 	glBufferData(GL_UNIFORM_BUFFER, sphereCount * sizeof(Sphere), spheres, GL_STATIC_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-	pathTracer->setUBO(spheresBuff, 1);
+	pathTracer->setUBO(spheresBuff, 3);
 }
 
 int main(int argc, char *argv[]) {
@@ -236,18 +239,13 @@ int main(int argc, char *argv[]) {
 
 	tex->bind();
 
-	glClearColor(0, 0, 0, 1);
+	glClearColor(0, 0, 0, 0);
 	while (!window->shouldClose()) {
 		window->beginFrame();
 		mouse->update();
 
 		controller->update(window->deltaTime);
 		camera->update();
-
-		Transformation& t = scene->getComponent<Transformation>(test);
-		t.rotation.y += 0.01;
-		t.rotation.x += 0.01;
-		t.updateWorldMatrix();
 
 		if (!pathTrace) {
 			renderer->doWork();

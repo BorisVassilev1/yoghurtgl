@@ -65,18 +65,22 @@ ygl::Light &ygl::Renderer::addLight(const Light &light) {
 }
 
 void ygl::Renderer::loadData() {
-	// send material and light data to the GPU through SSBOs
+	// send material and light data to the GPU through UBOs
 	if (materialsBuffer == 0) { glGenBuffers(1, &materialsBuffer); }
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, materialsBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, materials.size() * sizeof(Material), materials.data(), GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, materialsBuffer);
+	glBufferData(GL_UNIFORM_BUFFER, materials.size() * sizeof(Material), materials.data(), GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-	Shader::setSSBO(materialsBuffer, 0);
+	Shader::setUBO(materialsBuffer, 1);
 
 	if (lightsBuffer == 0) { glGenBuffers(1, &lightsBuffer); }
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightsBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, lights.size() * sizeof(Light), lights.data(), GL_DYNAMIC_DRAW);
+	uint lightsCount = lights.size();
+	glBindBuffer(GL_UNIFORM_BUFFER, lightsBuffer);
+	glBufferData(GL_UNIFORM_BUFFER, 100 * sizeof(Light) + sizeof(uint), lights.data(), GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_UNIFORM_BUFFER, 100 * sizeof(Light), sizeof(uint), &lightsCount);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-	Shader::setSSBO(lightsBuffer, 1);
+	Shader::setUBO(lightsBuffer, 2);
 }
 
 void ygl::Renderer::setDefaultShader(int defaultShader) { this->defaultShader = defaultShader; }
@@ -89,7 +93,7 @@ void ygl::Renderer::doWork() {
 	int prevShaderIndex = defaultShader;
 
 	for (Entity e : entities) {
-		ygl::Transformation	&transform = scene->getComponent<Transformation>(e);
+		ygl::Transformation	   &transform = scene->getComponent<Transformation>(e);
 		ygl::RendererComponent &ecr		  = scene->getComponent<RendererComponent>(e);
 
 		Shader *sh;
@@ -113,9 +117,9 @@ void ygl::Renderer::doWork() {
 		mesh->bind();
 
 		sh->setUniform("worldMatrix", transform.getWorldMatrix());
-		if(sh->hasUniform("material_index")) sh->setUniform("material_index", (GLuint)ecr.materialIndex);
+		if (sh->hasUniform("material_index")) sh->setUniform("material_index", (GLuint)ecr.materialIndex);
 		// always allow use of texture. this might be subject to change for optimisation
-		if(sh->hasUniform("use_texture")) sh->setUniform("use_texture", useTexture);
+		if (sh->hasUniform("use_texture")) sh->setUniform("use_texture", useTexture);
 
 		glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
 
@@ -151,12 +155,12 @@ void ygl::Renderer::drawObject(Shader *sh, Mesh *mesh) {
 
 	mesh->bind();
 	// sh->setUniform("worldMatrix", transform.getWorldMatrix());
-	
+
 	glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
 	mesh->unbind();
 }
 
-void ygl::Renderer::compute(ComputeShader *shader, int numGroupsX,  int numGroupsY,  int numGroupsZ) {
+void ygl::Renderer::compute(ComputeShader *shader, int numGroupsX, int numGroupsY, int numGroupsZ) {
 	shader->bind();
 	glDispatchCompute(numGroupsX, numGroupsY, numGroupsZ);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);

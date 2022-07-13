@@ -54,12 +54,13 @@ layout(std140, binding=0) uniform Matrices {
 	mat4 cameraWorldMatrix;
 };
 
-layout(std140, binding=0) buffer Materials {
-	Material materials[];
+layout(std140, binding=1) uniform Materials {
+	Material materials[100];
 };
 
-layout(std140, binding=1) buffer Lights{
-	Light lights[];
+layout(std140, binding=2) uniform Lights{
+	Light lights[100];
+	uint lightsCount;
 };
 
 uniform unsigned int material_index = 0;

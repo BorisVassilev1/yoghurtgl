@@ -8,6 +8,8 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 
+typedef unsigned int uint;
+
 namespace ygl {
 class IMesh {
    protected:

@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include <mesh.h>
 
 #include <assert.h>
@@ -6,6 +7,8 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <yoghurtgl.h>
+#include <math.h>
+
 
 GLuint ygl::IMesh::createVAO() {
 	glGenVertexArrays(1, &vao);

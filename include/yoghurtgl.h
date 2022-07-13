@@ -46,7 +46,7 @@ bool inline f_dbLog(T arg, Types... args) {
 
 #ifndef NDEBUG
 	#define YGL_LOG_LEVEL		 -1
-	#define dbLog(severity, ...) severity >= YGL_LOG_LEVEL ? ygl::f_dbLog("[", #severity, "]", __VA_ARGS__) : 0;
+	#define dbLog(severity, ...) severity >= YGL_LOG_LEVEL ? ygl::f_dbLog("[", #severity, "] ", __VA_ARGS__) : 0;
 #else
 	#define YGL_LOG_LEVEL		 3
 	#define dbLog(severity, ...) 0
