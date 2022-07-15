@@ -20,19 +20,20 @@ struct Material {
 	glm::vec3 transparency_color;
 	float	  refraction_chance;
 
+	glm::vec3 specular_color;
 	float refraction_roughness;
+	
 	float specular_roughness;
-
 	unsigned int texture_sampler;
 	float		 texture_influence;
 
    private:
-	char padding[0];
+	char padding[4];
 
    public:
 	Material();
 	Material(glm::vec3 albedo, float specular_chance, glm::vec3 emission, float ior, glm::vec3 transparency_color,
-			 float refraction_chance, float refraction_roughness, float specular_roughness,
+			 float refraction_chance, glm::vec3 specular_color, float refraction_roughness, float specular_roughness,
 			 unsigned int texture_sampler, float texture_influence);
 };
 

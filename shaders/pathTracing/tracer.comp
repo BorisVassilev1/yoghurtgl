@@ -67,12 +67,15 @@ void intersect_scene(in Ray ray, inout RayHit hit) {
 	intersectGroundPlane(ray, -0.5, hit);
 
 	if (do_trace_spheres) {
-		for (int s = 0; s < spheres_count; s++) {
+		for (int s = 0; s < spheresCount; s++) {
 			intersectSphere(ray, s, hit);
 		}
-
 		// intersectSphere(ray, sphs[2], hit);
 		// intersectSphere(ray, Sphere(vec4(-1.8, 0, 0.8, 1.0), vec4(10., 10., 0., 1.0), 0.2, 0), hit);
+	}
+
+	for (uint b = 0; b < boxesCount; ++b) {
+		intersectBox(ray, b, hit);
 	}
 
 	// if(do_trace_geometry) {
@@ -91,16 +94,8 @@ vec3 cam_pos = (cameraMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 
 // TODO: fix depth of field effect!!!
 void get_ray(inout Ray ray, in vec3 cam_pos, in ivec2 pixel_coords, in vec2 pixel_position, uint random_seed) {
-	vec3 ray_origin_offset = random_in_unit_disk(random_seed) * aperture / 2;
-
-	ray_origin_offset = (vec4(ray_origin_offset, 0.0) * cameraMatrix).xyz;
-
 	vec2 ray_coords = vec2(pixel_position.x + (randomFloat(random_seed)) / resolution.x,
 						   pixel_position.y + (randomFloat(random_seed)) / resolution.y);
-
-	// vec3 ray_dir = normalize(lerp4vec(vv00, vv10, vv01, vv11, ray_coords.x, ray_coords.y) - ray_origin_offset);
-
-	// ray = Ray(cam_pos + ray_origin_offset, ray_dir, vec3(1.0));
 
 	ray_coords = ray_coords * 2. - 1.;
 
@@ -111,15 +106,16 @@ void get_ray(inout Ray ray, in vec3 cam_pos, in ivec2 pixel_coords, in vec2 pixe
 }
 
 void computeHitInfo(out HitInfo info, in RayHit hit, in Ray ray) {
-	info.pos = ray.origin + ray.direction * hit.dist;
+	info.pos  = ray.origin + ray.direction * hit.dist;
+	info.dist = hit.dist;
 	if (hit.type == 0) return;
 	if (hit.type == 1) {
 		info.normal		 = vec3(0.0, 1.0, 0.0);
 		float d			 = dot(ray.direction, info.normal);
 		info.isFrontFace = d < 0.0;
-		info.normal		 = -(step(0.0, d) * 2.0 - 1.0) * info.normal;
+		info.normal		 = (float(info.isFrontFace) * 2.0 - 1.0) * info.normal;
 		info.matIdx		 = 0;
-		return;
+		// return;
 	}
 	if (hit.type == 2) {
 		Sphere sphere	 = sphs[hit.objIdx];
@@ -127,10 +123,30 @@ void computeHitInfo(out HitInfo info, in RayHit hit, in Ray ray) {
 		info.isFrontFace = dot(info.normal, ray.direction) < 0.;
 		info.normal		 = (float(info.isFrontFace) * 2. - 1.) * info.normal;
 		info.matIdx		 = sphere.matIdx;
-		return;
+		// return;
 	}
-	if (hit.type == 3) { info.matIdx = geometryMaterialIdx; }
-	info.pos += 0.01 * info.normal;
+	if (hit.type == 3) {
+		info.matIdx = geometryMaterialIdx;
+		// return;
+	}
+	if (hit.type == 4) {
+		Box box = boxes[hit.objIdx];
+
+		vec3 diffmin = abs(info.pos - box.min);
+		vec3 diffmax = abs(info.pos - box.max);
+
+		info.normal.x = float(diffmax.x < phi) - float(diffmin.x < phi);
+		info.normal.y = float(diffmax.y < phi) - float(diffmin.y < phi);
+		info.normal.z = float(diffmax.z < phi) - float(diffmin.z < phi);
+
+		normalize(info.normal);
+
+		info.isFrontFace = dot(info.normal, ray.direction) < 0;
+		info.normal		 = (float(info.isFrontFace) * 2. - 1.) * info.normal;
+
+		info.matIdx = box.matIdx;
+		// return;
+	}
 }
 
 uniform vec3 sun_direction = normalize(vec3(1., 2., 1.));
@@ -144,7 +160,6 @@ void main() {
 	uint random_seed_full = pixel_coords.x + pixel_coords.y * uint(resolution.x) + random_seed;
 	// uint random_seed_full = random_seed;
 
-	// int ray_id = to1d(pixel_coords, ivec2(resolution)); // position of the current ray in the ssbo
 	Ray	 ray;	  // the current ray being traced
 	vec3 attenuation = vec3(1.);
 	get_ray(ray, cam_pos, pixel_coords, pixel_position, random_seed_full);
@@ -159,7 +174,7 @@ void main() {
 		intersect_scene(ray, hit);
 
 		if (hit.type == 0) {
-			pixel += vec4(get_sky_color(ray) * attenuation, 1.0);
+			pixel += vec4(get_sky_color(ray) * attenuation, 1.0f);
 			break;
 		}
 
@@ -168,50 +183,80 @@ void main() {
 
 		Material mat = materials[info.matIdx];
 
-		// if we are exiting a transparent material, use the transparency
-		if (!info.isFrontFace) { attenuation *= exp(-mat.transparency_color * hit.dist); }
+		// do absorption if we are hitting from inside the object
+		if (!info.isFrontFace) { attenuation *= exp(-mat.transparency_color * info.dist); }
 
-		float eta = pow(mat.ior, float(!info.isFrontFace) * 2.0 - 1.0);
+		// get the pre-fresnel chances
+		float specularChance   = mat.specular_chance;
+		float refractionChance = mat.refraction_chance;
 
-		float refraction_chance;
-		float diffuse_chance;
+		// take fresnel into account for specularChance and adjust other chances.
+		// specular takes priority.
+		// chanceMultiplier makes sure we keep diffuse / refraction ratio the same.
+		float rayProbability = 1.0f;
+		if (specularChance > 0.0f) {
+			specularChance = fresnelReflectAmount(info.isFrontFace ? 1.0f : mat.ior, info.isFrontFace ? mat.ior : 1.0f,
+												  ray.direction, info.normal, mat.specular_chance, 1.0f);
 
-		float frensel = schlick_reflectance(ray.direction, info.normal, eta);	  // chance to specular if refracting
-
-		// specular, but only when refracting
-		float specular_1  = frensel * mat.refraction_chance;
-		refraction_chance = mat.refraction_chance - specular_1;
-
-		float specular_2 = (1. - mat.refraction_chance) * mat.specular_chance;
-		diffuse_chance	 = (1 - mat.refraction_chance) - specular_2;
-
-		float cos_theta		 = min(dot(-ray.direction, info.normal), 1.0);
-		float sin_theta		 = sqrt(1.0 - cos_theta * cos_theta);
-		bool  cannot_refract = eta * sin_theta > 1.0;
-
-		float dice = randomFloat(random_seed_full);
-		if (dice < diffuse_chance) {
-			// diffuse reflection
-			disperse_reflect(ray, info, attenuation, mat.albedo, 1.0, random_seed_full);
-		} else if (dice < diffuse_chance + specular_1 + specular_2 || cannot_refract) {
-			// specular reflection
-			disperse_reflect(ray, info, attenuation, mat.albedo, mat.specular_roughness, random_seed_full);
-		} else {
-			// refraction
-			disperse_refract(ray, info, attenuation, eta, mat.refraction_roughness, random_seed_full);
+			float chanceMultiplier = (1.0f - specularChance) / (1.0f - mat.specular_chance);
+			refractionChance *= chanceMultiplier;
 		}
 
+		// calculate whether we are going to do a diffuse, specular, or refractive ray
+		float doSpecular	= 0.0f;
+		float doRefraction	= 0.0f;
+		float raySelectRoll = randomFloat(random_seed_full);
+		if (specularChance > 0.0f && raySelectRoll < specularChance) {
+			doSpecular	   = 1.0f;
+			rayProbability = specularChance;
+		} else if (refractionChance > 0.0f && raySelectRoll < specularChance + refractionChance) {
+			doRefraction   = 1.0f;
+			rayProbability = refractionChance;
+		} else {
+			rayProbability = 1.0f - (specularChance + refractionChance);
+		}
+
+		// update the ray position
+		if (doRefraction == 1.0f) {
+			ray.origin = info.pos - info.normal * phi;
+		} else {
+			ray.origin = info.pos + info.normal * phi;
+		}
+
+		// Calculate a new ray direction.
+		// Diffuse uses a normal oriented cosine weighted hemisphere sample.
+		// Perfectly smooth specular uses the reflection ray.
+		// Rough (glossy) specular lerps from the smooth specular to the rough diffuse by the material roughness squared
+		// Squaring the roughness is just a convention to make roughness feel more linear perceptually.
+		vec3 diffuseRayDir = cosWeightedHemissphereDir(info.normal, random_seed_full);
+
+		vec3 specularRayDir = reflect(ray.direction, info.normal);
+		specularRayDir = normalize(mix(specularRayDir, diffuseRayDir, mat.specular_roughness * mat.specular_roughness));
+
+		vec3 refractionRayDir = refract(ray.direction, info.normal, info.isFrontFace ? 1.0f / mat.ior : mat.ior);
+		refractionRayDir =
+			normalize(mix(refractionRayDir, -diffuseRayDir, mat.refraction_roughness * mat.refraction_roughness));
+
+		ray.direction = mix(diffuseRayDir, specularRayDir, doSpecular);
+		ray.direction = mix(ray.direction, refractionRayDir, doRefraction);
+
+		// emission
 		pixel += vec4(mat.emission * attenuation, 0);
 
-		// RayHit shadowHit;
-		// shadowHit.dist = 1.0 / 0.0;
-		// Ray shadowRay = Ray(hit.pos, sun_direction, vec3(1.0));
-		// intersect_scene(shadowRay, shadowHit);
-		// if(shadowHit.dist == 1.0 / 0.0) {
-		// 	pixel += vec4(vec3(0.2) * ray.attenuation, 0);
-		// }
+		// update the colorMultiplier. refraction doesn't alter the color until we hit the next thing, so we can do
+		// light absorption over distance.
+		if (doRefraction == 0.0f) attenuation *= mix(mat.albedo, mat.specular_color, doSpecular);
 
-		if (max(attenuation.x, max(attenuation.y, attenuation.z)) < 0.01) break;
+		// Russian Roulette
+		// As the throughput gets smaller, the ray is more likely to get terminated early.
+		// Survivors have their value boosted to make up for fewer samples being in the average.
+		{
+			float p = max(attenuation.r, max(attenuation.g, attenuation.b));
+			if (randomFloat(random_seed_full) > p) break;
+
+			// Add the energy we 'lose' by randomly terminating paths
+			attenuation *= 1.0f / p;
+		}
 	}
 
 	write_sample(pixel_coords, pixel);

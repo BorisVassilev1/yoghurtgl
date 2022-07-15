@@ -27,26 +27,29 @@ struct Light {
 	int type;
 };
 
-struct Material {
-	vec3 albedo;
-	float	  specular_chance;
-	// 16
-	
-	vec3 emission;
-	float	  ior;
-	// 32
-	
-	vec3 transparency_color;
-	float	  refraction_chance;
-	// 48
-	
-	float refraction_roughness;
-	float specular_roughness;
-	// 56 
 
-	int texture_sampler; // useless but here for alignment
+struct Material {
+	vec3  albedo;
+	float specular_chance;
+	// 16
+
+	vec3  emission;
+	float ior;
+	// 32
+
+	vec3  transparency_color;
+	float refraction_chance;
+	// 48
+
+	vec3  specular_color;
+	float refraction_roughness;
+	// 56
+
+	float specular_roughness;
+	uint  texture_sampler;
 	float texture_influence;
-}; // 64 bytes all
+};	   // 64 bytes all
+
 
 layout(std140, binding=0) uniform Matrices {
 	mat4 projectionMatrix;

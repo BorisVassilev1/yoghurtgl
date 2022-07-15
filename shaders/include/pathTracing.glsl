@@ -17,11 +17,12 @@ struct Material {
 	float refraction_chance;
 	// 48
 
+	vec3  specular_color;
 	float refraction_roughness;
-	float specular_roughness;
 	// 56
 
-	int	  texture_sampler;	   // useless but here for alignment
+	float specular_roughness;
+	uint  texture_sampler;
 	float texture_influence;
 };	   // 64 bytes all
 
@@ -53,7 +54,7 @@ struct HitInfo {
 	float dist;
 	vec3  normal;
 	bool  isFrontFace;
-	uint matIdx;
+	uint  matIdx;
 };
 
 struct Triangle {
@@ -64,6 +65,12 @@ struct Triangle {
 	vec3 normal1;
 	vec3 normal2;
 };
+
+struct Box {
+	vec3 min;
+	vec3 max;
+	uint matIdx;
+};	   // 32 bytes
 
 struct AABB {
 	vec3 min;
@@ -76,8 +83,11 @@ struct BVHNode {
 	int	 obj_index;
 };
 
-uniform int spheres_count = 0;
-layout(binding = 3) uniform spheres { Sphere sphs[40]; };
+uniform int spheresCount = 0;
+layout(binding = 3) uniform uSpheres { Sphere sphs[40]; };
+
+uniform int boxesCount = 0;
+layout(binding = 4) uniform uBoxes { Box boxes[40]; };
 
 layout(std140, binding = 1) uniform Materials { Material materials[100]; };
 
@@ -100,7 +110,7 @@ uniform uint random_seed;
 
 uniform mat4 bvh_matrix;
 
-float phi = 0.001;
+float phi = 0.0001;
 
 float PI	 = 3.14159;
 float aspect = resolution.y / resolution.x;
@@ -155,6 +165,31 @@ float getSmallestPositive(float t1, float t2) {
 	// Assumes at least one float > 0
 	return t1 < 0 ? t2 : t1;
 	// return mix(t1, t2, t1 < 0);
+}
+
+void intersectBox(in Ray ray, in uint boxIdx, inout RayHit rec) {
+	Box box = boxes[boxIdx];
+
+	// Source:
+	// https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
+
+	float t1 = -FLOAT_MAX;
+	float t2 = FLOAT_MAX;
+
+	vec3 t0s = (box.min - ray.origin) * (1.0 / ray.direction);
+	vec3 t1s = (box.max - ray.origin) * (1.0 / ray.direction);
+
+	vec3 tsmaller = min(t0s, t1s);
+	vec3 tbigger  = max(t0s, t1s);
+
+	t1 = max(t1, max(tsmaller.x, max(tsmaller.y, tsmaller.z)));
+	t2 = min(t2, min(tbigger.x, min(tbigger.y, tbigger.z)));
+
+	if (t1 <= t2 && t2 > phi && t1 < rec.dist) {
+		rec.dist   = getSmallestPositive(t1, t2);
+		rec.type   = 4;
+		rec.objIdx = boxIdx;
+	}
 }
 
 void intersectSphere(in Ray r, in uint sphIdx, inout RayHit rec) {
@@ -221,7 +256,7 @@ float intersect(in vec3 orig, in vec3 dir, in vec3 v0, in vec3 v1, in vec3 v2,
 	return t;
 }
 
-uniform Material geometry_material	 = Material(vec3(1.), .2, vec3(0.), 0.99, vec3(0.1), 0.0, 0.0, 0.1, 0, 0.);
+uniform Material geometry_material	 = Material(vec3(1.), .2, vec3(0.), 0.99, vec3(0.1), 0.0,vec3(1.), 0.0, 0.1, 0, 0.);
 uniform uint	 geometryMaterialIdx = 0;
 
 bool intersectTriangle(in Ray ray, in vec3 v0, in vec3 v1, in vec3 v2, in vec3 normal0, in vec3 normal1,
@@ -232,10 +267,9 @@ bool intersectTriangle(in Ray ray, in vec3 v0, in vec3 v1, in vec3 v2, in vec3 n
 
 	float t = intersect(orig, dir, v0, v1, v2, uv);
 
-	if (t > 0.0001 && t < hit.dist) {
+	if (t > phi && t < hit.dist) {
 		hit.type = 3;
 		hit.dist = t;
-
 
 		// hit.normal = normalize((1. - uv.x - uv.y) * normal0 + uv.x * normal1 + uv.y * normal2);
 
@@ -294,27 +328,28 @@ bool intersectTriangle(in Ray ray, in Triangle t, inout RayHit hit) {
 	return intersectTriangle(ray, t.v0, t.v1, t.v2, t.normal0, t.normal1, t.normal2, hit);
 }
 
-float schlick_reflectance(in vec3 incident, in vec3 normal, in float eta) {
-	float r0 = (1 - eta) / (1 + eta);
-	r0 *= r0;
-	float cos_angle = dot(-incident, normal);
-	return r0 + (1 - r0) * pow((1 - cos_angle), 5);
+float fresnelReflectAmount(float n1, float n2, vec3 normal, vec3 incident, float f0, float f90)
+{
+        // Schlick aproximation
+        float r0 = (n1-n2) / (n1+n2);
+        r0 *= r0;
+        float cosX = -dot(normal, incident);
+        if (n1 > n2)
+        {
+            float n = n1/n2;
+            float sinT2 = n*n*(1.0-cosX*cosX);
+            // Total internal reflection
+            if (sinT2 > 1.0)
+                return f90;
+            cosX = sqrt(1.0-sinT2);
+        }
+        float x = 1.0-cosX;
+        float ret = r0+(1.0-r0)*x*x*x*x*x;
+ 
+        // adjust reflect multiplier for object reflectivity
+        return mix(f0, f90, ret);
 }
 
-void disperse_reflect(inout Ray ray, in HitInfo info, inout vec3 attenuation, in vec3 reflectivity, in float fuzz,
-					  inout uint random_seed) {
-	vec3 dir =
-		normalize(mix(reflect(ray.direction, info.normal), cosWeightedHemissphereDir(info.normal, random_seed), fuzz));
-	attenuation = reflectivity * attenuation;
-	ray			= Ray(info.pos + phi * info.normal, dir);
-}
-
-void disperse_refract(inout Ray ray, in HitInfo info, inout vec3 attenuation, in float eta,
-					  in float refraction_roughness, inout uint random_seed) {
-	vec3 dir = normalize(mix(refract(ray.direction, info.normal, eta),
-							 cosWeightedHemissphereDir(info.normal, random_seed), refraction_roughness));
-	ray		 = Ray(info.pos - phi * info.normal, dir);
-}
 
 vec3 get_sky_color(in Ray ray) {
 	// float t = 0.5*(ray.direction.y + 1.0);

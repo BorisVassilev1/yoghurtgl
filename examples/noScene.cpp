@@ -29,7 +29,7 @@ int main() {
 	FPController controller(&window, &mouse, cam.transform);
 
 
-	Material mat  = Material(glm::vec3(1., 1., 0.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, 0.0, 0.1, 0, 0.0);
+	Material mat  = Material(glm::vec3(1., 1., 0.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1, 0, 0.0);
 	GLuint	 matBuff = Renderer::loadMaterials(1, &mat);
 
 	Light lights [2] = {Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 0.7,

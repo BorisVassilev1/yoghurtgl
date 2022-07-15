@@ -22,11 +22,23 @@ struct Sphere {
 	float	  radius = 1;
 	uint	  matIdx;
 
-	Sphere(){};
-	Sphere(glm::vec3 position, float radius, uint matIdx) : position(position), radius(radius), matIdx(matIdx) {}
+	Sphere() {}
+	Sphere(const glm::vec3 &position, float radius, uint matIdx) : position(position), radius(radius), matIdx(matIdx) {}
 
    private:
 	char padding[12];
+};
+
+struct Box {
+	glm::vec3 min;
+	char	  padding[4];
+	glm::vec3 max;
+	uint	  matIdx;
+
+	Box() {}
+	Box(const glm::vec3 &min, const glm::vec3 &max, uint matIdx) : min(min), max(max), matIdx(matIdx) {}
+
+   private:
 };
 
 Window *window;
@@ -42,10 +54,9 @@ Camera		 *camera;
 FPController *controller;
 Mesh		 *sphereMesh;
 Mesh		 *bunnyMesh;
-Mesh		 *testMesh;
+Mesh		 *cubeMesh;
 
 Entity bunny;
-Entity test;
 
 ComputeShader  *pathTracer;
 ComputeShader  *normalizer;
@@ -58,6 +69,10 @@ TextureCubemap *skybox;
 Sphere *spheres;
 int		sphereCount;
 GLuint	spheresBuff;
+
+Box	  *boxes;
+int	   boxesCount;
+GLuint boxesBuff;
 
 bool pathTrace = false;
 bool shade	   = true;
@@ -80,12 +95,9 @@ void cleanup() {
 }
 
 void initScene() {
-	bunnyMesh = (Mesh *)getModel(loadScene("./res/models/bunny.obj"));
-	// Mesh *bunnyMesh = makeScreenQuad();
+	bunnyMesh  = (Mesh *)getModel(loadScene("./res/models/bunny.obj"));
 	sphereMesh = makeUnitSphere();
-	testMesh   = makeBox(glm::vec3(1, 1, 1), glm::vec3(10, 10, 10));
-
-	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	cubeMesh   = makeBox(glm::vec3(1, 1, 1), glm::vec3(1, 1, 1));
 
 	shader		= new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 	unlitShader = new VFShader("./shaders/unlit.vs", "./shaders/unlit.fs");
@@ -110,17 +122,12 @@ void initScene() {
 	unsigned int shaderIndex = renderer->addShader(shader);
 	renderer->setDefaultShader(shaderIndex);
 	scene->addComponent<RendererComponent>(
-		bunny, RendererComponent(-1, renderer->addMesh(bunnyMesh),
-								 renderer->addMaterial(Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.0,
-																glm::vec3(0.0), 0.0, 0.0, 0.1, 0, 0.0))));
+		bunny,
+		RendererComponent(-1, renderer->addMesh(bunnyMesh),
+						  renderer->addMaterial(Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 1.0, glm::vec3(0.0),
+														 0.0, glm::vec3(1.), 0.0, 1.0, 0, 0.0))));
 
 	unlitShaderIndex = renderer->addShader(unlitShader);
-	test			 = scene->createEntity();
-	scene->addComponent<Transformation>(test, Transformation(glm::vec3(1, 3, 3)));
-	scene->addComponent<RendererComponent>(
-		test, RendererComponent(-1, renderer->addMesh(testMesh),
-								renderer->addMaterial(Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.0,
-															   glm::vec3(0.1), 0.0, 0.0, 0.1, 0, 1.0))));
 
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(-1, -2.9, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
 							 0.7, Light::Type::DIRECTIONAL));
@@ -130,34 +137,37 @@ void initScene() {
 }
 
 void initSpheres() {
-	sphereCount = 25 + 4;
-	spheres		= new Sphere[sphereCount];
+	sphereCount = 4 + 7;
+	spheres		= new Sphere[7 + 4];
 
-	spheres[0] = Sphere(glm::vec3(0.2, 1.8, 0.2), 0.5,
-						renderer->addMaterial(Material(glm::vec3(1.0, 1.0, 0.5), 1.0, glm::vec3(0.0, 0.0, 0.0), 0.0,
-													   glm::vec3(0.0, 0.0, 0.0), 0.0, 0.00, 0.05, 0, 0)));
-	spheres[1] = Sphere(glm::vec3(1.0, 0.7, 0.7), 0.7,
-						renderer->addMaterial(Material(glm::vec3(0.1, 1.0, 0.1), 0.2, glm::vec3(0.0, 0.0, 0.0), 0.0,
-													   glm::vec3(0.0, 0.0, 0.0), 0.0, 0.00, 0.03, 0, 0)));
-	spheres[2] = Sphere(glm::vec3(-0.7, 1.0, 0.2), 0.5,
-						renderer->addMaterial(Material(glm::vec3(0.0, 1.0, 1.0), 0.0, glm::vec3(0.0, 0.0, 0.0), 1.7,
-													   glm::vec3(1.0, 0.0, 0.0), 1.0, 0.05, 0.05, 0, 0)));
-	spheres[3] = Sphere(glm::vec3(-0.1, 1.8, 1.7), 0.4,
-						renderer->addMaterial(Material(glm::vec3(1.0, 1.0, 1.0), 0.0, glm::vec3(10.0, 10.0, 10.0), 0.0,
-													   glm::vec3(0.0, 0.0, 0.0), 0.0, 0.00, 0.00, 0, 0)));
+	spheres[0] = Sphere(
+		glm::vec3(0.2, 1.8, 0.2), 0.5,
+		renderer->addMaterial(Material(glm::vec3(1.0, 1.0, 0.5), 1.0, glm::vec3(0.0, 0.0, 0.0), 1.0,
+									   glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.0, 1.0, 0.5), 0.00, 0.05, 0, 0)));
+	spheres[1] =
+		Sphere(glm::vec3(1.0, 0.7, 0.7), 0.7,
+			   renderer->addMaterial(Material(glm::vec3(0.1, 1.0, 0.1), 0.2, glm::vec3(0.0, 0.0, 0.0), 1.0,
+											  glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.), 0.00, 0.03, 0, 0)));
+	spheres[2] =
+		Sphere(glm::vec3(-0.7, 1.0, 0.2), 0.5,
+			   renderer->addMaterial(Material(glm::vec3(0.0, 1.0, 1.0), 0.0, glm::vec3(0.0, 0.0, 0.0), 1.7,
+											  glm::vec3(1.0, 0.0, 0.0), 1.0, glm::vec3(1.), 0.05, 0.05, 0, 0)));
+	spheres[3] =
+		Sphere(glm::vec3(-0.1, 1.8, 1.7), 0.4,
+			   renderer->addMaterial(Material(glm::vec3(1.0, 1.0, 1.0), 0.0, glm::vec3(10.0, 10.0, 10.0), 1.0,
+											  glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.), 0.00, 0.00, 0, 0)));
 
 	renderer->addLight(Light(Transformation(spheres[3].position), glm::vec3(1.), 1, Light::POINT));
 
 	Entity sphere;
-	for (int i = 0; i < 5; ++i) {
-		for (int j = 0; j < 5; ++j) {
-			glm::vec3 randomColor(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.);
+	for (int i = 0; i < 7; ++i) {
+		// glm::vec3 randomColor(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.);
+		glm::vec3 randomColor(1, 0.5, 0);
 
-			spheres[i * 5 + j + 4] =
-				Sphere(glm::vec3(i * 1.5 - 5, 0.5, 3 + j * 1.5), 0.5,
-					   renderer->addMaterial(Material(randomColor, rand() % 10 / 10., glm::vec3(0.0, 0.0, 0.0), 1.7,
-													  glm::vec3(1.0) - randomColor, 1.0, 0.05, 0.05, 0, 0.0)));
-		}
+		spheres[i + 4] =
+			Sphere(glm::vec3(i * 1.5 - 5, 0.5, 3), 0.5,
+				   renderer->addMaterial(Material(randomColor, 0.02, glm::vec3(0.0, 0.0, 0.0), 1.7,
+												  glm::vec3(1.0) - randomColor, 1., glm::vec3(1.), 0.05, 0.05, 0, 0.0)));
 	}
 
 	uint meshIndex = renderer->addMesh(sphereMesh);
@@ -169,6 +179,39 @@ void initSpheres() {
 	}
 
 	renderer->loadData();
+}
+
+void initBoxes() {
+	boxesCount = 7;
+	boxes	   = new Box[7];
+
+	Entity box;
+	for (int i = 0; i < 7; ++i) {
+		glm::vec3 randomColor(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.);
+
+		glm::vec3 min = glm::vec3(i * 1.5 - 5, 0.5, 4.5);
+
+		boxes[i] =
+			Box(min, min + glm::vec3(1.0),
+				renderer->addMaterial(Material(randomColor, 0.01, glm::vec3(0.0, 0.0, 0.0), 1.7,
+											   glm::vec3(1.0) - randomColor, 1.0, glm::vec3(1.), 0.00, 0.00, 0, 0.0)));
+	}
+
+	uint meshIndex = renderer->addMesh(cubeMesh);
+	for (int i = 0; i < boxesCount; ++i) {
+		box = scene->createEntity();
+		scene->addComponent<Transformation>(box, Transformation(boxes[i].min + glm::vec3(0.5)));
+		scene->addComponent<RendererComponent>(box, RendererComponent(-1, meshIndex, boxes[i].matIdx));
+	}
+
+	renderer->loadData();
+
+	glGenBuffers(1, &boxesBuff);
+	glBindBuffer(GL_UNIFORM_BUFFER, boxesBuff);
+	glBufferData(GL_UNIFORM_BUFFER, boxesCount * sizeof(Box), boxes, GL_STATIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	pathTracer->setUBO(boxesBuff, 4);
 }
 
 void initPathTracer() {
@@ -186,14 +229,16 @@ void initPathTracer() {
 	skybox->bind(GL_TEXTURE0);
 
 	initSpheres();
+	initBoxes();
 
 	pathTracer->bind();
 	pathTracer->setUniform("resolution", glm::vec2(window->getWidth(), window->getHeight()));
 	pathTracer->setUniform("img_output", 1);
 	if (pathTracer->hasUniform("skybox")) pathTracer->setUniform("skybox", 0);
 	pathTracer->setUniform("fov", camera->getFov());
-	pathTracer->setUniform("spheres_count", sphereCount);
-	pathTracer->setUniform("max_bounces", 6);
+	pathTracer->setUniform("spheresCount", sphereCount);
+	pathTracer->setUniform("boxesCount", boxesCount);
+	pathTracer->setUniform("max_bounces", 20);
 	pathTracer->setUniform("do_trace_spheres", true);
 	pathTracer->setUniform("fov", glm::radians(70.f));
 	// pathTracer->unbind();

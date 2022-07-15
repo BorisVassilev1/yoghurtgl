@@ -4,17 +4,19 @@
 #include <assert.h>
 
 ygl::Material::Material()
-	: Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, 0.0, 0.1, 0, 0.0) {}
+	: Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.0), 0.0, 0.1, 0, 0.0) {}
 
 ygl::Material::Material(glm::vec3 albedo, float specular_chance, glm::vec3 emission, float ior,
-						glm::vec3 transparency_color, float refraction_chance, float refraction_roughness,
-						float specular_roughness, unsigned int texture_sampler, float texture_influence)
+						glm::vec3 transparency_color, float refraction_chance, glm::vec3 specular_color,
+						float refraction_roughness, float specular_roughness, unsigned int texture_sampler,
+						float texture_influence)
 	: albedo(albedo),
 	  specular_chance(specular_chance),
 	  emission(emission),
 	  ior(ior),
 	  transparency_color(transparency_color),
 	  refraction_chance(refraction_chance),
+	  specular_color(specular_color),
 	  refraction_roughness(refraction_roughness),
 	  specular_roughness(specular_roughness),
 	  texture_sampler(texture_sampler),
@@ -69,7 +71,6 @@ void ygl::Renderer::loadData() {
 	if (materialsBuffer == 0) { glGenBuffers(1, &materialsBuffer); }
 	glBindBuffer(GL_UNIFORM_BUFFER, materialsBuffer);
 	glBufferData(GL_UNIFORM_BUFFER, materials.size() * sizeof(Material), materials.data(), GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	Shader::setUBO(materialsBuffer, 1);
 
@@ -169,18 +170,20 @@ void ygl::Renderer::compute(ComputeShader *shader, int numGroupsX, int numGroups
 GLuint ygl::Renderer::loadMaterials(int count, Material *materials) {
 	GLuint materialsBuffer;
 	glGenBuffers(1, &materialsBuffer);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, materialsBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, count * sizeof(Material), materials, GL_DYNAMIC_DRAW);
-	Shader::setSSBO(materialsBuffer, 0);
+	glBindBuffer(GL_UNIFORM_BUFFER, materialsBuffer);
+	glBufferData(GL_UNIFORM_BUFFER, count * sizeof(Material), materials, GL_DYNAMIC_DRAW);
+	Shader::setUBO(materialsBuffer, 1);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	return materialsBuffer;
 }
 
 GLuint ygl::Renderer::loadLights(int count, Light *lights) {
 	GLuint lightsBuffer;
 	glGenBuffers(1, &lightsBuffer);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightsBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, count * sizeof(Light), lights, GL_DYNAMIC_DRAW);
-
-	Shader::setSSBO(lightsBuffer, 1);
+	glBindBuffer(GL_UNIFORM_BUFFER, lightsBuffer);
+	glBufferData(GL_UNIFORM_BUFFER, 100 * sizeof(Light) + sizeof(uint), lights, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_UNIFORM_BUFFER, 100 * sizeof(Light), sizeof(uint), &count);
+	Shader::setUBO(lightsBuffer, 2);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	return lightsBuffer;
 }
