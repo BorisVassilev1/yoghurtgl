@@ -103,13 +103,15 @@ GLFWwindow *ygl::Window::getHandle() { return window; }
 bool ygl::Window::shouldClose() { return glfwWindowShouldClose(window); }
 
 void ygl::Window::swapBuffers() {
+	glFinish(); // TODO: THIS IS VERY BAD!!
+	
 	auto timeNow = std::chrono::high_resolution_clock::now();
-	long delta	 = std::chrono::duration_cast<std::chrono::nanoseconds>(timeNow - lastSwapTime).count();
+	long long delta	 = std::chrono::duration_cast<std::chrono::nanoseconds>(timeNow - lastSwapTime).count();
 
 	glfwSwapBuffers(window);
 
 	timeNow		   = std::chrono::high_resolution_clock::now();
-	long fullDelta = std::chrono::duration_cast<std::chrono::nanoseconds>(timeNow - lastSwapTime).count();
+	long long fullDelta = std::chrono::duration_cast<std::chrono::nanoseconds>(timeNow - lastSwapTime).count();
 	deltaTime	   = fullDelta / 1e9;
 
 	double glfwNow	= glfwGetTime();

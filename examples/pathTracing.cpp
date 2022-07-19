@@ -44,13 +44,13 @@ struct Box {
 Window *window;
 Mouse  *mouse;
 
-Texture2d	 *tex;
-Scene		 *scene;
+Texture2d	  *tex;
+Scene		  *scene;
 Renderer	 *renderer;
 VFShader	 *shader;
 VFShader	 *unlitShader;
 uint		  unlitShaderIndex = -1;
-Camera		 *camera;
+Camera	   *camera;
 FPController *controller;
 Mesh		 *sphereMesh;
 Mesh		 *bunnyMesh;
@@ -60,17 +60,17 @@ Entity bunny;
 
 ComputeShader  *pathTracer;
 ComputeShader  *normalizer;
-Texture2d	   *renderTexture;
-Texture2d	   *rawTexture;
-VFShader	   *textureOnScreen;
-Mesh		   *screenQuad;
+Texture2d	  *renderTexture;
+Texture2d	  *rawTexture;
+VFShader		 *textureOnScreen;
+Mesh			 *screenQuad;
 TextureCubemap *skybox;
 
 Sphere *spheres;
 int		sphereCount;
 GLuint	spheresBuff;
 
-Box	  *boxes;
+Box	*boxes;
 int	   boxesCount;
 GLuint boxesBuff;
 
@@ -164,10 +164,10 @@ void initSpheres() {
 		// glm::vec3 randomColor(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.);
 		glm::vec3 randomColor(1, 0.5, 0);
 
-		spheres[i + 4] =
-			Sphere(glm::vec3(i * 1.5 - 5, 0.5, 3), 0.5,
-				   renderer->addMaterial(Material(randomColor, 0.02, glm::vec3(0.0, 0.0, 0.0), 1.7,
-												  glm::vec3(1.0) - randomColor, 1., glm::vec3(1.), 0.05, 0.05, 0, 0.0)));
+		spheres[i + 4] = Sphere(
+			glm::vec3(i * 1.5 - 5, 0.5, 3), 0.5,
+			renderer->addMaterial(Material(randomColor, 0.02, glm::vec3(0.0, 0.0, 0.0), 1.7,
+										   glm::vec3(1.0) - randomColor, 1., glm::vec3(1.), 0.05, 0.05, 0, 0.0)));
 	}
 
 	uint meshIndex = renderer->addMesh(sphereMesh);
@@ -315,6 +315,7 @@ int main(int argc, char *argv[]) {
 
 			Renderer::drawObject(textureOnScreen, screenQuad);
 		}
+
 		window->swapBuffers();
 	}
 

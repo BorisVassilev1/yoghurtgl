@@ -77,7 +77,8 @@ void ygl::Renderer::loadData() {
 	if (lightsBuffer == 0) { glGenBuffers(1, &lightsBuffer); }
 	uint lightsCount = lights.size();
 	glBindBuffer(GL_UNIFORM_BUFFER, lightsBuffer);
-	glBufferData(GL_UNIFORM_BUFFER, 100 * sizeof(Light) + sizeof(uint), lights.data(), GL_DYNAMIC_DRAW);
+	glBufferData(GL_UNIFORM_BUFFER, 100 * sizeof(Light) + sizeof(uint), nullptr, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, lights.size() * sizeof(Light), lights.data());
 	glBufferSubData(GL_UNIFORM_BUFFER, 100 * sizeof(Light), sizeof(uint), &lightsCount);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
