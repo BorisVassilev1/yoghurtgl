@@ -435,7 +435,7 @@ const aiScene *ygl::loadScene(const std::string &file) {
 															 aiProcess_PreTransformVertices);
 
 	if (!scene) {
-		std::cerr << ygl::importer->GetErrorString() << std::endl;
+		dbLog(ygl::LOG_ERROR, "[Assimp]", ygl::importer->GetErrorString());
 		return nullptr;
 	}
 	return scene;
