@@ -79,6 +79,7 @@ bool shade	   = true;
 bool cullFace  = true;
 
 int sampleCount = 0;
+int maxSamples	= 10;
 
 void cleanup() {
 	delete tex;
@@ -164,10 +165,10 @@ void initSpheres() {
 		// glm::vec3 randomColor(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.);
 		glm::vec3 randomColor(1, 0.5, 0);
 
-		spheres[i + 4] = Sphere(
-			glm::vec3(i * 1.5 - 5, 0.5, 3), 0.5,
-			renderer->addMaterial(Material(randomColor, 0.02, glm::vec3(0.0, 0.0, 0.0), 1.7,
-										   glm::vec3(1.0) - randomColor, 1., glm::vec3(1.), 0.05, 0.05, 0, 0.0)));
+		spheres[i + 4] = Sphere(glm::vec3(i * 1.5 - 5, 0.5, 3), 0.5,
+								renderer->addMaterial(Material(randomColor, 0.02, glm::vec3(0.0, 0.0, 0.0), 1.7,
+															   glm::vec3(1.0) - randomColor, 1., glm::vec3(1.),
+															   0.05 + i * 0.1, 0.05 + i * 0.1, 0, 0.0)));
 	}
 
 	uint meshIndex = renderer->addMesh(sphereMesh);
@@ -238,7 +239,7 @@ void initPathTracer() {
 	pathTracer->setUniform("fov", camera->getFov());
 	pathTracer->setUniform("spheresCount", sphereCount);
 	pathTracer->setUniform("boxesCount", boxesCount);
-	pathTracer->setUniform("max_bounces", 20);
+	pathTracer->setUniform("max_bounces", 10);
 	pathTracer->setUniform("do_trace_spheres", true);
 	pathTracer->setUniform("fov", glm::radians(70.f));
 	// pathTracer->unbind();
@@ -274,7 +275,7 @@ int main(int argc, char *argv[]) {
 		if (windowHandle != window->getHandle()) return;
 		if (key == GLFW_KEY_T && action == GLFW_RELEASE) {
 			pathTrace = !pathTrace;
-			glfwSwapInterval(!pathTrace);
+			// glfwSwapInterval(!pathTrace);
 		}
 	});
 
@@ -292,27 +293,29 @@ int main(int argc, char *argv[]) {
 		controller->update(window->deltaTime);
 		camera->update();
 
+		if (controller->hasChanged()) {
+			glClearTexImage(rawTexture->getID(), 0, GL_RGBA, GL_FLOAT, new GLfloat[]{0., 0., 0., 0.});
+			sampleCount = 0;
+		}
+
 		if (!pathTrace) {
 			renderer->doWork();
 		} else {
-			pathTracer->bind();
-			Transformation t =
-				Transformation(camera->transform.position, -camera->transform.rotation, camera->transform.scale);
-			pathTracer->setUniform("cameraMatrix", t.getWorldMatrix());
-			pathTracer->setUniform("random_seed", (GLuint)rand());
+			if (sampleCount < maxSamples) {
+				pathTracer->bind();
+				Transformation t =
+					Transformation(camera->transform.position, -camera->transform.rotation, camera->transform.scale);
+				pathTracer->setUniform("cameraMatrix", t.getWorldMatrix());
+				pathTracer->setUniform("random_seed", (GLuint)rand());
 
-			if (controller->hasChanged()) {
-				glClearTexImage(rawTexture->getID(), 0, GL_RGBA, GL_FLOAT, new GLfloat[]{0., 0., 0., 1.});
-				sampleCount = 0;
+				Renderer::compute(pathTracer, window->getWidth(), window->getHeight(), 1);
+
+				sampleCount++;
+				normalizer->bind();
+				normalizer->setUniform("samples", sampleCount);
+
+				Renderer::compute(normalizer, window->getWidth(), window->getHeight(), 1);
 			}
-			Renderer::compute(pathTracer, window->getWidth(), window->getHeight(), 1);
-
-			sampleCount++;
-			normalizer->bind();
-			normalizer->setUniform("samples", sampleCount);
-
-			Renderer::compute(normalizer, window->getWidth(), window->getHeight(), 1);
-
 			Renderer::drawObject(textureOnScreen, screenQuad);
 		}
 

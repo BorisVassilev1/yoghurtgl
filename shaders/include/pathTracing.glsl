@@ -53,7 +53,7 @@ struct HitInfo {
 	vec3  pos;
 	float dist;
 	vec3  normal;
-	bool  isFrontFace;
+	float isFrontFace;
 	uint  matIdx;
 };
 
@@ -163,7 +163,7 @@ vec3 random_in_unit_disk(inout uint seed) {
 
 float getSmallestPositive(float t1, float t2) {
 	// Assumes at least one float > 0
-	return t1 < 0 ? t2 : t1;
+	return t1 <= 0 ? t2 : t1;
 	// return mix(t1, t2, t1 < 0);
 }
 
@@ -185,10 +185,24 @@ void intersectBox(in Ray ray, in uint boxIdx, inout RayHit rec) {
 	t1 = max(t1, max(tsmaller.x, max(tsmaller.y, tsmaller.z)));
 	t2 = min(t2, min(tbigger.x, min(tbigger.y, tbigger.z)));
 
-	if (t1 <= t2 && t2 > phi && t1 < rec.dist) {
-		rec.dist   = getSmallestPositive(t1, t2);
-		rec.type   = 4;
-		rec.objIdx = boxIdx;
+	// if (t1 <= t2 && t2 > phi && t1 < rec.dist) {
+	// 	float dist = getSmallestPositive(t1, t2);
+	// 	rec.dist   = dist;
+	// 	rec.type   = 4;
+	// 	rec.objIdx = boxIdx;
+	// }
+
+	if (t1 <= t2) {
+		if (t2 > phi && t2 < rec.dist) {
+			rec.dist   = t2;
+			rec.type   = 4;
+			rec.objIdx = boxIdx;
+		}
+		if (t1 > phi && t1 < rec.dist) {
+			rec.dist   = t1;
+			rec.type   = 4;
+			rec.objIdx = boxIdx;
+		}
 	}
 }
 
@@ -256,7 +270,7 @@ float intersect(in vec3 orig, in vec3 dir, in vec3 v0, in vec3 v1, in vec3 v2,
 	return t;
 }
 
-uniform Material geometry_material	 = Material(vec3(1.), .2, vec3(0.), 0.99, vec3(0.1), 0.0,vec3(1.), 0.0, 0.1, 0, 0.);
+uniform Material geometry_material = Material(vec3(1.), .2, vec3(0.), 0.99, vec3(0.1), 0.0, vec3(1.), 0.0, 0.1, 0, 0.);
 uniform uint	 geometryMaterialIdx = 0;
 
 bool intersectTriangle(in Ray ray, in vec3 v0, in vec3 v1, in vec3 v2, in vec3 normal0, in vec3 normal1,
@@ -328,28 +342,25 @@ bool intersectTriangle(in Ray ray, in Triangle t, inout RayHit hit) {
 	return intersectTriangle(ray, t.v0, t.v1, t.v2, t.normal0, t.normal1, t.normal2, hit);
 }
 
-float fresnelReflectAmount(float n1, float n2, vec3 normal, vec3 incident, float f0, float f90)
-{
-        // Schlick aproximation
-        float r0 = (n1-n2) / (n1+n2);
-        r0 *= r0;
-        float cosX = -dot(normal, incident);
-        if (n1 > n2)
-        {
-            float n = n1/n2;
-            float sinT2 = n*n*(1.0-cosX*cosX);
-            // Total internal reflection
-            if (sinT2 > 1.0)
-                return f90;
-            cosX = sqrt(1.0-sinT2);
-        }
-        float x = 1.0-cosX;
-        float ret = r0+(1.0-r0)*x*x*x*x*x;
- 
-        // adjust reflect multiplier for object reflectivity
-        return mix(f0, f90, ret);
-}
+float fresnelReflectAmount(float n1, float n2, vec3 normal, vec3 incident, float f0, float f90) {
+	// Schlick aproximation
+	float r0 = (n1 - n2) / (n1 + n2);
+	r0 *= r0;
+	float cosX = -dot(normal, incident);
+	if (n1 > n2) {
+		float n		= n1 / n2;
+		float sinT2 = n * n * (1.0 - cosX * cosX);
+		// Total internal reflection
+		if (sinT2 > 1.0) return f90;
+		cosX = sqrt(1.0 - sinT2);
+	}
+	float x	  = 1.0 - cosX;
+	float ret = r0 + (1.0 - r0) * x * x * x * x * x;
+	// ret = clamp(ret, 0.0, 1.0);
 
+	// adjust reflect multiplier for object reflectivity
+	return mix(f0, f90, ret);
+}
 
 vec3 get_sky_color(in Ray ray) {
 	// float t = 0.5*(ray.direction.y + 1.0);

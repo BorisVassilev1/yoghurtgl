@@ -112,22 +112,22 @@ void computeHitInfo(out HitInfo info, in RayHit hit, in Ray ray) {
 	if (hit.type == 1) {
 		info.normal		 = vec3(0.0, 1.0, 0.0);
 		float d			 = dot(ray.direction, info.normal);
-		info.isFrontFace = d < 0.0;
-		info.normal		 = (float(info.isFrontFace) * 2.0 - 1.0) * info.normal;
+		info.isFrontFace = step(d, 0.0);
+		info.normal		 = (info.isFrontFace * 2.0 - 1.0) * info.normal;
 		info.matIdx		 = 0;
-		// return;
+		return;
 	}
 	if (hit.type == 2) {
 		Sphere sphere	 = sphs[hit.objIdx];
 		info.normal		 = (info.pos - sphere.position.xyz) / sphere.radius;
-		info.isFrontFace = dot(info.normal, ray.direction) < 0.;
-		info.normal		 = (float(info.isFrontFace) * 2. - 1.) * info.normal;
+		info.isFrontFace = step(dot(info.normal, ray.direction), 0.);
+		info.normal		 = (info.isFrontFace * 2. - 1.) * info.normal;
 		info.matIdx		 = sphere.matIdx;
-		// return;
+		return;
 	}
 	if (hit.type == 3) {
 		info.matIdx = geometryMaterialIdx;
-		// return;
+		return;
 	}
 	if (hit.type == 4) {
 		Box box = boxes[hit.objIdx];
@@ -135,17 +135,14 @@ void computeHitInfo(out HitInfo info, in RayHit hit, in Ray ray) {
 		vec3 diffmin = abs(info.pos - box.min);
 		vec3 diffmax = abs(info.pos - box.max);
 
-		info.normal.x = float(diffmax.x < phi) - float(diffmin.x < phi);
-		info.normal.y = float(diffmax.y < phi) - float(diffmin.y < phi);
-		info.normal.z = float(diffmax.z < phi) - float(diffmin.z < phi);
-
+		info.normal = step(diffmax, vec3(phi)) - step(diffmin, vec3(phi));
 		normalize(info.normal);
 
-		info.isFrontFace = dot(info.normal, ray.direction) < 0;
+		info.isFrontFace = step(dot(info.normal, ray.direction), 0);
 		info.normal		 = (float(info.isFrontFace) * 2. - 1.) * info.normal;
 
 		info.matIdx = box.matIdx;
-		// return;
+		return;
 	}
 }
 
@@ -173,6 +170,7 @@ void main() {
 		// test intersections
 		intersect_scene(ray, hit);
 
+		// if hit the sky, write sky color and exit
 		if (hit.type == 0) {
 			pixel += vec4(get_sky_color(ray) * attenuation, 1.0f);
 			break;
@@ -184,7 +182,7 @@ void main() {
 		Material mat = materials[info.matIdx];
 
 		// do absorption if we are hitting from inside the object
-		if (!info.isFrontFace) { attenuation *= exp(-mat.transparency_color * info.dist); }
+		if (info.isFrontFace == 0.0f) { attenuation *= exp(-mat.transparency_color * info.dist); }
 
 		// get the pre-fresnel chances
 		float specularChance   = mat.specular_chance;
@@ -194,27 +192,44 @@ void main() {
 		// specular takes priority.
 		// chanceMultiplier makes sure we keep diffuse / refraction ratio the same.
 		float rayProbability = 1.0f;
-		if (specularChance > 0.0f) {
-			specularChance = fresnelReflectAmount(info.isFrontFace ? 1.0f : mat.ior, info.isFrontFace ? mat.ior : 1.0f,
-												  ray.direction, info.normal, mat.specular_chance, 1.0f);
+		// if (specularChance > 0.0f) {
+			specularChance = fresnelReflectAmount(info.isFrontFace == 1.0f ? 1.0f : mat.ior,
+												  info.isFrontFace == 1.0f ? mat.ior : 1.0f, ray.direction, info.normal,
+												  mat.specular_chance, 1.0f);
 
 			float chanceMultiplier = (1.0f - specularChance) / (1.0f - mat.specular_chance);
 			refractionChance *= chanceMultiplier;
-		}
+
+			// if(refractionChance == 0.0) {
+			// 	pixel += vec4(1.0, 0., 0., 0.0);
+			// }
+		// }
 
 		// calculate whether we are going to do a diffuse, specular, or refractive ray
 		float doSpecular	= 0.0f;
 		float doRefraction	= 0.0f;
 		float raySelectRoll = randomFloat(random_seed_full);
-		if (specularChance > 0.0f && raySelectRoll < specularChance) {
+		if (specularChance > 0.0f && raySelectRoll < specularChance) { // specular reflection
 			doSpecular	   = 1.0f;
 			rayProbability = specularChance;
-		} else if (refractionChance > 0.0f && raySelectRoll < specularChance + refractionChance) {
+
+			// if(info.normal == vec3(0.0, 0.0, 0.0)) {
+				// pixel += vec4(1.0, 0.0, 0.0, 1.0);
+			// }
+
+		} else if (refractionChance > 0.0f && raySelectRoll < specularChance + refractionChance) { // refraction
 			doRefraction   = 1.0f;
 			rayProbability = refractionChance;
-		} else {
+
+			// pixel += vec4(info.normal, 1.0);
+		} else { // lambertian disperse
 			rayProbability = 1.0f - (specularChance + refractionChance);
+			
+			// pixel += vec4(info.normal, 1.0);
 		}
+
+		// avoid numerical issues causing a divide by zero, or nearly so (more important later, when we add refraction)
+		rayProbability = max(rayProbability, 0.001f);
 
 		// update the ray position
 		if (doRefraction == 1.0f) {
@@ -233,7 +248,7 @@ void main() {
 		vec3 specularRayDir = reflect(ray.direction, info.normal);
 		specularRayDir = normalize(mix(specularRayDir, diffuseRayDir, mat.specular_roughness * mat.specular_roughness));
 
-		vec3 refractionRayDir = refract(ray.direction, info.normal, info.isFrontFace ? 1.0f / mat.ior : mat.ior);
+		vec3 refractionRayDir = refract(ray.direction, info.normal, info.isFrontFace == 1.0 ? 1.0f / mat.ior : mat.ior);
 		refractionRayDir =
 			normalize(mix(refractionRayDir, -diffuseRayDir, mat.refraction_roughness * mat.refraction_roughness));
 
@@ -247,12 +262,14 @@ void main() {
 		// light absorption over distance.
 		if (doRefraction == 0.0f) attenuation *= mix(mat.albedo, mat.specular_color, doSpecular);
 
+		attenuation /= rayProbability;
+
 		// Russian Roulette
 		// As the throughput gets smaller, the ray is more likely to get terminated early.
 		// Survivors have their value boosted to make up for fewer samples being in the average.
 		{
 			float p = max(attenuation.r, max(attenuation.g, attenuation.b));
-			if (randomFloat(random_seed_full) > p) break;
+			if (randomFloat(random_seed_full) > p) { break; }
 
 			// Add the energy we 'lose' by randomly terminating paths
 			attenuation *= 1.0f / p;
