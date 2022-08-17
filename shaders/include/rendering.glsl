@@ -66,4 +66,4 @@ layout(std140, binding=2) uniform Lights{
 	uint lightsCount;
 };
 
-uniform unsigned int material_index = 0;
+uniform uint material_index = 0;

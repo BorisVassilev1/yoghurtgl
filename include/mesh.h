@@ -3,7 +3,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <vector>
-#include <glm/vec3.hpp>
+#include <glm/glm.hpp>
 #include <string>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -75,6 +75,7 @@ class Mesh : public MultiBufferMesh {
 	ygl::IMesh::VBO getColors();
 };
 
+
 Mesh *makeTriangle();
 
 Mesh *makeBox(const glm::vec3 &size, const glm::vec3 &detail);
@@ -88,6 +89,9 @@ Mesh *makeScreenQuad();
 Mesh *makeSphere(float radius, uint detailX, uint detailY);
 Mesh *makeSphere(float radius);
 Mesh *makeUnitSphere();
+
+Mesh *makePlane(const glm::vec2 &size, const glm::vec2 &detail);
+Mesh *makePlane(const glm::vec2 &detail);
 
 extern Assimp::Importer *importer;
 

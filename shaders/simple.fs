@@ -2,10 +2,10 @@
 
 #include <rendering.glsl>
 
-in vec4 outColor;
-in vec2 outTexCoord;
-in vec3 mvVertexNormal;
-in vec3 mvVertexPos;
+in vec4 vColor;
+in vec2 vTexCoord;
+in vec3 vVertexNormal;
+in vec3 vVertexPos;
 
 out vec4 fragColor;
 
@@ -63,7 +63,7 @@ vec3 calcLight(Light light, in vec3 position, in vec3 normal, in vec2 texCoord, 
 void main() {
 	vec3 light = vec3(0.0, 0.0, 0.0);
 	for (int i = 0; i < lightsCount; i++) {
-		light += calcLight(lights[i], mvVertexPos, mvVertexNormal, outTexCoord, 2.0, materials[material_index]);
+		light += calcLight(lights[i], vVertexPos, vVertexNormal, vTexCoord, 2.0, materials[material_index]);
 	}
 
 	// light = vec3(materials[material_index].albedo);

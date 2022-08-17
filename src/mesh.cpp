@@ -169,7 +169,7 @@ ygl::Mesh *ygl::makeBox(const glm::vec3 &size, const glm::vec3 &detail) {
 					colors[k * 4 + 2] = 1;
 					colors[k * 4 + 3] = 1;
 
-					uvs[k * 2] = i / detail[axis0];
+					uvs[k * 2]	   = i / detail[axis0];
 					uvs[k * 2 + 1] = j / detail[axis1];
 				}
 			}
@@ -423,6 +423,68 @@ ygl::Mesh *ygl::makeSphere(float radius, uint detailX, uint detailY) {
 ygl::Mesh *ygl::makeSphere(float radius) { return makeSphere(radius, 20, 20); }
 
 ygl::Mesh *ygl::makeUnitSphere() { return makeSphere(1.); }
+
+ygl::Mesh *ygl::makePlane(const glm::vec2 &size, const glm::vec2 &detail) {
+	uint vertexCount = (detail.x + 1) * (detail.y + 1);
+
+	GLfloat *vertices = new GLfloat[vertexCount * 3];
+	GLfloat *normals  = new GLfloat[vertexCount * 3];
+	GLfloat *colors	  = new GLfloat[vertexCount * 4];
+	GLfloat *uvs	  = new GLfloat[vertexCount * 2];
+
+	for (int i = 0; i < detail.x + 1; ++i) {
+		for (int j = 0; j < detail.y + 1; ++j) {
+			uint index = i * (detail.y + 1) + j;
+
+			vertices[index * 3 + 0] = (i / detail.x - 0.5)* size.x;
+			vertices[index * 3 + 1] = 0;
+			vertices[index * 3 + 2] = (j / detail.y - 0.5) * size.y;
+
+			normals[index * 3 + 0] = 0.;
+			normals[index * 3 + 1] = 1.;
+			normals[index * 3 + 2] = 0.;
+
+			colors[index * 4 + 0] = i / detail.x;
+			colors[index * 4 + 1] = 1.;
+			colors[index * 4 + 2] = j / detail.y;
+			colors[index * 4 + 3] = 1.;
+
+			uvs[index * 2 + 0] = i / detail.x;
+			uvs[index * 2 + 1] = j / detail.y;
+		}
+	}
+
+	uint faceCount = detail.x * detail.y;
+
+	GLuint *indices = new GLuint[faceCount * 6];
+
+	for (int i = 0; i < detail.x; ++i) {
+		for (int j = 0; j < detail.y; ++j) {
+			uint index = i * detail.y + j;
+
+			indices[index * 6 + 0] = i * (detail.x + 1) + j;
+			indices[index * 6 + 1] = i * (detail.x + 1) + j + 1;
+			indices[index * 6 + 2] = (i + 1) * (detail.x + 1) + j;
+			indices[index * 6 + 3] = i * (detail.x + 1) + j + 1;
+			indices[index * 6 + 4] = (i + 1) * (detail.x + 1) + j + 1;
+			indices[index * 6 + 5] = (i + 1) * (detail.x + 1) + j;
+		}
+	}
+
+	Mesh *mesh = new Mesh(vertexCount, vertices, normals, uvs, colors, faceCount * 6, indices);
+
+	delete[] vertices;
+	delete[] normals;
+	delete[] colors;
+	delete[] indices;
+	delete[] uvs;
+
+	return mesh;
+}
+
+ygl::Mesh *ygl::makePlane(const glm::vec2 &detail) {
+	return makePlane(glm::vec2(1), detail);
+}
 
 Assimp::Importer *ygl::importer = nullptr;
 

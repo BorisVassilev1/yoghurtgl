@@ -2,10 +2,10 @@
 
 #include <rendering.glsl>
 
-in vec4 outColor;
-in vec2 outTexCoord;
-in vec3 mvVertexNormal;
-in vec3 mvVertexPos;
+in vec4 vColor;
+in vec2 vTexCoord;
+in vec3 vVertexNormal;
+in vec3 vVertexPos;
 
 out vec4 fragColor;
 
