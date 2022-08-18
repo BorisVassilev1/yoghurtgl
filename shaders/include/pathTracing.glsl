@@ -368,7 +368,7 @@ vec3 get_sky_color(in Ray ray) {
 
 	// return vec3(0.0);
 	// return vec3(1.0);
-	return textureLod(skybox, ray.direction, 3.).xyz;
+	return textureLod(skybox, ray.direction, 2.).xyz;
 
 	// vec3 sun_direction = normalize(vec3(1.,2.,1.));
 	// float angle = dot(sun_direction, ray.direction);

@@ -214,9 +214,10 @@ void main() {
 			rayProbability = specularChance;
 
 			// if(info.normal == vec3(0.0, 0.0, 0.0)) {
-				// pixel += vec4(1.0, 0.0, 0.0, 1.0);
+			// 	pixel += vec4(1.0, 0.0, 0.0, 1.0);
 			// }
 
+			// pixel += vec4(info.normal, 1.0);
 		} else if (refractionChance > 0.0f && raySelectRoll < specularChance + refractionChance) { // refraction
 			doRefraction   = 1.0f;
 			rayProbability = refractionChance;
@@ -249,8 +250,14 @@ void main() {
 		specularRayDir = normalize(mix(specularRayDir, diffuseRayDir, mat.specular_roughness * mat.specular_roughness));
 
 		vec3 refractionRayDir = refract(ray.direction, info.normal, info.isFrontFace == 1.0 ? 1.0f / mat.ior : mat.ior);
+		
+		if(refractionRayDir == vec3(0.)) {
+			refractionRayDir = vec3(1.0, 0.0, 0.0);
+		}
+		
 		refractionRayDir =
 			normalize(mix(refractionRayDir, -diffuseRayDir, mat.refraction_roughness * mat.refraction_roughness));
+
 
 		ray.direction = mix(diffuseRayDir, specularRayDir, doSpecular);
 		ray.direction = mix(ray.direction, refractionRayDir, doRefraction);

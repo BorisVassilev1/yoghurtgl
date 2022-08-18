@@ -79,7 +79,7 @@ bool shade	   = true;
 bool cullFace  = true;
 
 int sampleCount = 0;
-int maxSamples	= 10;
+int maxSamples	= 1000;
 
 void cleanup() {
 	delete tex;
@@ -194,8 +194,8 @@ void initBoxes() {
 
 		boxes[i] =
 			Box(min, min + glm::vec3(1.0),
-				renderer->addMaterial(Material(randomColor, 0.01, glm::vec3(0.0, 0.0, 0.0), 1.7,
-											   glm::vec3(1.0) - randomColor, 1.0, glm::vec3(1.), 0.00, 0.00, 0, 0.0)));
+				renderer->addMaterial(Material(randomColor, 0.01, glm::vec3(0.0, 0.0, 0.0), 1.45,
+											   glm::vec3(1.0) - randomColor, 1.0, glm::vec3(1.), 0.05 + i * 0.1, 0.05 + i * 0.1, 0, 0.0)));
 	}
 
 	uint meshIndex = renderer->addMesh(cubeMesh);
@@ -239,7 +239,7 @@ void initPathTracer() {
 	pathTracer->setUniform("fov", camera->getFov());
 	pathTracer->setUniform("spheresCount", sphereCount);
 	pathTracer->setUniform("boxesCount", boxesCount);
-	pathTracer->setUniform("max_bounces", 10);
+	pathTracer->setUniform("max_bounces", 20);
 	pathTracer->setUniform("do_trace_spheres", true);
 	pathTracer->setUniform("fov", glm::radians(70.f));
 	// pathTracer->unbind();
