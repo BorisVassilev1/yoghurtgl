@@ -114,7 +114,7 @@ bool ygl::Shader::checkCompileStatus(int target) {
 		char *shaderLog = new char[shaderLogLength + 1];
 		glGetShaderInfoLog(shader, shaderLogLength, NULL, shaderLog);
 
-		std::cerr << "Error: Shader Compilation - \n" << fileNames[target] << " - " << shaderLog << std::endl;
+		std::cerr << "Error: Shader Compilation - " << fileNames[target] << " :\n " << shaderLog << std::endl;
 
 		delete[] shaderLog;
 		return false;
