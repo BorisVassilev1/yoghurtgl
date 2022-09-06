@@ -9,7 +9,6 @@
 #include <yoghurtgl.h>
 #include <math.h>
 
-
 GLuint ygl::IMesh::createVAO() {
 	glGenVertexArrays(1, &vao);
 	return vao;
@@ -87,7 +86,7 @@ void ygl::MultiBufferMesh::disableVBOs() {
 
 // constructs a simple mesh with vertex position (vec3), normal(vec3), texCoord(vec2) and color(vec4).
 ygl::Mesh::Mesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
-				GLuint indicesCount, GLuint *indices) {
+				GLfloat *tangents, GLuint indicesCount, GLuint *indices) {
 	this->createVAO();
 	glBindVertexArray(this->getVAO());
 	this->createIBO(indices, indicesCount);
@@ -95,6 +94,7 @@ ygl::Mesh::Mesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat
 	this->addVBO(1, 3, normals, vertexCount);
 	this->addVBO(2, 2, texCoords, vertexCount);
 	this->addVBO(3, 4, colors, vertexCount);
+	this->addVBO(4, 3, tangents, vertexCount);
 	glBindVertexArray(0);
 }
 
@@ -123,7 +123,7 @@ ygl::Mesh *ygl::makeTriangle() {
 		0.0, 1.0, 1.0};
 	GLuint	indices[]  = {0, 1, 2};
 	// clang-format on
-	return new Mesh((GLuint)9, vertices, normals, (GLfloat *)nullptr, colors, (GLuint)3, indices);
+	return new Mesh((GLuint)9, vertices, normals, (GLfloat *)nullptr, colors, (GLfloat *)nullptr, (GLuint)3, indices);
 }
 
 // TODO: this must have better texture coords;
@@ -136,6 +136,7 @@ ygl::Mesh *ygl::makeBox(const glm::vec3 &size, const glm::vec3 &detail) {
 	GLfloat *normals  = new GLfloat[vertexCount * 3];
 	GLfloat *colors	  = new GLfloat[vertexCount * 4];
 	GLfloat *uvs	  = new GLfloat[vertexCount * 2];
+	GLfloat *tangents = new GLfloat[vertexCount * 3];
 
 	uint faceCount = detail.x * detail.y + detail.x * detail.z + detail.y * detail.z;
 	faceCount <<= 1;	 // 2 faces per axis
@@ -162,15 +163,19 @@ ygl::Mesh *ygl::makeBox(const glm::vec3 &size, const glm::vec3 &detail) {
 
 					normals[k * 3 + axis0] = 0;
 					normals[k * 3 + axis1] = 0;
-					normals[k * 3 + axis2] = (u * 2 - 1);
+					normals[k * 3 + axis2] = u * 2. - 1.;
 
 					colors[k * 4]	  = i / detail[axis0];
 					colors[k * 4 + 1] = j / detail[axis1];
 					colors[k * 4 + 2] = 1;
 					colors[k * 4 + 3] = 1;
 
-					uvs[k * 2]	   = i / detail[axis0];
+					uvs[k * 2]	   = (1-u) + (u * 2. - 1.) * i / detail[axis0];
 					uvs[k * 2 + 1] = j / detail[axis1];
+
+					tangents[k * 3 + axis0] = 1 - u * 2.;
+					tangents[k * 3 + axis1] = 0;
+					tangents[k * 3 + axis2] = 0;
 				}
 			}
 		}
@@ -198,13 +203,14 @@ ygl::Mesh *ygl::makeBox(const glm::vec3 &size, const glm::vec3 &detail) {
 		indexOffset += faceIndices * 2;
 	}
 
-	Mesh *mesh = new Mesh(vertexCount, vertices, normals, uvs, colors, faceCount * 6, indices);
+	Mesh *mesh = new Mesh(vertexCount, vertices, normals, uvs, colors, tangents, faceCount * 6, indices);
 
 	delete[] vertices;
 	delete[] normals;
 	delete[] colors;
 	delete[] indices;
 	delete[] uvs;
+	delete[] tangents;
 
 	return mesh;
 }
@@ -327,7 +333,7 @@ ygl::Mesh *ygl::makeBox(float x, float y, float z) {
 		22, 12, 14,
 		23, 15, 17};
 	// clang-format on
-	return new Mesh((GLuint)24 * 3, vertices, normals, texCoords, colors, (GLuint)12 * 3, indices);
+	return new Mesh((GLuint)24 * 3, vertices, normals, texCoords, colors, (GLfloat *)nullptr, (GLuint)12 * 3, indices);
 }
 
 ygl::Mesh *ygl::makeBox(const glm::vec3 &dim) { return makeBox(dim.x, dim.y, dim.z); }
@@ -356,7 +362,8 @@ ygl::Mesh *ygl::makeScreenQuad() {
 		};
 	GLuint	indices[]  = {2, 1, 0, 3, 2, 0};
 	// clang-format on
-	return new Mesh((GLuint)12, vertices, (GLfloat *)nullptr, texCoords, colors, (GLuint)6, indices);
+	return new Mesh((GLuint)12, vertices, (GLfloat *)nullptr, texCoords, colors, (GLfloat *)nullptr, (GLuint)6,
+					indices);
 }
 
 ygl::Mesh *ygl::makeSphere(float radius, uint detailX, uint detailY) {
@@ -409,7 +416,7 @@ ygl::Mesh *ygl::makeSphere(float radius, uint detailX, uint detailY) {
 		}
 	}
 
-	Mesh *mesh = new Mesh(vertexCount, vertices, normals, uvs, colors, faceCount * 6, indices);
+	Mesh *mesh = new Mesh(vertexCount, vertices, normals, uvs, colors, (GLfloat *)nullptr, faceCount * 6, indices);
 
 	delete[] vertices;
 	delete[] normals;
@@ -431,12 +438,13 @@ ygl::Mesh *ygl::makePlane(const glm::vec2 &size, const glm::vec2 &detail) {
 	GLfloat *normals  = new GLfloat[vertexCount * 3];
 	GLfloat *colors	  = new GLfloat[vertexCount * 4];
 	GLfloat *uvs	  = new GLfloat[vertexCount * 2];
+	GLfloat *tangents = new GLfloat[vertexCount * 3];
 
 	for (int i = 0; i < detail.x + 1; ++i) {
 		for (int j = 0; j < detail.y + 1; ++j) {
 			uint index = i * (detail.y + 1) + j;
 
-			vertices[index * 3 + 0] = (i / detail.x - 0.5)* size.x;
+			vertices[index * 3 + 0] = (i / detail.x - 0.5) * size.x;
 			vertices[index * 3 + 1] = 0;
 			vertices[index * 3 + 2] = (j / detail.y - 0.5) * size.y;
 
@@ -451,6 +459,10 @@ ygl::Mesh *ygl::makePlane(const glm::vec2 &size, const glm::vec2 &detail) {
 
 			uvs[index * 2 + 0] = i / detail.x;
 			uvs[index * 2 + 1] = j / detail.y;
+
+			tangents[index * 3 + 0] = 0;
+			tangents[index * 3 + 1] = 0;
+			tangents[index * 3 + 2] = 1;
 		}
 	}
 
@@ -471,20 +483,19 @@ ygl::Mesh *ygl::makePlane(const glm::vec2 &size, const glm::vec2 &detail) {
 		}
 	}
 
-	Mesh *mesh = new Mesh(vertexCount, vertices, normals, uvs, colors, faceCount * 6, indices);
+	Mesh *mesh = new Mesh(vertexCount, vertices, normals, uvs, colors, tangents, faceCount * 6, indices);
 
 	delete[] vertices;
 	delete[] normals;
 	delete[] colors;
 	delete[] indices;
 	delete[] uvs;
+	delete[] tangents;
 
 	return mesh;
 }
 
-ygl::Mesh *ygl::makePlane(const glm::vec2 &detail) {
-	return makePlane(glm::vec2(1), detail);
-}
+ygl::Mesh *ygl::makePlane(const glm::vec2 &detail) { return makePlane(glm::vec2(1), detail); }
 
 Assimp::Importer *ygl::importer = nullptr;
 
@@ -513,10 +524,10 @@ const ygl::Mesh *ygl::getModel(const aiScene *scene) {
 
 	assert(numMeshes >= 1 && "no meshes in the scene?");
 
-	aiMesh		*mesh		   = meshes[0];
+	aiMesh	   *mesh		   = meshes[0];
 	unsigned int verticesCount = mesh->mNumVertices;
 	unsigned int indicesCount  = mesh->mNumFaces * 3;
-	GLuint		*indices	   = new GLuint[indicesCount * sizeof(GLuint)];
+	GLuint	   *indices	   = new GLuint[indicesCount * sizeof(GLuint)];
 
 	unsigned int indexCounter = 0;
 	for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
@@ -525,17 +536,26 @@ const ygl::Mesh *ygl::getModel(const aiScene *scene) {
 		indices[indexCounter++] = mesh->mFaces[i].mIndices[2];
 	}
 
+	GLfloat *texCoords = nullptr;
+	if (mesh->HasTextureCoords(0)) {
+		texCoords = new GLfloat[verticesCount * sizeof(float) * 2];
+		for (unsigned int i = 0; i < verticesCount; ++i) {
+			texCoords[i * 2]	 = mesh->mTextureCoords[0][i].x;
+			texCoords[i * 2 + 1] = mesh->mTextureCoords[0][i].y;
+		}
+	}
+
 	assert(indexCounter == indicesCount && "something went very wrong");
 
 	if (!(mesh->HasTextureCoords(0))) { dbLog(ygl::LOG_WARNING, "tex coords cannot be loaded for model!"); }
 	if (!(mesh->HasVertexColors(0))) { dbLog(ygl::LOG_WARNING, "colors cannot be loaded for model!"); }
 
-	ygl::Mesh *result =
-		new ygl::Mesh(verticesCount, (GLfloat *)mesh->mVertices, (GLfloat *)mesh->mNormals,
-					  (GLfloat *)mesh->mTextureCoords[0], (GLfloat *)mesh->mColors[0], indicesCount, indices);
+	ygl::Mesh *result = new ygl::Mesh(verticesCount, (GLfloat *)mesh->mVertices, (GLfloat *)mesh->mNormals, texCoords,
+									  (GLfloat *)mesh->mColors[0], (GLfloat *)mesh->mTangents, indicesCount, indices);
 	// result->setDrawMode(GL_POINTS);
 
 	delete[] indices;
+	if (texCoords != nullptr) delete[] texCoords;
 
 	delete ygl::importer;
 

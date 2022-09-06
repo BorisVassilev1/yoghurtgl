@@ -2,6 +2,7 @@ layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 texCoord;
 layout (location = 3) in vec4 color;
+layout (location = 4) in vec3 tangent;
 
 struct PointLight {
 	vec3 position;
@@ -69,7 +70,8 @@ layout(std140, binding=2) uniform Lights{
 uniform uint material_index = 0;
 
 uniform bool	  use_texture;
-uniform sampler2D texture_sampler;
+layout(binding=0) uniform sampler2D texture_sampler;
+layout(binding=1) uniform sampler2D normalMap;
 
 vec3 calcLight(Light light, in vec3 position, in vec3 normal, in vec2 texCoord, in float attenuationExp, Material mat) {
 	vec3 lightPosition = (light.transform * vec4(0.0, 0.0, 0.0, 1.0)).xyz;

@@ -12,15 +12,17 @@ in vec4 vColor[];
 in vec2 vTexCoord[];
 in vec3 vVertexNormal[];
 in vec4 vVertexPos[];
+in mat3 vTBN[];
 
 out vec4 tcColor[];
 out vec2 tcTexCoord[];
 out vec3 tcVertexNormal[];
+out mat3 tcTBN[];
 
-const int	MIN_TES	 = 2;
-const int	MAX_TES	 = 32;
-const float MIN_DIST = 4;
-const float MAX_DIST = 20;
+const int	MIN_TES	 = 1;
+const int	MAX_TES	 = 16;
+const float MIN_DIST = 1;
+const float MAX_DIST = 5;
 
 void main() {
 	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
@@ -28,8 +30,10 @@ void main() {
 	tcColor[gl_InvocationID]		= vColor[gl_InvocationID];
 	tcTexCoord[gl_InvocationID]		= vTexCoord[gl_InvocationID];
 	tcVertexNormal[gl_InvocationID] = vVertexNormal[gl_InvocationID];
+	tcTBN[gl_InvocationID] = vTBN[gl_InvocationID];
 
 	if (gl_InvocationID == 0) {
+		// use the world space vertex position
 		vec4 center0 = vVertexPos[0] + (vVertexPos[2] - vVertexPos[0]) / 2.0;
 		vec4 center1 = vVertexPos[1] + (vVertexPos[0] - vVertexPos[1]) / 2.0;
 		vec4 center2 = vVertexPos[2] + (vVertexPos[1] - vVertexPos[2]) / 2.0;

@@ -13,6 +13,7 @@ void main() {
 	vec3 light = calcAllLights(vVertexPos, vVertexNormal, vTexCoord);
 
 	// light = vec3(materials[material_index].albedo);
+	// light = vVertexNormal;
 
 	fragColor = vec4(light, 1.0);
 }

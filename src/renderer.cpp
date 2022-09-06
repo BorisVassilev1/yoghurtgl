@@ -182,7 +182,8 @@ GLuint ygl::Renderer::loadLights(int count, Light *lights) {
 	GLuint lightsBuffer;
 	glGenBuffers(1, &lightsBuffer);
 	glBindBuffer(GL_UNIFORM_BUFFER, lightsBuffer);
-	glBufferData(GL_UNIFORM_BUFFER, 100 * sizeof(Light) + sizeof(uint), lights, GL_DYNAMIC_DRAW);
+	glBufferData(GL_UNIFORM_BUFFER, 100 * sizeof(Light) + sizeof(uint), nullptr, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, count * sizeof(Light), lights);
 	glBufferSubData(GL_UNIFORM_BUFFER, 100 * sizeof(Light), sizeof(uint), &count);
 	Shader::setUBO(lightsBuffer, 2);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);

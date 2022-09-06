@@ -67,12 +67,13 @@ class MultiBufferMesh : public IMesh {
 
 class Mesh : public MultiBufferMesh {
    public:
-	Mesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
+	Mesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors, GLfloat *tangents,
 			  GLuint indicesCount, GLuint *indices);
 	ygl::IMesh::VBO getVertices();
 	ygl::IMesh::VBO getNormals();
 	ygl::IMesh::VBO getTexCoords();
 	ygl::IMesh::VBO getColors();
+	ygl::IMesh::VBO getTangents();
 };
 
 

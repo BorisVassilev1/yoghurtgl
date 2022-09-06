@@ -24,6 +24,7 @@ ygl::Texture2d::Texture2d(GLsizei width, GLsizei height, GLint internalFormat, G
 }
 
 ygl::Texture2d::Texture2d(std::string fileName) {
+	stbi_set_flip_vertically_on_load(true);
 	stbi_uc* data = stbi_load(fileName.c_str(), &width, &height, &channelCount, 4);
 
 	glGenTextures(1, &id);

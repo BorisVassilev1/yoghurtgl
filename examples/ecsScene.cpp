@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 
 	Window window = Window(800, 600, "Test Window", true);
 
-	Mesh *bunnyMesh = (Mesh *)getModel(loadScene("./res/models/bunny.obj"));
+	Mesh *bunnyMesh = (Mesh *)getModel(loadScene("./res/models/bunny_uv/bunny_uv.obj"));
 
 	Mesh	 *cubeMesh = makeCube();
 	VFShader *shader   = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
@@ -40,7 +40,8 @@ int main(int argc, char *argv[]) {
 	scene.registerComponent<Transformation>();
 	scene.registerComponent<RendererComponent>();
 
-	Texture2d *tex = new Texture2d("./res/images/uv_checker.png");
+	Texture2d *tex = new Texture2d("./res/models/bunny_uv/bunny_uv.jpg");
+	// Texture2d *tex = new Texture2d("./res/images/uv_checker.png");
 	((ITexture *)tex)->bind();
 
 	Renderer *renderer = scene.registerSystem<Renderer>();
@@ -48,7 +49,7 @@ int main(int argc, char *argv[]) {
 	renderer->setUseTexture(true);
 
 	Entity			bunny	  = scene.createEntity();
-	Transformation &transform = scene.addComponent<Transformation>(bunny, Transformation());
+	Transformation &transform = scene.addComponent<Transformation>(bunny, Transformation(glm::vec3(), glm::vec3(), glm::vec3(10)));
 	transform.position.y	  = 1;
 	transform.updateWorldMatrix();
 	RendererComponent bunnyRenderer;
@@ -59,7 +60,7 @@ int main(int argc, char *argv[]) {
 
 	bunnyRenderer.shaderIndex	= shaderIndex;
 	bunnyRenderer.materialIndex = renderer->addMaterial(
-		Material(glm::vec3(1., 1., 0.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1, 0, 0.0));
+		Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1, 0, 1.0));
 
 	scene.addComponent<RendererComponent>(bunny, bunnyRenderer);
 
