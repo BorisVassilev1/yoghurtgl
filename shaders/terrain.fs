@@ -12,10 +12,16 @@ out vec4 fragColor;
 uniform mat4 worldMatrix;
 
 void main() {
-	vec3 normal = texture(normalMap, teTexCoord).xyz;
-	normal = normalize(normal * 2. - 1.);
+	vec3 finalNormal;
+	if (materials[material_index].use_normal_map != 0.0) {
+		vec3 normal = texture(normalMap, teTexCoord).xyz;
 
-	vec3 finalNormal = normalize(teTBN * normal);
+		normal = normalize(normal * 2. - 1.);
+
+		finalNormal = normalize(teTBN * normal);
+	} else {
+		finalNormal = teVertexNormal;
+	}
 
 	vec3 light = calcAllLights(teVertexPos, finalNormal, teTexCoord);
 

@@ -21,20 +21,21 @@ struct Material {
 	float	  refraction_chance;
 
 	glm::vec3 specular_color;
-	float refraction_roughness;
-	
-	float specular_roughness;
+	float	  refraction_roughness;
+
+	float		 specular_roughness;
 	unsigned int texture_sampler;
 	float		 texture_influence;
+	float		 use_normal_map;
 
    private:
-	char padding[4];
+	//char padding[0];
 
    public:
 	Material();
 	Material(glm::vec3 albedo, float specular_chance, glm::vec3 emission, float ior, glm::vec3 transparency_color,
 			 float refraction_chance, glm::vec3 specular_color, float refraction_roughness, float specular_roughness,
-			 unsigned int texture_sampler, float texture_influence);
+			 unsigned int texture_sampler, float texture_influence, bool use_normal_map);
 };
 
 struct Light {
@@ -71,7 +72,6 @@ class Renderer : public ygl::ISystem {
 	GLuint lightsBuffer	   = 0;
 
 	int	 defaultShader = -1;
-	bool useTexture	   = false;
 
    public:
 	Shader   *getShader(RendererComponent &);
@@ -84,7 +84,6 @@ class Renderer : public ygl::ISystem {
 	Light		  &addLight(const Light &);
 
 	void setDefaultShader(int defaultShader);
-	void setUseTexture(bool useTexture);
 
 	void loadData();
 
@@ -96,7 +95,7 @@ class Renderer : public ygl::ISystem {
 						   bool useTexture);
 	static void drawObject(Shader *sh, Mesh *mesh);
 
-	static void compute(ComputeShader *shader, int numGroupsX,  int numGroupsY,  int numGroupsZ);
+	static void compute(ComputeShader *shader, int numGroupsX, int numGroupsY, int numGroupsZ);
 
 	static GLuint loadMaterials(int count, Material *materials);
 	static GLuint loadLights(int count, Light *materials);

@@ -114,7 +114,6 @@ void initScene() {
 
 	renderer = scene->registerSystem<Renderer>();
 	scene->setSystemSignature<Renderer, Transformation, RendererComponent>();
-	renderer->setUseTexture(true);
 
 	bunny = scene->createEntity();
 	scene->addComponent<Transformation>(bunny, Transformation(glm::vec3(-3, 0, 0)));
@@ -126,7 +125,7 @@ void initScene() {
 		bunny,
 		RendererComponent(-1, renderer->addMesh(bunnyMesh),
 						  renderer->addMaterial(Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 1.0, glm::vec3(0.0),
-														 0.0, glm::vec3(1.), 0.0, 1.0, 0, 0.0))));
+														 0.0, glm::vec3(1.), 0.0, 1.0, 0, 0.0, false))));
 
 	unlitShaderIndex = renderer->addShader(unlitShader);
 
@@ -144,19 +143,19 @@ void initSpheres() {
 	spheres[0] = Sphere(
 		glm::vec3(0.2, 1.8, 0.2), 0.5,
 		renderer->addMaterial(Material(glm::vec3(1.0, 1.0, 0.5), 1.0, glm::vec3(0.0, 0.0, 0.0), 1.0,
-									   glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.0, 1.0, 0.5), 0.00, 0.05, 0, 0)));
+									   glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.0, 1.0, 0.5), 0.00, 0.05, 0, 0, false)));
 	spheres[1] =
 		Sphere(glm::vec3(1.0, 0.7, 0.7), 0.7,
 			   renderer->addMaterial(Material(glm::vec3(0.1, 1.0, 0.1), 0.2, glm::vec3(0.0, 0.0, 0.0), 1.0,
-											  glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.), 0.00, 0.03, 0, 0)));
+											  glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.), 0.00, 0.03, 0, 0, false)));
 	spheres[2] =
 		Sphere(glm::vec3(-0.7, 1.0, 0.2), 0.5,
 			   renderer->addMaterial(Material(glm::vec3(0.0, 1.0, 1.0), 0.0, glm::vec3(0.0, 0.0, 0.0), 1.7,
-											  glm::vec3(1.0, 0.0, 0.0), 1.0, glm::vec3(1.), 0.05, 0.05, 0, 0)));
+											  glm::vec3(1.0, 0.0, 0.0), 1.0, glm::vec3(1.), 0.05, 0.05, 0, 0, false)));
 	spheres[3] =
 		Sphere(glm::vec3(-0.1, 1.8, 1.7), 0.4,
 			   renderer->addMaterial(Material(glm::vec3(1.0, 1.0, 1.0), 0.0, glm::vec3(10.0, 10.0, 10.0), 1.0,
-											  glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.), 0.00, 0.00, 0, 0)));
+											  glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.), 0.00, 0.00, 0, 0, false)));
 
 	renderer->addLight(Light(Transformation(spheres[3].position), glm::vec3(1.), 1, Light::POINT));
 
@@ -168,7 +167,7 @@ void initSpheres() {
 		spheres[i + 4] = Sphere(glm::vec3(i * 1.5 - 5, 0.5, 3), 0.5,
 								renderer->addMaterial(Material(randomColor, 0.02, glm::vec3(0.0, 0.0, 0.0), 1.7,
 															   glm::vec3(1.0) - randomColor, 1., glm::vec3(1.),
-															   0.05 + i * 0.1, 0.05 + i * 0.1, 0, 0.0)));
+															   0.05 + i * 0.1, 0.05 + i * 0.1, 0, 0.0, false)));
 	}
 
 	uint meshIndex = renderer->addMesh(sphereMesh);
@@ -195,7 +194,7 @@ void initBoxes() {
 		boxes[i] =
 			Box(min, min + glm::vec3(1.0),
 				renderer->addMaterial(Material(randomColor, 0.01, glm::vec3(0.0, 0.0, 0.0), 1.45,
-											   glm::vec3(1.0) - randomColor, 1.0, glm::vec3(1.), 0.05 + i * 0.1, 0.05 + i * 0.1, 0, 0.0)));
+											   glm::vec3(1.0) - randomColor, 1.0, glm::vec3(1.), 0.05 + i * 0.1, 0.05 + i * 0.1, 0, 0.0, false)));
 	}
 
 	uint meshIndex = renderer->addMesh(cubeMesh);

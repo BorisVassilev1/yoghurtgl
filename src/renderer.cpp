@@ -4,12 +4,12 @@
 #include <assert.h>
 
 ygl::Material::Material()
-	: Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.0), 0.0, 0.1, 0, 0.0) {}
+	: Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.0), 0.0, 0.1, 0, 0.0, false) {}
 
 ygl::Material::Material(glm::vec3 albedo, float specular_chance, glm::vec3 emission, float ior,
 						glm::vec3 transparency_color, float refraction_chance, glm::vec3 specular_color,
 						float refraction_roughness, float specular_roughness, unsigned int texture_sampler,
-						float texture_influence)
+						float texture_influence, bool use_normal_map)
 	: albedo(albedo),
 	  specular_chance(specular_chance),
 	  emission(emission),
@@ -20,7 +20,8 @@ ygl::Material::Material(glm::vec3 albedo, float specular_chance, glm::vec3 emiss
 	  refraction_roughness(refraction_roughness),
 	  specular_roughness(specular_roughness),
 	  texture_sampler(texture_sampler),
-	  texture_influence(texture_influence) {}
+	  texture_influence(texture_influence),
+	  use_normal_map(use_normal_map) {}
 
 ygl::Light::Light(glm::mat4 transform, glm::vec3 color, float intensity, ygl::Light::Type type)
 	: transform(transform), color(color), intensity(intensity), type(type) {}
@@ -87,8 +88,6 @@ void ygl::Renderer::loadData() {
 
 void ygl::Renderer::setDefaultShader(int defaultShader) { this->defaultShader = defaultShader; }
 
-void ygl::Renderer::setUseTexture(bool useTexture) { this->useTexture = useTexture; }
-
 void ygl::Renderer::doWork() {
 	// bind default shader
 	if (defaultShader != -1) { shaders[defaultShader]->bind(); }
@@ -120,8 +119,6 @@ void ygl::Renderer::doWork() {
 
 		sh->setUniform("worldMatrix", transform.getWorldMatrix());
 		if (sh->hasUniform("material_index")) sh->setUniform("material_index", (GLuint)ecr.materialIndex);
-		// always allow use of texture. this might be subject to change for optimisation
-		if (sh->hasUniform("use_texture")) sh->setUniform("use_texture", useTexture);
 
 		glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
 
@@ -146,7 +143,6 @@ void ygl::Renderer::drawObject(Transformation &transform, Shader *sh, Mesh *mesh
 	mesh->bind();
 	sh->setUniform("worldMatrix", transform.getWorldMatrix());
 	sh->setUniform("material_index", materialIndex);
-	sh->setUniform("use_texture", useTexture);
 
 	glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
 	mesh->unbind();

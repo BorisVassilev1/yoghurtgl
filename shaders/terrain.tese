@@ -20,9 +20,13 @@ out vec3 teVertexNormal;
 out vec3 teVertexPos;
 out mat3 teTBN;
 
-layout(binding=0) uniform sampler2D texture_sampler;
+layout(binding=0) uniform sampler2D albedoMap;
 layout(binding=1) uniform sampler2D normalMap;
+layout(binding=2) uniform sampler2D heightMap;
+
 uniform mat4 worldMatrix;
+uniform float displacementPower;
+uniform float displacementOffset;
 
 void main() {
 	// barycentric coordinates
@@ -42,7 +46,7 @@ void main() {
 	vec4 pos = u * pos0 + v * pos1 + w * pos2;
 
 	// still in model space for appropriate scaling of displacement
-    pos.xyz += texture(texture_sampler, texCoord).x * 0.135 * normal;
+    pos.xyz += (texture(heightMap, texCoord).x + displacementOffset) * displacementPower  * normal;
 
 	// vertex position goes to world space
     pos = worldMatrix * pos;

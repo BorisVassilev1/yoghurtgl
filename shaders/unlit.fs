@@ -9,7 +9,6 @@ in vec3 vVertexPos;
 
 out vec4 fragColor;
 
-uniform bool	  use_texture;
 uniform sampler2D texture_sampler;
 
 void main() {

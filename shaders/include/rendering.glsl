@@ -49,6 +49,7 @@ struct Material {
 	float specular_roughness;
 	uint  texture_sampler;
 	float texture_influence;
+	float use_normal_map;
 };	   // 64 bytes all
 
 
@@ -70,17 +71,18 @@ layout(std140, binding=2) uniform Lights{
 uniform uint material_index = 0;
 
 uniform bool	  use_texture;
-layout(binding=0) uniform sampler2D texture_sampler;
+layout(binding=0) uniform sampler2D albedoMap;
 layout(binding=1) uniform sampler2D normalMap;
+layout(binding=2) uniform sampler2D heightMap;
 
 vec3 calcLight(Light light, in vec3 position, in vec3 normal, in vec2 texCoord, in float attenuationExp, Material mat) {
 	vec3 lightPosition = (light.transform * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	vec3 lightForward  = (light.transform * vec4(0.0, 0.0, 1.0, 0.0)).xyz;
 
 	vec3 albedo = mat.albedo;
-	if (use_texture) {
+	if (mat.texture_influence != 0.0) {
 		albedo =
-			mat.texture_influence * texture(texture_sampler, texCoord).xyz + (1 - mat.texture_influence) * mat.albedo;
+			mat.texture_influence * texture(albedoMap, texCoord).xyz + (1 - mat.texture_influence) * mat.albedo;
 	}
 
 	if (light.type == 0) return light.color * albedo * light.intensity;
