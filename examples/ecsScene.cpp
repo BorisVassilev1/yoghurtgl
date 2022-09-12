@@ -43,15 +43,18 @@ int main(int argc, char *argv[]) {
 	// Texture2d *tex = new Texture2d("./res/models/bunny_uv/bunny_uv.jpg");
 	Texture2d *tex = new Texture2d("./res/images/uv_checker.png");
 	tex->bind();
-	tex->bind(GL_TEXTURE1); // something has to be bound, otherwise the shaders throw a warning
+	tex->bind(GL_TEXTURE1);		// something has to be bound, otherwise the shaders throw a warning
 	tex->bind(GL_TEXTURE2);
+	tex->bind(GL_TEXTURE3);
+	tex->bind(GL_TEXTURE4);
 
 	Renderer *renderer = scene.registerSystem<Renderer>();
 	scene.setSystemSignature<Renderer, Transformation, RendererComponent>();
 
-	Entity			bunny	  = scene.createEntity();
-	Transformation &transform = scene.addComponent<Transformation>(bunny, Transformation(glm::vec3(), glm::vec3(), glm::vec3(10)));
-	transform.position.y	  = 1;
+	Entity			bunny = scene.createEntity();
+	Transformation &transform =
+		scene.addComponent<Transformation>(bunny, Transformation(glm::vec3(), glm::vec3(), glm::vec3(10)));
+	transform.position.y = 1;
 	transform.updateWorldMatrix();
 	RendererComponent bunnyRenderer;
 
@@ -60,8 +63,8 @@ int main(int argc, char *argv[]) {
 	bunnyRenderer.meshIndex = renderer->addMesh(bunnyMesh);
 
 	bunnyRenderer.shaderIndex	= shaderIndex;
-	bunnyRenderer.materialIndex = renderer->addMaterial(
-		Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1, 0, 1.0, false));
+	bunnyRenderer.materialIndex = renderer->addMaterial(Material(
+		glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1, 1.0, false, 0., 0.0, 0.0));
 
 	scene.addComponent<RendererComponent>(bunny, bunnyRenderer);
 
@@ -80,10 +83,11 @@ int main(int argc, char *argv[]) {
 
 			scene.addComponent<Transformation>(curr,
 											   Transformation(glm::vec3(i * 2, -1, j * 2), glm::vec3(), glm::vec3(1)));
-			RendererComponent rc(shaderIndex, cubeMeshIndex,
-								 renderer->addMaterial(Material(
-									 glm::vec3(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.), .2,
-									 glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1, 0, 0.5, false)));
+			RendererComponent rc(
+				shaderIndex, cubeMeshIndex,
+				renderer->addMaterial(Material(glm::vec3(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.),
+											   .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1,
+											   0., false, 0.0, 0.0, 0.0)));
 
 			scene.addComponent<RendererComponent>(curr, rc);
 		}

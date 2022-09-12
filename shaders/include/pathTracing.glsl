@@ -22,9 +22,13 @@ struct Material {
 	// 56
 
 	float specular_roughness;
-	uint  texture_sampler;
 	float texture_influence;
-};	   // 64 bytes all
+	float use_normal_map;
+	float metallic;
+
+	float use_roughness_map;
+	float use_ao_map;
+};	   // 80 bytes all
 
 struct Sphere {
 	vec3  position;
@@ -270,7 +274,7 @@ float intersect(in vec3 orig, in vec3 dir, in vec3 v0, in vec3 v1, in vec3 v2,
 	return t;
 }
 
-uniform Material geometry_material = Material(vec3(1.), .2, vec3(0.), 0.99, vec3(0.1), 0.0, vec3(1.), 0.0, 0.1, 0, 0.);
+uniform Material geometry_material = Material(vec3(1.), .2, vec3(0.), 0.99, vec3(0.1), 0.0, vec3(1.), 0.0, 0.1, 0, 0., 0.0, 0.0, 0.0);
 uniform uint	 geometryMaterialIdx = 0;
 
 bool intersectTriangle(in Ray ray, in vec3 v0, in vec3 v1, in vec3 v2, in vec3 normal0, in vec3 normal1,

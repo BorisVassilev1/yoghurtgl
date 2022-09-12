@@ -25,6 +25,10 @@ void main() {
 
 	vec3 light = calcAllLights(teVertexPos, finalNormal, teTexCoord);
 
+	// float height = texture(heightMap, teTexCoord).x;
+
+	// light *= mix(vec3(0.0, 0.5, 0), vec3(165 / 255.,42 / 255.,42 / 255.), height);
+
 	// vec3 light = vec3(texture(normalMap, teTexCoord));
 	// vec3 light = finalNormal;
 

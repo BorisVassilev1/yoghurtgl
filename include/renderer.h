@@ -23,19 +23,22 @@ struct Material {
 	glm::vec3 specular_color;
 	float	  refraction_roughness;
 
-	float		 specular_roughness;
-	unsigned int texture_sampler;
-	float		 texture_influence;
-	float		 use_normal_map;
+	float specular_roughness;
+	float texture_influence;
+	float use_normal_map;
+	float metallic;
+
+	float use_roughness_map;
+	float use_ao_map;
 
    private:
-	//char padding[0];
+	char padding[8];
 
    public:
 	Material();
 	Material(glm::vec3 albedo, float specular_chance, glm::vec3 emission, float ior, glm::vec3 transparency_color,
 			 float refraction_chance, glm::vec3 specular_color, float refraction_roughness, float specular_roughness,
-			 unsigned int texture_sampler, float texture_influence, bool use_normal_map);
+			 float texture_influence, bool use_normal_map, float metallic, float use_roughness_map, float use_ao_map);
 };
 
 struct Light {
@@ -71,7 +74,7 @@ class Renderer : public ygl::ISystem {
 	GLuint materialsBuffer = 0;
 	GLuint lightsBuffer	   = 0;
 
-	int	 defaultShader = -1;
+	int defaultShader = -1;
 
    public:
 	Shader   *getShader(RendererComponent &);

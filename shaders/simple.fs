@@ -21,10 +21,13 @@ void main() {
 	} else {
 		finalNormal = vVertexNormal;
 	}
-	vec3 light = calcAllLights(vVertexPos, finalNormal, vTexCoord);
+	vec3 color = calcAllLights(vVertexPos, finalNormal, vTexCoord);
 
 	// light = vec3(materials[material_index].albedo);
 	// light = vVertexNormal;
 
-	fragColor = vec4(light, 1.0);
+	color = color / (color + vec3(1.0));
+    color = pow(color, vec3(1.0/2.2));
+
+	fragColor = vec4(color, 1.0);
 }

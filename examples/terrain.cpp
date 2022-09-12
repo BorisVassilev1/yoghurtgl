@@ -61,6 +61,8 @@ int main(int argc, char *argv[]) {
 	color->bind(GL_TEXTURE0);
 	normal->bind(GL_TEXTURE1);
 	height->bind(GL_TEXTURE2);
+	height->bind(GL_TEXTURE3);
+	color->bind(GL_TEXTURE4);
 
 	Renderer *renderer = scene.registerSystem<Renderer>();
 	scene.setSystemSignature<Renderer, Transformation, RendererComponent>();
@@ -72,7 +74,7 @@ int main(int argc, char *argv[]) {
 	scene.addComponent<Transformation>(terrain, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(10)));
 	RendererComponent terrainRenderer;
 	terrainRenderer.materialIndex = renderer->addMaterial(Material(
-		glm::vec3(1., 1., 1.), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 0, 0.0, true));
+		glm::vec3(1., 1., 1.), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 0., true, 0, 0., false));
 	terrainRenderer.shaderIndex	  = renderer->addShader(terrainShader);
 	terrainRenderer.meshIndex	  = renderer->addMesh(terrainMesh);
 	scene.addComponent(terrain, terrainRenderer);
@@ -85,7 +87,7 @@ int main(int argc, char *argv[]) {
 
 	renderer->loadData();
 
-	glClearColor(0, 0, 0, 0);
+	glClearColor(0, 0, 0, 1);
 	while (!window.shouldClose()) {
 		window.beginFrame();
 		mouse.update();

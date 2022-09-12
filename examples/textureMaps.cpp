@@ -17,8 +17,7 @@ int main() {
 
 	Window window = Window(800, 600, "Test Window", true);
 
-	VFShader *shader   = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
-	
+	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 
 	Camera cam(glm::radians(70.f), window, 0.01, 1000);
 
@@ -29,13 +28,17 @@ int main() {
 	scene.registerComponent<Transformation>();
 	scene.registerComponent<RendererComponent>();
 
-	Texture2d *color  = new Texture2d("./res/images/bricks/albedo.jpg");	 // not used
-	Texture2d *height = new Texture2d("./res/images/bricks/displ.jpg");
-	Texture2d *normal = new Texture2d("./res/images/bricks/normal.jpg");
+	Texture2d *color	 = new Texture2d("./res/images/stones/albedo.png");		// not used
+	Texture2d *height	 = new Texture2d("./res/images/stones/height.png");
+	Texture2d *normal	 = new Texture2d("./res/images/stones/normal.png");
+	Texture2d *roughness = new Texture2d("./res/images/stones/roughness.png");
+	Texture2d *ao		 = new Texture2d("./res/images/stones/ao.png");
 
 	color->bind(GL_TEXTURE0);
 	normal->bind(GL_TEXTURE1);
 	height->bind(GL_TEXTURE2);
+	roughness->bind(GL_TEXTURE3);
+	ao->bind(GL_TEXTURE4);
 
 	Renderer *renderer = scene.registerSystem<Renderer>();
 	scene.setSystemSignature<Renderer, Transformation, RendererComponent>();
@@ -46,7 +49,7 @@ int main() {
 	scene.addComponent<Transformation>(terrain, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(10)));
 	RendererComponent terrainRenderer;
 	terrainRenderer.materialIndex = renderer->addMaterial(Material(
-		glm::vec3(1., 1., 1.), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 0, 1.0, true));
+		glm::vec3(1., 1., 1.), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 1.0, true, 0.0, 0.5, 1.0));
 	terrainRenderer.shaderIndex	  = renderer->addShader(shader);
 	terrainRenderer.meshIndex	  = renderer->addMesh(terrainMesh);
 	scene.addComponent(terrain, terrainRenderer);
@@ -59,7 +62,7 @@ int main() {
 
 	renderer->loadData();
 
-	glClearColor(0, 0, 0, 0);
+	glClearColor(0, 0, 0, 1);
 	while (!window.shouldClose()) {
 		window.beginFrame();
 		mouse.update();
