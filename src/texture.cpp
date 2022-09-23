@@ -5,65 +5,142 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb/stb_image_write.h>
 
-ygl::Texture2d::Texture2d(GLsizei width, GLsizei height) : Texture2d(width, height, GL_RGBA32F, GL_RGBA) {}
+void ygl::ITexture::getTypeParameters(Type type, GLint &internalFormat, GLenum &format, uint8_t &pixelSize,
+									  uint8_t &components) {
+	switch (type) {
+		case Type::RGBA: {
+			internalFormat = GL_RGBA32F;
+			format		   = GL_RGBA;
+			pixelSize	   = 16;
+			components	   = 4;
+			break;
+		}
+		case Type::RGB: {
+			internalFormat = GL_RGB32F;
+			format		   = GL_RGB;
+			pixelSize	   = 12;
+			components	   = 3;
+			break;
+		}
+		case Type::SRGBA: {
+			internalFormat = GL_SRGB_ALPHA;
+			format		   = GL_RGBA;
+			pixelSize	   = 16;
+			components	   = 4;
+			break;
+		}
+		case Type::SRGB: {
+			internalFormat = GL_SRGB;
+			format		   = GL_RGB;
+			pixelSize	   = 12;
+			components	   = 3;
+			break;
+		}
+		case Type::GREY: {
+			internalFormat = GL_R32F;
+			format		   = GL_RED;
+			pixelSize	   = 4;
+			components	   = 1;
+			break;
+		}
+		default: {
+			dbLog(ygl::LOG_WARNING, "unknown texture type ", type, ". default texture type will be RGBA32f");
+			internalFormat = GL_RGBA32F;
+			format		   = GL_RGBA;
+			pixelSize	   = 16;
+			components	   = 4;
+			break;
+		}
+	}
+}
 
-ygl::Texture2d::Texture2d(GLsizei width, GLsizei height, GLint internalFormat, GLenum format)
-	: width(width), height(height) {
+void ygl::Texture2d::init(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize,
+						  uint8_t components, stbi_uc *data) {
+	this->width		 = width;
+	this->height	 = height;
+	this->pixelSize	 = pixelSize;
+	this->components = components;
+
 	glGenTextures(1, &id);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, id);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, (GLuint)0, internalFormat, width, height, (GLint)0, format, GL_UNSIGNED_BYTE, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, (GLuint)0, internalFormat, width, height, (GLint)0, format, GL_UNSIGNED_BYTE, data);
 
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-ygl::Texture2d::Texture2d(std::string fileName) {
+void ygl::Texture2d::init(GLsizei width, GLsizei height, Type type, stbi_uc *data) {
+	GLint	internalFormat = 0;
+	GLenum	format		   = 0;
+	uint8_t pixelSize	   = 0;
+	uint8_t components	   = 0;
+
+	ITexture::getTypeParameters(type, internalFormat, format, pixelSize, components);
+
+	init(width, height, internalFormat, format, pixelSize, components, data);
+}
+
+void ygl::Texture2d::init(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize,
+						  uint8_t components) {
 	stbi_set_flip_vertically_on_load(true);
-	stbi_uc* data = stbi_load(fileName.c_str(), &width, &height, &channelCount, 4);
-
-	glGenTextures(1, &id);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, id);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	GLsizei	 width, height, channelCount;
+	stbi_uc *data = stbi_load(fileName.c_str(), &width, &height, &channelCount, components);
+	stbi_set_flip_vertically_on_load(false);
 
 	if (data != nullptr) {
-		glTexImage2D(GL_TEXTURE_2D, (GLuint)0, GL_RGBA32F, width, height, (GLint)0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		init(width, height, internalFormat, format, pixelSize, components, data);
+		stbi_image_free(data);
 	} else {
 		dbLog(ygl::LOG_ERROR, "Image file [" + fileName + "] failed to load: " + stbi_failure_reason());
-
-		unsigned char tex[] = {0, 0, 0, 255, 255, 0, 255, 255, 255, 0, 255, 255, 0, 0, 0, 255};
-
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+		data = new stbi_uc[]{0, 0, 0, 255, 255, 0, 255, 255, 255, 0, 255, 255, 0, 0, 0, 255};
+		init(width, height, Type::RGBA, data);
+		delete[] data;
 	}
-
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	stbi_image_free(data);
 }
 
+ygl::Texture2d::Texture2d(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize,
+						  uint8_t components, stbi_uc *data) {
+	init(width, height, internalFormat, format, pixelSize, components, data);
+}
+
+ygl::Texture2d::Texture2d(GLsizei width, GLsizei height, Type type, stbi_uc *data) : width(width), height(height) {
+	init(width, height, type, data);
+}
+
+ygl::Texture2d::Texture2d(GLsizei width, GLsizei height) { init(width, height, Type::RGBA, nullptr); }
+
+ygl::Texture2d::Texture2d(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize,
+						  uint8_t components) {
+	init(fileName, internalFormat, format, pixelSize, components);
+}
+
+ygl::Texture2d::Texture2d(std::string fileName, Type type) {
+	GLint	internalFormat = 0;
+	GLenum	format		   = 0;
+	uint8_t pixelSize	   = 0;
+	uint8_t components	   = 0;
+
+	ITexture::getTypeParameters(type, internalFormat, format, pixelSize, components);
+
+	init(fileName, internalFormat, format, pixelSize, components);
+}
+
+ygl::Texture2d::Texture2d(std::string fileName) : Texture2d(fileName, Type::RGBA) {}
+
 void ygl::Texture2d::save(std::string fileName) {
-	float* buff = new float[width * height * channelCount];
+	uint8_t *buff = new uint8_t[width * height * pixelSize];
 
 	glBindTexture(GL_TEXTURE_2D, id);
-	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, buff);
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buff);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	// TODO: test this
-	stbi_write_png(fileName.c_str(), width, height, channelCount, buff, channelCount * sizeof(GLfloat) * width);
+	stbi_write_png(fileName.c_str(), width, height, 4, buff, 4 * width);
 }
 
 void ygl::Texture2d::bind(int textureUnit) {
@@ -84,8 +161,6 @@ void ygl::Texture2d::bindImage(int unit) { glBindImageTexture(unit, id, 0, false
 void ygl::Texture2d::unbindImage(int unit) { glBindImageTexture(unit, 0, 0, false, 0, GL_READ_WRITE, GL_RGBA32F); }
 int	 ygl::Texture2d::getID() { return id; }
 ygl::Texture2d::~Texture2d() { glDeleteTextures(1, &id); }
-
-// const constexpr char* ygl::TextureCubemap::faces[] = {"right", "left", "top", "bottom", "front", "back"};
 
 ygl::TextureCubemap::TextureCubemap(std::string path, std::string format) {
 	glGenTextures(1, &id);

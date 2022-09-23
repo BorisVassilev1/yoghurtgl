@@ -12,8 +12,10 @@ out vec4 fragColor;
 uniform mat4 worldMatrix;
 
 void main() {
+	Material mat = materials[material_index];
+	
 	vec3 finalNormal;
-	if (materials[material_index].use_normal_map != 0.0) {
+	if (mat.use_normal_map != 0.0) {
 		vec3 normal = texture(normalMap, teTexCoord).xyz;
 
 		normal = normalize(normal * 2. - 1.);
@@ -23,14 +25,18 @@ void main() {
 		finalNormal = teVertexNormal;
 	}
 
-	vec3 light = calcAllLights(teVertexPos, finalNormal, teTexCoord);
+	vec3 albedo = mat.albedo;
+	if (mat.texture_influence != 0.0) {
+		albedo = mat.texture_influence * texture(albedoMap, texCoord).xyz * mix(vec3(1.), texture(aoMap, texCoord).xyz, mat.use_ao_map) +
+				 (1 - mat.texture_influence) * mat.albedo;
+	}
 
-	// float height = texture(heightMap, teTexCoord).x;
-
-	// light *= mix(vec3(0.0, 0.5, 0), vec3(165 / 255.,42 / 255.,42 / 255.), height);
+	vec3 light = calcAllLights(teVertexPos, finalNormal, teVertexNormal, teTexCoord, albedo);
 
 	// vec3 light = vec3(texture(normalMap, teTexCoord));
 	// vec3 light = finalNormal;
+
+	light = pow(light, vec3(1.0/2.2));
 
 	fragColor = vec4(light, 1.0);
 }

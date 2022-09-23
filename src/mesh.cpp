@@ -54,17 +54,36 @@ GLuint ygl::IMesh::getVAO() { return vao; }
 
 void ygl::IMesh::setDrawMode(GLenum mode) { drawMode = mode; }
 
-// note that 'data' is the vertex count, not the length or size of the VBO
-void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLfloat *data, GLuint count) {
-	assert(!(verticesCount && verticesCount != count));
-	verticesCount = count;
+void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint count,
+								  GLuint indexDivisor, GLsizei stride, const void *pointer) {
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	glVertexAttribPointer(attrLocation, coordSize, GL_FLOAT, GL_FALSE, stride, pointer);
+	glVertexAttribDivisor(attrLocation, indexDivisor);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	vbos.push_back(VBO(attrLocation, buffer, coordSize));
+}
+
+void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint count,
+								  GLuint indexDivisor) {
+	addVBO(attrLocation, coordSize, buffer, count, indexDivisor, 0, 0);
+}
+
+void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint count) {
+	addVBO(attrLocation, coordSize, buffer, count, 0);
+}
+
+// note that 'count' is the vertex count, not the length or size of the VBO
+void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLfloat *data, GLuint count,
+								  GLuint indexDivisor) {
 	GLuint buff;
 	glGenBuffers(1, &buff);
 	glBindBuffer(GL_ARRAY_BUFFER, buff);
 	glBufferData(GL_ARRAY_BUFFER, count * sizeof(GLfloat) * coordSize, data, GL_STATIC_DRAW);
-	glVertexAttribPointer(attrLocation, coordSize, GL_FLOAT, GL_FALSE, 0, 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	vbos.push_back(VBO(attrLocation, buff, coordSize));
+	addVBO(attrLocation, coordSize, buff, count, indexDivisor);
+}
+
+void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLfloat *data, GLuint count) {
+	addVBO(attrLocation, coordSize, data, count, 0);
 }
 
 ygl::MultiBufferMesh::~MultiBufferMesh() {
@@ -89,6 +108,7 @@ ygl::Mesh::Mesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat
 				GLfloat *tangents, GLuint indicesCount, GLuint *indices) {
 	this->createVAO();
 	glBindVertexArray(this->getVAO());
+	this->verticesCount = vertexCount;
 	this->createIBO(indices, indicesCount);
 	this->addVBO(0, 3, vertices, vertexCount);
 	this->addVBO(1, 3, normals, vertexCount);
@@ -170,7 +190,7 @@ ygl::Mesh *ygl::makeBox(const glm::vec3 &size, const glm::vec3 &detail) {
 					colors[k * 4 + 2] = 1;
 					colors[k * 4 + 3] = 1;
 
-					uvs[k * 2]	   = (1-u) + (u * 2. - 1.) * i / detail[axis0];
+					uvs[k * 2]	   = (1 - u) + (u * 2. - 1.) * i / detail[axis0];
 					uvs[k * 2 + 1] = j / detail[axis1];
 
 					tangents[k * 3 + axis0] = 1 - u * 2.;

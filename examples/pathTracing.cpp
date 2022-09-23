@@ -44,13 +44,13 @@ struct Box {
 Window *window;
 Mouse  *mouse;
 
-Texture2d	  *tex;
-Scene		  *scene;
+Texture2d	 *tex;
+Scene		 *scene;
 Renderer	 *renderer;
 VFShader	 *shader;
 VFShader	 *unlitShader;
 uint		  unlitShaderIndex = -1;
-Camera	   *camera;
+Camera		 *camera;
 FPController *controller;
 Mesh		 *sphereMesh;
 Mesh		 *bunnyMesh;
@@ -60,17 +60,17 @@ Entity bunny;
 
 ComputeShader  *pathTracer;
 ComputeShader  *normalizer;
-Texture2d	  *renderTexture;
-Texture2d	  *rawTexture;
-VFShader		 *textureOnScreen;
-Mesh			 *screenQuad;
+Texture2d	   *renderTexture;
+Texture2d	   *rawTexture;
+VFShader	   *textureOnScreen;
+Mesh		   *screenQuad;
 TextureCubemap *skybox;
 
 Sphere *spheres;
 int		sphereCount;
 GLuint	spheresBuff;
 
-Box	*boxes;
+Box	  *boxes;
 int	   boxesCount;
 GLuint boxesBuff;
 
@@ -79,7 +79,7 @@ bool shade	   = true;
 bool cullFace  = true;
 
 int sampleCount = 0;
-int maxSamples	= 1000;
+int maxSamples	= 100000;
 
 void cleanup() {
 	delete tex;
@@ -93,6 +93,9 @@ void cleanup() {
 	delete textureOnScreen;
 	delete screenQuad;
 	delete spheres;
+	delete boxes;
+	delete skybox;
+	delete mouse;
 }
 
 void initScene() {
@@ -132,8 +135,8 @@ void initScene() {
 	unlitShaderIndex = renderer->addShader(unlitShader);
 
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(-1, -2.9, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
-							 0.7, Light::Type::DIRECTIONAL));
-	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.1, Light::Type::AMBIENT));
+							 3, Light::Type::DIRECTIONAL));
+	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
 
 	renderer->loadData();
 }
@@ -146,18 +149,18 @@ void initSpheres() {
 						renderer->addMaterial(Material(glm::vec3(1.0, 1.0, 0.5), 1.0, glm::vec3(0.0, 0.0, 0.0), 1.0,
 													   glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.0, 1.0, 0.5), 0.00,
 													   0.05, 0., false, 0, 0., 0.)));
-	spheres[1] =
-		Sphere(glm::vec3(1.0, 0.7, 0.7), 0.7,
-			   renderer->addMaterial(Material(glm::vec3(0.1, 1.0, 0.1), 0.2, glm::vec3(0.0, 0.0, 0.0), 1.0,
-											  glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.), 0.00, 0.03,  0., false, 0, 0., 0.)));
-	spheres[2] =
-		Sphere(glm::vec3(-0.7, 1.0, 0.2), 0.5,
-			   renderer->addMaterial(Material(glm::vec3(0.0, 1.0, 1.0), 0.0, glm::vec3(0.0, 0.0, 0.0), 1.7,
-											  glm::vec3(1.0, 0.0, 0.0), 1.0, glm::vec3(1.), 0.05, 0.05,  0., false, 0, 0., 0.)));
-	spheres[3] =
-		Sphere(glm::vec3(-0.1, 1.8, 1.7), 0.4,
-			   renderer->addMaterial(Material(glm::vec3(1.0, 1.0, 1.0), 0.0, glm::vec3(10.0, 10.0, 10.0), 1.0,
-											  glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.), 0.00, 0.00,  0., false, 0, 0., 0.)));
+	spheres[1] = Sphere(glm::vec3(1.0, 0.7, 0.7), 0.7,
+						renderer->addMaterial(Material(glm::vec3(0.1, 1.0, 0.1), 0.2, glm::vec3(0.0, 0.0, 0.0), 1.0,
+													   glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.), 0.00, 0.03, 0.,
+													   false, 0, 0., 0.)));
+	spheres[2] = Sphere(glm::vec3(-0.7, 1.0, 0.2), 0.5,
+						renderer->addMaterial(Material(glm::vec3(0.0, 1.0, 1.0), 0.0, glm::vec3(0.0, 0.0, 0.0), 1.7,
+													   glm::vec3(1.0, 0.0, 0.0), 1.0, glm::vec3(1.), 0.05, 0.05, 0.,
+													   false, 0, 0., 0.)));
+	spheres[3] = Sphere(glm::vec3(-0.1, 1.8, 1.7), 0.4,
+						renderer->addMaterial(Material(glm::vec3(1.0, 1.0, 1.0), 0.0, glm::vec3(10.0, 10.0, 10.0), 1.0,
+													   glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.), 0.00, 0.00, 0.,
+													   false, 0, 0., 0.)));
 
 	renderer->addLight(Light(Transformation(spheres[3].position), glm::vec3(1.), 1, Light::POINT));
 
@@ -169,7 +172,7 @@ void initSpheres() {
 		spheres[i + 4] = Sphere(glm::vec3(i * 1.5 - 5, 0.5, 3), 0.5,
 								renderer->addMaterial(Material(randomColor, 0.02, glm::vec3(0.0, 0.0, 0.0), 1.7,
 															   glm::vec3(1.0) - randomColor, 1., glm::vec3(1.),
-															   0.05 + i * 0.1, 0.05 + i * 0.1,  0., false, 0, 0., 0.)));
+															   0.05 + i * 0.1, 0.05 + i * 0.1, 0., false, 0, 0., 0.)));
 	}
 
 	uint meshIndex = renderer->addMesh(sphereMesh);
@@ -276,7 +279,10 @@ int main(int argc, char *argv[]) {
 		if (windowHandle != window->getHandle()) return;
 		if (key == GLFW_KEY_T && action == GLFW_RELEASE) {
 			pathTrace = !pathTrace;
-			// glfwSwapInterval(!pathTrace);
+			glfwSwapInterval(!pathTrace);
+		}
+		if(key == GLFW_KEY_G && action == GLFW_RELEASE) {
+			renderTexture->save("./res/images/result.png");
 		}
 	});
 

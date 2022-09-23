@@ -28,11 +28,11 @@ int main() {
 	scene.registerComponent<Transformation>();
 	scene.registerComponent<RendererComponent>();
 
-	Texture2d *color	 = new Texture2d("./res/images/stones/albedo.png");		// not used
-	Texture2d *height	 = new Texture2d("./res/images/stones/height.png");
-	Texture2d *normal	 = new Texture2d("./res/images/stones/normal.png");
-	Texture2d *roughness = new Texture2d("./res/images/stones/roughness.png");
-	Texture2d *ao		 = new Texture2d("./res/images/stones/ao.png");
+	Texture2d *color	 = new Texture2d("./res/images/stones/albedo.png", ITexture::Type::SRGB);
+	Texture2d *height	 = new Texture2d("./res/images/stones/height.png", ITexture::Type::GREY);
+	Texture2d *normal	 = new Texture2d("./res/images/stones/normal.png", ITexture::Type::RGB);
+	Texture2d *roughness = new Texture2d("./res/images/stones/roughness.png", ITexture::Type::GREY);
+	Texture2d *ao		 = new Texture2d("./res/images/stones/ao.png", ITexture::Type::GREY);
 
 	color->bind(GL_TEXTURE0);
 	normal->bind(GL_TEXTURE1);
@@ -48,17 +48,16 @@ int main() {
 	Entity terrain = scene.createEntity();
 	scene.addComponent<Transformation>(terrain, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(10)));
 	RendererComponent terrainRenderer;
-	terrainRenderer.materialIndex = renderer->addMaterial(Material(
-		glm::vec3(1., 1., 1.), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 1.0, true, 0.0, 0.5, 1.0));
-	terrainRenderer.shaderIndex	  = renderer->addShader(shader);
-	terrainRenderer.meshIndex	  = renderer->addMesh(terrainMesh);
+	terrainRenderer.materialIndex =
+		renderer->addMaterial(Material(glm::vec3(1., 1., 1.), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0,
+									   glm::vec3(1.0), 0.0, 0.0, 1.0, true, 0.0, 0.5, 1.0));
+	terrainRenderer.shaderIndex = renderer->addShader(shader);
+	terrainRenderer.meshIndex	= renderer->addMesh(terrainMesh);
 	scene.addComponent(terrain, terrainRenderer);
 
-	glPatchParameteri(GL_PATCH_VERTICES, 3);
-
-	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
-							 0.7, Light::Type::DIRECTIONAL));
-	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.1, Light::Type::AMBIENT));
+	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 3,
+							 Light::Type::DIRECTIONAL));
+	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.11, Light::Type::AMBIENT));
 
 	renderer->loadData();
 

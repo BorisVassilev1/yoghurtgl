@@ -71,8 +71,8 @@ int main(int argc, char *argv[]) {
 	unsigned int cubeMeshIndex = renderer->addMesh(cubeMesh);
 
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
-							 0.7, Light::Type::DIRECTIONAL));
-	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.1, Light::Type::AMBIENT));
+							 0, Light::Type::DIRECTIONAL));
+	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
 
 	renderer->addLight(
 		Light(Transformation(glm::vec3(15, 4, 15), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 100, Light::Type::POINT));
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
 
 	renderer->loadData();
 
-	glClearColor(0, 0, 0, 0);
+	glClearColor(0.07f, 0.13f, 0.17f, 1.0);
 	while (!window.shouldClose()) {
 		window.beginFrame();
 		mouse.update();

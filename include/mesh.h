@@ -24,7 +24,7 @@ class IMesh {
 	GLuint createVAO();
 	GLuint createIBO(GLuint *data, int size);
 
-	IMesh(){};	  // protected constructor so that noone can instantiate this
+	IMesh(){};	   // protected constructor so that noone can instantiate this
 
    public:
 	virtual ~IMesh();
@@ -56,10 +56,16 @@ class IMesh {
 class MultiBufferMesh : public IMesh {
    protected:
 	std::vector<VBO> vbos;
-	void			 addVBO(GLuint location, GLuint coordSize, GLfloat *data, GLuint count);
 	MultiBufferMesh() {}
 
    public:
+	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint count, GLuint indexDivisor, GLsizei stride,
+				const void *pointer);
+	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint count, GLuint indexDivisor);
+	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint count);
+	void addVBO(GLuint location, GLuint coordSize, GLfloat *data, GLuint count, GLuint indexDivisor);
+	void addVBO(GLuint location, GLuint coordSize, GLfloat *data, GLuint count);
+
 	virtual ~MultiBufferMesh();
 	void enableVBOs();
 	void disableVBOs();
@@ -67,15 +73,14 @@ class MultiBufferMesh : public IMesh {
 
 class Mesh : public MultiBufferMesh {
    public:
-	Mesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors, GLfloat *tangents,
-			  GLuint indicesCount, GLuint *indices);
+	Mesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
+		 GLfloat *tangents, GLuint indicesCount, GLuint *indices);
 	ygl::IMesh::VBO getVertices();
 	ygl::IMesh::VBO getNormals();
 	ygl::IMesh::VBO getTexCoords();
 	ygl::IMesh::VBO getColors();
 	ygl::IMesh::VBO getTangents();
 };
-
 
 Mesh *makeTriangle();
 
@@ -96,8 +101,8 @@ Mesh *makePlane(const glm::vec2 &detail);
 
 extern Assimp::Importer *importer;
 
-const aiScene	  *loadScene(const std::string &);
-const Mesh *getModel(const aiScene *);
+const aiScene *loadScene(const std::string &);
+const Mesh	   *getModel(const aiScene *);
 
 void terminateLoader();
 

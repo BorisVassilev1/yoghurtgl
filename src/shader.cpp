@@ -297,10 +297,13 @@ void ygl::Shader::setUniform(GLuint location, glm::vec2 value) {
 void ygl::Shader::setUniform(GLuint location, glm::ivec2 value) {
 	glUniform2i(location, value.x, value.y);
 }
-void ygl::Shader::setUniform(GLuint location, float value) {
+void ygl::Shader::setUniform(GLuint location, GLfloat value) {
 	glUniform1f(location, value);
 }
 
+void ygl::Shader::setUniform(GLuint location, GLdouble value) {
+	glUniform1d(location, value);
+}
 
 
 void ygl::Shader::createSSBO(std::string &name, GLuint binding) {
@@ -364,8 +367,9 @@ ygl::VFShader::VFShader(const char *vertex, const char *fragment) : Shader({vert
 	finishProgramCreation();
 }
 
-
 ygl::ComputeShader::ComputeShader(const char *source) : Shader({source}) {
 	createShader(GL_COMPUTE_SHADER, 0);
 	finishProgramCreation();
+
+	glGetProgramiv(program, GL_COMPUTE_WORK_GROUP_SIZE, glm::value_ptr(groupSize));
 }

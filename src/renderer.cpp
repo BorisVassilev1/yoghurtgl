@@ -164,7 +164,7 @@ ygl::Material::Material(glm::vec3 albedo, float specular_chance, glm::vec3 emiss
 
 	void ygl::Renderer::compute(ComputeShader *shader, int numGroupsX, int numGroupsY, int numGroupsZ) {
 		shader->bind();
-		glDispatchCompute(numGroupsX, numGroupsY, numGroupsZ);
+		glDispatchCompute(numGroupsX / shader->groupSize.x, numGroupsY / shader->groupSize.y, numGroupsZ / shader->groupSize.z);
 		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	}
 

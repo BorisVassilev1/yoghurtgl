@@ -12,6 +12,9 @@
 
 namespace ygl {
 class Shader {
+	Shader() {}
+
+   protected:
 	GLuint		 program	  = 0;
 	int			 shadersCount = 0;
 	GLuint	   *shaders	  = nullptr;
@@ -25,9 +28,7 @@ class Shader {
 
 	void loadSourceRecursively(std::vector<std::string> &lines, const char *file, const char *includeDir,
 							   int includeDirLength);
-	Shader() {}
 
-   protected:
 	Shader(std::initializer_list<const char *> files);
 
 	void createShader(GLenum type, GLuint target);
@@ -73,6 +74,7 @@ class Shader {
 	void setUniform(GLuint location, glm::vec2 value);
 	void setUniform(GLuint location, glm::ivec2 value);
 	void setUniform(GLuint location, GLfloat value);
+	void setUniform(GLuint location, GLdouble value);
 
 	void  createSSBO(std::string &name, GLuint binding);
 	void  createUBO(std::string &name, GLuint binding);
@@ -92,6 +94,7 @@ class VFShader : public Shader {
 
 class ComputeShader : public Shader {
    public:
+	glm::ivec3 groupSize;
 	ComputeShader(const char *source);
 };
 }	  // namespace ygl

@@ -1,4 +1,5 @@
 const float PI = 3.14159265359;
+const float TWO_PI = 2. * PI;
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
@@ -45,16 +46,17 @@ struct Material {
 
 	vec3  specular_color;
 	float refraction_roughness;
-	// 56
+	// 64
 
 	float specular_roughness;
 	float texture_influence;
 	float use_normal_map;
 	float metallic;
+	// 80
 
 	float use_roughness_map;
 	float use_ao_map;
-};	   // 80 bytes all
+};	   // 96 bytes all
 
 layout(std140, binding = 0) uniform Matrices {
 	mat4 projectionMatrix;
@@ -92,7 +94,7 @@ float DistributionGGX(vec3 N, vec3 H, float roughness) {
 	float denom = (NdotH2 * (a2 - 1.0) + 1.0);
 	denom		= PI * denom * denom;
 
-	return num / denom;
+	return num / max(denom, 0.0001);
 }
 
 float GeometrySchlickGGX(float NdotV, float roughness) {
@@ -102,8 +104,9 @@ float GeometrySchlickGGX(float NdotV, float roughness) {
 	float num	= NdotV;
 	float denom = NdotV * (1.0 - k) + k;
 
-	return num / denom;
+	return num / max(denom, 0.0001);
 }
+
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
 	float NdotV = max(dot(N, V), 0.0);
 	float NdotL = max(dot(N, L), 0.0);
@@ -113,15 +116,10 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
 	return ggx1 * ggx2;
 }
 
-vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec2 texCoord, in float attenuationExp, Material mat) {
+vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec3 vertexNormal, in vec2 texCoord, Material mat,
+			   in vec3 albedo) {
 	vec3 lightPosition = (light.transform * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	vec3 lightForward  = (light.transform * vec4(0.0, 0.0, 1.0, 0.0)).xyz;
-
-	vec3 albedo = mat.albedo;
-	if (mat.texture_influence != 0.0) {
-		albedo = mat.texture_influence * texture(albedoMap, texCoord).xyz * mix(vec3(1.), texture(aoMap, texCoord).xyz, mat.use_ao_map) +
-				 (1 - mat.texture_influence) * mat.albedo;
-	}
 
 	if (light.type == 0) return light.color * albedo * light.intensity;
 
@@ -129,15 +127,18 @@ vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec2 texCoord, in fl
 
 	vec3 L = lightPosition - position;
 	if (light.type == 1) L = -lightForward;
-	
-	float dist		   = length(L);
-	L = normalize(L);
+
+	float dist = length(L);
+	L		   = normalize(L);
 
 	vec3 V = normalize(camPos - position);
+	
+	if(dot(V, vertexNormal) < 0) N = -N;
+	
 	vec3 H = normalize(V + L);
 
 	float attennuation = 1. / (dist * dist);
-	vec3  radiance	   = light.color * attennuation;
+	vec3  radiance	   = light.color * attennuation * light.intensity;
 
 	vec3 F0 = vec3(0.04);
 	F0		= mix(F0, albedo, mat.metallic);
@@ -150,21 +151,22 @@ vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec2 texCoord, in fl
 	float G	  = GeometrySmith(N, V, L, roughness);
 
 	vec3  numerator	  = NDF * G * F;
-	float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+	float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+	denominator = max(denominator, 0.0001);
 	vec3  specular	  = numerator / denominator;
 
 	vec3 kS = F;
 	vec3 kD = vec3(1.0) - kS;
 	kD *= 1.0 - mat.metallic;
 
-    float NdotL = max(dot(N, L), 0.0);        
-    return (kD * albedo / PI + specular) * radiance * NdotL;
+	float NdotL = max(dot(N, L), 0.0);
+	return (kD * albedo / PI + specular) * radiance * NdotL;
 }
 
-vec3 calcAllLights(in vec3 position, in vec3 normal, in vec2 texCoord) {
+vec3 calcAllLights(in vec3 position, in vec3 normal, in vec3 vertexNormal, in vec2 texCoord, in vec3 albedo) {
 	vec3 light = vec3(0.0, 0.0, 0.0);
 	for (int i = 0; i < lightsCount; i++) {
-		light += calcLight(lights[i], position, normal, texCoord, 2.0, materials[material_index]);
+		light += calcLight(lights[i], position, normal, vertexNormal, texCoord, materials[material_index], albedo);
 	}
 	return light;
 }

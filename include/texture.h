@@ -11,6 +11,8 @@
 namespace ygl {
 class ITexture {
    public:
+	enum Type { RGB, RGBA, SRGBA, SRGB, GREY };
+
 	ITexture(){};
 	virtual void save(std::string fileName) = 0;
 
@@ -24,19 +26,35 @@ class ITexture {
 	virtual void unbindImage(int unit) = 0;
 
 	virtual int getID() = 0;
-	virtual ~ITexture() {};
+	virtual ~ITexture(){};
+
+   protected:
+	static void getTypeParameters(Type type, GLint &internalFormat, GLenum &format, uint8_t &pixelSize,
+								  uint8_t &components);
 };
 
 class Texture2d : public ITexture {
 	GLsizei width = -1, height = -1;
-	int		channelCount = 4;	  // TODO: add a sensible way to change this
-	GLuint	id			 = -1;
+	uint8_t pixelSize  = 16;
+	uint8_t components = 4;
+	GLuint	id		   = -1;
+
+	void init(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
+			  stbi_uc *data);
+	void init(GLsizei width, GLsizei height, Type type, stbi_uc *data);
+	void init(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components);
 
    public:
 	Texture2d(){};
+
+	Texture2d(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
+			  stbi_uc *data);
+	Texture2d(GLsizei width, GLsizei height, Type type, stbi_uc *data);
 	Texture2d(GLsizei width, GLsizei height);
-	Texture2d(GLsizei width, GLsizei height, GLint internalFormat, GLenum format);
+	Texture2d(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components);
+	Texture2d(std::string fileName, Type type);
 	Texture2d(std::string fileName);
+
 	void save(std::string filename) override;
 	void bind(int textureUnit) override;
 	void bind() override;
@@ -49,10 +67,10 @@ class Texture2d : public ITexture {
 };
 
 class TextureCubemap : public ITexture {
-	static const constexpr char* faces[] = {"right", "left", "top", "bottom", "front", "back"};
+	static const constexpr char *faces[] = {"right", "left", "top", "bottom", "front", "back"};
 
 	GLsizei width = -1, height = -1;
-	GLuint	id = -1;
+	GLuint	id		 = -1;
 	int		channels = 4;
 
    public:
@@ -66,10 +84,9 @@ class TextureCubemap : public ITexture {
 	void unbind() override;
 	void bindImage(int textureUnit) override;
 	void unbindImage(int textureUnit) override;
-	int getID() override;
+	int	 getID() override;
 
-	virtual ~TextureCubemap() {};
+	virtual ~TextureCubemap(){};
 };
-
 
 }	  // namespace ygl

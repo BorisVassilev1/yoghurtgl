@@ -12,14 +12,15 @@ uniform mat4 worldMatrix;
 
 void main() {
 	vec4 vPos = worldMatrix * vec4(position, 1.0);
-	
+
 	gl_PointSize = 5.0;
 	gl_Position = projectionMatrix * viewMatrix * vPos;
 	
 	vColor = color;
 	vTexCoord = texCoord;
 	vVertexNormal = normalize(worldMatrix * vec4(normal, 0.0)).xyz;
-    vVertexPos = vPos.xyz;
+	
+	vVertexPos = vPos.xyz;
 
 	vec3 worldSpaceTangent = normalize(vec3(worldMatrix * vec4(tangent, 0.0)));
 

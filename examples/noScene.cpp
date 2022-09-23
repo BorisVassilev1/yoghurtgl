@@ -19,30 +19,31 @@ int main() {
 
 	ygl::Window window = ygl::Window(1200, 800, "rayTracer", true);
 
-	Mesh			 *bunnyMesh = (Mesh *)getModel(loadScene("./res/models/bunny.obj"));
+	Mesh		  *bunnyMesh = (Mesh *)getModel(loadScene("./res/models/bunny.obj"));
 	Transformation bunnyTransform;
 
 	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 	Camera	  cam(glm::radians(70.f), window, 0.01, 1000);
 
-	Mouse mouse(window);
+	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);
 
-	Material mat  = Material(glm::vec3(1., 1., 0.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1, 0., false, 0, 0., 0.);
+	Material mat	 = Material(glm::vec3(1., 1., 0.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0,
+								0.1, 0., false, 0, 0., 0.);
 	GLuint	 matBuff = Renderer::loadMaterials(1, &mat);
 
-	Light lights [2] = {Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 0.7,
-						Light::Type::DIRECTIONAL),
-						Light(Transformation(), glm::vec3(1., 1., 1.), 0.1, Light::Type::AMBIENT)};
-    GLuint lightBuff = Renderer::loadLights(2, lights);
-	
+	Light  lights[2] = {Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
+							  3, Light::Type::DIRECTIONAL),
+						Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT)};
+	GLuint lightBuff = Renderer::loadLights(2, lights);
+
 	Texture2d tex(1, 1);
 	tex.bind(GL_TEXTURE0);
 	tex.bind(GL_TEXTURE1);
 	tex.bind(GL_TEXTURE2);
 	tex.bind(GL_TEXTURE3);
 	tex.bind(GL_TEXTURE4);
-	
+
 	while (!window.shouldClose()) {
 		window.beginFrame();
 
