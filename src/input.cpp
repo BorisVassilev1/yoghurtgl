@@ -25,8 +25,8 @@ void ygl::Mouse::update() {
 	position = newPos;
 
 	if (lock && !disableMouseWhenLockedAndHidden) {
-		position.x = window.getWidth() / 2.;
-		position.y = window.getHeight() / 2.;
+		position.x = window.getWidth() / 2;
+		position.y = window.getHeight() / 2;
 		glfwSetCursorPos(window.getHandle(), position.x, position.y);
 	}
 }
@@ -88,8 +88,8 @@ void ygl::FPController::update(double deltaTime) {
 
 	if (mouse->getDelta().x != 0.0 || mouse->getDelta().y != 0.0) { changed = true; }
 
-	transform.rotation.x -= mouse->getDelta().y / 500;
-	transform.rotation.y -= mouse->getDelta().x / 500;
+	transform.rotation.x -= mouse->getDelta().y / 500.;
+	transform.rotation.y -= mouse->getDelta().x / 500.;
 
 	if (transform.rotation.x > M_PI / 2) {
 		transform.rotation.x = M_PI / 2;

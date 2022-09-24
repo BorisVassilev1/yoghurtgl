@@ -14,8 +14,9 @@ uniform vec3 color1 = pow(vec3(0.9, 1, 0.7), vec3(2.2));
 
 void main() {
 	vec3 albedo = mix(color0, color1, vColor.x * vColor.x);
+	vec3 normalizedVertexNormal = normalize(vVertexNormal);
 
-	vec3 color = calcAllLights(vVertexPos, vVertexNormal, vVertexNormal, vTexCoord, albedo);
+	vec3 color = calcAllLights(vVertexPos, normalizedVertexNormal, normalizedVertexNormal, vTexCoord, albedo);
 	// vec3 color2 = calcAllLights(vVertexPos, -vVertexNormal, vVertexNormal, vTexCoord, albedo);
 	// color += 0.5 * color2;
 

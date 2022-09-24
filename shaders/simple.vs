@@ -24,5 +24,8 @@ void main() {
 
 	vec3 worldSpaceTangent = normalize(vec3(worldMatrix * vec4(tangent, 0.0)));
 
+	// re-orthogonalize T with respect to N
+	// worldSpaceTangent = normalize(worldSpaceTangent - dot(worldSpaceTangent, vVertexNormal) * vVertexNormal);
+
 	vTBN = mat3(worldSpaceTangent, cross(worldSpaceTangent, vVertexNormal), vVertexNormal);
 }

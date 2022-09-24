@@ -11,6 +11,7 @@ in mat3 vTBN;
 out vec4 fragColor;
 
 void main() {
+	vec3 normalizedVertexNormal = normalize(vVertexNormal);
 	vec3	 finalNormal;
 	vec2	 vTexCoord = vTexCoord * 3.;
 	Material mat	   = materials[material_index];
@@ -22,7 +23,7 @@ void main() {
 
 		finalNormal = normalize(vTBN * normal);
 	} else {
-		finalNormal = vVertexNormal;
+		finalNormal = normalizedVertexNormal;
 	}
 
 	vec3 albedo = mat.albedo;
@@ -31,10 +32,10 @@ void main() {
 				 mix(vec3(1.), vec3(texture(aoMap, vTexCoord).x), mat.use_ao_map);
 	}
 
-	vec3 color = calcAllLights(vVertexPos, finalNormal, vVertexNormal, vTexCoord, albedo);
+	vec3 color = calcAllLights(vVertexPos, finalNormal, normalizedVertexNormal, vTexCoord, albedo);
 
 	// light = vec3(materials[material_index].albedo);
-	// light = vVertexNormal;
+	// color = vVertexNormal;
 	// color = vVertexPos;
 
 	// color = color / (color + vec3(1.0));

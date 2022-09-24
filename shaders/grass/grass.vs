@@ -30,8 +30,9 @@ vec3 bezierDerivative(float x, vec3 v0, vec3 v1, vec3 v2) {
 	return v0 * (2*x-2) + (2*v2-4*v1) * x + 2 * v1;
 }
 
-uniform float curvature = 1.0;
-uniform float facingOffset = 1.;
+uniform float curvature = 0.6;
+uniform float facingOffset = 0.8;
+uniform float height = 1.0;
 
 void main() {
 	uint seed = bladeData2;
@@ -39,24 +40,29 @@ void main() {
 	float windStrength = bladeData0.w;
 	vec2 facing = bladeData1.xy;
 	vec2 size = bladeData1.zw;
+	size.y *= height;
 
 	// construct everything on the y/z plane
 	vec3 target = vec3(0, size.y, facingOffset);
-	vec3 lineNormal = normalize(vec3(0, facingOffset, -size.y));
-	vec3 mid = target * 0.7 + lineNormal * curvature;
 	
 	// bobbing still in 2d
 	float bobbingOffset = TWO_PI * randomFloat(seed) - color.x * 3.14;
-	float bobbingFreq = pow(size.y, 2);
-	target.y += windStrength * (sin(time * bobbingFreq + bobbingOffset) + 1.);
-	target.z -= windStrength * sin(time * bobbingFreq + bobbingOffset);
+	float bobbingFreq = 2.;
+	float bobbingStrength = 0.2;
+	target.y += (bobbingStrength * sin(time * bobbingFreq + bobbingOffset) - windStrength) * 1;
+	target.z -= (bobbingStrength * sin(time * bobbingFreq + bobbingOffset) - windStrength ) * 0.5;
+
+	// calculate the mid point
+	vec3 lineNormal = normalize(vec3(0, facingOffset, -size.y));
+	vec3 mid = target * 0.7 + lineNormal * curvature;
+	
 
 	// generate vertex data in 2d
 	vec3 vertexPos = bezierCurve(color.x, vec3(0), mid, target);
 	vec3 derivative = bezierDerivative(color.x, vec3(0), mid, target);
 	vec3 curveNormal = vec3(0, derivative.z, -derivative.y);
 
-	curveNormal.x += 0.2 * (color.y);
+	curveNormal.x -= 0.2 * (color.y);
 
 	// construct the rotation matrix
 	vec3 orthogonal = vec3(facing.y, 0, -facing.x);

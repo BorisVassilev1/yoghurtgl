@@ -43,17 +43,18 @@ int main() {
 	Renderer *renderer = scene.registerSystem<Renderer>();
 	scene.setSystemSignature<Renderer, Transformation, RendererComponent>();
 
-	Mesh *terrainMesh = makeBox(glm::vec3(1, 1, 1), glm::vec3(20, 20, 20));
+	// Mesh *modelMesh = makeBox(glm::vec3(1, 1, 1), glm::vec3(20, 20, 20));
+	Mesh *modelMesh = (Mesh *)getModel(loadScene("./res/models/bunny_uv/bunny_uv.obj"));
 
-	Entity terrain = scene.createEntity();
-	scene.addComponent<Transformation>(terrain, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(10)));
-	RendererComponent terrainRenderer;
-	terrainRenderer.materialIndex =
+	Entity model = scene.createEntity();
+	scene.addComponent<Transformation>(model, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(10)));
+	RendererComponent modelRenderer;
+	modelRenderer.materialIndex =
 		renderer->addMaterial(Material(glm::vec3(1., 1., 1.), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0,
 									   glm::vec3(1.0), 0.0, 0.0, 1.0, true, 0.0, 0.5, 1.0));
-	terrainRenderer.shaderIndex = renderer->addShader(shader);
-	terrainRenderer.meshIndex	= renderer->addMesh(terrainMesh);
-	scene.addComponent(terrain, terrainRenderer);
+	modelRenderer.shaderIndex = renderer->addShader(shader);
+	modelRenderer.meshIndex	= renderer->addMesh(modelMesh);
+	scene.addComponent(model, modelRenderer);
 
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 3,
 							 Light::Type::DIRECTIONAL));
@@ -65,6 +66,10 @@ int main() {
 	while (!window.shouldClose()) {
 		window.beginFrame();
 		mouse.update();
+
+		Transformation &transform = scene.getComponent<Transformation>(model);
+		transform.rotation += glm::vec3(0.3 * window.deltaTime);
+		transform.updateWorldMatrix();
 
 		controller.update(window.deltaTime);
 		cam.update();

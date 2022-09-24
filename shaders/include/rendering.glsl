@@ -133,7 +133,7 @@ vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec3 vertexNormal, i
 
 	vec3 V = normalize(camPos - position);
 	
-	if(dot(V, vertexNormal) < 0) N = -N;
+	if(dot(V, vertexNormal) < -0.1) N = -N;
 	
 	vec3 H = normalize(V + L);
 

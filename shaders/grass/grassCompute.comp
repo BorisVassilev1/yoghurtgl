@@ -1,5 +1,7 @@
 #version 460
 
+#include <simplexNoise.glsl>
+
 #ifdef GL_ES
 precision highp float;
 #endif
@@ -40,6 +42,8 @@ float map(float value, float min1, float max1, float min2, float max2) {
 const float PI = 3.141592;
 const float TWO_PI = 2. * PI;
 
+uniform vec2 windDirection = normalize(vec2(1, 1));
+
 void main() {
     uvec3 invID = gl_GlobalInvocationID;
     uint id = invID.x + int(resolution.x) * invID.y;
@@ -50,10 +54,21 @@ void main() {
     bladePosition.y = 0;
     bladePosition.xz += 0.4 * vec2(randomFloat(seed), randomFloat(seed));
 
+    float noiseValue = snoise(bladePosition * .1 + time * vec3(-windDirection, 0.)) * 0.5 + 0.5;
+    float noiseValue2 = snoise(vec3(bladePosition.xz * .05, 0)) * TWO_PI;
+    // float noiseValue2 = 2.;
+    vec2 grassFacing = vec2(cos(noiseValue2), sin(noiseValue2));
+
+
+    float windStrength = noiseValue * 2 + 2;
+
+    float angle = randomFloat(seed) * TWO_PI;
+    vec2 facing = grassFacing + windDirection * windStrength + 0.3 * vec2(cos(angle), sin(angle));
+    facing = normalize(facing);
+
     bladeData[id].position = bladePosition;
     bladeData[id].hash = seed;
-    bladeData[id].windStrength = 0.2;
-    float angle = randomFloat(seed) * TWO_PI;
-    bladeData[id].facing = vec2(cos(angle), sin(angle));
+    bladeData[id].windStrength = noiseValue;
+    bladeData[id].facing = facing;
     bladeData[id].size = vec2(0.1, map(randomFloat(seed), 0, 1, 0.8, 1.5));
 }

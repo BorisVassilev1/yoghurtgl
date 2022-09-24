@@ -17,8 +17,8 @@
 using namespace ygl;
 using namespace std;
 
-const int grassCountX = 60;
-const int grassCountY = 60;
+const int grassCountX = 120;
+const int grassCountY = 120;
 const int grassCount  = grassCountX * grassCountY;
 
 struct BladeData {
@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 
 	srand(time(NULL));
 
-	Window window = Window(1200, 800, "Test Window", true);
+	Window window = Window(1200, 800, "Grass Test", true);
 
 	VFShader *shader	  = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 	VFShader *grassShader = new VFShader("./shaders/grass/grass.vs", "./shaders/grass/grass.fs");
@@ -69,14 +69,14 @@ int main(int argc, char *argv[]) {
 	renderer->setDefaultShader(0);
 
 	Mesh *grassBlade = (Mesh *)getModel(loadScene("./res/models/grass_blade.obj"));
-	Mesh *planeMesh	 = makePlane(glm::vec2(20, 20), glm::vec2(1, 1));
+	Mesh *planeMesh	 = makePlane(glm::vec2(40, 40), glm::vec2(1, 1));
 
 	Entity plane = scene.createEntity();
 	scene.addComponent(plane, Transformation());
 	scene.addComponent(plane, RendererComponent(-1, renderer->addMesh(planeMesh),
-												renderer->addMaterial(Material(glm::vec3(0.1, 0.5, 0.1), .2, glm::vec3(0.),
-																			   0.99, glm::vec3(0.1), 0.0, glm::vec3(1.),
-																			   0.0, 0.1, 0.0, false, 0., 0.0, 0.0))));
+												renderer->addMaterial(Material(
+													glm::vec3(0.1, 0.5, 0.1), .2, glm::vec3(0.), 0.99, glm::vec3(0.1),
+													0.0, glm::vec3(1.), 0.0, 0.1, 0.0, false, 0., 0.0, 0.0))));
 
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(0.5, -0.5, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
 							 3, Light::Type::DIRECTIONAL));
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
 
 	grassCompute.bind();
 	grassCompute.setUniform("resolution", glm::vec2(grassCountX, grassCountY));
-	grassCompute.setUniform("size", glm::vec2(20, 20));
+	grassCompute.setUniform("size", glm::vec2(40, 40));
 	Renderer::compute(&grassCompute, grassCountX, grassCountY, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
@@ -121,6 +121,12 @@ int main(int argc, char *argv[]) {
 		cam.update();
 
 		renderer->doWork();
+
+		grassCompute.bind();
+		grassCompute.setUniform("time", time);
+		Renderer::compute(&grassCompute, grassCountX, grassCountY, 1);
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 		grassShader->bind();
 		time += window.deltaTime;
