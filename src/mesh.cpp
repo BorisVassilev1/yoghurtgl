@@ -54,7 +54,7 @@ GLuint ygl::IMesh::getVAO() { return vao; }
 
 void ygl::IMesh::setDrawMode(GLenum mode) { drawMode = mode; }
 
-void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint count,
+void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer,
 								  GLuint indexDivisor, GLsizei stride, const void *pointer) {
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
 	glVertexAttribPointer(attrLocation, coordSize, GL_FLOAT, GL_FALSE, stride, pointer);
@@ -63,13 +63,13 @@ void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint 
 	vbos.push_back(VBO(attrLocation, buffer, coordSize));
 }
 
-void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint count,
+void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer,
 								  GLuint indexDivisor) {
-	addVBO(attrLocation, coordSize, buffer, count, indexDivisor, 0, 0);
+	addVBO(attrLocation, coordSize, buffer, indexDivisor, 0, 0);
 }
 
-void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint count) {
-	addVBO(attrLocation, coordSize, buffer, count, 0);
+void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer) {
+	addVBO(attrLocation, coordSize, buffer, 0);
 }
 
 // note that 'count' is the vertex count, not the length or size of the VBO
@@ -79,7 +79,7 @@ void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLfloat
 	glGenBuffers(1, &buff);
 	glBindBuffer(GL_ARRAY_BUFFER, buff);
 	glBufferData(GL_ARRAY_BUFFER, count * sizeof(GLfloat) * coordSize, data, GL_STATIC_DRAW);
-	addVBO(attrLocation, coordSize, buff, count, indexDivisor);
+	addVBO(attrLocation, coordSize, buff, indexDivisor);
 }
 
 void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLfloat *data, GLuint count) {
@@ -519,19 +519,23 @@ ygl::Mesh *ygl::makePlane(const glm::vec2 &detail) { return makePlane(glm::vec2(
 
 Assimp::Importer *ygl::importer = nullptr;
 
-const aiScene *ygl::loadScene(const std::string &file) {
+const aiScene *ygl::loadScene(const std::string &file, unsigned int flags) {
 	// Assimp::Importer importer;
 	if (ygl::importer == nullptr) { ygl::importer = new Assimp::Importer(); }
 
-	const aiScene *scene = ygl::importer->ReadFile(file, aiProcess_CalcTangentSpace | aiProcess_Triangulate |
-															 aiProcess_JoinIdenticalVertices | aiProcess_GenNormals |
-															 aiProcess_PreTransformVertices);
+	const aiScene *scene = ygl::importer->ReadFile(file, flags);
 
 	if (!scene) {
 		dbLog(ygl::LOG_ERROR, "[Assimp]", ygl::importer->GetErrorString());
 		return nullptr;
 	}
 	return scene;
+}
+
+const aiScene *ygl::loadScene(const std::string &file) {
+	return loadScene(file, aiProcess_CalcTangentSpace | aiProcess_Triangulate |
+															 aiProcess_JoinIdenticalVertices | aiProcess_GenNormals |
+															 aiProcess_PreTransformVertices);
 }
 
 const ygl::Mesh *ygl::getModel(const aiScene *scene) {

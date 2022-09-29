@@ -59,10 +59,10 @@ class MultiBufferMesh : public IMesh {
 	MultiBufferMesh() {}
 
    public:
-	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint count, GLuint indexDivisor, GLsizei stride,
+	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint indexDivisor, GLsizei stride,
 				const void *pointer);
-	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint count, GLuint indexDivisor);
-	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint count);
+	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint indexDivisor);
+	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer);
 	void addVBO(GLuint location, GLuint coordSize, GLfloat *data, GLuint count, GLuint indexDivisor);
 	void addVBO(GLuint location, GLuint coordSize, GLfloat *data, GLuint count);
 
@@ -101,7 +101,8 @@ Mesh *makePlane(const glm::vec2 &detail);
 
 extern Assimp::Importer *importer;
 
-const aiScene *loadScene(const std::string &);
+const aiScene *loadScene(const std::string &file, unsigned int flags);
+const aiScene *loadScene(const std::string &file);
 const Mesh	   *getModel(const aiScene *);
 
 void terminateLoader();

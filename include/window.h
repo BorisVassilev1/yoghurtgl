@@ -23,6 +23,7 @@ class Window {
 
    public:
 	double deltaTime = 0;
+	double globalTime = 0;
 	Window(int width, int height, const char *name, bool vsync, bool resizable, GLFWmonitor *monitor);
 	Window(int width, int height, const char *name, bool vsync, bool resizable);
 	Window(int width, int height, const char *name, bool vsync);

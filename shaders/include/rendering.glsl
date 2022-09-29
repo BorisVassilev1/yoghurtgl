@@ -1,4 +1,4 @@
-const float PI = 3.14159265359;
+const float PI	   = 3.14159265359;
 const float TWO_PI = 2. * PI;
 
 layout(location = 0) in vec3 position;
@@ -74,11 +74,11 @@ layout(std140, binding = 2) uniform Lights {
 uniform uint material_index = 0;
 
 uniform bool use_texture;
-layout(binding = 0) uniform sampler2D albedoMap;
-layout(binding = 1) uniform sampler2D normalMap;
-layout(binding = 2) uniform sampler2D heightMap;
-layout(binding = 3) uniform sampler2D roughnessMap;
-layout(binding = 4) uniform sampler2D aoMap;
+layout(binding = 1) uniform sampler2D albedoMap;
+layout(binding = 2) uniform sampler2D normalMap;
+layout(binding = 3) uniform sampler2D heightMap;
+layout(binding = 4) uniform sampler2D roughnessMap;
+layout(binding = 5) uniform sampler2D aoMap;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {	   // learnopengl
 	return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
@@ -132,9 +132,9 @@ vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec3 vertexNormal, i
 	L		   = normalize(L);
 
 	vec3 V = normalize(camPos - position);
-	
-	if(dot(V, vertexNormal) < -0.1) N = -N;
-	
+
+	if (dot(V, vertexNormal) < -0.001) N = -N;
+
 	vec3 H = normalize(V + L);
 
 	float attennuation = 1. / (dist * dist);
@@ -152,8 +152,8 @@ vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec3 vertexNormal, i
 
 	vec3  numerator	  = NDF * G * F;
 	float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-	denominator = max(denominator, 0.0001);
-	vec3  specular	  = numerator / denominator;
+	denominator		  = max(denominator, 0.0001);
+	vec3 specular	  = numerator / denominator;
 
 	vec3 kS = F;
 	vec3 kD = vec3(1.0) - kS;

@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <iostream>
 #include <set>
+#include <window.h>
 
 namespace ygl {
 
@@ -156,10 +157,11 @@ class ISystem {
 	std::set<Entity> entities;
 	Scene			  *scene = nullptr;
 
-	ISystem() {}
-	virtual ~ISystem() {};
+	ISystem(Scene *scene) : scene(scene) {}
+	virtual ~ISystem(){};
 
 	virtual void doWork() = 0;
+	virtual void init()	  = 0;
 };
 
 class SystemManager {
@@ -168,23 +170,23 @@ class SystemManager {
 
    public:
 	template <class T>
-	T *registerSystem() {
+	T *registerSystem(Scene *scene) {
 		const char *type = typeid(T).name();
 
 		assert(systems.find(type) == systems.end() && "system type already registered");
 
-		T *sys		  = new T();
-		systems[type] = sys;
+		T *sys = new T(scene);
+		systems.insert({type, sys});
 		return sys;
 	}
 
 	template <class T>
-	T* getSystem() {
+	T *getSystem() {
 		const char *type = typeid(T).name();
 
 		assert(systems.find(type) != systems.end() && "system type has not been registered");
 
-		return (T*)(systems[type]);
+		return (T *)(systems[type]);
 	}
 
 	template <class T>
@@ -212,7 +214,7 @@ class SystemManager {
 	}
 
 	~SystemManager() {
-		for(auto pair : systems) {
+		for (auto pair : systems) {
 			delete pair.second;
 		}
 	}
@@ -223,10 +225,13 @@ class Scene {
 	EntityManager	 entityManager;
 	SystemManager	 systemManager;
 
+	Scene();
+
    public:
+	ygl::Window		*window;
 	std::set<Entity> entities;
 
-	Scene() {}
+	Scene(ygl::Window *window) : window(window) {}
 
 	Entity createEntity() {
 		Entity res = entityManager.createEntity();
@@ -277,7 +282,7 @@ class Scene {
 		systemManager.setSignature<System>(s);
 	}
 
-	template<class T>
+	template <class T>
 	T *getSystem() {
 		return systemManager.getSystem<T>();
 	}
@@ -294,8 +299,8 @@ class Scene {
 
 	template <class T>
 	T *registerSystem() {
-		T *sys	   = systemManager.registerSystem<T>();
-		sys->scene = this;
+		T *sys = systemManager.registerSystem<T>(this);
+		sys->init();
 		return sys;
 	}
 };

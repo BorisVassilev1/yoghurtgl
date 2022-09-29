@@ -20,9 +20,9 @@ out vec3 teVertexNormal;
 out vec3 teVertexPos;
 out mat3 teTBN;
 
-layout(binding=0) uniform sampler2D albedoMap;
-layout(binding=1) uniform sampler2D normalMap;
-layout(binding=2) uniform sampler2D heightMap;
+layout(binding=1) uniform sampler2D albedoMap;
+layout(binding=2) uniform sampler2D normalMap;
+layout(binding=3) uniform sampler2D heightMap;
 
 uniform mat4 worldMatrix;
 uniform float displacementPower;

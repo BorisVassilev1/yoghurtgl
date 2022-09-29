@@ -17,8 +17,6 @@ void main() {
 	vec3 normalizedVertexNormal = normalize(vVertexNormal);
 
 	vec3 color = calcAllLights(vVertexPos, normalizedVertexNormal, normalizedVertexNormal, vTexCoord, albedo);
-	// vec3 color2 = calcAllLights(vVertexPos, -vVertexNormal, vVertexNormal, vTexCoord, albedo);
-	// color += 0.5 * color2;
 
 	// color = vec3(materials[material_index].albedo);
 	// color = vVertexNormal;

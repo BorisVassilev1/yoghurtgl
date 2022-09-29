@@ -1,6 +1,20 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.2.0)
 
 project(YoghurtGL)
+
+
+# Set where the ImGui files are stored
+set(IMGUI_PATH  "./libs/imgui")
+    
+# Compile as static library 
+file(GLOB IMGUI_SOURCES ${IMGUI_PATH}/*.cpp) 
+add_library("ImGui" STATIC 
+${IMGUI_SOURCES} 
+${IMGUI_PATH}/backends/imgui_impl_opengl3.cpp
+${IMGUI_PATH}/backends/imgui_impl_glfw.cpp
+)
+target_include_directories("ImGui" PUBLIC ${IMGUI_PATH})
+target_include_directories("ImGui" PUBLIC ${IMGUI_PATH}/backends/)
 
 
 file(GLOB_RECURSE SOURCES
@@ -30,9 +44,10 @@ foreach(CURR_FILE ${TARGET_FILES})
 	set_target_properties(${CURR_TARGET} PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY ../
 	)
-	target_include_directories(${CURR_TARGET} PRIVATE include)
-	target_include_directories(${CURR_TARGET} PRIVATE ${INCLUDES})
-	target_link_libraries(${CURR_TARGET} ${LIBS})
+	target_include_directories(${CURR_TARGET} PUBLIC include)
+	target_include_directories(${CURR_TARGET} PUBLIC ${INCLUDES})
+	target_link_libraries(${CURR_TARGET} PUBLIC ImGui)
+	target_link_libraries(${CURR_TARGET} PUBLIC ${LIBS})
 endforeach(CURR_FILE ${TARGET_FILES})
 
 set(CMAKE_CXX_FLAGS "-g -std=c++23 -Wall")

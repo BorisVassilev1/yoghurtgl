@@ -23,9 +23,13 @@ layout(std430, binding = 1) writeonly buffer GrassData{
     BladeData bladeData[];
 };
 
-uniform vec2 resolution = vec2(100, 100);
+uniform ivec2 resolution = ivec2(100, 100);
 uniform vec2 size = vec2(10, 10);
 uniform float time;
+
+uniform vec2 windDirection = normalize(vec2(1, 1));
+
+uniform mat4 anchorWorldMatrix; 
 
 uint PCGHash(inout uint seed) {
 	seed	  = seed * 747796405u + 2891336453u;
@@ -42,10 +46,9 @@ float map(float value, float min1, float max1, float min2, float max2) {
 const float PI = 3.141592;
 const float TWO_PI = 2. * PI;
 
-uniform vec2 windDirection = normalize(vec2(1, 1));
-
 void main() {
     uvec3 invID = gl_GlobalInvocationID;
+    if(invID.x >= resolution.x || invID.y >= resolution.y) return;
     uint id = invID.x + int(resolution.x) * invID.y;
     uint seed = id;
 
@@ -54,8 +57,10 @@ void main() {
     bladePosition.y = 0;
     bladePosition.xz += 0.4 * vec2(randomFloat(seed), randomFloat(seed));
 
-    float noiseValue = snoise(bladePosition * .1 + time * vec3(-windDirection, 0.)) * 0.5 + 0.5;
-    float noiseValue2 = snoise(vec3(bladePosition.xz * .05, 0)) * TWO_PI;
+    vec3 worldBladePosition = (anchorWorldMatrix * vec4(bladePosition, 1.0)).xyz;
+
+    float noiseValue = snoise(worldBladePosition * .1 + time * vec3(-windDirection, 0.)) * 0.5 + 0.5;
+    float noiseValue2 = snoise(worldBladePosition.xyz * .05) * TWO_PI;
     // float noiseValue2 = 2.;
     vec2 grassFacing = vec2(cos(noiseValue2), sin(noiseValue2));
 

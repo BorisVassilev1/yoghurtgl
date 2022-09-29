@@ -103,7 +103,7 @@ layout(std430, binding = 4) buffer Indices { int indices[]; };
 
 layout(std430, binding = 5) buffer BVH { BVHNode nodes[]; };
 
-layout(binding = 5) uniform samplerCube skybox;
+layout(binding = 6) uniform samplerCube skybox;
 
 uniform mat4  cameraMatrix;
 uniform vec2  resolution;

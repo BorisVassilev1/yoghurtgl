@@ -50,22 +50,17 @@ int main(int argc, char *argv[]) {
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);
 
-	Scene scene;
+	Scene scene(&window);
 	scene.registerComponent<Transformation>();
-	scene.registerComponent<RendererComponent>();
 
-	Texture2d *color  = new Texture2d(1, 1);	 // not used
+	Renderer *renderer = scene.registerSystem<Renderer>();
+
 	Texture2d *height = new Texture2d("./res/images/heightmap.png");
 	Texture2d *normal = new Texture2d("./res/images/NormalMap.png");
 
-	color->bind(GL_TEXTURE0);
-	normal->bind(GL_TEXTURE1);
-	height->bind(GL_TEXTURE2);
+	normal->bind(GL_TEXTURE2);
 	height->bind(GL_TEXTURE3);
-	color->bind(GL_TEXTURE4);
-
-	Renderer *renderer = scene.registerSystem<Renderer>();
-	scene.setSystemSignature<Renderer, Transformation, RendererComponent>();
+	height->bind(GL_TEXTURE4);
 
 	Mesh *terrainMesh = makePlane(glm::vec2(1, 1), glm::vec2(20, 20));
 

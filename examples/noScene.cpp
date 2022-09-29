@@ -38,11 +38,11 @@ int main() {
 	GLuint lightBuff = Renderer::loadLights(2, lights);
 
 	Texture2d tex(1, 1);
-	tex.bind(GL_TEXTURE0);
 	tex.bind(GL_TEXTURE1);
 	tex.bind(GL_TEXTURE2);
 	tex.bind(GL_TEXTURE3);
 	tex.bind(GL_TEXTURE4);
+	tex.bind(GL_TEXTURE5);
 
 	while (!window.shouldClose()) {
 		window.beginFrame();

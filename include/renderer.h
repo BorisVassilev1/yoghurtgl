@@ -75,8 +75,12 @@ class Renderer : public ygl::ISystem {
 	GLuint lightsBuffer	   = 0;
 
 	int defaultShader = -1;
+	Texture2d defaultTexture = Texture2d(1, 1, ITexture::Type::RGBA, nullptr);
 
    public:
+	using ISystem::ISystem;
+	void init() override;
+
 	Shader   *getShader(RendererComponent &);
 	Material &getMaterial(RendererComponent &);
 	Mesh	 *getMesh(RendererComponent &);

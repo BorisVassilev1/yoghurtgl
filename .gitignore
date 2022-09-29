@@ -4,9 +4,11 @@
 !makefile
 !Makefile
 !Makefile-manual
+!/libs/*
 
 /build/*
 *.exe
 *.log
 
 /res/*
+imgui.ini

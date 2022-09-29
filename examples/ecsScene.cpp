@@ -36,20 +36,15 @@ int main(int argc, char *argv[]) {
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);
 
-	Scene scene;
+	Scene scene(&window);
 	scene.registerComponent<Transformation>();
-	scene.registerComponent<RendererComponent>();
+
+	Renderer *renderer = scene.registerSystem<Renderer>();
 
 	// Texture2d *tex = new Texture2d("./res/models/bunny_uv/bunny_uv.jpg");
 	Texture2d *tex = new Texture2d("./res/images/uv_checker.png");
-	tex->bind();
-	tex->bind(GL_TEXTURE1);		// something has to be bound, otherwise the shaders throw a warning
-	tex->bind(GL_TEXTURE2);
-	tex->bind(GL_TEXTURE3);
-	tex->bind(GL_TEXTURE4);
+	tex->bind(GL_TEXTURE1);
 
-	Renderer *renderer = scene.registerSystem<Renderer>();
-	scene.setSystemSignature<Renderer, Transformation, RendererComponent>();
 
 	Entity			bunny = scene.createEntity();
 	Transformation &transform =

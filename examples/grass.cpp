@@ -1,3 +1,5 @@
+#define _USE_MATH_DEFINES
+
 #include <yoghurtgl.h>
 
 #include <window.h>
@@ -9,28 +11,19 @@
 #include <ecs.h>
 #include <renderer.h>
 #include <texture.h>
+#include <effects.h>
 
 #include <iostream>
 #include <random>
 #include <time.h>
+#include <math.h>
+
+#include <imgui.h>
+#include <imgui_impl_opengl3.h>
+#include <imgui_impl_glfw.h>
 
 using namespace ygl;
 using namespace std;
-
-const int grassCountX = 120;
-const int grassCountY = 120;
-const int grassCount  = grassCountX * grassCountY;
-
-struct BladeData {
-	glm::vec3 position;
-	float	  windStrength;
-	glm::vec2 facing;
-	glm::vec2 size;
-	uint	  hash;
-
-   private:
-	char padding[12];
-};
 
 int main(int argc, char *argv[]) {
 	if (init()) {
@@ -42,34 +35,26 @@ int main(int argc, char *argv[]) {
 
 	Window window = Window(1200, 800, "Grass Test", true);
 
-	VFShader *shader	  = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
-	VFShader *grassShader = new VFShader("./shaders/grass/grass.vs", "./shaders/grass/grass.fs");
+	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 	Camera	  cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);
 
-	Scene scene;
+	Scene scene(&window);
 	scene.registerComponent<Transformation>();
-	scene.registerComponent<RendererComponent>();
 
-	// Texture2d *tex = new Texture2d("./res/models/bunny_uv/bunny_uv.jpg");
-	Texture2d tex		= Texture2d(1, 1);
 	Texture2d uvChecker = Texture2d("./res/images/uv_checker.png");
 
-	uvChecker.bind(GL_TEXTURE0);
-	tex.bind(GL_TEXTURE1);	   // something has to be bound, otherwise the shaders throw a warning
-	tex.bind(GL_TEXTURE2);
-	tex.bind(GL_TEXTURE3);
-	tex.bind(GL_TEXTURE4);
+	uvChecker.bind(GL_TEXTURE1);
 
 	Renderer *renderer = scene.registerSystem<Renderer>();
-	scene.setSystemSignature<Renderer, Transformation, RendererComponent>();
 	renderer->addShader(shader);
 	renderer->setDefaultShader(0);
 
-	Mesh *grassBlade = (Mesh *)getModel(loadScene("./res/models/grass_blade.obj"));
-	Mesh *planeMesh	 = makePlane(glm::vec2(40, 40), glm::vec2(1, 1));
+	GrassSystem *grassSystem = scene.registerSystem<GrassSystem>();
+
+	Mesh *planeMesh = makePlane(glm::vec2(40, 40), glm::vec2(1, 1));
 
 	Entity plane = scene.createEntity();
 	scene.addComponent(plane, Transformation());
@@ -78,41 +63,16 @@ int main(int argc, char *argv[]) {
 													glm::vec3(0.1, 0.5, 0.1), .2, glm::vec3(0.), 0.99, glm::vec3(0.1),
 													0.0, glm::vec3(1.), 0.0, 0.1, 0.0, false, 0., 0.0, 0.0))));
 
+	// renderer->addLight(Light(Transformation(glm::vec3(0, 3, 0)), glm::vec3(0.2, 0.2, 1.0), 50, Light::Type::POINT));
+
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(0.5, -0.5, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
 							 3, Light::Type::DIRECTIONAL));
-	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.1, Light::Type::AMBIENT));
+	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
 
-	GLuint grassMatIndex =
-		renderer->addMaterial(Material(glm::vec3(0., 1., 0.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0,
-									   glm::vec3(1.), 0.0, 0.1, 0.0, false, 0., 0.0, 0.0));
 	renderer->loadData();
 	// scene is initialized
 
-	// compute shaders for blade data
-	ComputeShader grassCompute("./shaders/grass/grassCompute.comp");
-
-	GLuint grassData = -1;
-	glGenBuffers(1, &grassData);
-	glBindBuffer(GL_ARRAY_BUFFER, grassData);
-	glBufferData(GL_ARRAY_BUFFER, grassCount * sizeof(BladeData), nullptr, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	Shader::setSSBO(grassData, 1);
-
-	grassCompute.bind();
-	grassCompute.setUniform("resolution", glm::vec2(grassCountX, grassCountY));
-	grassCompute.setUniform("size", glm::vec2(40, 40));
-	Renderer::compute(&grassCompute, grassCountX, grassCountY, 1);
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-	glBindVertexArray(grassBlade->getVAO());
-	grassBlade->addVBO(5, 4, grassData, grassCount, 1, sizeof(BladeData), 0);
-	grassBlade->addVBO(6, 4, grassData, grassCount, 1, sizeof(BladeData), (const void *)(4 * sizeof(float)));
-	grassBlade->addVBO(7, 1, grassData, grassCount, 1, sizeof(BladeData), (const void *)(8 * sizeof(float)));
-	// glBindVertexArray(0);
-
 	glClearColor(0.07f, 0.13f, 0.17f, 1.0);
-	float time = 0;
 	while (!window.shouldClose()) {
 		window.beginFrame();
 		mouse.update();
@@ -122,26 +82,19 @@ int main(int argc, char *argv[]) {
 
 		renderer->doWork();
 
-		grassCompute.bind();
-		grassCompute.setUniform("time", time);
-		Renderer::compute(&grassCompute, grassCountX, grassCountY, 1);
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+		grassSystem->doWork();
 
-		grassShader->bind();
-		time += window.deltaTime;
-		if (grassShader->hasUniform("time")) grassShader->setUniform("time", time);
-		// cout << time << endl;
-		grassBlade->bind();
-		{
-			grassShader->setUniform("worldMatrix", glm::mat4(1.0));
-			if (grassShader->hasUniform("material_index")) grassShader->setUniform("material_index", grassMatIndex);
+		ImGui::Begin("Grass controls");
+		if (ImGui::SliderFloat("density", &(grassSystem->density), 1., 10.)) { grassSystem->reload(); }
 
-			glDrawElementsInstanced(grassBlade->getDrawMode(), grassBlade->getIndicesCount(), GL_UNSIGNED_INT, 0,
-									grassCount);
+		Transformation &groundTransform = scene.getComponent<Transformation>(plane);
+		if (ImGui::SliderFloat3("ground rotation", (float *)&groundTransform.rotation, -M_PI, M_PI)) {
+			groundTransform.updateWorldMatrix();
 		}
-		grassBlade->unbind();
-		grassShader->unbind();
+		if (ImGui::SliderFloat3("ground position", (float *)&groundTransform.position, -20, 20)) {
+			groundTransform.updateWorldMatrix();
+		}
+		ImGui::End();
 
 		window.swapBuffers();
 	}

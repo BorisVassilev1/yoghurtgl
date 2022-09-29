@@ -1,6 +1,12 @@
 #version 430
 
-#include <rendering.glsl>
+const float TWO_PI = 6.28318530718;
+
+layout(std140, binding = 0) uniform Matrices {
+	mat4 projectionMatrix;
+	mat4 viewMatrix;
+	mat4 cameraWorldMatrix;
+};
 
 out vec4 vColor;
 out vec2 vTexCoord;
@@ -10,9 +16,9 @@ out vec3 vVertexPos;
 uniform mat4 worldMatrix;
 uniform float time;
 
-layout(location = 5) in vec4 bladeData0;
-layout(location = 6) in vec4 bladeData1;
-layout(location = 7) in uint bladeData2;
+layout(location = 0) in vec4 bladeData0;
+layout(location = 1) in vec4 bladeData1;
+layout(location = 2) in uint bladeData2;
 
 uint PCGHash(inout uint seed) {
 	seed	  = seed * 747796405u + 2891336453u;
@@ -42,11 +48,18 @@ void main() {
 	vec2 size = bladeData1.zw;
 	size.y *= height;
 
+	float distanceAlongBlade = (gl_VertexID / 2.) / 7.;
+	float leftOrRight = (gl_VertexID % 2 - 0.5) * 2. + float(gl_VertexID == 14);
+
+	// float distanceAlongBlade = color.x;
+	// float leftOrRight = color.y;
+
+
 	// construct everything on the y/z plane
 	vec3 target = vec3(0, size.y, facingOffset);
 	
 	// bobbing still in 2d
-	float bobbingOffset = TWO_PI * randomFloat(seed) - color.x * 3.14;
+	float bobbingOffset = TWO_PI * randomFloat(seed) - distanceAlongBlade * 3.14;
 	float bobbingFreq = 2.;
 	float bobbingStrength = 0.2;
 	target.y += (bobbingStrength * sin(time * bobbingFreq + bobbingOffset) - windStrength) * 1;
@@ -58,11 +71,11 @@ void main() {
 	
 
 	// generate vertex data in 2d
-	vec3 vertexPos = bezierCurve(color.x, vec3(0), mid, target);
-	vec3 derivative = bezierDerivative(color.x, vec3(0), mid, target);
+	vec3 vertexPos = bezierCurve(distanceAlongBlade, vec3(0), mid, target);
+	vec3 derivative = bezierDerivative(distanceAlongBlade, vec3(0), mid, target);
 	vec3 curveNormal = vec3(0, derivative.z, -derivative.y);
 
-	curveNormal.x -= 0.2 * (color.y);
+	curveNormal.x -= 0.2 * (leftOrRight);
 
 	// construct the rotation matrix
 	vec3 orthogonal = vec3(facing.y, 0, -facing.x);
@@ -78,15 +91,16 @@ void main() {
 	vPos.xyz += bladePosition;
 
 	// blade width
-	vPos.xyz += orthogonal * size.x * color.y * pow((1 - color.x), 0.3);
+	vPos.xyz += orthogonal * size.x * leftOrRight * pow((1 - distanceAlongBlade), 0.3);
 
 	vPos = worldMatrix * vPos;
 
-	// gl_PointSize = 5.0;
 	gl_Position = projectionMatrix * viewMatrix * vPos;
 	
-	vColor = color;
-	vTexCoord = texCoord;
+	vColor.x = distanceAlongBlade;
+	vColor.y = leftOrRight;
+
+	vTexCoord = vec2((leftOrRight + 1.) / 2., distanceAlongBlade);
 	vVertexNormal = normalize(worldMatrix * vec4(curveNormal, 0.0)).xyz;
     vVertexPos = vPos.xyz;
 }

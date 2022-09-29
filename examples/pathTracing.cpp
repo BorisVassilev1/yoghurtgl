@@ -99,7 +99,7 @@ void cleanup() {
 }
 
 void initScene() {
-	bunnyMesh  = (Mesh *)getModel(loadScene("./res/models/bunny.obj"));
+	bunnyMesh  = (Mesh *)getModel(loadScene("./res/models/bunny_uv/bunny_uv.obj"));
 	sphereMesh = makeUnitSphere();
 	cubeMesh   = makeBox(glm::vec3(1, 1, 1), glm::vec3(1, 1, 1));
 
@@ -108,20 +108,16 @@ void initScene() {
 	camera		= new Camera(glm::radians(70.f), *window, 0.01, 1000);
 	controller	= new FPController(window, mouse, camera->transform);
 
-	tex = new Texture2d("./res/images/uv_checker.png");
-	tex->bind();
-	tex->bind(GL_TEXTURE3);
-	tex->bind(GL_TEXTURE4);
-
-	scene = new Scene();
+	scene = new Scene(window);
 	scene->registerComponent<Transformation>();
-	scene->registerComponent<RendererComponent>();
 
 	renderer = scene->registerSystem<Renderer>();
-	scene->setSystemSignature<Renderer, Transformation, RendererComponent>();
+
+	tex = new Texture2d("./res/images/uv_checker.png");
+	tex->bind(GL_TEXTURE1); // albedo texture
 
 	bunny = scene->createEntity();
-	scene->addComponent<Transformation>(bunny, Transformation(glm::vec3(-3, 0, 0)));
+	scene->addComponent<Transformation>(bunny, Transformation(glm::vec3(-3, 0, 0), glm::vec3(0), glm::vec3(10)));
 	RendererComponent bunnyRenderer;
 
 	unsigned int shaderIndex = renderer->addShader(shader);
@@ -130,7 +126,7 @@ void initScene() {
 		bunny,
 		RendererComponent(-1, renderer->addMesh(bunnyMesh),
 						  renderer->addMaterial(Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 1.0, glm::vec3(0.0),
-														 0.0, glm::vec3(1.), 0.0, 1.0, 0., false, 0., 0., 0.))));
+														 0.0, glm::vec3(1.), 0.0, 1.0, 1., false, 0., 0., 0.))));
 
 	unlitShaderIndex = renderer->addShader(unlitShader);
 
@@ -231,7 +227,7 @@ void initPathTracer() {
 	rawTexture->bindImage(1);
 
 	skybox = new TextureCubemap("./res/images/skybox", ".jpg");
-	skybox->bind(GL_TEXTURE0);
+	skybox->bind(GL_TEXTURE6);
 
 	initSpheres();
 	initBoxes();
@@ -239,7 +235,6 @@ void initPathTracer() {
 	pathTracer->bind();
 	pathTracer->setUniform("resolution", glm::vec2(window->getWidth(), window->getHeight()));
 	pathTracer->setUniform("img_output", 1);
-	if (pathTracer->hasUniform("skybox")) pathTracer->setUniform("skybox", 0);
 	pathTracer->setUniform("fov", camera->getFov());
 	pathTracer->setUniform("spheresCount", sphereCount);
 	pathTracer->setUniform("boxesCount", boxesCount);
@@ -248,12 +243,12 @@ void initPathTracer() {
 	pathTracer->setUniform("fov", glm::radians(70.f));
 	// pathTracer->unbind();
 
-	renderTexture->bind(GL_TEXTURE1);
-	rawTexture->bind(GL_TEXTURE2);
+	renderTexture->bind(GL_TEXTURE7);
+	rawTexture->bind(GL_TEXTURE8);
 
 	textureOnScreen = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/ui/textureOnScreen.fs");
 	textureOnScreen->bind();
-	textureOnScreen->setUniform("texture_sampler", 1);
+	textureOnScreen->setUniform("texture_sampler", 7);
 	textureOnScreen->unbind();
 
 	glGenBuffers(1, &spheresBuff);

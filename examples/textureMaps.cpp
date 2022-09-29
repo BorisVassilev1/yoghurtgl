@@ -24,9 +24,10 @@ int main() {
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);
 
-	Scene scene;
+	Scene scene(&window);
 	scene.registerComponent<Transformation>();
-	scene.registerComponent<RendererComponent>();
+
+	Renderer *renderer = scene.registerSystem<Renderer>();
 
 	Texture2d *color	 = new Texture2d("./res/images/stones/albedo.png", ITexture::Type::SRGB);
 	Texture2d *height	 = new Texture2d("./res/images/stones/height.png", ITexture::Type::GREY);
@@ -34,14 +35,11 @@ int main() {
 	Texture2d *roughness = new Texture2d("./res/images/stones/roughness.png", ITexture::Type::GREY);
 	Texture2d *ao		 = new Texture2d("./res/images/stones/ao.png", ITexture::Type::GREY);
 
-	color->bind(GL_TEXTURE0);
-	normal->bind(GL_TEXTURE1);
-	height->bind(GL_TEXTURE2);
-	roughness->bind(GL_TEXTURE3);
-	ao->bind(GL_TEXTURE4);
-
-	Renderer *renderer = scene.registerSystem<Renderer>();
-	scene.setSystemSignature<Renderer, Transformation, RendererComponent>();
+	color->bind(GL_TEXTURE1);
+	normal->bind(GL_TEXTURE2);
+	height->bind(GL_TEXTURE3);
+	roughness->bind(GL_TEXTURE4);
+	ao->bind(GL_TEXTURE5);
 
 	// Mesh *modelMesh = makeBox(glm::vec3(1, 1, 1), glm::vec3(20, 20, 20));
 	Mesh *modelMesh = (Mesh *)getModel(loadScene("./res/models/bunny_uv/bunny_uv.obj"));
@@ -53,7 +51,7 @@ int main() {
 		renderer->addMaterial(Material(glm::vec3(1., 1., 1.), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0,
 									   glm::vec3(1.0), 0.0, 0.0, 1.0, true, 0.0, 0.5, 1.0));
 	modelRenderer.shaderIndex = renderer->addShader(shader);
-	modelRenderer.meshIndex	= renderer->addMesh(modelMesh);
+	modelRenderer.meshIndex	  = renderer->addMesh(modelMesh);
 	scene.addComponent(model, modelRenderer);
 
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 3,
@@ -68,7 +66,8 @@ int main() {
 		mouse.update();
 
 		Transformation &transform = scene.getComponent<Transformation>(model);
-		transform.rotation += glm::vec3(0.3 * window.deltaTime);
+		// transform.rotation += glm::vec3(0.3 * window.deltaTime);
+		transform.rotation.y += 0.3 * window.deltaTime;
 		transform.updateWorldMatrix();
 
 		controller.update(window.deltaTime);

@@ -6,6 +6,10 @@
 #include <iomanip>
 #include <assert.h>
 
+#include <imgui.h>
+#include <imgui_impl_opengl3.h>
+#include <imgui_impl_glfw.h>
+
 #define GL_CONTEXT_VERSION_MAJOR 4
 #define GL_CONTEXT_VERSION_MINOR 6
 
@@ -86,6 +90,19 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	glEnable(GL_CULL_FACE);
+
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO &io = ImGui::GetIO();
+	(void)io;
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+
+	// Setup Platform/Renderer backends
+	ImGui_ImplGlfw_InitForOpenGL(getHandle(), true);
+	ImGui_ImplOpenGL3_Init("#version 430 core");
 }
 
 ygl::Window::Window(int width, int height, const char *name, bool vsync, bool resizable)
@@ -103,23 +120,27 @@ GLFWwindow *ygl::Window::getHandle() { return window; }
 bool ygl::Window::shouldClose() { return glfwWindowShouldClose(window); }
 
 void ygl::Window::swapBuffers() {
-	glFinish(); // TODO: THIS IS VERY BAD!!
-	
-	auto timeNow = std::chrono::high_resolution_clock::now();
-	long long delta	 = std::chrono::duration_cast<std::chrono::nanoseconds>(timeNow - lastSwapTime).count();
+	// finish Dear ImGui frame
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+	glFinish();		// TODO: THIS IS VERY BAD!!
+
+	auto	  timeNow = std::chrono::high_resolution_clock::now();
+	long long delta	  = std::chrono::duration_cast<std::chrono::nanoseconds>(timeNow - lastSwapTime).count();
 
 	glfwSwapBuffers(window);
 
-	timeNow		   = std::chrono::high_resolution_clock::now();
+	timeNow				= std::chrono::high_resolution_clock::now();
 	long long fullDelta = std::chrono::duration_cast<std::chrono::nanoseconds>(timeNow - lastSwapTime).count();
-	deltaTime	   = fullDelta / 1e9;
+	deltaTime			= fullDelta / 1e9;
+	globalTime += deltaTime;
 
-	double glfwNow	= glfwGetTime();
-	double logDelta = glfwNow - lastPrintTime;
+	double logDelta = globalTime - lastPrintTime;
 
 	if (logDelta > 1.) {
 		frameCallback(delta, fullDelta);
-		lastPrintTime = glfwNow;
+		lastPrintTime = globalTime;
 	}
 
 	lastSwapTime = timeNow;
@@ -129,9 +150,19 @@ void ygl::Window::beginFrame() {
 	glfwPollEvents();
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Start the Dear ImGui frame
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
 }
 
 ygl::Window::~Window() {
+	// clean up all ImGui
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
 	if (!ygl::glfw_init) return;
 	if (window != nullptr) {
 		glfwDestroyWindow(window);
