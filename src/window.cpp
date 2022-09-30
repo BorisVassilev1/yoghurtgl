@@ -158,13 +158,13 @@ void ygl::Window::beginFrame() {
 }
 
 ygl::Window::~Window() {
-	// clean up all ImGui
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
-
 	if (!ygl::glfw_init) return;
 	if (window != nullptr) {
+		// clean up all ImGui
+		ImGui_ImplOpenGL3_Shutdown();
+		ImGui_ImplGlfw_Shutdown();
+		ImGui::DestroyContext();
+
 		glfwDestroyWindow(window);
 		ygl::gl_init = false;
 		window		 = nullptr;
