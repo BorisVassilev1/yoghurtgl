@@ -1,8 +1,7 @@
 #define _USE_MATH_DEFINES
 
 #include <input.h>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <yoghurtgl.h>
 #include <iostream>
 #include <math.h>
 

@@ -1,7 +1,6 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <yoghurtgl.h>
 #include <vector>
 #include <glm/glm.hpp>
 #include <string>

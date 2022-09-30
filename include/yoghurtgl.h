@@ -1,10 +1,10 @@
 #pragma once
 
-//#define GLFW_INCLUDE_GLU
+#define GLFW_INCLUDE_GLU
 #ifdef _WIN32
-	#define GLFW_DLL	 // -> windows
+	// #define GLFW_DLL	 // -> windows
 #elif __linux__
-//
+
 #endif
 
 //#define GLEW_NO_GLU
@@ -26,10 +26,10 @@ void			glfwErrorCallback(int code, const char *err_msg);
 void			terminate();
 
 enum {
-	LOG_ERROR = (3),
+	LOG_ERROR	= (3),
 	LOG_WARNING = (2),
-	LOG_DEBUG = (1),
-	LOG_INFO = (0),
+	LOG_DEBUG	= (1),
+	LOG_INFO	= (0),
 };
 
 bool inline f_dbLog() {

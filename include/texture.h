@@ -1,12 +1,9 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <yoghurtgl.h>
 
 #include <string>
 #include <stb/stb_image.h>
-
-#include <yoghurtgl.h>
 
 namespace ygl {
 class ITexture {

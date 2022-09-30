@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.2.0)
 
 project(YoghurtGL)
 
+add_subdirectory(libs/glfw)
+add_subdirectory(libs/glm)
+# add_subdirectory(libs/assimp)
+add_subdirectory(libs/glew-cmake)
+
 
 # Set where the ImGui files are stored
 set(IMGUI_PATH  "./libs/imgui")    
@@ -14,19 +19,17 @@ ${IMGUI_PATH}/backends/imgui_impl_glfw.cpp
 )
 target_include_directories("ImGui" PUBLIC ${IMGUI_PATH})
 target_include_directories("ImGui" PUBLIC ${IMGUI_PATH}/backends/)
+target_include_directories("ImGui" PUBLIC libs/glfw/include)
+target_link_directories("ImGui" PUBLIC libs/glfw/src)
 
-
-add_subdirectory(libs/glfw)
-add_subdirectory(libs/glm)
 
 file(GLOB_RECURSE SOURCES
 	./src/*.cpp
 )
 
 if (WIN32)
-	set(LIBS -lglfw3 -lglew32 -lopengl32 -lassimp)
-endif (WIN32)
-	
+	set(LIBS glfw assimp)
+endif (WIN32)	
 	
 if (UNIX)
 	set(LIBS glfw GL X11 GLEW assimp)
@@ -42,13 +45,18 @@ foreach(CURR_FILE ${TARGET_FILES})
 	set_target_properties(${CURR_TARGET} PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY ../
 	)
-	target_include_directories(${CURR_TARGET} PUBLIC include)
-	target_include_directories(${CURR_TARGET} PUBLIC ${INCLUDES})
-	target_include_directories(${CURR_TARGET} PUBLIC libs/glfw/include)
-	target_include_directories(${CURR_TARGET} PUBLIC libs/glm/)
-	target_link_directories(${CURR_TARGET} PUBLIC libs/glfw/src)
-	target_link_libraries(${CURR_TARGET} PUBLIC ImGui)
-	target_link_libraries(${CURR_TARGET} PUBLIC ${LIBS})
+	target_include_directories(${CURR_TARGET} PRIVATE include)
+	target_include_directories(${CURR_TARGET} PRIVATE ${INCLUDES})
+	target_include_directories(${CURR_TARGET} PRIVATE libs/glfw/include)
+	target_include_directories(${CURR_TARGET} PRIVATE libs/glm/)
+	# target_include_directories(${CURR_TARGET} PUBLIC build/libs/assimp/include)
+	# target_include_directories(${CURR_TARGET} PUBLIC libs/assimp/include)
+
+	target_link_directories(${CURR_TARGET} PRIVATE libs/glfw/src)
+	# target_link_directories(${CURR_TARGET} PUBLIC libs/assimp/code)
+	target_link_libraries(${CURR_TARGET} PRIVATE ImGui)
+	target_link_libraries(${CURR_TARGET} PRIVATE ${LIBS})
+	target_link_libraries(${CURR_TARGET} PRIVATE libglew_static)
 endforeach(CURR_FILE ${TARGET_FILES})
 
 set(CMAKE_CXX_FLAGS "-g -std=c++23 -Wall")
