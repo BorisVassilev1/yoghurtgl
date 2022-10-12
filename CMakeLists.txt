@@ -22,6 +22,13 @@ target_include_directories("ImGui" PUBLIC ${IMGUI_PATH}/backends/)
 target_include_directories("ImGui" PUBLIC libs/glfw/include)
 target_link_directories("ImGui" PUBLIC libs/glfw/src)
 
+# ImGuizmo target
+set(IMGUIZMO_PATH "./libs/ImGuizmo")
+file(GLOB IMGUIZMO_SOURCES ${IMGUIZMO_PATH}/*.cpp)
+add_library("ImGuizmo" STATIC ${IMGUIZMO_SOURCES})
+target_include_directories("ImGuizmo" PUBLIC ${IMGUIZMO_PATH})
+target_link_libraries("ImGuizmo" PUBLIC "ImGui")
+
 
 file(GLOB_RECURSE SOURCES
 	./src/*.cpp
@@ -46,17 +53,15 @@ foreach(CURR_FILE ${TARGET_FILES})
 	RUNTIME_OUTPUT_DIRECTORY ../
 	)
 	target_include_directories(${CURR_TARGET} PRIVATE include)
-	target_include_directories(${CURR_TARGET} PRIVATE ${INCLUDES})
 	target_include_directories(${CURR_TARGET} PRIVATE libs/glfw/include)
 	target_include_directories(${CURR_TARGET} PRIVATE libs/glm/)
-	# target_include_directories(${CURR_TARGET} PUBLIC build/libs/assimp/include)
-	# target_include_directories(${CURR_TARGET} PUBLIC libs/assimp/include)
 
 	target_link_directories(${CURR_TARGET} PRIVATE libs/glfw/src)
-	# target_link_directories(${CURR_TARGET} PUBLIC libs/assimp/code)
 	target_link_libraries(${CURR_TARGET} PRIVATE ImGui)
 	target_link_libraries(${CURR_TARGET} PRIVATE ${LIBS})
 	target_link_libraries(${CURR_TARGET} PRIVATE libglew_static)
+	target_link_libraries(${CURR_TARGET} PRIVATE ImGuizmo)
+
 endforeach(CURR_FILE ${TARGET_FILES})
 
 set(CMAKE_CXX_FLAGS "-g -std=c++23 -Wall")

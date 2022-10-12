@@ -4,6 +4,7 @@
 #include <yoghurtgl.h>
 #include <iostream>
 #include <math.h>
+#include <glm/gtc/type_ptr.hpp>
 
 ygl::Mouse::Mouse(ygl::Window &window, bool lock) : delta(0), window(window), lock(lock) {
 	position.x = window.getWidth() / 2.;
@@ -81,7 +82,7 @@ ygl::FPController::FPController(ygl::Window *window, ygl::Mouse *mouse, ygl::Tra
 	});
 }
 
-void ygl::FPController::update(double deltaTime) {
+void ygl::FPController::update() {
 	if (!active) return;
 	changed = false;
 
@@ -104,19 +105,19 @@ void ygl::FPController::update(double deltaTime) {
 	glm::vec3 forward = glm::vec4(0., 0., -1., 0.0) * rotationMat;
 	forward.y		  = 0;
 	forward			  = glm::normalize(forward);
-	forward *= deltaTime * speed;
+	forward *= window->deltaTime * speed;
 
 	glm::vec3 sideways = glm::vec4(1., 0., 0., 0.0) * rotationMat;
 	sideways.y		   = 0;
 	sideways		   = glm::normalize(sideways);
-	sideways *= deltaTime * speed;
+	sideways *= window->deltaTime * speed;
 
 	if (Keyboard::getKey(GLFW_KEY_SPACE) == GLFW_PRESS) {
-		transform.position.y += speed * deltaTime;
+		transform.position.y += speed * window->deltaTime;
 		changed = true;
 	}
 	if (Keyboard::getKey(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-		transform.position.y -= speed * deltaTime;
+		transform.position.y -= speed * window->deltaTime;
 		changed = true;
 	}
 	if (Keyboard::getKey(GLFW_KEY_A) == GLFW_PRESS) {
@@ -137,4 +138,22 @@ void ygl::FPController::update(double deltaTime) {
 	}
 
 	transform.updateWorldMatrix();
+}
+
+ygl::TransformGuizmo::TransformGuizmo(ygl::Window *window, ygl::Camera *camera, ygl::Transformation *transform)
+	: window(window), transform(transform), camera(camera) {
+	Keyboard::addKeyCallback([&, this](GLFWwindow *windowHandle, int key, int scancode, int action, int mods) {
+		if (windowHandle != window->getHandle()) return;
+		if (key == GLFW_KEY_Z && action == GLFW_RELEASE) { this->operation = ImGuizmo::OPERATION::TRANSLATE; }
+		if (key == GLFW_KEY_X && action == GLFW_RELEASE) { this->operation = ImGuizmo::OPERATION::ROTATE; }
+		if (key == GLFW_KEY_C && action == GLFW_RELEASE) { this->operation = ImGuizmo::OPERATION::SCALE; }
+	});
+}
+void ygl::TransformGuizmo::update(Transformation *transform) {
+	if(transform == nullptr) transform = this->transform;
+	else this->transform = transform;
+	ImGuizmo::Manipulate(glm::value_ptr(camera->getViewMatrix()), glm::value_ptr(camera->getProjectionMatrix()),
+						 operation, mode,
+						 glm::value_ptr(transform->getWorldMatrix()));
+	if (ImGuizmo::IsUsing()) transform->updateVectors();
 }

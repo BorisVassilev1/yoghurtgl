@@ -5,6 +5,10 @@
 #include <transformation.h>
 #include <vector>
 #include <functional>
+#include <camera.h>
+
+#include <imgui.h>
+#include <ImGuizmo.h>
 
 namespace ygl {
 // mouse will have different coordinates relative to different windows
@@ -16,8 +20,8 @@ class Mouse {
 	Mouse();
 
    public:
-	bool visible = false;
-	bool lock	 = false;
+	bool visible						 = false;
+	bool lock							 = false;
 	bool disableMouseWhenLockedAndHidden = false;
 
 	Mouse(ygl::Window &, bool);
@@ -56,11 +60,23 @@ class FPController {
 	FPController();
 
    public:
-	float speed		= 4;
-	bool  active	= true;
+	float speed	 = 4;
+	bool  active = true;
 	FPController(ygl::Window *, ygl::Mouse *, ygl::Transformation &);
 
-	void update(double);
+	void update();
 	bool hasChanged() { return changed; }
+};
+
+class TransformGuizmo {
+	ygl::Window			*window;
+	ygl::Transformation *transform = nullptr;
+	ygl::Camera			*camera;
+	ImGuizmo::OPERATION	 operation = ImGuizmo::OPERATION::TRANSLATE;
+	ImGuizmo::MODE		 mode	   = ImGuizmo::MODE::WORLD;
+
+   public:
+	TransformGuizmo(ygl::Window *, ygl::Camera *, ygl::Transformation *);
+	void update(ygl::Transformation *);
 };
 }	  // namespace ygl

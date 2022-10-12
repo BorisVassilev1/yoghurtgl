@@ -267,7 +267,7 @@ int main(int argc, char *argv[]) {
 
 	srand(time(NULL));
 
-	window = new Window(1000, 800, "Test Window", true, false);
+	window = new Window(1280, 1000, "Test Window", true, false);
 	mouse  = new Mouse(*window);
 
 	Keyboard::addKeyCallback([&](GLFWwindow *windowHandle, int key, int scancode, int action, int mods) {
@@ -292,7 +292,7 @@ int main(int argc, char *argv[]) {
 		window->beginFrame();
 		mouse->update();
 
-		controller->update(window->deltaTime);
+		controller->update();
 		camera->update();
 
 		if (controller->hasChanged()) {

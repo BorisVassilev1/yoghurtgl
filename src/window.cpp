@@ -10,6 +10,8 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
 
+#include <ImGuizmo.h>
+
 #define GL_CONTEXT_VERSION_MAJOR 4
 #define GL_CONTEXT_VERSION_MINOR 6
 
@@ -155,6 +157,10 @@ void ygl::Window::beginFrame() {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
+
+	ImGuizmo::BeginFrame();
+	ImGuizmo::SetOrthographic(false);
+	ImGuizmo::SetRect(0, 0, getWidth(), getHeight());
 }
 
 ygl::Window::~Window() {

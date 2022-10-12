@@ -10,3 +10,6 @@
 [submodule "libs/glew-cmake"]
 	path = libs/glew-cmake
 	url = https://github.com/Perlmint/glew-cmake
+[submodule "libs/ImGuizmo"]
+	path = libs/ImGuizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo.git

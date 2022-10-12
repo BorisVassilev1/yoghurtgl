@@ -22,6 +22,8 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
 
+#include <ImGuizmo.h>
+
 using namespace ygl;
 using namespace std;
 
@@ -40,6 +42,7 @@ int main(int argc, char *argv[]) {
 
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);
+	TransformGuizmo guizmo(&window, &cam, (Transformation *)nullptr);
 
 	Scene scene(&window);
 	scene.registerComponent<Transformation>();
@@ -76,18 +79,19 @@ int main(int argc, char *argv[]) {
 	while (!window.shouldClose()) {
 		window.beginFrame();
 		mouse.update();
-
-		controller.update(window.deltaTime);
+		controller.update();
 		cam.update();
 
 		renderer->doWork();
-
 		grassSystem->doWork();
+
+		Transformation &groundTransform = scene.getComponent<Transformation>(plane);
+
+		guizmo.update(&groundTransform);
 
 		ImGui::Begin("Grass controls");
 		if (ImGui::SliderFloat("density", &(grassSystem->density), 1., 10.)) { grassSystem->reload(); }
 
-		Transformation &groundTransform = scene.getComponent<Transformation>(plane);
 		if (ImGui::SliderFloat3("ground rotation", (float *)&groundTransform.rotation, -M_PI, M_PI)) {
 			groundTransform.updateWorldMatrix();
 		}

@@ -15,7 +15,11 @@ class Transformation {
 	Transformation(const glm::vec3 &position);
 	Transformation(const glm::vec3 &position, const glm::vec3 &rotation, const glm::vec3 &scale);
 
-	glm::mat4 getWorldMatrix() const;
-	void	  updateWorldMatrix();
+	glm::mat4 &getWorldMatrix();
+	void	   updateWorldMatrix();
+	void	   updateVectors();
+
+	static bool decomposeTransform(const glm::mat4 &transform, glm::vec3 &translation, glm::vec3 &rotation,
+							  glm::vec3 &scale);
 };
 }	  // namespace ygl

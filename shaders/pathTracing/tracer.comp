@@ -247,7 +247,11 @@ void main() {
 		vec3 diffuseRayDir = cosWeightedHemissphereDir(info.normal, random_seed_full);
 
 		vec3 specularRayDir = reflect(ray.direction, info.normal);
-		specularRayDir = normalize(mix(specularRayDir, diffuseRayDir, mat.specular_roughness * mat.specular_roughness));
+
+		float specR = mat.specular_roughness * mat.specular_roughness;
+		specR = specR * specR;
+
+		specularRayDir = normalize(mix(specularRayDir, diffuseRayDir, specR));
 
 		vec3 refractionRayDir = refract(ray.direction, info.normal, info.isFrontFace == 1.0 ? 1.0f / mat.ior : mat.ior);
 		
@@ -255,6 +259,9 @@ void main() {
 			refractionRayDir = vec3(1.0, 0.0, 0.0);
 		}
 		
+		float refR = mat.refraction_roughness * mat.refraction_roughness;
+		refR = refR * refR;
+
 		refractionRayDir =
 			normalize(mix(refractionRayDir, -diffuseRayDir, mat.refraction_roughness * mat.refraction_roughness));
 
