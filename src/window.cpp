@@ -56,7 +56,7 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 			} else {
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			}
-		} else if (key == GLFW_KEY_C && action == GLFW_RELEASE) {
+		} else if (key == GLFW_KEY_F && action == GLFW_RELEASE) {
 			cullFace = !cullFace;
 			if (cullFace) {
 				glEnable(GL_CULL_FACE);

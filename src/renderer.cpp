@@ -128,7 +128,6 @@ void ygl::Renderer::doWork() {
 		Mesh *mesh = meshes[ecr.meshIndex];
 
 		// always bind the mesh.
-		// TODO: instancing
 		mesh->bind();
 
 		sh->setUniform("worldMatrix", transform.getWorldMatrix());

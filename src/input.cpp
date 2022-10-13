@@ -143,17 +143,21 @@ void ygl::FPController::update() {
 ygl::TransformGuizmo::TransformGuizmo(ygl::Window *window, ygl::Camera *camera, ygl::Transformation *transform)
 	: window(window), transform(transform), camera(camera) {
 	Keyboard::addKeyCallback([&, this](GLFWwindow *windowHandle, int key, int scancode, int action, int mods) {
-		if (windowHandle != window->getHandle()) return;
+		if (windowHandle != this->window->getHandle()) return;
 		if (key == GLFW_KEY_Z && action == GLFW_RELEASE) { this->operation = ImGuizmo::OPERATION::TRANSLATE; }
 		if (key == GLFW_KEY_X && action == GLFW_RELEASE) { this->operation = ImGuizmo::OPERATION::ROTATE; }
 		if (key == GLFW_KEY_C && action == GLFW_RELEASE) { this->operation = ImGuizmo::OPERATION::SCALE; }
 	});
 }
 void ygl::TransformGuizmo::update(Transformation *transform) {
+	bool snap = Keyboard::getKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
+	float snapValue = 1.0f;
+	if(operation == ImGuizmo::OPERATION::ROTATE) snapValue = 15.0f;
+	float snapVector[3] = {snapValue, snapValue, snapValue};
 	if(transform == nullptr) transform = this->transform;
 	else this->transform = transform;
 	ImGuizmo::Manipulate(glm::value_ptr(camera->getViewMatrix()), glm::value_ptr(camera->getProjectionMatrix()),
 						 operation, mode,
-						 glm::value_ptr(transform->getWorldMatrix()));
+						 glm::value_ptr(transform->getWorldMatrix()), nullptr, snap ? snapVector : nullptr);
 	if (ImGuizmo::IsUsing()) transform->updateVectors();
 }
