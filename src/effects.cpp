@@ -56,6 +56,7 @@ void ygl::GrassSystem::update(float time) {
 	grassCompute.setUniform("resolution", resolution);
 	grassCompute.setUniform("size", size);
 	grassCompute.setUniform("anchorWorldMatrix", worldMatrix);
+	grassCompute.unbind();
 	Renderer::compute(&grassCompute, resolution.x, resolution.y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }

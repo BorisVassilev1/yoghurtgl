@@ -18,6 +18,7 @@ class Shader {
 	int			 shadersCount = 0;
 	GLuint	   *shaders	  = nullptr;
 	const char **fileNames	  = nullptr;
+	bool		 bound		  = false;
 
 	std::unordered_map<std::string, GLint> uniforms;
 	std::unordered_map<std::string, GLint> SSBOs;
@@ -46,8 +47,8 @@ class Shader {
    public:
 	~Shader();
 
-	void		bind();
-	static void unbind();
+	void bind();
+	void unbind();
 
 	void createUniform(const char *uniformName);
 	void registerUniform(const std::string &name, int location);
@@ -81,6 +82,8 @@ class Shader {
 	void  setUBO(std::string &name, GLuint bufferId);
 	GLint getSSBOBinding(std::string &name);
 	GLint getUBOBinding(std::string &name);
+
+	bool isBound();
 
 	static void setSSBO(GLuint bufferId, GLuint binding);
 	static void setUBO(GLuint bufferId, GLuint binding);

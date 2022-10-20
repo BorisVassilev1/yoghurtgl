@@ -71,28 +71,15 @@ int main() {
 	Mesh	 *screenQuad = makeScreenQuad();
 	VFShader onScreen("./shaders/ui/textureOnScreen.vs", "./shaders/ui/textureOnScreen.fs");
 	onScreen.bind();
-	if (onScreen.hasUniform("texture_sampler")) onScreen.setUniform("texture_sampler", 7);
-	if (onScreen.hasUniform("texture_sampler_depth")) onScreen.setUniform("texture_sampler_depth", 8);
-	if (onScreen.hasUniform("texture_sampler_stencil")) onScreen.setUniform("texture_sampler_stencil", 9);
+	if (onScreen.hasUniform("sampler_color")) onScreen.setUniform("sampler_color", 7);
+	if (onScreen.hasUniform("sampler_depth")) onScreen.setUniform("sampler_depth", 8);
+	if (onScreen.hasUniform("sampler_stencil")) onScreen.setUniform("sampler_stencil", 8);
 	onScreen.unbind();
 
 	FrameBuffer frameBuffer(window.getWidth(), window.getHeight());
 
 	frameBuffer.getColor()->bind(GL_TEXTURE7);
 	frameBuffer.getDepthStencil()->bind(GL_TEXTURE8);
-	frameBuffer.getDepthStencil()->bind(GL_TEXTURE9);
-
-	glActiveTexture(GL_TEXTURE8);
-	frameBuffer.getDepthStencil()->bind(GL_TEXTURE8);
-	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
-
-	GLuint stencil_view;
-	glGenTextures(1, &stencil_view);
-	glTextureView(stencil_view, GL_TEXTURE_2D, frameBuffer.getDepthStencil()->getID(), GL_DEPTH32F_STENCIL8, 0, 1, 0, 1);
-
-	glActiveTexture(GL_TEXTURE9);
-	glBindTexture(GL_TEXTURE_2D, stencil_view);
-	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
 
 	glActiveTexture(GL_TEXTURE0);
 
@@ -105,10 +92,14 @@ int main() {
 			onScreen.bind();
 			onScreen.setUniform("viewMode", 1);
 			onScreen.unbind();
+			frameBuffer.getDepthStencil()->bind(GL_TEXTURE8);
+			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
 		} else if (key == GLFW_KEY_4) {
 			onScreen.bind();
 			onScreen.setUniform("viewMode", 2);
 			onScreen.unbind();
+			frameBuffer.getDepthStencil()->bind(GL_TEXTURE8);
+			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
 		}
 	});
 
@@ -128,7 +119,7 @@ int main() {
 		cam.update();
 
 		frameBuffer.bind();
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		frameBuffer.clear();
 		renderer->doWork();
 		frameBuffer.unbind();
 

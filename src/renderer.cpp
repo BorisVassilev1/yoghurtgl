@@ -36,10 +36,10 @@ ygl::RendererComponent::RendererComponent(unsigned int shaderIndex, unsigned int
 	: shaderIndex(shaderIndex), meshIndex(meshIndex), materialIndex(materialIndex) {}
 
 void ygl::Renderer::init() {
-	defaultTexture.bind(GL_TEXTURE1); 
-	defaultTexture.bind(GL_TEXTURE2); 
-	defaultTexture.bind(GL_TEXTURE3); 
-	defaultTexture.bind(GL_TEXTURE4); 
+	defaultTexture.bind(GL_TEXTURE1);
+	defaultTexture.bind(GL_TEXTURE2);
+	defaultTexture.bind(GL_TEXTURE3);
+	defaultTexture.bind(GL_TEXTURE4);
 	defaultTexture.bind(GL_TEXTURE5);
 
 	scene->registerComponent<RendererComponent>();
@@ -104,8 +104,14 @@ void ygl::Renderer::setDefaultShader(int defaultShader) { this->defaultShader = 
 
 void ygl::Renderer::doWork() {
 	// bind default shader
-	if (defaultShader != -1) { shaders[defaultShader]->bind(); }
-	int prevShaderIndex = defaultShader;
+	int prevShaderIndex;
+	if (defaultShader != -1) {
+		shaders[defaultShader]->bind();
+		prevShaderIndex = defaultShader;
+	} else {
+		shaders[0]->bind();		// there has to be at least one shader
+		prevShaderIndex = 0;
+	}
 
 	for (Entity e : entities) {
 		ygl::Transformation	&transform = scene->getComponent<Transformation>(e);
@@ -115,29 +121,39 @@ void ygl::Renderer::doWork() {
 		// binds the object's own shader if present.
 		// Oherwise checks if the default shader has been bound by the previous object
 		// and binds it only if needed
-		if (ecr.shaderIndex != -1) {
-			sh				= shaders[ecr.shaderIndex];
-			prevShaderIndex = ecr.shaderIndex;
-			sh->bind();
+		if (ecr.shaderIndex != -1) {					  // if object has a shader
+			if (ecr.shaderIndex != prevShaderIndex) {	  // if its different from the previous one
+				shaders[prevShaderIndex]->unbind();
+				sh				= shaders[ecr.shaderIndex];
+				prevShaderIndex = ecr.shaderIndex;	   // the next previous is the current
+				sh->bind();
+			} else {
+				sh = shaders[prevShaderIndex];	   // set sh so that its not null
+			}
 		} else {
 			assert(defaultShader != -1 && "cannot use default shader when it is not defined");
-			sh = shaders[defaultShader];
-			if (prevShaderIndex != -1) { sh->bind(); }
+			if (prevShaderIndex != defaultShader) {		// if the previous shader was different
+				shaders[prevShaderIndex]->unbind();
+				sh				= shaders[defaultShader];
+				prevShaderIndex = defaultShader;
+				sh->bind();
+			} else {
+				sh = shaders[defaultShader];	 // set sh so its not null
+			}
 		}
+		// sh is never null and the current bound shader
 
 		Mesh *mesh = meshes[ecr.meshIndex];
-
-		// always bind the mesh.
 		mesh->bind();
-
+		// set uniforms
 		sh->setUniform("worldMatrix", transform.getWorldMatrix());
 		if (sh->hasUniform("material_index")) sh->setUniform("material_index", (GLuint)ecr.materialIndex);
-
+		// draw
 		glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
-
+		// clean up
 		mesh->unbind();
 	}
-	Shader::unbind();
+	shaders[prevShaderIndex]->unbind(); // unbind the last used shader
 }
 
 ygl::Renderer::~Renderer() {
@@ -159,16 +175,15 @@ void ygl::Renderer::drawObject(Transformation &transform, Shader *sh, Mesh *mesh
 
 	glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
 	mesh->unbind();
+	sh->unbind();
 }
 
 void ygl::Renderer::drawObject(Shader *sh, Mesh *mesh) {
 	sh->bind();
-
 	mesh->bind();
-	// sh->setUniform("worldMatrix", transform.getWorldMatrix());
-
 	glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
 	mesh->unbind();
+	sh->unbind();
 }
 
 void ygl::Renderer::compute(ComputeShader *shader, int domainX, int domainY, int domainZ) {
@@ -179,6 +194,7 @@ void ygl::Renderer::compute(ComputeShader *shader, int domainX, int domainY, int
 
 	glDispatchCompute(groupsX, groupsY, groupsZ);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	shader->unbind();
 }
 
 GLuint ygl::Renderer::loadMaterials(int count, Material *materials) {

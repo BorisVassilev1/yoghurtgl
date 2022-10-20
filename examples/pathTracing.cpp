@@ -248,7 +248,7 @@ void initPathTracer() {
 
 	textureOnScreen = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/ui/textureOnScreen.fs");
 	textureOnScreen->bind();
-	textureOnScreen->setUniform("texture_sampler", 7);
+	textureOnScreen->setUniform("sampler_color", 7);
 	textureOnScreen->unbind();
 
 	glGenBuffers(1, &spheresBuff);
@@ -307,12 +307,14 @@ int main(int argc, char *argv[]) {
 					Transformation(camera->transform.position, -camera->transform.rotation, camera->transform.scale);
 				pathTracer->setUniform("cameraMatrix", t.getWorldMatrix());
 				pathTracer->setUniform("random_seed", (GLuint)rand());
+				pathTracer->unbind();
 
 				Renderer::compute(pathTracer, window->getWidth(), window->getHeight(), 1);
 
 				sampleCount++;
 				normalizer->bind();
 				normalizer->setUniform("samples", sampleCount);
+				normalizer->unbind();
 
 				Renderer::compute(normalizer, window->getWidth(), window->getHeight(), 1);
 			}

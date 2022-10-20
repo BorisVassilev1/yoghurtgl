@@ -49,7 +49,7 @@ int main() {
 
 		mouse.update();
 
-		controller.update(window.deltaTime);
+		controller.update();
 		cam.update();
 
 		Renderer::drawObject(bunnyTransform, shader, bunnyMesh, 0, false);

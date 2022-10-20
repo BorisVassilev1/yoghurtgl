@@ -33,18 +33,19 @@ enum {
 };
 
 bool inline f_dbLog() {
-	std::cout << std::endl;
+	std::cerr << std::endl;
 	return 1;
 }
 
 template <class T, class... Types>
 bool inline f_dbLog(T arg, Types... args) {
-	std::cout << arg;
+	std::cerr << arg;
 	f_dbLog(args...);
 	return 1;
 }
 
 #ifndef NDEBUG
+	#define YGL_DEBUG
 	#define YGL_LOG_LEVEL		 -1
 	#define dbLog(severity, ...) severity >= YGL_LOG_LEVEL ? ygl::f_dbLog("[", #severity, "] ", __VA_ARGS__) : 0;
 #else

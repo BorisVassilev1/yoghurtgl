@@ -10,13 +10,13 @@
 
 ygl::Shader::~Shader() {
 	if (shaders != nullptr) { deleteShaders(); }
-	if(program != 0) {
-		glDeleteProgram(program); 
+	if (program != 0) {
+		glDeleteProgram(program);
 		program = 0;
 	}
 
 	if (fileNames != nullptr) {
-		delete [] fileNames; 
+		delete[] fileNames;
 		fileNames = nullptr;
 	}
 }
@@ -26,7 +26,7 @@ void ygl::Shader::deleteShaders() {
 		glDeleteShader(shaders[i]);
 		shaders[i] = 0;
 	}
-	delete [] shaders;
+	delete[] shaders;
 	shaders = nullptr;
 }
 
@@ -183,9 +183,20 @@ void ygl::Shader::finishProgramCreation() {
 	detectStorageBlocks();
 }
 
-void ygl::Shader::bind() { glUseProgram(program); }
+void ygl::Shader::bind() {
+#ifdef YGL_DEBUG
+	if (bound) {
+		dbLog(ygl::LOG_WARNING, "shader object ", program, " is being bound repeatedly");
+	}
+#endif
+	bound = true;
+	glUseProgram(program);
+}
 
-void ygl::Shader::unbind() { glUseProgram(0); }
+void ygl::Shader::unbind() {
+	bound = false;
+	glUseProgram(0);
+}
 
 void ygl::Shader::createUniform(const char *uniformName) {
 	GLint uniformLocation = glGetUniformLocation(program, uniformName);
@@ -272,39 +283,21 @@ GLuint ygl::Shader::getUniformLocation(const std::string &uniformName) {
 
 bool ygl::Shader::hasUniform(const std::string &uniformName) { return uniforms.find(uniformName) != uniforms.end(); }
 
-
-void ygl::Shader::setUniform(GLuint location, GLboolean value) {
-	glUniform1i(location, value ? 1 : 0);
-}
-void ygl::Shader::setUniform(GLuint location, GLint value) {
-	glUniform1i(location, value);
-}
-void ygl::Shader::setUniform(GLuint location, GLuint value) {
-	glUniform1ui(location, value);
-}
+void ygl::Shader::setUniform(GLuint location, GLboolean value) { glUniform1i(location, value ? 1 : 0); }
+void ygl::Shader::setUniform(GLuint location, GLint value) { glUniform1i(location, value); }
+void ygl::Shader::setUniform(GLuint location, GLuint value) { glUniform1ui(location, value); }
 void ygl::Shader::setUniform(GLuint location, glm::mat4x4 value) {
 	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
 }
 void ygl::Shader::setUniform(GLuint location, glm::vec4 value) {
 	glUniform4f(location, value.x, value.y, value.z, value.w);
 }
-void ygl::Shader::setUniform(GLuint location, glm::vec3 value) {
-	glUniform3f(location, value.x, value.y, value.z);
-}
-void ygl::Shader::setUniform(GLuint location, glm::vec2 value) {
-	glUniform2f(location, value.x, value.y);
-}
-void ygl::Shader::setUniform(GLuint location, glm::ivec2 value) {
-	glUniform2i(location, value.x, value.y);
-}
-void ygl::Shader::setUniform(GLuint location, GLfloat value) {
-	glUniform1f(location, value);
-}
+void ygl::Shader::setUniform(GLuint location, glm::vec3 value) { glUniform3f(location, value.x, value.y, value.z); }
+void ygl::Shader::setUniform(GLuint location, glm::vec2 value) { glUniform2f(location, value.x, value.y); }
+void ygl::Shader::setUniform(GLuint location, glm::ivec2 value) { glUniform2i(location, value.x, value.y); }
+void ygl::Shader::setUniform(GLuint location, GLfloat value) { glUniform1f(location, value); }
 
-void ygl::Shader::setUniform(GLuint location, GLdouble value) {
-	glUniform1d(location, value);
-}
-
+void ygl::Shader::setUniform(GLuint location, GLdouble value) { glUniform1d(location, value); }
 
 void ygl::Shader::createSSBO(std::string &name, GLuint binding) {
 	// https://www.geeks3d.com/20140704/tutorial-introduction-to-opengl-4-3-shader-storage-buffers-objects-ssbo-demo/
@@ -353,6 +346,8 @@ GLint ygl::Shader::getUBOBinding(std::string &name) {
 	}
 	return res->second;
 }
+
+bool ygl::Shader::isBound() { return bound; }
 
 void ygl::Shader::setSSBO(GLuint bufferId, GLuint binding) {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, bufferId);
