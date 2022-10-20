@@ -8,7 +8,7 @@
 namespace ygl {
 class ITexture {
    public:
-	enum Type { RGB, RGBA, SRGBA, SRGB, GREY };
+	enum Type { RGB, RGBA, SRGBA, SRGB, GREY, DEPTH_STENCIL };
 
 	ITexture(){};
 	virtual void save(std::string fileName) = 0;
@@ -27,7 +27,7 @@ class ITexture {
 
    protected:
 	static void getTypeParameters(Type type, GLint &internalFormat, GLenum &format, uint8_t &pixelSize,
-								  uint8_t &components);
+								  uint8_t &components, GLenum &_type);
 };
 
 class Texture2d : public ITexture {
@@ -37,7 +37,7 @@ class Texture2d : public ITexture {
 	GLuint	id		   = -1;
 
 	void init(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
-			  stbi_uc *data);
+			  GLenum type, stbi_uc *data);
 	void init(GLsizei width, GLsizei height, Type type, stbi_uc *data);
 	void init(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components);
 
@@ -45,7 +45,7 @@ class Texture2d : public ITexture {
 	Texture2d(){};
 
 	Texture2d(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
-			  stbi_uc *data);
+			  GLenum type, stbi_uc *data);
 	Texture2d(GLsizei width, GLsizei height, Type type, stbi_uc *data);
 	Texture2d(GLsizei width, GLsizei height);
 	Texture2d(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components);

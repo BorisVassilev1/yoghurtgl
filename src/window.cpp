@@ -92,6 +92,11 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	glEnable(GL_CULL_FACE);
+	glEnable(GL_STENCIL_TEST);
+
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	glStencilMask(0xFF);
 
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
@@ -151,7 +156,7 @@ void ygl::Window::swapBuffers() {
 void ygl::Window::beginFrame() {
 	glfwPollEvents();
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	// Start the Dear ImGui frame
 	ImGui_ImplOpenGL3_NewFrame();

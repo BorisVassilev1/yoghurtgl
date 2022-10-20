@@ -135,7 +135,7 @@ void ygl::Renderer::doWork() {
 
 		glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
 
-		// mesh->unbind();
+		mesh->unbind();
 	}
 	Shader::unbind();
 }

@@ -44,13 +44,13 @@ struct Box {
 Window *window;
 Mouse  *mouse;
 
-Texture2d	 *tex;
-Scene		 *scene;
+Texture2d	  *tex;
+Scene		  *scene;
 Renderer	 *renderer;
 VFShader	 *shader;
 VFShader	 *unlitShader;
 uint		  unlitShaderIndex = -1;
-Camera		 *camera;
+Camera	   *camera;
 FPController *controller;
 Mesh		 *sphereMesh;
 Mesh		 *bunnyMesh;
@@ -60,17 +60,17 @@ Entity bunny;
 
 ComputeShader  *pathTracer;
 ComputeShader  *normalizer;
-Texture2d	   *renderTexture;
-Texture2d	   *rawTexture;
-VFShader	   *textureOnScreen;
-Mesh		   *screenQuad;
+Texture2d	  *renderTexture;
+Texture2d	  *rawTexture;
+VFShader		 *textureOnScreen;
+Mesh			 *screenQuad;
 TextureCubemap *skybox;
 
 Sphere *spheres;
 int		sphereCount;
 GLuint	spheresBuff;
 
-Box	  *boxes;
+Box	*boxes;
 int	   boxesCount;
 GLuint boxesBuff;
 
@@ -114,7 +114,7 @@ void initScene() {
 	renderer = scene->registerSystem<Renderer>();
 
 	tex = new Texture2d("./res/images/uv_checker.png");
-	tex->bind(GL_TEXTURE1); // albedo texture
+	tex->bind(GL_TEXTURE1);		// albedo texture
 
 	bunny = scene->createEntity();
 	scene->addComponent<Transformation>(bunny, Transformation(glm::vec3(-3, 0, 0), glm::vec3(0), glm::vec3(10)));
@@ -276,9 +276,7 @@ int main(int argc, char *argv[]) {
 			pathTrace = !pathTrace;
 			glfwSwapInterval(!pathTrace);
 		}
-		if(key == GLFW_KEY_G && action == GLFW_RELEASE) {
-			renderTexture->save("./res/images/result.png");
-		}
+		if (key == GLFW_KEY_G && action == GLFW_RELEASE) { renderTexture->save("./res/images/result.png"); }
 	});
 
 	initScene();

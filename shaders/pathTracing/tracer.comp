@@ -100,7 +100,7 @@ void get_ray(inout Ray ray, in vec3 cam_pos, in ivec2 pixel_coords, in vec2 pixe
 	ray_coords = ray_coords * 2. - 1.;
 
 	vec3 ray_dir =
-		normalize((vec4(ray_coords.x, -ray_coords.y * aspect, -1 / tan(fov / 2) * aspect, 0.0) * cameraMatrix).xyz);
+		normalize((vec4(ray_coords.x, ray_coords.y * aspect, -1 / tan(fov / 2) * aspect, 0.0) * cameraMatrix).xyz);
 
 	ray = Ray(cam_pos, ray_dir);
 }

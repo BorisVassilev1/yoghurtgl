@@ -57,6 +57,39 @@ struct Light {
 	Light(ygl::Transformation transformation, glm::vec3 color, float intensity, Type type);
 };
 
+class FrameBuffer {
+	GLuint	   id;
+	Texture2d *color;
+	Texture2d *depth_stencil;
+
+   public:
+	FrameBuffer(uint16_t width, uint16_t height) {
+		glGenFramebuffers(1, &id);
+		glBindFramebuffer(GL_FRAMEBUFFER, id);
+
+		color		  = new Texture2d(width, height, ITexture::Type::RGBA, nullptr);
+		depth_stencil = new Texture2d(width, height, ITexture::Type::DEPTH_STENCIL, nullptr);
+
+		std::cout << color->getID() << std::endl;
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color->getID(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depth_stencil->getID(), 0);
+
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+			std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+			assert(false);
+		}
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	void bind() { glBindFramebuffer(GL_FRAMEBUFFER, id); }
+
+	void unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
+
+	Texture2d *getColor() { return color; }
+	Texture2d *getDepthStencil() { return depth_stencil; }
+};
+
 struct RendererComponent {
 	int shaderIndex;
 	int meshIndex;
@@ -74,7 +107,7 @@ class Renderer : public ygl::ISystem {
 	GLuint materialsBuffer = 0;
 	GLuint lightsBuffer	   = 0;
 
-	int defaultShader = -1;
+	int		  defaultShader	 = -1;
 	Texture2d defaultTexture = Texture2d(1, 1, ITexture::Type::RGBA, nullptr);
 
    public:

@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
 		transform.rotation.y += 1 * window.deltaTime;
 		transform.updateWorldMatrix();
 
-		controller.update(window.deltaTime);
+		controller.update();
 		cam.update();
 
 		renderer->doWork();
