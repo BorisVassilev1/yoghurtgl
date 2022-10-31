@@ -168,6 +168,7 @@ void ygl::Texture2d::save(std::string fileName) {
 void ygl::Texture2d::bind(int textureUnit) {
 	glActiveTexture(textureUnit);
 	glBindTexture(GL_TEXTURE_2D, id);
+	glActiveTexture(GL_TEXTURE0);
 }
 
 void ygl::Texture2d::bind() { bind(GL_TEXTURE0); }
@@ -175,6 +176,7 @@ void ygl::Texture2d::bind() { bind(GL_TEXTURE0); }
 void ygl::Texture2d::unbind(int textureUnit) {
 	glActiveTexture(textureUnit);
 	glBindTexture(GL_TEXTURE_2D, 0);
+	glActiveTexture(GL_TEXTURE0);
 }
 
 void ygl::Texture2d::unbind() { unbind(GL_TEXTURE0); }

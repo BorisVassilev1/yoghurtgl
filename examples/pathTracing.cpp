@@ -243,12 +243,12 @@ void initPathTracer() {
 	pathTracer->setUniform("fov", glm::radians(70.f));
 	// pathTracer->unbind();
 
-	renderTexture->bind(GL_TEXTURE7);
-	rawTexture->bind(GL_TEXTURE8);
+	renderTexture->bind(GL_TEXTURE10);
+	rawTexture->bind(GL_TEXTURE11);
 
 	textureOnScreen = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/ui/textureOnScreen.fs");
 	textureOnScreen->bind();
-	textureOnScreen->setUniform("sampler_color", 7);
+	textureOnScreen->setUniform("sampler_color", 10);
 	textureOnScreen->unbind();
 
 	glGenBuffers(1, &spheresBuff);

@@ -172,7 +172,10 @@ void main() {
 
 		// if hit the sky, write sky color and exit
 		if (hit.type == 0) {
-			pixel += vec4(get_sky_color(ray) * attenuation, 1.0f);
+			if(i == 0) pixel = vec4(0.);
+			else {
+				pixel += vec4(get_sky_color(ray) * attenuation, 1.0f);
+			}
 			break;
 		}
 

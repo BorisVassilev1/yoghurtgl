@@ -75,15 +75,19 @@ int main(int argc, char *argv[]) {
 	renderer->loadData();
 	// scene is initialized
 
-	glClearColor(0.07f, 0.13f, 0.17f, 1.0);
+	glm::vec3 clearColor(0.07f, 0.13f, 0.17f);
+	clearColor *= 1.5;
+	clearColor = glm::pow(clearColor, glm::vec3(2.4));
+
+	glClearColor(clearColor.x, clearColor.y, clearColor.z, 1.0);
 	while (!window.shouldClose()) {
 		window.beginFrame();
 		mouse.update();
 		controller.update();
 		cam.update();
 
-		renderer->doWork();
 		grassSystem->doWork();
+		renderer->doWork();
 
 		Transformation &groundTransform = scene.getComponent<Transformation>(plane);
 

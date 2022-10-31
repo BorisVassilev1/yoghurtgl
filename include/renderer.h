@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <vector>
+#include <functional>
 #include <shader.h>
 #include <mesh.h>
 #include <ecs.h>
@@ -63,35 +64,24 @@ class FrameBuffer {
 	Texture2d *depth_stencil;
 
    public:
-	FrameBuffer(uint16_t width, uint16_t height) {
-		glGenFramebuffers(1, &id);
-		glBindFramebuffer(GL_FRAMEBUFFER, id);
+	FrameBuffer(uint16_t width, uint16_t height, const char *name = nullptr);
 
-		color		  = new Texture2d(width, height, ITexture::Type::RGBA, nullptr);
-		depth_stencil = new Texture2d(width, height, ITexture::Type::DEPTH_STENCIL, nullptr);
+	void clear();
+	void bind();
+	void unbind();
 
-		std::cout << color->getID() << std::endl;
+	Texture2d *getColor();
+	Texture2d *getDepthStencil();
+};
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color->getID(), 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depth_stencil->getID(), 0);
+struct ScreenEffect {
+	VFShader *shader;
 
-		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-			std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
-			assert(false);
-		}
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	}
+	ScreenEffect() { shader = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/postProcessing/acesFilm.fs"); }
 
-	void clear() {
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-	}
+	~ScreenEffect() { delete shader; }
 
-	void bind() { glBindFramebuffer(GL_FRAMEBUFFER, id); }
-
-	void unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
-
-	Texture2d *getColor() { return color; }
-	Texture2d *getDepthStencil() { return depth_stencil; }
+	VFShader *getShader() { return shader; }
 };
 
 struct RendererComponent {
@@ -114,6 +104,18 @@ class Renderer : public ygl::ISystem {
 	int		  defaultShader	 = -1;
 	Texture2d defaultTexture = Texture2d(1, 1, ITexture::Type::RGBA, nullptr);
 
+	FrameBuffer *frontFrameBuffer;
+	FrameBuffer *backFrameBuffer;
+	Mesh		 *screenQuad = makeScreenQuad();
+
+	std::vector<std::function<void()> > drawFunctions;
+	ScreenEffect						 *effect = new ScreenEffect();
+
+	void swapFrameBuffers();
+	void drawScene();
+	void colorPass();
+	void toneMappingPass();
+
    public:
 	using ISystem::ISystem;
 	void init() override;
@@ -134,6 +136,8 @@ class Renderer : public ygl::ISystem {
 	void doWork() override;
 
 	~Renderer() override;
+
+	void addDrawFunction(std::function<void()> func);
 
 	static void drawObject(Transformation &transform, Shader *shader, Mesh *mesh, GLuint materialIndex,
 						   bool useTexture);

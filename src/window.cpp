@@ -98,6 +98,8 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 	glStencilFunc(GL_ALWAYS, 1, 0xFF);
 	glStencilMask(0xFF);
 
+	glDepthFunc(GL_LEQUAL);
+
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();

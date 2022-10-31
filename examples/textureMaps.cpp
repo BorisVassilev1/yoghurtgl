@@ -15,7 +15,7 @@ int main() {
 		exit(1);
 	}
 
-	Window window = Window(800, 600, "Test Window", true);
+	Window window = Window(1000, 800, "Test Window", true);
 
 	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 
@@ -62,48 +62,15 @@ int main() {
 	modelRenderer.meshIndex	  = renderer->addMesh(modelMesh);
 	scene.addComponent(model, modelRenderer);
 
-	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 3,
+	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 5,
 							 Light::Type::DIRECTIONAL));
 	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.11, Light::Type::AMBIENT));
 
 	renderer->loadData();
 
-	Mesh	 *screenQuad = makeScreenQuad();
-	VFShader onScreen("./shaders/ui/textureOnScreen.vs", "./shaders/ui/textureOnScreen.fs");
-	onScreen.bind();
-	if (onScreen.hasUniform("sampler_color")) onScreen.setUniform("sampler_color", 7);
-	if (onScreen.hasUniform("sampler_depth")) onScreen.setUniform("sampler_depth", 8);
-	if (onScreen.hasUniform("sampler_stencil")) onScreen.setUniform("sampler_stencil", 8);
-	onScreen.unbind();
-
-	FrameBuffer frameBuffer(window.getWidth(), window.getHeight());
-
-	frameBuffer.getColor()->bind(GL_TEXTURE7);
-	frameBuffer.getDepthStencil()->bind(GL_TEXTURE8);
-
-	glActiveTexture(GL_TEXTURE0);
-
-	Keyboard::addKeyCallback([&](GLFWwindow *window, int key, int scancode, int action, int mods) {
-		if (key == GLFW_KEY_2) {
-			onScreen.bind();
-			onScreen.setUniform("viewMode", 0);
-			onScreen.unbind();
-		} else if (key == GLFW_KEY_3) {
-			onScreen.bind();
-			onScreen.setUniform("viewMode", 1);
-			onScreen.unbind();
-			frameBuffer.getDepthStencil()->bind(GL_TEXTURE8);
-			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
-		} else if (key == GLFW_KEY_4) {
-			onScreen.bind();
-			onScreen.setUniform("viewMode", 2);
-			onScreen.unbind();
-			frameBuffer.getDepthStencil()->bind(GL_TEXTURE8);
-			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
-		}
-	});
-
 	controller.speed = 0.4;
+
+	
 
 	glClearColor(0, 0, 0, 1);
 	while (!window.shouldClose()) {
@@ -118,12 +85,7 @@ int main() {
 		controller.update();
 		cam.update();
 
-		frameBuffer.bind();
-		frameBuffer.clear();
 		renderer->doWork();
-		frameBuffer.unbind();
-
-		Renderer::drawObject(&onScreen, screenQuad);
 
 		window.swapBuffers();
 	}

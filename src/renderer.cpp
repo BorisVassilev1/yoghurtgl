@@ -32,6 +32,39 @@ ygl::Light::Light(glm::mat4 transform, glm::vec3 color, float intensity, ygl::Li
 ygl::Light::Light(ygl::Transformation transformation, glm::vec3 color, float intensity, ygl::Light::Type type)
 	: transform(transformation.getWorldMatrix()), color(color), intensity(intensity), type(type) {}
 
+ygl::FrameBuffer::FrameBuffer(uint16_t width, uint16_t height, const char *name) {
+	glGenFramebuffers(1, &id);
+	glBindFramebuffer(GL_FRAMEBUFFER, id);
+
+	color		  = new Texture2d(width, height, ITexture::Type::RGBA, nullptr);
+	depth_stencil = new Texture2d(width, height, ITexture::Type::DEPTH_STENCIL, nullptr);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color->getID(), 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depth_stencil->getID(), 0);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+		assert(false);
+	}
+
+	if(name) {
+		GLsizei size = strlen(name);
+		glObjectLabel(GL_FRAMEBUFFER, id, size, name);
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void ygl::FrameBuffer::clear() { glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); }
+
+void ygl::FrameBuffer::bind() { glBindFramebuffer(GL_FRAMEBUFFER, id); }
+
+void ygl::FrameBuffer::unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
+
+ygl::Texture2d *ygl::FrameBuffer::getColor() { return color; }
+
+ygl::Texture2d *ygl::FrameBuffer::getDepthStencil() { return depth_stencil; }
+
 ygl::RendererComponent::RendererComponent(unsigned int shaderIndex, unsigned int meshIndex, unsigned int materialIndex)
 	: shaderIndex(shaderIndex), meshIndex(meshIndex), materialIndex(materialIndex) {}
 
@@ -41,6 +74,10 @@ void ygl::Renderer::init() {
 	defaultTexture.bind(GL_TEXTURE3);
 	defaultTexture.bind(GL_TEXTURE4);
 	defaultTexture.bind(GL_TEXTURE5);
+
+	uint16_t width = scene->window->getWidth(), height = scene->window->getHeight();
+	frontFrameBuffer = new FrameBuffer(width, height, "Front frameBuffer");
+	backFrameBuffer	 = new FrameBuffer(width, height, "Back frameBuffer");
 
 	scene->registerComponent<RendererComponent>();
 	scene->setSystemSignature<Renderer, Transformation, RendererComponent>();
@@ -102,7 +139,9 @@ void ygl::Renderer::loadData() {
 
 void ygl::Renderer::setDefaultShader(int defaultShader) { this->defaultShader = defaultShader; }
 
-void ygl::Renderer::doWork() {
+void ygl::Renderer::swapFrameBuffers() { std::swap(frontFrameBuffer, backFrameBuffer); }
+
+void ygl::Renderer::drawScene() {
 	// bind default shader
 	int prevShaderIndex;
 	if (defaultShader != -1) {
@@ -153,7 +192,40 @@ void ygl::Renderer::doWork() {
 		// clean up
 		mesh->unbind();
 	}
-	shaders[prevShaderIndex]->unbind(); // unbind the last used shader
+	shaders[prevShaderIndex]->unbind();		// unbind the last used shader
+}
+
+void ygl::Renderer::colorPass() {
+	backFrameBuffer->bind();
+	backFrameBuffer->clear();
+	if (scene->window->shade) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	} else {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+	
+	// draw all entities
+	drawScene();
+	
+	// run draw calls from other systems
+	for(auto f : drawFunctions) {
+		f();
+	}
+
+	backFrameBuffer->unbind();
+	swapFrameBuffers();
+}
+
+void ygl::Renderer::toneMappingPass() {
+	frontFrameBuffer->getColor()->bind(GL_TEXTURE7);
+	frontFrameBuffer->getDepthStencil()->bind(GL_TEXTURE8);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	drawObject(effect->getShader(), screenQuad);
+}
+
+void ygl::Renderer::doWork() {
+	colorPass();
+	toneMappingPass();
 }
 
 ygl::Renderer::~Renderer() {
@@ -163,6 +235,13 @@ ygl::Renderer::~Renderer() {
 	for (Mesh *mesh : meshes) {
 		delete mesh;
 	}
+	delete frontFrameBuffer;
+	delete backFrameBuffer;
+	delete screenQuad;
+}
+
+void ygl::Renderer::addDrawFunction(std::function<void()> func) {
+	drawFunctions.push_back(func);
 }
 
 void ygl::Renderer::drawObject(Transformation &transform, Shader *sh, Mesh *mesh, GLuint materialIndex,

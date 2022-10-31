@@ -44,6 +44,9 @@ void ygl::GrassSystem::init() {
 
 	scene->registerComponent<GrassHolder>();
 	scene->setSystemSignature<GrassSystem, Transformation, GrassHolder>();
+	scene->getSystem<Renderer>()->addDrawFunction([this]() ->void {
+		render(this->scene->window->globalTime);
+	});
 }
 
 ygl::GrassSystem::~GrassSystem() { delete bladeMesh; }
@@ -85,5 +88,4 @@ void ygl::GrassSystem::reload() {
 
 void ygl::GrassSystem::doWork() {
 	this->update((float)scene->window->globalTime);
-	this->render((float)scene->window->globalTime);
 }

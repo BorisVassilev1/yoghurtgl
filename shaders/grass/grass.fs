@@ -21,9 +21,5 @@ void main() {
 	// color = vec3(materials[material_index].albedo);
 	// color = vVertexNormal;
 
-	// color = color / (color + vec3(1.0));
-	// color = vec3(vColor.y);
-    color = pow(color, vec3(1.0/2.2));
-
 	fragColor = vec4(color, 1.0);
 }
