@@ -124,7 +124,7 @@ class BloomEffect : public IScreenEffect {
 	Texture2d *tex1, *tex2;
 
 	public:
-	bool  enabled = false;
+	bool  enabled = true;
 	BloomEffect(Renderer *renderer);
 
 	void apply(FrameBuffer *front, FrameBuffer *back);
