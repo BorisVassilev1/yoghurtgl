@@ -102,6 +102,7 @@ int main(int argc, char *argv[]) {
 		if (ImGui::SliderFloat3("ground position", (float *)&groundTransform.position, -20, 20)) {
 			groundTransform.updateWorldMatrix();
 		}
+		ImGui::Checkbox("Bloom", &(((BloomEffect*)renderer->effects[0])->enabled));
 		ImGui::End();
 
 		window.swapBuffers();

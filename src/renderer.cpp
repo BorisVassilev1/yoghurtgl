@@ -47,7 +47,7 @@ ygl::FrameBuffer::FrameBuffer(uint16_t width, uint16_t height, const char *name)
 		assert(false);
 	}
 
-	if(name) {
+	if (name) {
 		GLsizei size = strlen(name);
 		glObjectLabel(GL_FRAMEBUFFER, id, size, name);
 	}
@@ -65,19 +65,103 @@ ygl::Texture2d *ygl::FrameBuffer::getColor() { return color; }
 
 ygl::Texture2d *ygl::FrameBuffer::getDepthStencil() { return depth_stencil; }
 
+void ygl::FrameBuffer::bindDefault() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
+
+ygl::ACESEffect::ACESEffect() {
+	colorGrader = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/postProcessing/acesFilm.fs");
+}
+
+ygl::ACESEffect::~ACESEffect() { delete colorGrader; }
+
+void ygl::ACESEffect::apply(FrameBuffer *front, FrameBuffer *back) {
+	front->getColor()->bind(GL_TEXTURE7);
+	if (back) back->bind();
+	else FrameBuffer::bindDefault();
+	Renderer::drawObject(colorGrader, renderer->getScreenQuad());
+	front->getColor()->unbind(GL_TEXTURE7);
+}
+
+ygl::BloomEffect::BloomEffect(Renderer *renderer) {
+	Window *window = renderer->scene->window;
+	tex1 = new Texture2d(window->getWidth(), window->getHeight());
+	tex2 = new Texture2d(window->getWidth(), window->getHeight());
+
+	blurShader = new ComputeShader("./shaders/postProcessing/blur.comp");
+	filterShader = new ComputeShader("./shaders/postProcessing/filter.comp");
+
+	onScreen = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/ui/textureOnScreen.fs");
+	onScreen->bind();
+	onScreen->setUniform("sampler_color", 7);
+	onScreen->setUniform("sampler_depth", 7);
+	onScreen->setUniform("sampler_stencil", 7);
+	onScreen->unbind();
+
+	//filterShader->detectUniforms();
+}
+
+ygl::BloomEffect::~BloomEffect() {
+	delete tex1;
+	delete tex2;
+	delete blurShader;
+}
+
+void ygl::BloomEffect::apply(FrameBuffer *front, FrameBuffer *back) {
+	uint blurSize = 5;
+	// first separate pixels that have to be blurred;
+	front->getColor()->bindImage(1);
+	tex1->bindImage(0);
+	filterShader->bind();
+	Window *window = renderer->scene->window;
+	Renderer::compute(filterShader, window->getWidth(), window->getHeight(), 1);
+	tex2->bindImage(1);
+
+	for(uint i = 0; i < blurSize; ++ i) {
+		blurShader->bind();
+		blurShader->setUniform("img_input", 0);
+		blurShader->setUniform("img_output", 1);
+		blurShader->setUniform("blurDirection", 0);
+		Renderer::compute(blurShader, window->getWidth(), window->getHeight(), 1);
+
+		blurShader->bind();
+		blurShader->setUniform("img_input", 1);
+		blurShader->setUniform("img_output", 0);
+		blurShader->setUniform("blurDirection", 1);
+		Renderer::compute(blurShader, window->getWidth(), window->getHeight(), 1);
+	}
+
+	if (back) {
+		back->bind();
+		back->clear();
+	}
+	else FrameBuffer::bindDefault();
+
+	front->getColor()->bind(GL_TEXTURE7);
+	Renderer::drawObject(onScreen, renderer->getScreenQuad());
+	tex1->bind(GL_TEXTURE7);
+	if(enabled)
+	Renderer::drawObject(onScreen, renderer->getScreenQuad());
+	tex1->unbind(GL_TEXTURE7);
+
+}
+
 ygl::RendererComponent::RendererComponent(unsigned int shaderIndex, unsigned int meshIndex, unsigned int materialIndex)
 	: shaderIndex(shaderIndex), meshIndex(meshIndex), materialIndex(materialIndex) {}
 
 void ygl::Renderer::init() {
+	defaultTexture.bind(GL_TEXTURE0);
 	defaultTexture.bind(GL_TEXTURE1);
 	defaultTexture.bind(GL_TEXTURE2);
 	defaultTexture.bind(GL_TEXTURE3);
 	defaultTexture.bind(GL_TEXTURE4);
 	defaultTexture.bind(GL_TEXTURE5);
 
+
 	uint16_t width = scene->window->getWidth(), height = scene->window->getHeight();
 	frontFrameBuffer = new FrameBuffer(width, height, "Front frameBuffer");
 	backFrameBuffer	 = new FrameBuffer(width, height, "Back frameBuffer");
+
+	addScreenEffect(new BloomEffect(this));
+	addScreenEffect(new ACESEffect());
 
 	scene->registerComponent<RendererComponent>();
 	scene->setSystemSignature<Renderer, Transformation, RendererComponent>();
@@ -98,6 +182,8 @@ ygl::Mesh *ygl::Renderer::getMesh(RendererComponent &comp) {
 	return meshes[comp.meshIndex];
 }
 
+ygl::Mesh *ygl::Renderer::getScreenQuad() { return screenQuad; }
+
 unsigned int ygl::Renderer::addShader(Shader *shader) {
 	shaders.push_back(shader);
 	return shaders.size() - 1;
@@ -116,6 +202,11 @@ unsigned int ygl::Renderer::addMesh(Mesh *mesh) {
 ygl::Light &ygl::Renderer::addLight(const Light &light) {
 	lights.push_back(light);
 	return lights.back();
+}
+
+void ygl::Renderer::addScreenEffect(IScreenEffect *effect) {
+	effect->setRenderer(this);
+	effects.push_back(effect);
 }
 
 void ygl::Renderer::loadData() {
@@ -153,7 +244,7 @@ void ygl::Renderer::drawScene() {
 	}
 
 	for (Entity e : entities) {
-		ygl::Transformation	&transform = scene->getComponent<Transformation>(e);
+		ygl::Transformation	   &transform = scene->getComponent<Transformation>(e);
 		ygl::RendererComponent &ecr		  = scene->getComponent<RendererComponent>(e);
 
 		Shader *sh;
@@ -203,12 +294,14 @@ void ygl::Renderer::colorPass() {
 	} else {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
-	
+	glEnable(GL_DEPTH_TEST);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	// draw all entities
 	drawScene();
-	
+
 	// run draw calls from other systems
-	for(auto f : drawFunctions) {
+	for (auto f : drawFunctions) {
 		f();
 	}
 
@@ -216,16 +309,28 @@ void ygl::Renderer::colorPass() {
 	swapFrameBuffers();
 }
 
-void ygl::Renderer::toneMappingPass() {
-	frontFrameBuffer->getColor()->bind(GL_TEXTURE7);
-	frontFrameBuffer->getDepthStencil()->bind(GL_TEXTURE8);
+void ygl::Renderer::effectsPass() {
+	glDisable(GL_DEPTH_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	drawObject(effect->getShader(), screenQuad);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
+
+	int effectsCount = effects.size();
+	assert(effectsCount != 0);
+	for (int i = 0; i < effectsCount; ++i) {
+		auto effect = effects[i];
+		if (i == effectsCount - 1) {
+			effect->apply(frontFrameBuffer, 0);
+		} else {
+			effect->apply(frontFrameBuffer, backFrameBuffer);
+			swapFrameBuffers();
+		}
+	}
 }
 
 void ygl::Renderer::doWork() {
 	colorPass();
-	toneMappingPass();
+	effectsPass();
 }
 
 ygl::Renderer::~Renderer() {
@@ -240,9 +345,7 @@ ygl::Renderer::~Renderer() {
 	delete screenQuad;
 }
 
-void ygl::Renderer::addDrawFunction(std::function<void()> func) {
-	drawFunctions.push_back(func);
-}
+void ygl::Renderer::addDrawFunction(std::function<void()> func) { drawFunctions.push_back(func); }
 
 void ygl::Renderer::drawObject(Transformation &transform, Shader *sh, Mesh *mesh, GLuint materialIndex,
 							   bool useTexture) {
@@ -258,6 +361,7 @@ void ygl::Renderer::drawObject(Transformation &transform, Shader *sh, Mesh *mesh
 }
 
 void ygl::Renderer::drawObject(Shader *sh, Mesh *mesh) {
+	if(!sh->isBound())
 	sh->bind();
 	mesh->bind();
 	glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
@@ -266,6 +370,7 @@ void ygl::Renderer::drawObject(Shader *sh, Mesh *mesh) {
 }
 
 void ygl::Renderer::compute(ComputeShader *shader, int domainX, int domainY, int domainZ) {
+	if(!shader->isBound())
 	shader->bind();
 	int groupsX = domainX / shader->groupSize.x + (domainX % shader->groupSize.x > 0);
 	int groupsY = domainY / shader->groupSize.y + (domainY % shader->groupSize.y > 0);

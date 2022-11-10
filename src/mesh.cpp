@@ -446,7 +446,7 @@ ygl::Mesh *ygl::makeSphere(float radius, uint detailX, uint detailY) {
 	return mesh;
 }
 
-ygl::Mesh *ygl::makeSphere(float radius) { return makeSphere(radius, 20, 20); }
+ygl::Mesh *ygl::makeSphere(float radius) { return makeSphere(radius, 10, 10); }
 
 ygl::Mesh *ygl::makeUnitSphere() { return makeSphere(1.); }
 

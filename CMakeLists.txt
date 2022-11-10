@@ -29,11 +29,7 @@ add_library("ImGuizmo" STATIC ${IMGUIZMO_SOURCES})
 target_include_directories("ImGuizmo" PUBLIC ${IMGUIZMO_PATH})
 target_link_libraries("ImGuizmo" PUBLIC "ImGui")
 
-
-file(GLOB_RECURSE SOURCES
-	./src/*.cpp
-)
-
+# YoghurtGL compilation
 if (WIN32)
 	set(LIBS glfw assimp)
 endif (WIN32)	
@@ -43,24 +39,30 @@ if (UNIX)
 endif (UNIX)
 
 
+file(GLOB_RECURSE YGL_SOURCES
+	./src/*.cpp
+)
+add_library("YoghurtGL" STATIC ${YGL_SOURCES})
+target_include_directories("YoghurtGL" PUBLIC include)
+target_include_directories("YoghurtGL" PUBLIC libs/glfw/include)
+target_include_directories("YoghurtGL" PUBLIC libs/glm/)
+target_link_directories("YoghurtGL" PUBLIC libs/glfw/src)
+target_link_libraries("YoghurtGL" PUBLIC ImGui)
+target_link_libraries("YoghurtGL" PUBLIC ${LIBS})
+target_link_libraries("YoghurtGL" PUBLIC libglew_static)
+target_link_libraries("YoghurtGL" PUBLIC ImGuizmo)
+
+
 file(GLOB_RECURSE TARGET_FILES examples/*.cpp)
 
 foreach(CURR_FILE ${TARGET_FILES})
 	get_filename_component(CURR_TARGET ${CURR_FILE} NAME_WE)
 
-	add_executable(${CURR_TARGET} ${SOURCES} ${CURR_FILE})
+	add_executable(${CURR_TARGET} ${CURR_FILE})
 	set_target_properties(${CURR_TARGET} PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY ../
 	)
-	target_include_directories(${CURR_TARGET} PRIVATE include)
-	target_include_directories(${CURR_TARGET} PRIVATE libs/glfw/include)
-	target_include_directories(${CURR_TARGET} PRIVATE libs/glm/)
-
-	target_link_directories(${CURR_TARGET} PRIVATE libs/glfw/src)
-	target_link_libraries(${CURR_TARGET} PRIVATE ImGui)
-	target_link_libraries(${CURR_TARGET} PRIVATE ${LIBS})
-	target_link_libraries(${CURR_TARGET} PRIVATE libglew_static)
-	target_link_libraries(${CURR_TARGET} PRIVATE ImGuizmo)
+	target_link_libraries(${CURR_TARGET} PRIVATE YoghurtGL)
 
 endforeach(CURR_FILE ${TARGET_FILES})
 

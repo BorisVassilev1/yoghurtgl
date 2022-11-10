@@ -5,9 +5,9 @@ in vec2 outTexCoord;
 
 out vec4 fragColor;
 
-uniform sampler2D  sampler_color;
-uniform sampler2D  sampler_depth;
-uniform usampler2D sampler_stencil;
+layout(binding = 7) uniform sampler2D  sampler_color;
+layout(binding = 8) uniform sampler2D  sampler_depth;
+layout(binding = 9) uniform usampler2D sampler_stencil;
 
 uniform int viewMode = 0;
 

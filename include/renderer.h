@@ -11,6 +11,15 @@
 
 namespace ygl {
 
+struct Material;
+struct Light;
+class FrameBuffer;
+struct ScreenEffect;
+struct IScreenEffect;
+struct ACESEffect;
+struct RendererComponent;
+class Renderer;
+
 struct Material {
 	glm::vec3 albedo;
 	float	  specular_chance;
@@ -72,6 +81,8 @@ class FrameBuffer {
 
 	Texture2d *getColor();
 	Texture2d *getDepthStencil();
+
+	static void bindDefault();
 };
 
 struct ScreenEffect {
@@ -82,6 +93,43 @@ struct ScreenEffect {
 	~ScreenEffect() { delete shader; }
 
 	VFShader *getShader() { return shader; }
+};
+
+class IScreenEffect {
+   protected:
+	Renderer *renderer;
+	IScreenEffect() {}
+
+   public:
+	void		 setRenderer(Renderer *renderer) { this->renderer = renderer; }
+	virtual void apply(FrameBuffer *front, FrameBuffer *back) = 0;
+};
+
+// TODO: this must go to the effects header
+class ACESEffect : public IScreenEffect {
+	VFShader *colorGrader;
+
+   public:
+	ACESEffect();
+
+	void apply(FrameBuffer *front, FrameBuffer *back);
+
+	~ACESEffect();
+};
+
+class BloomEffect : public IScreenEffect {
+	ComputeShader *blurShader, *filterShader;
+	VFShader *onScreen;
+
+	Texture2d *tex1, *tex2;
+
+	public:
+	bool  enabled = false;
+	BloomEffect(Renderer *renderer);
+
+	void apply(FrameBuffer *front, FrameBuffer *back);
+
+	~BloomEffect();
 };
 
 struct RendererComponent {
@@ -106,28 +154,32 @@ class Renderer : public ygl::ISystem {
 
 	FrameBuffer *frontFrameBuffer;
 	FrameBuffer *backFrameBuffer;
-	Mesh		 *screenQuad = makeScreenQuad();
+	Mesh		*screenQuad = makeScreenQuad();
 
 	std::vector<std::function<void()> > drawFunctions;
-	ScreenEffect						 *effect = new ScreenEffect();
+	public:
+	std::vector<IScreenEffect *>		effects;
+	private:
 
 	void swapFrameBuffers();
 	void drawScene();
 	void colorPass();
-	void toneMappingPass();
+	void effectsPass();
 
    public:
 	using ISystem::ISystem;
 	void init() override;
 
-	Shader   *getShader(RendererComponent &);
+	Shader	 *getShader(RendererComponent &);
 	Material &getMaterial(RendererComponent &);
 	Mesh	 *getMesh(RendererComponent &);
+	Mesh	 *getScreenQuad();
 
 	unsigned int addShader(Shader *);
 	unsigned int addMaterial(const Material &);
 	unsigned int addMesh(Mesh *);
-	Light		  &addLight(const Light &);
+	Light		&addLight(const Light &);
+	void		 addScreenEffect(IScreenEffect *);
 
 	void setDefaultShader(int defaultShader);
 
