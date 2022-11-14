@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
 	clearColor *= 1.5;
 	clearColor = glm::pow(clearColor, glm::vec3(2.4));
 
-	glClearColor(clearColor.x, clearColor.y, clearColor.z, 1.0);
+	renderer->setClearColor(glm::vec4(clearColor, 1.));
 	while (!window.shouldClose()) {
 		window.beginFrame();
 		mouse.update();
@@ -102,7 +102,8 @@ int main(int argc, char *argv[]) {
 		if (ImGui::SliderFloat3("ground position", (float *)&groundTransform.position, -20, 20)) {
 			groundTransform.updateWorldMatrix();
 		}
-		ImGui::Checkbox("Bloom", &(((BloomEffect*)renderer->effects[0])->enabled));
+		ImGui::Checkbox("Bloom", &(renderer->effects[0]->enabled));
+		ImGui::Checkbox("Alpha Correction", &(renderer->effects[1]->enabled));
 		ImGui::End();
 
 		window.swapBuffers();

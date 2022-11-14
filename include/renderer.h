@@ -101,6 +101,7 @@ class IScreenEffect {
 	IScreenEffect() {}
 
    public:
+	bool enabled = true;
 	void		 setRenderer(Renderer *renderer) { this->renderer = renderer; }
 	virtual void apply(FrameBuffer *front, FrameBuffer *back) = 0;
 };
@@ -124,7 +125,6 @@ class BloomEffect : public IScreenEffect {
 	Texture2d *tex1, *tex2;
 
 	public:
-	bool  enabled = true;
 	BloomEffect(Renderer *renderer);
 
 	void apply(FrameBuffer *front, FrameBuffer *back);
@@ -156,12 +156,13 @@ class Renderer : public ygl::ISystem {
 	FrameBuffer *backFrameBuffer;
 	Mesh		*screenQuad = makeScreenQuad();
 
+	glm::vec4 clearColor = glm::vec4(0, 0, 0, 1);
+
 	std::vector<std::function<void()> > drawFunctions;
 	public:
 	std::vector<IScreenEffect *>		effects;
 	private:
 
-	void swapFrameBuffers();
 	void drawScene();
 	void colorPass();
 	void effectsPass();
@@ -182,6 +183,7 @@ class Renderer : public ygl::ISystem {
 	void		 addScreenEffect(IScreenEffect *);
 
 	void setDefaultShader(int defaultShader);
+	void setClearColor(glm::vec4 color);
 
 	void loadData();
 
@@ -190,6 +192,7 @@ class Renderer : public ygl::ISystem {
 	~Renderer() override;
 
 	void addDrawFunction(std::function<void()> func);
+	void swapFrameBuffers();
 
 	static void drawObject(Transformation &transform, Shader *shader, Mesh *mesh, GLuint materialIndex,
 						   bool useTexture);

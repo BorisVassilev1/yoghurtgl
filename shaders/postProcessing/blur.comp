@@ -27,7 +27,7 @@ void main() {
     vec3 color1 = imageLoad(img_input, pixel_coords).xyz;
     vec3 color2 = imageLoad(img_input, pixel_coords + right).xyz;
 
-    vec3 color = (color0 + color1 * 2. + color2) / 4;
+    vec3 color = (color0 + color1 + color2) / 3;
 
     imageStore(img_output, pixel_coords, vec4(color, 1.0));
 	return;

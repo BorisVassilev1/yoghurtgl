@@ -249,6 +249,8 @@ void initPathTracer() {
 	textureOnScreen = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/ui/textureOnScreen.fs");
 	textureOnScreen->bind();
 	textureOnScreen->setUniform("sampler_color", 10);
+	textureOnScreen->setUniform("sampler_depth", 10);
+	textureOnScreen->setUniform("sampler_stencil", 10);
 	textureOnScreen->unbind();
 
 	glGenBuffers(1, &spheresBuff);
@@ -285,7 +287,7 @@ int main(int argc, char *argv[]) {
 
 	tex->bind();
 
-	glClearColor(0, 0, 0, 0);
+	renderer->setClearColor(glm::vec4(0,0,0,0));
 	while (!window->shouldClose()) {
 		window->beginFrame();
 		mouse->update();

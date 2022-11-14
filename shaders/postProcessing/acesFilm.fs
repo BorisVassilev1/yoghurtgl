@@ -4,9 +4,12 @@ in vec2 outTexCoord;
 
 out vec4 fragColor;
 
-layout(binding = 7) uniform sampler2D  sampler_color;
-layout(binding = 8) uniform sampler2D  sampler_depth;
+layout(binding = 7) uniform sampler2D sampler_color;
+layout(binding = 8) uniform sampler2D sampler_depth;
 layout(binding = 9) uniform usampler2D sampler_stencil;
+
+uniform bool doColorGrading	   = true;
+uniform bool doGammaCorrection = true;
 
 // ACES tone mapping curve fit to go from HDR to LDR
 // https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
@@ -26,9 +29,9 @@ vec3 LinearToInverseGamma(vec3 rgb, float gamma) {
 
 void main() {
 	vec4 color = texture(sampler_color, outTexCoord);
-    //float depth = texture(sampler_depth, outTexCoord).x;
-    // color.xyz *= step(1.73, length(color.xyz));
-	color.xyz  = ACESFilm(color.xyz);
-	color.xyz  = LinearToInverseGamma(color.xyz, 2.4);
-    fragColor = color;
+
+	if (doColorGrading) color.xyz = ACESFilm(color.xyz);
+	if (doGammaCorrection) color.xyz = LinearToInverseGamma(color.xyz, 2.4);
+
+	fragColor = color;
 }
