@@ -257,8 +257,8 @@ void ygl::Renderer::swapFrameBuffers() { std::swap(frontFrameBuffer, backFrameBu
 
 void ygl::Renderer::drawScene() {
 	// bind default shader
-	int prevShaderIndex;
-	if (defaultShader != -1) {
+	uint prevShaderIndex;
+	if (defaultShader != (uint)-1) {
 		shaders[defaultShader]->bind();
 		prevShaderIndex = defaultShader;
 	} else {
@@ -274,7 +274,7 @@ void ygl::Renderer::drawScene() {
 		// binds the object's own shader if present.
 		// Oherwise checks if the default shader has been bound by the previous object
 		// and binds it only if needed
-		if (ecr.shaderIndex != -1) {					  // if object has a shader
+		if (ecr.shaderIndex != (uint)-1) {					  // if object has a shader
 			if (ecr.shaderIndex != prevShaderIndex) {	  // if its different from the previous one
 				shaders[prevShaderIndex]->unbind();
 				sh				= shaders[ecr.shaderIndex];
@@ -284,7 +284,7 @@ void ygl::Renderer::drawScene() {
 				sh = shaders[prevShaderIndex];	   // set sh so that its not null
 			}
 		} else {
-			assert(defaultShader != -1 && "cannot use default shader when it is not defined");
+			assert(defaultShader != (uint)-1 && "cannot use default shader when it is not defined");
 			if (prevShaderIndex != defaultShader) {		// if the previous shader was different
 				shaders[prevShaderIndex]->unbind();
 				sh				= shaders[defaultShader];

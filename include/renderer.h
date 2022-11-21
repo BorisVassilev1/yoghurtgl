@@ -133,11 +133,11 @@ class BloomEffect : public IScreenEffect {
 };
 
 struct RendererComponent {
-	int shaderIndex;
-	int meshIndex;
-	int materialIndex;
+	uint shaderIndex;
+	uint meshIndex;
+	uint materialIndex;
 	RendererComponent() : shaderIndex(-1), meshIndex(-1), materialIndex(-1) {}
-	RendererComponent(unsigned int shaderIndex, unsigned int meshIndex, unsigned int materialIndex);
+	RendererComponent(uint shaderIndex, uint meshIndex, uint materialIndex);
 };
 
 class Renderer : public ygl::ISystem {
@@ -149,7 +149,7 @@ class Renderer : public ygl::ISystem {
 	GLuint materialsBuffer = 0;
 	GLuint lightsBuffer	   = 0;
 
-	int		  defaultShader	 = -1;
+	uint		  defaultShader	 = -1;
 	Texture2d defaultTexture = Texture2d(1, 1, ITexture::Type::RGBA, nullptr);
 
 	FrameBuffer *frontFrameBuffer;

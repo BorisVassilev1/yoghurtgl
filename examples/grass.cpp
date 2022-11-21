@@ -12,6 +12,7 @@
 #include <renderer.h>
 #include <texture.h>
 #include <effects.h>
+#include <entities.h>
 
 #include <iostream>
 #include <random>
@@ -68,6 +69,8 @@ int main(int argc, char *argv[]) {
 
 	// renderer->addLight(Light(Transformation(glm::vec3(0, 3, 0)), glm::vec3(0.2, 0.2, 1.0), 50, Light::Type::POINT));
 
+	addBox(scene, {0, 1.5, 0}, {3, 3, 3});
+
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(0.5, -0.5, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
 							 3, Light::Type::DIRECTIONAL));
 	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
@@ -102,8 +105,8 @@ int main(int argc, char *argv[]) {
 		if (ImGui::SliderFloat3("ground position", (float *)&groundTransform.position, -20, 20)) {
 			groundTransform.updateWorldMatrix();
 		}
-		ImGui::Checkbox("Bloom", &(renderer->effects[0]->enabled));
-		ImGui::Checkbox("Alpha Correction", &(renderer->effects[1]->enabled));
+		
+		ImGui::Checkbox("Alpha Correction", &(renderer->effects[0]->enabled));
 		ImGui::End();
 
 		window.swapBuffers();
