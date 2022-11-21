@@ -16,7 +16,6 @@ void main() {
 	vec4 color = imageLoad(img_input, pixel_coords);
 
     color.xyz = clamp(color.xyz - threshhold, 0, 1000);
-    color.w = 1.0;
 
     imageStore(img_output, pixel_coords, color);
 	return;

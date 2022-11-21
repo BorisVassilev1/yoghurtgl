@@ -23,12 +23,13 @@ void main() {
         right = ivec2(0, 1);
     }
 
-	vec3 color0 = imageLoad(img_input, pixel_coords + left).xyz;
-    vec3 color1 = imageLoad(img_input, pixel_coords).xyz;
-    vec3 color2 = imageLoad(img_input, pixel_coords + right).xyz;
+	vec4 color0 = imageLoad(img_input, pixel_coords + left);
+    vec4 color1 = imageLoad(img_input, pixel_coords);
+    vec4 color2 = imageLoad(img_input, pixel_coords + right);
 
-    vec3 color = (color0 + color1 + color2) / 3;
+    vec3 color = (color0.xyz + color1.xyz + color2.xyz) / 3;
+    float maxAlpha = step(0.01, color).x;
 
-    imageStore(img_output, pixel_coords, vec4(color, 1.0));
+    imageStore(img_output, pixel_coords, vec4(color, maxAlpha));
 	return;
 }

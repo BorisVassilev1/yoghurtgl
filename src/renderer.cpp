@@ -92,6 +92,10 @@ ygl::BloomEffect::BloomEffect(Renderer *renderer) {
 
 	blurShader	 = new ComputeShader("./shaders/postProcessing/blur.comp");
 	filterShader = new ComputeShader("./shaders/postProcessing/filter.comp");
+	filterShader->bind();
+	filterShader->setUniform("img_input", 1);
+	filterShader->setUniform("img_output", 0);
+	filterShader->unbind();
 
 	onScreen = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/ui/textureOnScreen.fs");
 	onScreen->bind();
@@ -174,7 +178,7 @@ void ygl::Renderer::init() {
 	frontFrameBuffer = new FrameBuffer(width, height, "Front frameBuffer");
 	backFrameBuffer	 = new FrameBuffer(width, height, "Back frameBuffer");
 
-	addScreenEffect(new BloomEffect(this));
+	// addScreenEffect(new BloomEffect(this));
 	addScreenEffect(new ACESEffect());
 
 	scene->registerComponent<RendererComponent>();
