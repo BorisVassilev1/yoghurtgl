@@ -4,7 +4,7 @@
 #include <assert.h>
 
 ygl::Material::Material()
-	: Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.0), 0.0, 0.1, 0., false,
+	: Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.0), 0.0, 0.3, 0., false,
 			   0.0, 0.0, 0.0) {}
 
 ygl::Material::Material(glm::vec3 albedo, float specular_chance, glm::vec3 emission, float ior,
@@ -186,18 +186,30 @@ void ygl::Renderer::init() {
 }
 
 ygl::Shader *ygl::Renderer::getShader(RendererComponent &comp) {
-	assert(comp.shaderIndex >= 0 && "invalid index");
-	return shaders[comp.shaderIndex];
+	return getShader(comp.shaderIndex);
+}
+
+ygl::Shader *ygl::Renderer::getShader(uint index) {
+	assert(index >= 0 && "invalid index");
+	return shaders[index];
 }
 
 ygl::Material &ygl::Renderer::getMaterial(RendererComponent &comp) {
-	assert(comp.materialIndex >= 0 && "invalid index");
-	return materials[comp.materialIndex];
+	return getMaterial(comp.materialIndex);
+}
+
+ygl::Material &ygl::Renderer::getMaterial(uint index) {
+	assert(index >= 0 && "invalid index");
+	return materials[index];
 }
 
 ygl::Mesh *ygl::Renderer::getMesh(RendererComponent &comp) {
-	assert(comp.meshIndex >= 0 && "invalid index");
-	return meshes[comp.meshIndex];
+	return getMesh(comp.meshIndex);
+}
+
+ygl::Mesh *ygl::Renderer::getMesh(uint index) {
+	assert(index >= 0 && "invalid index");
+	return meshes[index];
 }
 
 ygl::Mesh *ygl::Renderer::getScreenQuad() { return screenQuad; }

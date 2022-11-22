@@ -32,7 +32,8 @@ void main() {
 				 mix(vec3(1.), vec3(texture(aoMap, vTexCoord).x), mat.use_ao_map);
 	}
 
-	vec3 color = calcAllLights(vVertexPos, finalNormal, normalizedVertexNormal, vTexCoord, albedo);
+	if(!gl_FrontFacing) finalNormal = -finalNormal;
+	vec3 color = calcAllLights(vVertexPos, finalNormal, finalNormal, vTexCoord, albedo);
 
 	// light = vec3(materials[material_index].albedo);
 	// color = vVertexNormal;

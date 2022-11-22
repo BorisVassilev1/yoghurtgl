@@ -14,8 +14,10 @@ uniform vec3 color1 = pow(vec3(0.9, 1, 0.7), vec3(2.2));
 
 void main() {
 	vec3 albedo = mix(color0, color1, vColor.x * vColor.x);
+
 	vec3 normalizedVertexNormal = normalize(vVertexNormal);
 
+	// if(!gl_FrontFacing) normalizedVertexNormal = -normalizedVertexNormal;
 	vec3 color = calcAllLights(vVertexPos, normalizedVertexNormal, normalizedVertexNormal, vTexCoord, albedo);
 
 	// color = vec3(materials[material_index].albedo);

@@ -7,19 +7,18 @@
 namespace ygl {
 
 using uint = uint32_t;
+
 static uint canonicalCubeIndex = -1;
 
-Entity addBox(Scene &scene, glm::vec3 position = glm::vec3(), glm::vec3 scale = glm::vec3(1.)) {
-    Entity e = scene.createEntity();
-    Renderer *renderer = scene.getSystem<Renderer>();
-    if(canonicalCubeIndex == (uint)-1) {
-        canonicalCubeIndex = renderer->addMesh(makeCube(1.));
-    }
-    uint materialIndex = renderer->addMaterial(Material());
-    scene.addComponent<Transformation>(e, Transformation(position, glm::vec3(), scale));
-    scene.addComponent<RendererComponent>(e, RendererComponent(-1, canonicalCubeIndex, materialIndex));
+Entity addBox(Scene &scene, glm::vec3 position = glm::vec3(), glm::vec3 scale = glm::vec3(1.),
+			  glm::vec3 color = glm::vec3(1.));
 
-    return e;
-}
+static uint canonicalSphereIndex = -1;
 
-};
+Entity addSphere(Scene &scene, glm::vec3 position = glm::vec3(), glm::vec3 scale = glm::vec3(1.),
+				 glm::vec3 color = glm::vec3(1.));
+
+Entity addModel(Scene &scene, Mesh *mesh, glm::vec3 position = glm::vec3(), glm::vec3 scale = glm::vec3(1.),
+				glm::vec3 color = glm::vec3(1.));
+
+};	   // namespace ygl

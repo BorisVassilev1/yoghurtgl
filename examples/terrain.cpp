@@ -58,6 +58,11 @@ int main(int argc, char *argv[]) {
 	Texture2d *height = new Texture2d("./res/images/heightmap.png");
 	Texture2d *normal = new Texture2d("./res/images/NormalMap.png");
 
+	// Texture2d *height = new Texture2d("./res/images/bricks/displ.jpg");
+	// Texture2d *normal = new Texture2d("./res/images/bricks/normal.jpg");
+	Texture2d *color = new Texture2d("./res/images/bricks/albedo.jpg", ygl::ITexture::Type::SRGB);
+
+	color->bind(GL_TEXTURE1);
 	normal->bind(GL_TEXTURE2);
 	height->bind(GL_TEXTURE3);
 	height->bind(GL_TEXTURE4);
@@ -70,15 +75,15 @@ int main(int argc, char *argv[]) {
 	RendererComponent terrainRenderer;
 	terrainRenderer.materialIndex =
 		renderer->addMaterial(Material(glm::vec3(1., 1., 1.), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0,
-									   glm::vec3(1.0), 0.0, 0.0, 0., true, 0, 0., 0.));
+									   glm::vec3(1.0), 0.0, 0.4, 1., true, 0, 0., 0.));
 	terrainRenderer.shaderIndex = renderer->addShader(terrainShader);
 	terrainRenderer.meshIndex	= renderer->addMesh(terrainMesh);
 	scene.addComponent(terrain, terrainRenderer);
 
 	glPatchParameteri(GL_PATCH_VERTICES, 3);
 
-	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
-							 3, Light::Type::DIRECTIONAL));
+	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 3,
+							 Light::Type::DIRECTIONAL));
 	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
 
 	renderer->loadData();

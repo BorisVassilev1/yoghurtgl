@@ -28,6 +28,7 @@
             "name": "win_opengl",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceFolder}/src/**",
                 "C:/msys64/mingw64/include"
             ],
             "defines": [
@@ -49,7 +50,8 @@
             "mergeConfigurations": false,
             "browse": {
                 "path": [
-                    "${workspaceFolder}/***",
+                    "${workspaceFolder}/**",
+                    "${workspaceFolder}/src/**",
                     "C:/msys64/mingw64/include"
                 ],
                 "limitSymbolsToIncludedHeaders": false

@@ -70,8 +70,6 @@ int main() {
 
 	controller.speed = 0.4;
 
-	
-
 	glClearColor(0, 0, 0, 1);
 	while (!window.shouldClose()) {
 		window.beginFrame();

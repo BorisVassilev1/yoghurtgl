@@ -101,7 +101,7 @@ class IScreenEffect {
 	IScreenEffect() {}
 
    public:
-	bool enabled = true;
+	bool		 enabled = true;
 	void		 setRenderer(Renderer *renderer) { this->renderer = renderer; }
 	virtual void apply(FrameBuffer *front, FrameBuffer *back) = 0;
 };
@@ -120,11 +120,11 @@ class ACESEffect : public IScreenEffect {
 
 class BloomEffect : public IScreenEffect {
 	ComputeShader *blurShader, *filterShader;
-	VFShader *onScreen;
+	VFShader		 *onScreen;
 
 	Texture2d *tex1, *tex2;
 
-	public:
+   public:
 	BloomEffect(Renderer *renderer);
 
 	void apply(FrameBuffer *front, FrameBuffer *back);
@@ -149,20 +149,21 @@ class Renderer : public ygl::ISystem {
 	GLuint materialsBuffer = 0;
 	GLuint lightsBuffer	   = 0;
 
-	uint		  defaultShader	 = -1;
+	uint	  defaultShader	 = -1;
 	Texture2d defaultTexture = Texture2d(1, 1, ITexture::Type::RGBA, nullptr);
 
 	FrameBuffer *frontFrameBuffer;
 	FrameBuffer *backFrameBuffer;
-	Mesh		*screenQuad = makeScreenQuad();
+	Mesh		 *screenQuad = makeScreenQuad();
 
 	glm::vec4 clearColor = glm::vec4(0, 0, 0, 1);
 
 	std::vector<std::function<void()> > drawFunctions;
-	public:
-	std::vector<IScreenEffect *>		effects;
-	private:
 
+   public:
+	std::vector<IScreenEffect *> effects;
+
+   private:
 	void drawScene();
 	void colorPass();
 	void effectsPass();
@@ -171,15 +172,18 @@ class Renderer : public ygl::ISystem {
 	using ISystem::ISystem;
 	void init() override;
 
-	Shader	 *getShader(RendererComponent &);
+	Shader   *getShader(RendererComponent &);
+	Shader   *getShader(uint index);
 	Material &getMaterial(RendererComponent &);
+	Material &getMaterial(uint index);
 	Mesh	 *getMesh(RendererComponent &);
+	Mesh	 *getMesh(uint index);
 	Mesh	 *getScreenQuad();
 
 	unsigned int addShader(Shader *);
 	unsigned int addMaterial(const Material &);
 	unsigned int addMesh(Mesh *);
-	Light		&addLight(const Light &);
+	Light		  &addLight(const Light &);
 	void		 addScreenEffect(IScreenEffect *);
 
 	void setDefaultShader(int defaultShader);

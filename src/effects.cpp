@@ -34,7 +34,7 @@ void ygl::GrassSystem::init() {
 	bladeMesh = new GrassBladeMesh(bladeCount);
 
 	materialIndex = scene->getSystem<Renderer>()->addMaterial(Material(glm::vec3(0., 1., 0.), .2, glm::vec3(0.), 0.99,
-																	   glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1,
+																	   glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.3,
 																	   0.0, false, 0., 0.0, 0.0));
 	Shader::setSSBO(bladeMesh->grassData, 1);
 	grassCompute.bind();
@@ -44,9 +44,7 @@ void ygl::GrassSystem::init() {
 
 	scene->registerComponent<GrassHolder>();
 	scene->setSystemSignature<GrassSystem, Transformation, GrassHolder>();
-	scene->getSystem<Renderer>()->addDrawFunction([this]() ->void {
-		render(this->scene->window->globalTime);
-	});
+	scene->getSystem<Renderer>()->addDrawFunction([this]() -> void { render(this->scene->window->globalTime); });
 }
 
 ygl::GrassSystem::~GrassSystem() { delete bladeMesh; }
@@ -86,6 +84,4 @@ void ygl::GrassSystem::reload() {
 	if (bladeMesh != nullptr) { bladeMesh->setBladeCount(bladeCount); }
 }
 
-void ygl::GrassSystem::doWork() {
-	this->update((float)scene->window->globalTime);
-}
+void ygl::GrassSystem::doWork() { this->update((float)scene->window->globalTime); }

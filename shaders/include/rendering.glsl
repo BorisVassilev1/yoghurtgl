@@ -133,7 +133,8 @@ vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec3 vertexNormal, i
 
 	vec3 V = normalize(camPos - position);
 
-	if (dot(V, vertexNormal) < -0.001) N = -N;
+	// if (dot(V, vertexNormal) < -0.001) N = -N;
+	// if(!gl_FrontFacing) N = -N;
 
 	vec3 H = normalize(V + L);
 
@@ -144,12 +145,11 @@ vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec3 vertexNormal, i
 	F0		= mix(F0, albedo, mat.metallic);
 	vec3 F	= fresnelSchlick(max(dot(H, V), 0.0), F0);
 
-	float roughness = max(texture(roughnessMap, texCoord).x * mat.use_roughness_map, 0.3);
-	// float roughness = 0.05;
+	float roughness = mix(mat.specular_roughness, texture(roughnessMap, texCoord).x, mat.use_roughness_map);
 
 	float NDF = DistributionGGX(N, H, roughness);
 	float G	  = GeometrySmith(N, V, L, roughness);
-
+	
 	vec3  numerator	  = NDF * G * F;
 	float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
 	denominator		  = max(denominator, 0.0001);

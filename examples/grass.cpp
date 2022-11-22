@@ -41,8 +41,8 @@ int main(int argc, char *argv[]) {
 	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 	Camera	  cam(glm::radians(70.f), window, 0.01, 1000);
 
-	Mouse		 mouse(window);
-	FPController controller(&window, &mouse, cam.transform);
+	Mouse			mouse(window);
+	FPController	controller(&window, &mouse, cam.transform);
 	TransformGuizmo guizmo(&window, &cam, (Transformation *)nullptr);
 
 	Scene scene(&window);
@@ -65,11 +65,14 @@ int main(int argc, char *argv[]) {
 	scene.addComponent(plane, RendererComponent(-1, renderer->addMesh(planeMesh),
 												renderer->addMaterial(Material(
 													glm::vec3(0.1, 0.5, 0.1), .2, glm::vec3(0.), 0.99, glm::vec3(0.1),
-													0.0, glm::vec3(1.), 0.0, 0.1, 0.0, false, 0., 0.0, 0.0))));
+													0.0, glm::vec3(1.), 0.0, 0.3, 0.0, false, 0., 0.0, 0.0))));
 
 	// renderer->addLight(Light(Transformation(glm::vec3(0, 3, 0)), glm::vec3(0.2, 0.2, 1.0), 50, Light::Type::POINT));
 
-	addBox(scene, {0, 1.5, 0}, {3, 3, 3});
+	Entity model =
+		addModel(scene, (Mesh *)getModel(loadScene("./res/models/dragon.obj")), {0, 3, 0}, {10, 10, 10}, {1, 1, 1});
+	Material &modelMat			= renderer->getMaterial(scene.getComponent<RendererComponent>(model));
+	modelMat.specular_roughness = 0.7;
 
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(0.5, -0.5, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
 							 3, Light::Type::DIRECTIONAL));
@@ -92,7 +95,7 @@ int main(int argc, char *argv[]) {
 		grassSystem->doWork();
 		renderer->doWork();
 
-		Transformation &groundTransform = scene.getComponent<Transformation>(plane);
+		Transformation &groundTransform = scene.getComponent<Transformation>(model);
 
 		guizmo.update(&groundTransform);
 
@@ -105,7 +108,7 @@ int main(int argc, char *argv[]) {
 		if (ImGui::SliderFloat3("ground position", (float *)&groundTransform.position, -20, 20)) {
 			groundTransform.updateWorldMatrix();
 		}
-		
+
 		ImGui::Checkbox("Alpha Correction", &(renderer->effects[0]->enabled));
 		ImGui::End();
 

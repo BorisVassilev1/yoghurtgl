@@ -19,7 +19,7 @@ out vec2 tcTexCoord[];
 out vec3 tcVertexNormal[];
 out mat3 tcTBN[];
 
-const int	MIN_TES	 = 1;
+const int	MIN_TES	 = 4;
 const int	MAX_TES	 = 16;
 const float MIN_DIST = 1;
 const float MAX_DIST = 5;
@@ -30,7 +30,7 @@ void main() {
 	tcColor[gl_InvocationID]		= vColor[gl_InvocationID];
 	tcTexCoord[gl_InvocationID]		= vTexCoord[gl_InvocationID];
 	tcVertexNormal[gl_InvocationID] = vVertexNormal[gl_InvocationID];
-	tcTBN[gl_InvocationID] = vTBN[gl_InvocationID];
+	tcTBN[gl_InvocationID]			= vTBN[gl_InvocationID];
 
 	if (gl_InvocationID == 0) {
 		// use the world space vertex position
@@ -48,10 +48,10 @@ void main() {
 		float tes1 = mix(MAX_TES, MIN_TES, clamp(dist1 / MAX_DIST, 0.0, 1.0));
 		float tes2 = mix(MAX_TES, MIN_TES, clamp(dist2 / MAX_DIST, 0.0, 1.0));
 
-		gl_TessLevelOuter[0] = tes2;	  // left for triangles
-		gl_TessLevelOuter[1] = tes0;	  // bot for triangles
-		gl_TessLevelOuter[2] = tes1;	  // right for triangles
+		gl_TessLevelOuter[0] = tes2;	 // left for triangles
+		gl_TessLevelOuter[1] = tes0;	 // bot for triangles
+		gl_TessLevelOuter[2] = tes1;	 // right for triangles
 
-		gl_TessLevelInner[0] = max(tes0, max(tes1, tes2));	  // all inner sides for triangles
+		gl_TessLevelInner[0] = max(tes0, max(tes1, tes2));	   // all inner sides for triangles
 	}
 }
