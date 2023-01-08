@@ -15,7 +15,8 @@ void main() {
     ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 	vec4 color = imageLoad(img_input, pixel_coords);
 
-    color.xyz = clamp(color.xyz - threshhold, 0, 1000);
+    // color.xyz = clamp(color.xyz - threshhold, 0, 1000);
+    color.xyz = step(threshhold, color.xyz) * color.xyz;
 
     imageStore(img_output, pixel_coords, color);
 	return;

@@ -14,20 +14,18 @@ ygl::Shader::~Shader() {
 		glDeleteProgram(program);
 		program = 0;
 	}
-
-	if (fileNames != nullptr) {
-		delete[] fileNames;
-		fileNames = nullptr;
-	}
 }
 
 void ygl::Shader::deleteShaders() {
 	for (int i = 0; i < shadersCount; ++i) {
+		glDetachShader(program, shaders[i]);
 		glDeleteShader(shaders[i]);
 		shaders[i] = 0;
 	}
 	delete[] shaders;
 	shaders = nullptr;
+	delete[] fileNames;
+	fileNames = nullptr;
 }
 
 ygl::Shader::Shader(std::initializer_list<const char *> files) {
@@ -44,7 +42,7 @@ ygl::Shader::Shader(std::initializer_list<const char *> files) {
 }
 
 void ygl::Shader::createShader(GLenum type, GLuint target) {
-	const char   *file = fileNames[target];
+	const char	 *file = fileNames[target];
 	std::ifstream in(file);
 	if (in.fail()) { std::cerr << "Error: failed opening file: " << file << std::endl; }
 
@@ -185,9 +183,7 @@ void ygl::Shader::finishProgramCreation() {
 
 void ygl::Shader::bind() {
 #ifdef YGL_DEBUG
-	if (bound) {
-		dbLog(ygl::LOG_WARNING, "shader object ", program, " is being bound repeatedly");
-	}
+	if (bound) { dbLog(ygl::LOG_WARNING, "shader object ", program, " is being bound repeatedly"); }
 #endif
 	bound = true;
 	glUseProgram(program);
@@ -250,6 +246,7 @@ void ygl::Shader::detectBlockUniforms() {
 		// std::cout << blockName << " " << blockIx << " " << result[1] << " " << result[0] << std::endl;
 
 		createUBO(blockNameString, result[1]);
+		delete[] blockName;
 	}
 }
 
@@ -271,6 +268,7 @@ void ygl::Shader::detectStorageBlocks() {
 		// System.out.println(blockName + " " + block + " " + blockInfo[0] + " " + blockInfo[1]);
 
 		createSSBO(blockNameString, blockInfo[1]);
+		delete[] blockName;
 	}
 }
 

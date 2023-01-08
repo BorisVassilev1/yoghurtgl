@@ -168,5 +168,6 @@ vec3 calcAllLights(in vec3 position, in vec3 normal, in vec3 vertexNormal, in ve
 	for (int i = 0; i < lightsCount; i++) {
 		light += calcLight(lights[i], position, normal, vertexNormal, texCoord, materials[material_index], albedo);
 	}
+	light += materials[material_index].emission;
 	return light;
 }

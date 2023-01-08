@@ -107,7 +107,7 @@ layout(binding = 6) uniform samplerCube skybox;
 
 uniform mat4  cameraMatrix;
 uniform vec2  resolution;
-uniform float fov				= radians(70);
+uniform float fov;
 uniform int	  samples_per_pixel = 1;
 
 uniform uint random_seed;

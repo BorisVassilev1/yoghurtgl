@@ -55,6 +55,12 @@ ygl::FrameBuffer::FrameBuffer(uint16_t width, uint16_t height, const char *name)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+ygl::FrameBuffer::~FrameBuffer() {
+	glDeleteFramebuffers(1, &id);
+	delete color;
+	delete depth_stencil;
+}
+
 void ygl::FrameBuffer::clear() { glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); }
 
 void ygl::FrameBuffer::bind() { glBindFramebuffer(GL_FRAMEBUFFER, id); }
@@ -109,6 +115,8 @@ ygl::BloomEffect::~BloomEffect() {
 	delete tex1;
 	delete tex2;
 	delete blurShader;
+	delete filterShader;
+	delete onScreen;
 }
 
 void ygl::BloomEffect::apply(FrameBuffer *front, FrameBuffer *back) {
@@ -178,7 +186,7 @@ void ygl::Renderer::init() {
 	frontFrameBuffer = new FrameBuffer(width, height, "Front frameBuffer");
 	backFrameBuffer	 = new FrameBuffer(width, height, "Back frameBuffer");
 
-	// addScreenEffect(new BloomEffect(this));
+	addScreenEffect(new BloomEffect(this));
 	addScreenEffect(new ACESEffect());
 
 	scene->registerComponent<RendererComponent>();
@@ -376,6 +384,9 @@ ygl::Renderer::~Renderer() {
 	}
 	for (Mesh *mesh : meshes) {
 		delete mesh;
+	}
+	for(IScreenEffect *effect : effects) {
+		delete effect;
 	}
 	delete frontFrameBuffer;
 	delete backFrameBuffer;

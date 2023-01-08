@@ -158,7 +158,7 @@ void initSpheres() {
 													   glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.), 0.00, 0.00, 0.,
 													   false, 0, 0., 0.)));
 
-	renderer->addLight(Light(Transformation(spheres[3].position), glm::vec3(1.), 1, Light::POINT));
+	renderer->addLight(Light(Transformation(spheres[3].position), glm::vec3(1.), 10, Light::POINT));
 
 	Entity sphere;
 	for (int i = 0; i < 7; ++i) {
@@ -241,7 +241,7 @@ void initPathTracer() {
 	pathTracer->setUniform("max_bounces", 20);
 	pathTracer->setUniform("do_trace_spheres", true);
 	pathTracer->setUniform("fov", glm::radians(70.f));
-	// pathTracer->unbind();
+	pathTracer->unbind();
 
 	renderTexture->bind(GL_TEXTURE10);
 	rawTexture->bind(GL_TEXTURE11);
@@ -287,7 +287,7 @@ int main(int argc, char *argv[]) {
 
 	tex->bind();
 
-	renderer->setClearColor(glm::vec4(0,0,0,0));
+	renderer->setClearColor(glm::vec4(0, 0, 0, 1));
 	while (!window->shouldClose()) {
 		window->beginFrame();
 		mouse->update();
@@ -303,23 +303,30 @@ int main(int argc, char *argv[]) {
 		if (!pathTrace) {
 			renderer->doWork();
 		} else {
+			renderTexture->bind(GL_TEXTURE10);
+			rawTexture->bind(GL_TEXTURE11);
+			renderTexture->bindImage(0);
+			rawTexture->bindImage(1);
+
 			if (sampleCount < maxSamples) {
 				pathTracer->bind();
 				Transformation t =
 					Transformation(camera->transform.position, -camera->transform.rotation, camera->transform.scale);
 				pathTracer->setUniform("cameraMatrix", t.getWorldMatrix());
 				pathTracer->setUniform("random_seed", (GLuint)rand());
-				pathTracer->unbind();
+
+				// pathTracer->unbind();
 
 				Renderer::compute(pathTracer, window->getWidth(), window->getHeight(), 1);
 
 				sampleCount++;
 				normalizer->bind();
 				normalizer->setUniform("samples", sampleCount);
-				normalizer->unbind();
+				// normalizer->unbind();
 
 				Renderer::compute(normalizer, window->getWidth(), window->getHeight(), 1);
 			}
+
 			Renderer::drawObject(textureOnScreen, screenQuad);
 		}
 

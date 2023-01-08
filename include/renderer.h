@@ -74,6 +74,7 @@ class FrameBuffer {
 
    public:
 	FrameBuffer(uint16_t width, uint16_t height, const char *name = nullptr);
+	~FrameBuffer();
 
 	void clear();
 	void bind();
@@ -104,6 +105,7 @@ class IScreenEffect {
 	bool		 enabled = true;
 	void		 setRenderer(Renderer *renderer) { this->renderer = renderer; }
 	virtual void apply(FrameBuffer *front, FrameBuffer *back) = 0;
+	virtual ~IScreenEffect() {};
 };
 
 // TODO: this must go to the effects header
