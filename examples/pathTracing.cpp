@@ -92,8 +92,8 @@ void cleanup() {
 	delete rawTexture;
 	delete textureOnScreen;
 	delete screenQuad;
-	delete spheres;
-	delete boxes;
+	delete [] spheres;
+	delete [] boxes;
 	delete skybox;
 	delete mouse;
 }
@@ -296,7 +296,8 @@ int main(int argc, char *argv[]) {
 		camera->update();
 
 		if (controller->hasChanged()) {
-			glClearTexImage(rawTexture->getID(), 0, GL_RGBA, GL_FLOAT, new GLfloat[]{0., 0., 0., 0.});
+			float clearColor[] {0.,0.,0.,0.};
+			glClearTexImage(rawTexture->getID(), 0, GL_RGBA, GL_FLOAT, &clearColor);
 			sampleCount = 0;
 		}
 

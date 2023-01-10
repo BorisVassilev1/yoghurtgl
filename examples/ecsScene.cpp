@@ -108,6 +108,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// clean up and exit
+	delete tex;
 	window.~Window();
 	ygl::terminate();
 	std::cerr << std::endl;

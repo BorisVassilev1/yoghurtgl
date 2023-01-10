@@ -61,5 +61,9 @@ int main() {
 	glDeleteBuffers(1, &lightBuff);
 
 	std::cerr << std::endl;
+	delete bunnyMesh;
+	delete shader;
+	window.~Window();
+	ygl::terminate();
 	return 0;
 }

@@ -103,6 +103,9 @@ int main(int argc, char *argv[]) {
 
 	// clean up and exit
 	window.~Window();
+	delete height;
+	delete normal;
+	delete color;
 	ygl::terminate();
 	std::cerr << std::endl;
 	return 0;

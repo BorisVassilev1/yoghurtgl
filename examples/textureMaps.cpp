@@ -90,6 +90,11 @@ int main() {
 
 	// clean up and exit
 	window.~Window();
+	delete color;
+	delete height;
+	delete normal;
+	delete roughness;
+	delete ao;
 	ygl::terminate();
 	std::cerr << std::endl;
 	return 0;
