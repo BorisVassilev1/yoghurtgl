@@ -43,8 +43,8 @@ int ygl::initDebug() {
 	return 0;
 }
 
-void GLAPIENTRY ygl::yglDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
-											 const GLchar *message, const void *userParam) {
+void GLAPIENTRY ygl::yglDebugMessageCallback(GLenum source, GLenum type, GLuint, GLenum severity, GLsizei,
+											 const GLchar *message, const void *) {
 	std::cerr << "----------<GL DEBUG MESSAGE>----------\n\tSource: ";
 	switch (source) {
 		case GL_DEBUG_SOURCE_API: std::cerr << "API"; break;
@@ -88,4 +88,3 @@ void ygl::terminate() {
 	ygl::gl_init	   = false;
 	ygl::glfw_init	   = false;
 }
-

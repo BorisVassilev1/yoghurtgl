@@ -43,8 +43,8 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 
 	ygl::Keyboard::init(this);
 
-	glfwSetWindowCloseCallback(window, [](GLFWwindow *window) { std::cerr << "closing window!"; });
-	Keyboard::addKeyCallback([&](GLFWwindow *window, int key, int scancode, int action, int mods) {
+	glfwSetWindowCloseCallback(window, [](GLFWwindow *) { std::cerr << "closing window!"; });
+	Keyboard::addKeyCallback([&](GLFWwindow *window, int key, int, int action, int) {
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
 		}

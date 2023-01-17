@@ -8,15 +8,12 @@
 namespace ygl {
 class GrassSystem : public ygl::ISystem {
 	class GrassBladeMesh : public MultiBufferMesh {
-		struct BladeData {
+		struct alignas(16) BladeData {
 			glm::vec3 position;
 			float	  windStrength;
 			glm::vec2 facing;
 			glm::vec2 size;
 			uint	  hash;
-
-		   private:
-			char padding[12];
 		};
 
 	   public:

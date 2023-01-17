@@ -17,23 +17,19 @@
 using namespace ygl;
 using namespace std;
 
-struct Sphere {
+struct alignas(16) Sphere {
 	glm::vec3 position;
 	float	  radius = 1;
 	uint	  matIdx;
 
 	Sphere() {}
 	Sphere(const glm::vec3 &position, float radius, uint matIdx) : position(position), radius(radius), matIdx(matIdx) {}
-
-   private:
-	char padding[12];
 };
 
-struct Box {
+struct alignas(16) Box {
 	glm::vec3 min;
-	char	  padding[4];
-	glm::vec3 max;
 	uint	  matIdx;
+	glm::vec3 max;
 
 	Box() {}
 	Box(const glm::vec3 &min, const glm::vec3 &max, uint matIdx) : min(min), max(max), matIdx(matIdx) {}
@@ -44,13 +40,13 @@ struct Box {
 Window *window;
 Mouse  *mouse;
 
-Texture2d	  *tex;
-Scene		  *scene;
+Texture2d	 *tex;
+Scene		 *scene;
 Renderer	 *renderer;
 VFShader	 *shader;
 VFShader	 *unlitShader;
 uint		  unlitShaderIndex = -1;
-Camera	   *camera;
+Camera		 *camera;
 FPController *controller;
 Mesh		 *sphereMesh;
 Mesh		 *bunnyMesh;
@@ -60,17 +56,17 @@ Entity bunny;
 
 ComputeShader  *pathTracer;
 ComputeShader  *normalizer;
-Texture2d	  *renderTexture;
-Texture2d	  *rawTexture;
-VFShader		 *textureOnScreen;
-Mesh			 *screenQuad;
+Texture2d	   *renderTexture;
+Texture2d	   *rawTexture;
+VFShader	   *textureOnScreen;
+Mesh		   *screenQuad;
 TextureCubemap *skybox;
 
 Sphere *spheres;
 int		sphereCount;
 GLuint	spheresBuff;
 
-Box	*boxes;
+Box	  *boxes;
 int	   boxesCount;
 GLuint boxesBuff;
 
@@ -92,8 +88,8 @@ void cleanup() {
 	delete rawTexture;
 	delete textureOnScreen;
 	delete screenQuad;
-	delete [] spheres;
-	delete [] boxes;
+	delete[] spheres;
+	delete[] boxes;
 	delete skybox;
 	delete mouse;
 }
@@ -261,7 +257,7 @@ void initPathTracer() {
 	pathTracer->setUBO(spheresBuff, 3);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
 	if (init()) {
 		dbLog(ygl::LOG_ERROR, "ygl failed to init");
 		exit(1);
@@ -272,7 +268,7 @@ int main(int argc, char *argv[]) {
 	window = new Window(1280, 1000, "Test Window", true, false);
 	mouse  = new Mouse(*window);
 
-	Keyboard::addKeyCallback([&](GLFWwindow *windowHandle, int key, int scancode, int action, int mods) {
+	Keyboard::addKeyCallback([&](GLFWwindow *windowHandle, int key, int, int action, int) {
 		if (windowHandle != window->getHandle()) return;
 		if (key == GLFW_KEY_T && action == GLFW_RELEASE) {
 			pathTrace = !pathTrace;
@@ -296,7 +292,7 @@ int main(int argc, char *argv[]) {
 		camera->update();
 
 		if (controller->hasChanged()) {
-			float clearColor[] {0.,0.,0.,0.};
+			float clearColor[]{0., 0., 0., 0.};
 			glClearTexImage(rawTexture->getID(), 0, GL_RGBA, GL_FLOAT, &clearColor);
 			sampleCount = 0;
 		}

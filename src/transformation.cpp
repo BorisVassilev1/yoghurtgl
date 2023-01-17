@@ -22,10 +22,10 @@ void ygl::Transformation::updateWorldMatrix() {
 
 void ygl::Transformation::updateVectors() { decomposeTransform(worldMatrix, position, rotation, scale); }
 
-// stolen from Hazel engine: 
+// stolen from Hazel engine:
 // https://github.com/TheCherno/Hazel/blob/master/Hazel/src/Hazel/Math/Math.cpp
 bool ygl::Transformation::decomposeTransform(const glm::mat4 &transform, glm::vec3 &translation, glm::vec3 &rotation,
-											   glm::vec3 &scale) {
+											 glm::vec3 &scale) {
 	// From glm::decompose in matrix_decompose.inl
 
 	using namespace glm;
@@ -49,7 +49,7 @@ bool ygl::Transformation::decomposeTransform(const glm::mat4 &transform, glm::ve
 	translation	   = vec3(LocalMatrix[3]);
 	LocalMatrix[3] = vec4(0, 0, 0, LocalMatrix[3].w);
 
-	vec3 Row[3], Pdum3;
+	vec3 Row[3];
 
 	// Now get scale and shear.
 	for (length_t i = 0; i < 3; ++i)

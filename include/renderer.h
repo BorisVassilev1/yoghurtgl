@@ -14,13 +14,14 @@ namespace ygl {
 struct Material;
 struct Light;
 class FrameBuffer;
-struct ScreenEffect;
-struct IScreenEffect;
-struct ACESEffect;
+class IScreenEffect;
+class ACESEffect;
 struct RendererComponent;
 class Renderer;
 
-struct Material {
+// #pragma pack(push)
+// #pragma pack(1)
+struct alignas(16) Material {
 	glm::vec3 albedo;
 	float	  specular_chance;
 
@@ -41,26 +42,21 @@ struct Material {
 	float use_roughness_map;
 	float use_ao_map;
 
-   private:
-	char padding[8];
-
    public:
 	Material();
 	Material(glm::vec3 albedo, float specular_chance, glm::vec3 emission, float ior, glm::vec3 transparency_color,
 			 float refraction_chance, glm::vec3 specular_color, float refraction_roughness, float specular_roughness,
 			 float texture_influence, bool use_normal_map, float metallic, float use_roughness_map, float use_ao_map);
 };
+// #pragma pack(pop)
 
-struct Light {
+struct alignas(16) Light {
 	enum Type { AMBIENT, DIRECTIONAL, POINT };
 
 	glm::mat4 transform;
 	glm::vec3 color;
 	float	  intensity;
 	Type	  type;
-
-   private:
-	char padding[12];
 
    public:
 	Light(glm::mat4 transform, glm::vec3 color, float intensity, Type type);
@@ -86,16 +82,6 @@ class FrameBuffer {
 	static void bindDefault();
 };
 
-struct ScreenEffect {
-	VFShader *shader;
-
-	ScreenEffect() { shader = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/postProcessing/acesFilm.fs"); }
-
-	~ScreenEffect() { delete shader; }
-
-	VFShader *getShader() { return shader; }
-};
-
 class IScreenEffect {
    protected:
 	Renderer *renderer;
@@ -105,7 +91,7 @@ class IScreenEffect {
 	bool		 enabled = true;
 	void		 setRenderer(Renderer *renderer) { this->renderer = renderer; }
 	virtual void apply(FrameBuffer *front, FrameBuffer *back) = 0;
-	virtual ~IScreenEffect() {};
+	virtual ~IScreenEffect(){};
 };
 
 // TODO: this must go to the effects header
@@ -122,7 +108,7 @@ class ACESEffect : public IScreenEffect {
 
 class BloomEffect : public IScreenEffect {
 	ComputeShader *blurShader, *filterShader;
-	VFShader		 *onScreen;
+	VFShader	  *onScreen;
 
 	Texture2d *tex1, *tex2;
 
@@ -156,7 +142,7 @@ class Renderer : public ygl::ISystem {
 
 	FrameBuffer *frontFrameBuffer;
 	FrameBuffer *backFrameBuffer;
-	Mesh		 *screenQuad = makeScreenQuad();
+	Mesh		*screenQuad = makeScreenQuad();
 
 	glm::vec4 clearColor = glm::vec4(0, 0, 0, 1);
 
@@ -174,8 +160,8 @@ class Renderer : public ygl::ISystem {
 	using ISystem::ISystem;
 	void init() override;
 
-	Shader   *getShader(RendererComponent &);
-	Shader   *getShader(uint index);
+	Shader	 *getShader(RendererComponent &);
+	Shader	 *getShader(uint index);
 	Material &getMaterial(RendererComponent &);
 	Material &getMaterial(uint index);
 	Mesh	 *getMesh(RendererComponent &);
@@ -185,7 +171,7 @@ class Renderer : public ygl::ISystem {
 	unsigned int addShader(Shader *);
 	unsigned int addMaterial(const Material &);
 	unsigned int addMesh(Mesh *);
-	Light		  &addLight(const Light &);
+	Light		&addLight(const Light &);
 	void		 addScreenEffect(IScreenEffect *);
 
 	void setDefaultShader(int defaultShader);
@@ -200,8 +186,7 @@ class Renderer : public ygl::ISystem {
 	void addDrawFunction(std::function<void()> func);
 	void swapFrameBuffers();
 
-	static void drawObject(Transformation &transform, Shader *shader, Mesh *mesh, GLuint materialIndex,
-						   bool useTexture);
+	static void drawObject(Transformation &transform, Shader *shader, Mesh *mesh, GLuint materialIndex);
 	static void drawObject(Shader *sh, Mesh *mesh);
 
 	static void compute(ComputeShader *shader, int numGroupsX, int numGroupsY, int numGroupsZ);

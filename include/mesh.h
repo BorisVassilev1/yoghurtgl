@@ -102,7 +102,7 @@ extern Assimp::Importer *importer;
 
 const aiScene *loadScene(const std::string &file, unsigned int flags);
 const aiScene *loadScene(const std::string &file);
-const Mesh	   *getModel(const aiScene *);
+const Mesh	  *getModel(const aiScene *);
 
 void terminateLoader();
 

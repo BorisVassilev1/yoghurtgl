@@ -193,30 +193,24 @@ void ygl::Renderer::init() {
 	scene->setSystemSignature<Renderer, Transformation, RendererComponent>();
 }
 
-ygl::Shader *ygl::Renderer::getShader(RendererComponent &comp) {
-	return getShader(comp.shaderIndex);
-}
+ygl::Shader *ygl::Renderer::getShader(RendererComponent &comp) { return getShader(comp.shaderIndex); }
 
 ygl::Shader *ygl::Renderer::getShader(uint index) {
-	assert(index >= 0 && "invalid index");
+	assert(index < shaders.size() && "invalid index");
 	return shaders[index];
 }
 
-ygl::Material &ygl::Renderer::getMaterial(RendererComponent &comp) {
-	return getMaterial(comp.materialIndex);
-}
+ygl::Material &ygl::Renderer::getMaterial(RendererComponent &comp) { return getMaterial(comp.materialIndex); }
 
 ygl::Material &ygl::Renderer::getMaterial(uint index) {
-	assert(index >= 0 && "invalid index");
+	assert(index < materials.size() && "invalid index");
 	return materials[index];
 }
 
-ygl::Mesh *ygl::Renderer::getMesh(RendererComponent &comp) {
-	return getMesh(comp.meshIndex);
-}
+ygl::Mesh *ygl::Renderer::getMesh(RendererComponent &comp) { return getMesh(comp.meshIndex); }
 
 ygl::Mesh *ygl::Renderer::getMesh(uint index) {
-	assert(index >= 0 && "invalid index");
+	assert(index < meshes.size() && "invalid index");
 	return meshes[index];
 }
 
@@ -287,14 +281,14 @@ void ygl::Renderer::drawScene() {
 	}
 
 	for (Entity e : entities) {
-		ygl::Transformation	&transform = scene->getComponent<Transformation>(e);
+		ygl::Transformation	   &transform = scene->getComponent<Transformation>(e);
 		ygl::RendererComponent &ecr		  = scene->getComponent<RendererComponent>(e);
 
 		Shader *sh;
 		// binds the object's own shader if present.
 		// Oherwise checks if the default shader has been bound by the previous object
 		// and binds it only if needed
-		if (ecr.shaderIndex != (uint)-1) {					  // if object has a shader
+		if (ecr.shaderIndex != (uint)-1) {				  // if object has a shader
 			if (ecr.shaderIndex != prevShaderIndex) {	  // if its different from the previous one
 				shaders[prevShaderIndex]->unbind();
 				sh				= shaders[ecr.shaderIndex];
@@ -385,7 +379,7 @@ ygl::Renderer::~Renderer() {
 	for (Mesh *mesh : meshes) {
 		delete mesh;
 	}
-	for(IScreenEffect *effect : effects) {
+	for (IScreenEffect *effect : effects) {
 		delete effect;
 	}
 	delete frontFrameBuffer;
@@ -395,8 +389,7 @@ ygl::Renderer::~Renderer() {
 
 void ygl::Renderer::addDrawFunction(std::function<void()> func) { drawFunctions.push_back(func); }
 
-void ygl::Renderer::drawObject(Transformation &transform, Shader *sh, Mesh *mesh, GLuint materialIndex,
-							   bool useTexture) {
+void ygl::Renderer::drawObject(Transformation &transform, Shader *sh, Mesh *mesh, GLuint materialIndex) {
 	sh->bind();
 
 	mesh->bind();

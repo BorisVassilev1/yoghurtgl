@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.2.0)
 
+set(DGLFW_BUILD_DOCS OFF)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_C_COMPILER gcc)
+set(DCMAKE_CXX_COMPILER g++)
+
 project(YoghurtGL)
 
 add_subdirectory(libs/glfw)
@@ -53,6 +59,17 @@ target_link_libraries("YoghurtGL" PUBLIC libglew_static)
 target_link_libraries("YoghurtGL" PUBLIC ImGuizmo)
 
 
+set(COMPILE_ARGS 
+-Wall -Wextra --pedantic-errors -g
+# -fsanitize=address
+)
+set(LINK_ARGS
+# -fsanitize=address
+)
+
+target_compile_options("YoghurtGL" PRIVATE ${COMPILE_ARGS})
+target_link_options("YoghurtGL" PRIVATE ${LINK_ARGS})
+
 file(GLOB_RECURSE TARGET_FILES examples/*.cpp)
 
 foreach(CURR_FILE ${TARGET_FILES})
@@ -64,7 +81,7 @@ foreach(CURR_FILE ${TARGET_FILES})
 	)
 	target_link_libraries(${CURR_TARGET} PRIVATE YoghurtGL)
 
+	target_link_options(${CURR_TARGET} PRIVATE ${COMPILE_ARGS})
+	target_link_options(${CURR_TARGET} PRIVATE ${LINK_ARGS})
+
 endforeach(CURR_FILE ${TARGET_FILES})
-
-set(CMAKE_CXX_FLAGS "-g -std=c++23 -Wall")
-
