@@ -19,8 +19,8 @@ out vec2 tcTexCoord[];
 out vec3 tcVertexNormal[];
 out mat3 tcTBN[];
 
-const int	MIN_TES	 = 4;
-const int	MAX_TES	 = 16;
+const int	MIN_TES	 = 2;
+const int	MAX_TES	 = 32;
 const float MIN_DIST = 1;
 const float MAX_DIST = 5;
 

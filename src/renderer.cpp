@@ -3,29 +3,6 @@
 #include <transformation.h>
 #include <assert.h>
 
-ygl::Material::Material()
-	: Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.0), 0.0, 0.3, 0., false,
-			   0.0, 0.0, 0.0) {}
-
-ygl::Material::Material(glm::vec3 albedo, float specular_chance, glm::vec3 emission, float ior,
-						glm::vec3 transparency_color, float refraction_chance, glm::vec3 specular_color,
-						float refraction_roughness, float specular_roughness, float texture_influence,
-						bool use_normal_map, float metallic, float use_roughness_map, float use_ao_map)
-	: albedo(albedo),
-	  specular_chance(specular_chance),
-	  emission(emission),
-	  ior(ior),
-	  transparency_color(transparency_color),
-	  refraction_chance(refraction_chance),
-	  specular_color(specular_color),
-	  refraction_roughness(refraction_roughness),
-	  specular_roughness(specular_roughness),
-	  texture_influence(texture_influence),
-	  use_normal_map(use_normal_map),
-	  metallic(metallic),
-	  use_roughness_map(use_roughness_map),
-	  use_ao_map(use_ao_map) {}
-
 ygl::Light::Light(glm::mat4 transform, glm::vec3 color, float intensity, ygl::Light::Type type)
 	: transform(transform), color(color), intensity(intensity), type(type) {}
 
@@ -175,18 +152,17 @@ ygl::RendererComponent::RendererComponent(unsigned int shaderIndex, unsigned int
 	: shaderIndex(shaderIndex), meshIndex(meshIndex), materialIndex(materialIndex) {}
 
 void ygl::Renderer::init() {
-	defaultTexture.bind(GL_TEXTURE0);
-	defaultTexture.bind(GL_TEXTURE1);
-	defaultTexture.bind(GL_TEXTURE2);
-	defaultTexture.bind(GL_TEXTURE3);
-	defaultTexture.bind(GL_TEXTURE4);
-	defaultTexture.bind(GL_TEXTURE5);
+	GLint texture_units;
+	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
+	for (int i = 0; i < texture_units; ++i) {
+		defaultTexture.bind(GL_TEXTURE0 + i);
+	}
 
 	uint16_t width = scene->window->getWidth(), height = scene->window->getHeight();
 	frontFrameBuffer = new FrameBuffer(width, height, "Front frameBuffer");
 	backFrameBuffer	 = new FrameBuffer(width, height, "Back frameBuffer");
 
-	addScreenEffect(new BloomEffect(this));
+	// addScreenEffect(new BloomEffect(this));
 	addScreenEffect(new ACESEffect());
 
 	scene->registerComponent<RendererComponent>();
@@ -309,6 +285,19 @@ void ygl::Renderer::drawScene() {
 			}
 		}
 		// sh is never null and the current bound shader
+
+		if (materials[ecr.materialIndex].use_albedo_map)
+			scene->assetManager.getTexture(materials[ecr.materialIndex].albedo_map)->bind(ygl::TexIndex::COLOR);
+		if (materials[ecr.materialIndex].use_normal_map)
+			scene->assetManager.getTexture(materials[ecr.materialIndex].normal_map)->bind(ygl::TexIndex::NORMAL);
+		if (materials[ecr.materialIndex].use_roughness_map)
+			scene->assetManager.getTexture(materials[ecr.materialIndex].roughness_map)->bind(ygl::TexIndex::ROUGHNESS);
+		if (materials[ecr.materialIndex].use_ao_map)
+			scene->assetManager.getTexture(materials[ecr.materialIndex].ao_map)->bind(ygl::TexIndex::AO);
+		if (materials[ecr.materialIndex].use_emission_map)
+			scene->assetManager.getTexture(materials[ecr.materialIndex].emission_map)->bind(ygl::TexIndex::EMISSION);
+		if (materials[ecr.materialIndex].use_metallic_map)
+			scene->assetManager.getTexture(materials[ecr.materialIndex].metallic_map)->bind(ygl::TexIndex::METALLIC);
 
 		Mesh *mesh = meshes[ecr.meshIndex];
 		mesh->bind();

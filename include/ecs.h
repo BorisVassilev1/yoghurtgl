@@ -9,6 +9,7 @@
 #include <iostream>
 #include <set>
 #include <window.h>
+#include <importer.h>
 
 namespace ygl {
 
@@ -230,6 +231,7 @@ class Scene {
    public:
 	ygl::Window		*window;
 	std::set<Entity> entities;
+	AssetManager assetManager;
 
 	Scene(ygl::Window *window) : window(window) {}
 

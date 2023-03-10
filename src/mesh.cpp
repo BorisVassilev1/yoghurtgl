@@ -3,9 +3,6 @@
 
 #include <assert.h>
 #include <iostream>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 #include <math.h>
 
 GLuint ygl::IMesh::createVAO() {
@@ -53,8 +50,8 @@ GLuint ygl::IMesh::getVAO() { return vao; }
 
 void ygl::IMesh::setDrawMode(GLenum mode) { drawMode = mode; }
 
-void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer,
-								  GLuint indexDivisor, GLsizei stride, const void *pointer) {
+void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint indexDivisor,
+								  GLsizei stride, const void *pointer) {
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
 	glVertexAttribPointer(attrLocation, coordSize, GL_FLOAT, GL_FALSE, stride, pointer);
 	glVertexAttribDivisor(attrLocation, indexDivisor);
@@ -62,8 +59,7 @@ void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint 
 	vbos.push_back(VBO(attrLocation, buffer, coordSize));
 }
 
-void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer,
-								  GLuint indexDivisor) {
+void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint indexDivisor) {
 	addVBO(attrLocation, coordSize, buffer, indexDivisor, 0, 0);
 }
 
@@ -515,72 +511,3 @@ ygl::Mesh *ygl::makePlane(const glm::vec2 &size, const glm::vec2 &detail) {
 }
 
 ygl::Mesh *ygl::makePlane(const glm::vec2 &detail) { return makePlane(glm::vec2(1), detail); }
-
-Assimp::Importer *ygl::importer = nullptr;
-
-const aiScene *ygl::loadScene(const std::string &file, unsigned int flags) {
-	// Assimp::Importer importer;
-	if (ygl::importer == nullptr) { ygl::importer = new Assimp::Importer(); }
-
-	const aiScene *scene = ygl::importer->ReadFile(file, flags);
-
-	if (!scene) {
-		dbLog(ygl::LOG_ERROR, "[Assimp]", ygl::importer->GetErrorString());
-		return nullptr;
-	}
-	return scene;
-}
-
-const aiScene *ygl::loadScene(const std::string &file) {
-	return loadScene(file, aiProcess_CalcTangentSpace | aiProcess_Triangulate |
-															 aiProcess_JoinIdenticalVertices | aiProcess_GenNormals |
-															 aiProcess_PreTransformVertices);
-}
-
-const ygl::Mesh *ygl::getModel(const aiScene *scene) {
-	using namespace std;
-	assert(scene->HasMeshes() && "scene does not have any meshes");
-	if (!scene->HasMeshes()) { return nullptr; }
-
-	aiMesh	   **meshes	   = scene->mMeshes;
-	unsigned int numMeshes = scene->mNumMeshes;
-
-	assert(numMeshes >= 1 && "no meshes in the scene?");
-
-	aiMesh	   *mesh		   = meshes[0];
-	unsigned int verticesCount = mesh->mNumVertices;
-	unsigned int indicesCount  = mesh->mNumFaces * 3;
-	GLuint	   *indices	   = new GLuint[indicesCount * sizeof(GLuint)];
-
-	unsigned int indexCounter = 0;
-	for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
-		indices[indexCounter++] = mesh->mFaces[i].mIndices[0];
-		indices[indexCounter++] = mesh->mFaces[i].mIndices[1];
-		indices[indexCounter++] = mesh->mFaces[i].mIndices[2];
-	}
-
-	GLfloat *texCoords = nullptr;
-	if (mesh->HasTextureCoords(0)) {
-		texCoords = new GLfloat[verticesCount * sizeof(float) * 2];
-		for (unsigned int i = 0; i < verticesCount; ++i) {
-			texCoords[i * 2]	 = mesh->mTextureCoords[0][i].x;
-			texCoords[i * 2 + 1] = mesh->mTextureCoords[0][i].y;
-		}
-	}
-
-	assert(indexCounter == indicesCount && "something went very wrong");
-
-	if (!(mesh->HasTextureCoords(0))) { dbLog(ygl::LOG_WARNING, "tex coords cannot be loaded for model!"); }
-	if (!(mesh->HasVertexColors(0))) { dbLog(ygl::LOG_WARNING, "colors cannot be loaded for model!"); }
-
-	ygl::Mesh *result = new ygl::Mesh(verticesCount, (GLfloat *)mesh->mVertices, (GLfloat *)mesh->mNormals, texCoords,
-									  (GLfloat *)mesh->mColors[0], (GLfloat *)mesh->mTangents, indicesCount, indices);
-	// result->setDrawMode(GL_POINTS);
-
-	delete[] indices;
-	if (texCoords != nullptr) delete[] texCoords;
-
-	delete ygl::importer;
-
-	return result;
-}

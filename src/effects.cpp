@@ -33,9 +33,8 @@ void ygl::GrassSystem::init() {
 	reload();
 	bladeMesh = new GrassBladeMesh(bladeCount);
 
-	materialIndex = scene->getSystem<Renderer>()->addMaterial(Material(glm::vec3(0., 1., 0.), .2, glm::vec3(0.), 0.99,
-																	   glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.3,
-																	   0.0, false, 0., 0.0, 0.0));
+	materialIndex = scene->getSystem<Renderer>()->addMaterial(
+		Material(glm::vec3(0.1, 0.7, 0.1), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.3, 0.0));
 	Shader::setSSBO(bladeMesh->grassData, 1);
 	grassCompute.bind();
 	grassCompute.setUniform("time", 0.f);

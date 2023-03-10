@@ -4,8 +4,6 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <string>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
 
 typedef unsigned int uint;
 
@@ -97,13 +95,4 @@ Mesh *makeUnitSphere();
 
 Mesh *makePlane(const glm::vec2 &size, const glm::vec2 &detail);
 Mesh *makePlane(const glm::vec2 &detail);
-
-extern Assimp::Importer *importer;
-
-const aiScene *loadScene(const std::string &file, unsigned int flags);
-const aiScene *loadScene(const std::string &file);
-const Mesh	  *getModel(const aiScene *);
-
-void terminateLoader();
-
 }	  // namespace ygl

@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 	VTFShader *terrainShader = new VTFShader("./shaders/terrain.vs", "./shaders/terrain.tesc", "./shaders/terrain.tese",
 											 "./shaders/terrain.fs");
 	terrainShader->bind();
-	terrainShader->setUniform("displacementPower", 0.06f);
+	terrainShader->setUniform("displacementPower", 0.006f);
 	terrainShader->setUniform("displacementOffset", -0.4f);
 	terrainShader->unbind();
 
@@ -55,12 +55,12 @@ int main(int argc, char *argv[]) {
 
 	Renderer *renderer = scene.registerSystem<Renderer>();
 
-	Texture2d *height = new Texture2d("./res/images/heightmap.png");
-	Texture2d *normal = new Texture2d("./res/images/NormalMap.png");
+	// Texture2d *height = new Texture2d("./res/images/heightmap.png");
+	// Texture2d *normal = new Texture2d("./res/images/NormalMap.png");
 
-	// Texture2d *height = new Texture2d("./res/images/bricks/displ.jpg");
-	// Texture2d *normal = new Texture2d("./res/images/bricks/normal.jpg");
-	Texture2d *color = new Texture2d("./res/images/bricks/albedo.jpg", ygl::ITexture::Type::SRGB);
+	Texture2d *height = new Texture2d("./res/images/bricks/displ.jpg");
+	Texture2d *normal = new Texture2d("./res/images/bricks/normal.jpg");
+	Texture2d *color  = new Texture2d("./res/images/bricks/albedo.jpg", ygl::ITexture::Type::SRGB);
 
 	color->bind(GL_TEXTURE1);
 	normal->bind(GL_TEXTURE2);
@@ -68,16 +68,21 @@ int main(int argc, char *argv[]) {
 	height->bind(GL_TEXTURE4);
 
 	Mesh *terrainMesh = makePlane(glm::vec2(1, 1), glm::vec2(20, 20));
-
 	terrainMesh->setDrawMode(GL_PATCHES);
+
+	Material terrainMat(glm::vec3(1., 1., 1.), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.4,
+						0., 0.);
+	terrainMat.albedo_map = scene.assetManager.addTexture(color, "bricks/albedo");
+	terrainMat.use_albedo_map = 1.0;
+	terrainMat.normal_map = scene.assetManager.addTexture(normal, "bricks/normal");
+	terrainMat.use_normal_map = 1.0;
+
 	Entity terrain = scene.createEntity();
 	scene.addComponent<Transformation>(terrain, Transformation(glm::vec3(), glm::vec3(0, 0, 0), glm::vec3(10)));
 	RendererComponent terrainRenderer;
-	terrainRenderer.materialIndex =
-		renderer->addMaterial(Material(glm::vec3(1., 1., 1.), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0,
-									   glm::vec3(1.0), 0.0, 0.4, 1., true, 0, 0., 0.));
-	terrainRenderer.shaderIndex = renderer->addShader(terrainShader);
-	terrainRenderer.meshIndex	= renderer->addMesh(terrainMesh);
+	terrainRenderer.materialIndex = renderer->addMaterial(terrainMat);
+	terrainRenderer.shaderIndex	  = renderer->addShader(terrainShader);
+	terrainRenderer.meshIndex	  = renderer->addMesh(terrainMesh);
 	scene.addComponent(terrain, terrainRenderer);
 
 	glPatchParameteri(GL_PATCH_VERTICES, 3);

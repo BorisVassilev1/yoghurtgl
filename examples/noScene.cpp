@@ -28,21 +28,19 @@ int main() {
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);
 
-	Material mat	 = Material(glm::vec3(1., 1., 0.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0,
-								0.1, 0., false, 0, 0., 0.);
-	GLuint	 matBuff = Renderer::loadMaterials(1, &mat);
+	Material mat =
+		Material(glm::vec3(1., 1., 0.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1, 0.);
+	GLuint matBuff = Renderer::loadMaterials(1, &mat);
 
-	Light  lights[2] = {Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
-							  3, Light::Type::DIRECTIONAL),
-						Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT)};
+	Light lights[2] = {Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 3,
+							 Light::Type::DIRECTIONAL),
+					   Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT)};
 	GLuint lightBuff = Renderer::loadLights(2, lights);
 
 	Texture2d tex(1, 1);
-	tex.bind(GL_TEXTURE1);
-	tex.bind(GL_TEXTURE2);
-	tex.bind(GL_TEXTURE3);
-	tex.bind(GL_TEXTURE4);
-	tex.bind(GL_TEXTURE5);
+	for (unsigned int i = 0; i < 11; ++i) {
+		tex.bind(GL_TEXTURE0 + i);
+	}
 
 	while (!window.shouldClose()) {
 		window.beginFrame();
@@ -52,7 +50,7 @@ int main() {
 		controller.update();
 		cam.update();
 
-		Renderer::drawObject(bunnyTransform, shader, bunnyMesh, 0, false);
+		Renderer::drawObject(bunnyTransform, shader, bunnyMesh, 0);
 
 		window.swapBuffers();
 	}

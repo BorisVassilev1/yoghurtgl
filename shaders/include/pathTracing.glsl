@@ -7,28 +7,34 @@ precision highp float;
 struct Material {
 	vec3  albedo;
 	float specular_chance;
-	// 16
 
 	vec3  emission;
 	float ior;
-	// 32
 
 	vec3  transparency_color;
 	float refraction_chance;
-	// 48
 
 	vec3  specular_color;
 	float refraction_roughness;
-	// 56
 
 	float specular_roughness;
-	float texture_influence;
-	float use_normal_map;
 	float metallic;
+	int	  normal_map;
+	float use_normal_map;
 
+	int	  roughness_map;
 	float use_roughness_map;
+	int	  ao_map;
 	float use_ao_map;
-};	   // 80 bytes all
+
+	int	  metallic_map;
+	float use_metallic_map;
+	int	  albedo_map;
+	float use_albedo_map;
+
+	int	  emission_map;
+	float use_emission_map;
+};	   // 96 bytes all
 
 struct Sphere {
 	vec3  position;
@@ -274,9 +280,9 @@ float intersect(in vec3 orig, in vec3 dir, in vec3 v0, in vec3 v1, in vec3 v2,
 	return t;
 }
 
-uniform Material geometry_material =
-	Material(vec3(1.), .2, vec3(0.), 0.99, vec3(0.1), 0.0, vec3(1.), 0.0, 0.1, 0, 0., 0.0, 0.0, 0.0);
-uniform uint geometryMaterialIdx = 0;
+uniform Material geometry_material	 = Material(vec3(1.), .2, vec3(0.), 0.99, vec3(0.1), 0.0, vec3(1.), 0.0, 0.1, 0., 0,
+												0.0, 0, 0.0, 0, 0.0, 0, 0.0, 0, 0.0, 0, 0.0);
+uniform uint	 geometryMaterialIdx = 0;
 
 bool intersectTriangle(in Ray ray, in vec3 v0, in vec3 v1, in vec3 v2, in vec3 normal0, in vec3 normal1,
 					   in vec3 normal2, inout RayHit hit) {

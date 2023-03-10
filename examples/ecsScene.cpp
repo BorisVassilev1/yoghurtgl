@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <random>
+#include "material.h"
 #include <time.h>
 
 using namespace ygl;
@@ -45,7 +46,6 @@ int main(int argc, char *argv[]) {
 	Texture2d *tex = new Texture2d("./res/images/uv_checker.png");
 	tex->bind(GL_TEXTURE1);
 
-
 	Entity			bunny = scene.createEntity();
 	Transformation &transform =
 		scene.addComponent<Transformation>(bunny, Transformation(glm::vec3(), glm::vec3(), glm::vec3(10)));
@@ -53,36 +53,38 @@ int main(int argc, char *argv[]) {
 	transform.updateWorldMatrix();
 	RendererComponent bunnyRenderer;
 
+	Material bunnyMat(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1,
+					  0.5);
+	bunnyMat.albedo_map = scene.assetManager.addTexture(tex, "res/images/uv_checker.png"); 
+	bunnyMat.use_albedo_map = 1.0;
+
 	unsigned int shaderIndex = renderer->addShader(shader);
 
 	bunnyRenderer.meshIndex = renderer->addMesh(bunnyMesh);
 
 	bunnyRenderer.shaderIndex	= shaderIndex;
-	bunnyRenderer.materialIndex = renderer->addMaterial(Material(
-		glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1, 1.0, false, 0., 0.0, 0.0));
-
+	bunnyRenderer.materialIndex = renderer->addMaterial(bunnyMat);
 	scene.addComponent<RendererComponent>(bunny, bunnyRenderer);
 
 	unsigned int cubeMeshIndex = renderer->addMesh(cubeMesh);
 
-	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
-							 0, Light::Type::DIRECTIONAL));
+	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 0,
+							 Light::Type::DIRECTIONAL));
 	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
 
 	renderer->addLight(
-		Light(Transformation(glm::vec3(15, 4, 15), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 100, Light::Type::POINT));
+		Light(Transformation(glm::vec3(5, 4, 5), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 100, Light::Type::POINT));
 
 	for (int i = 0; i < 20; ++i) {
 		for (int j = 0; j < 20; ++j) {
 			Entity curr = scene.createEntity();
 
 			scene.addComponent<Transformation>(curr,
-											   Transformation(glm::vec3(i * 2, -1, j * 2), glm::vec3(), glm::vec3(1)));
-			RendererComponent rc(
-				shaderIndex, cubeMeshIndex,
-				renderer->addMaterial(Material(glm::vec3(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.),
-											   .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1,
-											   0., false, 0.0, 0.0, 0.0)));
+											   Transformation(glm::vec3(i * 2 - 20, -1, j * 2 - 20), glm::vec3(), glm::vec3(1)));
+			RendererComponent rc(shaderIndex, cubeMeshIndex,
+								 renderer->addMaterial(Material(
+									 glm::vec3(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.), .2,
+									 glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1, 0.0)));
 
 			scene.addComponent<RendererComponent>(curr, rc);
 		}

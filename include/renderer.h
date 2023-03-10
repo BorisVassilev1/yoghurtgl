@@ -8,6 +8,7 @@
 #include <ecs.h>
 #include <transformation.h>
 #include <texture.h>
+#include <material.h>
 
 namespace ygl {
 
@@ -18,37 +19,6 @@ class IScreenEffect;
 class ACESEffect;
 struct RendererComponent;
 class Renderer;
-
-// #pragma pack(push)
-// #pragma pack(1)
-struct alignas(16) Material {
-	glm::vec3 albedo;
-	float	  specular_chance;
-
-	glm::vec3 emission;
-	float	  ior;
-
-	glm::vec3 transparency_color;
-	float	  refraction_chance;
-
-	glm::vec3 specular_color;
-	float	  refraction_roughness;
-
-	float specular_roughness;
-	float texture_influence;
-	float use_normal_map;
-	float metallic;
-
-	float use_roughness_map;
-	float use_ao_map;
-
-   public:
-	Material();
-	Material(glm::vec3 albedo, float specular_chance, glm::vec3 emission, float ior, glm::vec3 transparency_color,
-			 float refraction_chance, glm::vec3 specular_color, float refraction_roughness, float specular_roughness,
-			 float texture_influence, bool use_normal_map, float metallic, float use_roughness_map, float use_ao_map);
-};
-// #pragma pack(pop)
 
 struct alignas(16) Light {
 	enum Type { AMBIENT, DIRECTIONAL, POINT };
@@ -129,10 +99,10 @@ struct RendererComponent {
 };
 
 class Renderer : public ygl::ISystem {
-	std::vector<Shader *> shaders;
-	std::vector<Material> materials;
-	std::vector<Mesh *>	  meshes;
-	std::vector<Light>	  lights;
+	std::vector<Shader *>  shaders;
+	std::vector<Material>  materials;
+	std::vector<Mesh *>	   meshes;
+	std::vector<Light>	   lights;
 
 	GLuint materialsBuffer = 0;
 	GLuint lightsBuffer	   = 0;
@@ -147,7 +117,6 @@ class Renderer : public ygl::ISystem {
 	glm::vec4 clearColor = glm::vec4(0, 0, 0, 1);
 
 	std::vector<std::function<void()> > drawFunctions;
-
    public:
 	std::vector<IScreenEffect *> effects;
 

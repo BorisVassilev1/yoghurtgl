@@ -63,16 +63,16 @@ int main(int argc, char *argv[]) {
 	Entity plane = scene.createEntity();
 	scene.addComponent(plane, Transformation());
 	scene.addComponent(plane, RendererComponent(-1, renderer->addMesh(planeMesh),
-												renderer->addMaterial(Material(
-													glm::vec3(0.1, 0.5, 0.1), .2, glm::vec3(0.), 0.99, glm::vec3(0.1),
-													0.0, glm::vec3(1.), 0.0, 0.3, 0.0, false, 0., 0.0, 0.0))));
-
-	// renderer->addLight(Light(Transformation(glm::vec3(0, 3, 0)), glm::vec3(0.2, 0.2, 1.0), 50, Light::Type::POINT));
+												renderer->addMaterial(Material(glm::vec3(0.1, 0.5, 0.1), .2,
+																			   glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0,
+																			   glm::vec3(1.), 0.0, 0.3, 0.0, 0.0))));
 
 	Entity model =
 		addModel(scene, (Mesh *)getModel(loadScene("./res/models/dragon.obj")), {0, 3, 0}, {10, 10, 10}, {1, 1, 1});
 	Material &modelMat			= renderer->getMaterial(scene.getComponent<RendererComponent>(model));
 	modelMat.specular_roughness = 0.7;
+
+	// renderer->addLight(Light(Transformation(glm::vec3(0, 3, 0)), glm::vec3(0.2, 0.2, 1.0), 50, Light::Type::POINT));
 
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(0.5, -0.5, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
 							 3, Light::Type::DIRECTIONAL));

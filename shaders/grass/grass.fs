@@ -18,7 +18,7 @@ void main() {
 	vec3 normalizedVertexNormal = normalize(vVertexNormal);
 
 	// if(!gl_FrontFacing) normalizedVertexNormal = -normalizedVertexNormal;
-	vec3 color = calcAllLights(vVertexPos, normalizedVertexNormal, normalizedVertexNormal, vTexCoord, albedo);
+	vec3 color = calcAllLights(vVertexPos, normalizedVertexNormal, normalizedVertexNormal, vTexCoord);
 
 	// color = vec3(materials[material_index].albedo);
 	// color = vVertexNormal;

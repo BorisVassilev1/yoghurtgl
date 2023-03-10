@@ -30,45 +30,40 @@ int main() {
 	Renderer *renderer = scene.registerSystem<Renderer>();
 
 	Texture2d *color	 = new Texture2d("./res/images/stones/albedo.png", ITexture::Type::SRGB);
-	Texture2d *height	 = new Texture2d("./res/images/stones/height.png", ITexture::Type::GREY);
 	Texture2d *normal	 = new Texture2d("./res/images/stones/normal.png", ITexture::Type::RGB);
 	Texture2d *roughness = new Texture2d("./res/images/stones/roughness.png", ITexture::Type::GREY);
 	Texture2d *ao		 = new Texture2d("./res/images/stones/ao.png", ITexture::Type::GREY);
 
-	// Texture2d *color	 = new Texture2d("./res/horse_statue_01_4k/textures/horse_statue_01_diff_4k.png",
-	// ITexture::Type::SRGB); Texture2d *height	 = new Texture2d(1,1, ITexture::Type::GREY, nullptr); Texture2d *normal
-	// = new Texture2d("./res/horse_statue_01_4k/textures/horse_statue_01_nor_gl_4k.png", ITexture::Type::RGB);
-	// Texture2d *roughness = new Texture2d("./res/horse_statue_01_4k/textures/horse_statue_01_rough_4k.png",
-	// ITexture::Type::GREY); Texture2d *ao		 = new
-	// Texture2d("./res/horse_statue_01_4k/textures/horse_statue_01_ao_4k.png", ITexture::Type::GREY);
-
-	color->bind(GL_TEXTURE1);
-	normal->bind(GL_TEXTURE2);
-	height->bind(GL_TEXTURE3);
-	roughness->bind(GL_TEXTURE4);
-	ao->bind(GL_TEXTURE5);
-
-	// Mesh *modelMesh = makeBox(glm::vec3(1, 1, 1), glm::vec3(20, 20, 20));
-	Mesh *modelMesh = (Mesh *)getModel(loadScene("./res/models/bunny_uv/bunny_uv.obj"));
-	// Mesh *modelMesh = (Mesh *)getModel(loadScene("./res/horse_statue_01_4k/horse_statue_01_4k.fbx"));
+	Mesh *modelMesh = makeBox(glm::vec3(1, 1, 1), glm::vec3(20, 20, 20));
+	// Mesh *modelMesh = (Mesh *)getModel(loadScene("./res/models/bunny_uv/bunny_uv.obj"));
 
 	Entity model = scene.createEntity();
 	scene.addComponent<Transformation>(model, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(1)));
+
+	Material modelMat(glm::vec3(1.0, 0.5, 0.0), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.2,
+					  0.0, 0.);
+	modelMat.albedo_map		= scene.assetManager.addTexture(color, "color");
+	modelMat.use_albedo_map = 1.0;
+	modelMat.normal_map		= scene.assetManager.addTexture(normal, "normal");
+	modelMat.use_normal_map = 1.0;
+	modelMat.roughness_map = scene.assetManager.addTexture(roughness, "roughness");
+	modelMat.use_roughness_map = 0.0;
+	modelMat.ao_map = scene.assetManager.addTexture(ao, "ao");
+	modelMat.use_ao_map = 1.0;
+
 	RendererComponent modelRenderer;
-	modelRenderer.materialIndex =
-		renderer->addMaterial(Material(glm::vec3(1., 1., 1.), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0,
-									   glm::vec3(1.0), 0.0, 0.0, 1.0, true, 0.0, 0.5, 1.0));
-	modelRenderer.shaderIndex = renderer->addShader(shader);
-	modelRenderer.meshIndex	  = renderer->addMesh(modelMesh);
+	modelRenderer.materialIndex = renderer->addMaterial(modelMat);
+	modelRenderer.shaderIndex	= renderer->addShader(shader);
+	modelRenderer.meshIndex		= renderer->addMesh(modelMesh);
 	scene.addComponent(model, modelRenderer);
 
-	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 5,
+	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 3,
 							 Light::Type::DIRECTIONAL));
-	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.11, Light::Type::AMBIENT));
+	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
 
 	renderer->loadData();
 
-	controller.speed = 0.4;
+	controller.speed = 0.6;
 
 	glClearColor(0, 0, 0, 1);
 	while (!window.shouldClose()) {
@@ -77,7 +72,7 @@ int main() {
 
 		Transformation &transform = scene.getComponent<Transformation>(model);
 		// transform.rotation += glm::vec3(0.3 * window.deltaTime);
-		transform.rotation.y += 0.3 * window.deltaTime;
+		// transform.rotation.y += 0.3 * window.deltaTime;
 		transform.updateWorldMatrix();
 
 		controller.update();
@@ -91,7 +86,6 @@ int main() {
 	// clean up and exit
 	window.~Window();
 	delete color;
-	delete height;
 	delete normal;
 	delete roughness;
 	delete ao;

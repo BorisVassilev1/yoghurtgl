@@ -117,6 +117,7 @@ void ygl::Texture2d::init(std::string fileName, GLint internalFormat, GLenum for
 		stbi_image_free(data);
 	} else {
 		dbLog(ygl::LOG_ERROR, "Image file [" + fileName + "] failed to load: " + stbi_failure_reason());
+		exit(1);
 		data = new stbi_uc[]{0, 0, 0, 255, 255, 0, 255, 255, 255, 0, 255, 255, 0, 0, 0, 255};
 		init(width, height, Type::RGBA, data);
 		delete[] data;
@@ -219,7 +220,7 @@ ygl::TextureCubemap::TextureCubemap(std::string path, std::string format) {
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
-void ygl::TextureCubemap::save(std::string fileName) {
+void ygl::TextureCubemap::save(std::string) {
 	// TODO: implement this
 }
 

@@ -34,28 +34,33 @@ struct Light {
 struct Material {
 	vec3  albedo;
 	float specular_chance;
-	// 16
 
 	vec3  emission;
 	float ior;
-	// 32
 
 	vec3  transparency_color;
 	float refraction_chance;
-	// 48
 
 	vec3  specular_color;
 	float refraction_roughness;
-	// 64
 
 	float specular_roughness;
-	float texture_influence;
-	float use_normal_map;
 	float metallic;
-	// 80
+	int	  normal_map;
+	float use_normal_map;
 
+	int	  roughness_map;
 	float use_roughness_map;
+	int	  ao_map;
 	float use_ao_map;
+
+	int	  metallic_map;
+	float use_metallic_map;
+	int	  albedo_map;
+	float use_albedo_map;
+
+	int	  emission_map;
+	float use_emission_map;
 };	   // 96 bytes all
 
 layout(std140, binding = 0) uniform Matrices {
@@ -79,6 +84,8 @@ layout(binding = 2) uniform sampler2D normalMap;
 layout(binding = 3) uniform sampler2D heightMap;
 layout(binding = 4) uniform sampler2D roughnessMap;
 layout(binding = 5) uniform sampler2D aoMap;
+layout(binding = 6) uniform sampler2D emissionMap;
+layout(binding = 10) uniform sampler2D metallicMap;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {	   // learnopengl
 	return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
@@ -117,7 +124,7 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
 }
 
 vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec3 vertexNormal, in vec2 texCoord, Material mat,
-			   in vec3 albedo) {
+			   in vec3 albedo, in float roughness, in float metallic) {
 	vec3 lightPosition = (light.transform * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	vec3 lightForward  = (light.transform * vec4(0.0, 0.0, 1.0, 0.0)).xyz;
 
@@ -142,14 +149,12 @@ vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec3 vertexNormal, i
 	vec3  radiance	   = light.color * attennuation * light.intensity;
 
 	vec3 F0 = vec3(0.04);
-	F0		= mix(F0, albedo, mat.metallic);
+	F0		= mix(F0, albedo, metallic);
 	vec3 F	= fresnelSchlick(max(dot(H, V), 0.0), F0);
-
-	float roughness = mix(mat.specular_roughness, texture(roughnessMap, texCoord).x, mat.use_roughness_map);
 
 	float NDF = DistributionGGX(N, H, roughness);
 	float G	  = GeometrySmith(N, V, L, roughness);
-	
+
 	vec3  numerator	  = NDF * G * F;
 	float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
 	denominator		  = max(denominator, 0.0001);
@@ -157,17 +162,34 @@ vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec3 vertexNormal, i
 
 	vec3 kS = F;
 	vec3 kD = vec3(1.0) - kS;
-	kD *= 1.0 - mat.metallic;
+	kD *= 1.0 - metallic;
 
 	float NdotL = max(dot(N, L), 0.0);
+
 	return (kD * albedo / PI + specular) * radiance * NdotL;
 }
 
-vec3 calcAllLights(in vec3 position, in vec3 normal, in vec3 vertexNormal, in vec2 texCoord, in vec3 albedo) {
-	vec3 light = vec3(0.0, 0.0, 0.0);
+vec3 calcAllLights(in vec3 position, in vec3 normal, in vec3 vertexNormal, in vec2 texCoord) {
+	vec3  light		= vec3(0.0, 0.0, 0.0);
+	vec3  diffuse	= texture(albedoMap, texCoord).xyz;
+	float roughness = texture(roughnessMap, texCoord).y;
+	vec3  emission	= texture(emissionMap, texCoord).xyz;
+	float metallic	= texture(metallicMap, texCoord).z;
+	float ao		= texture(aoMap, texCoord).x;
+
+	Material mat = materials[material_index];
+
+	vec3  calcAlbedo	= mix(1., ao, mat.use_ao_map) * mix(mat.albedo, diffuse, mat.use_albedo_map);
+	float calcMetallic	= mix(mat.metallic, metallic, mat.use_metallic_map);
+	vec3  calcEmission	= mix(mat.emission, mat.emission * emission, mat.use_emission_map);
+	float calcRoughness = mix(mat.specular_roughness, mat.specular_roughness * roughness, mat.use_roughness_map);
+
 	for (int i = 0; i < lightsCount; i++) {
-		light += calcLight(lights[i], position, normal, vertexNormal, texCoord, materials[material_index], albedo);
+		light += calcLight(lights[i], position, normal, vertexNormal, texCoord, mat, calcAlbedo, calcRoughness,
+						   calcMetallic);
 	}
-	light += materials[material_index].emission;
+	light += calcEmission;
 	return light;
+
+	// return vec3(calcRoughness);
 }

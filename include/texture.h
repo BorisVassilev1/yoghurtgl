@@ -6,9 +6,31 @@
 #include <stb/stb_image.h>
 
 namespace ygl {
+enum TexIndex {
+	COLOR	  = GL_TEXTURE1,
+	NORMAL	  = GL_TEXTURE2,
+	HEIGHT	  = GL_TEXTURE3,
+	ROUGHNESS = GL_TEXTURE4,
+	AO		  = GL_TEXTURE5,
+	EMISSION  = GL_TEXTURE6,
+	METALLIC  = GL_TEXTURE10
+};
 class ITexture {
    public:
-	enum Type { RGB, RGBA, SRGBA, SRGB, GREY, DEPTH_STENCIL };
+	enum Type {
+		RGB,
+		RGBA,
+		SRGBA,
+		SRGB,
+		GREY,
+		DEPTH_STENCIL,
+		DIFFUSE	  = SRGB,
+		NORMAL	  = RGB,
+		ROUGHNESS = SRGB,
+		METALLIC  = SRGB,
+		AO		  = SRGB,
+		EMISSIVE  = SRGB
+	};
 
 	ITexture(){};
 	virtual void save(std::string fileName) = 0;

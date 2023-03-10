@@ -25,15 +25,8 @@ void main() {
 		finalNormal = teVertexNormal;
 	}
 
-	vec3 albedo = mat.albedo;
-	if (mat.texture_influence != 0.0) {
-		albedo = mat.texture_influence * texture(albedoMap, teTexCoord).xyz *
-					 mix(vec3(1.), texture(aoMap, teTexCoord).xyz, mat.use_ao_map) +
-				 (1 - mat.texture_influence) * mat.albedo;
-	}
-
 	if(!gl_FrontFacing) finalNormal = -finalNormal;
-	vec3 light = calcAllLights(teVertexPos, finalNormal, finalNormal, teTexCoord, albedo);
+	vec3 light = calcAllLights(teVertexPos, finalNormal, finalNormal, teTexCoord);
 
 	// vec3 light = vec3(texture(normalMap, teTexCoord));
 	// light = finalNormal;
