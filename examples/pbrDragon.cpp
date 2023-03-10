@@ -16,7 +16,7 @@ int main() {
 		exit(1);
 	}
 
-	Window window = Window(1000, 800, "Test Window", true, false);
+	Window window = Window(1280, 1000, "Test Window", true, false);
 
 	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 
@@ -35,6 +35,7 @@ int main() {
 	uint shaderInd = renderer->addShader(shader);
 
 	for (int i = 0; i < 4; ++i) {
+		if(i == 1) continue;
 		Mesh *modelMesh = (Mesh *)getModel(aiscene, i);
 
 		Entity model = scene.createEntity();
