@@ -17,8 +17,8 @@ I use **make** as a build system, but any other should also work.
 
 The simplest way to build the library if you have **g++** and **make** is to run:
 ```
-./configure.bat
-cd build
+./configure.bat # for Windows or ./configure.sh for Unix-like systems
+cd build/
 make <target>
 ```
 Target can be YoghurtGL or the name of any example in the **examples** directory.
