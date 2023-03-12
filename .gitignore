@@ -16,3 +16,6 @@ imgui.ini
 .clangd
 compile_commands.json
 /.vscode/*
+/html/*
+/latex/*
+doxygen_config.txt

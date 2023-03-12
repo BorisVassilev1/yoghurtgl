@@ -1,6 +1,12 @@
 #include <camera.h>
 #include <shader.h>
 
+/// @brief constructor.
+/// @param fov Field of view
+/// @param aspect Aspect ratio
+/// @param zNear Near plane z
+/// @param zFar Far plane z
+/// @param transform Transformation for the camera
 ygl::Camera::Camera(float fov, float aspect, float zNear, float zFar, ygl::Transformation transform)
 	: fov(fov), aspect(aspect), zNear(zNear), zFar(zFar), transform(transform) {
 	updateProjectionMatrix();
@@ -8,9 +14,21 @@ ygl::Camera::Camera(float fov, float aspect, float zNear, float zFar, ygl::Trans
 	createMatricesUBO();
 }
 
+/// @brief Constructor for a camera at world position (0,0,0) looking towards negative Z.
+/// @param fov field of view
+/// @param aspect aspect ratio of the screen
+/// @param zNear near plane z
+/// @param zFar far plane z
 ygl::Camera::Camera(float fov, float aspect, float zNear, float zFar)
 	: Camera(fov, aspect, zNear, zFar, ygl::Transformation()) {}
 
+/// @brief Constructor for camera for a window. Adds a resize callback that updates the projection matrix
+/// whenever the window is resized
+/// @param fov Field of view
+/// @param from_window Window to attach the camera to
+/// @param zNear Near plane z
+/// @param zFar Far plane z
+/// @param transform Transformation for the camera
 ygl::Camera::Camera(float fov, ygl::Window &from_window, float zNear, float zFar, ygl::Transformation transform)
 	: Camera(fov, (float)from_window.getWidth() / from_window.getHeight(), zNear, zFar, transform) {
 	from_window.addResizeCallback([&, this](GLFWwindow *window, int width, int height) {
@@ -20,11 +38,19 @@ ygl::Camera::Camera(float fov, ygl::Window &from_window, float zNear, float zFar
 	});
 }
 
+/// @brief Constructor for camera for a window. Adds a resize callback that updatess the projection matrix
+/// whenever the window is resized
+/// @param fov Field of view
+/// @param from_window Window to attach the camera to
+/// @param zNear Near plane z
+/// @param zFar Far plane z
 ygl::Camera::Camera(float fov, ygl::Window &from_window, float zNear, float zFar)
 	: Camera(fov, from_window, zNear, zFar, ygl::Transformation()) {}
 
+/// @brief Updates the projection matrix using the current set values.
 void ygl::Camera::updateProjectionMatrix() { matrices.projectionMatrix = glm::perspective(fov, aspect, zNear, zFar); }
 
+/// @brief Updates the view matrix using the current transformation.
 void ygl::Camera::updateViewMatrix() {
 	matrices.viewMatrix = glm::translate(glm::mat4x4(1), transform.position);
 	matrices.viewMatrix = glm::rotate(matrices.viewMatrix, transform.rotation.z, glm::vec3(0, 0, 1));
@@ -34,6 +60,7 @@ void ygl::Camera::updateViewMatrix() {
 	matrices.viewMatrix = glm::inverse(matrices.viewMatrix);
 }
 
+/// @brief Creates a Uniform Buffer Object so that the matrices can be sent to the GPU
 void ygl::Camera::createMatricesUBO() {
 	glGenBuffers(1, &uboMatrices);
 
@@ -44,8 +71,13 @@ void ygl::Camera::createMatricesUBO() {
 	enable();
 }
 
+/// @brief Enables the camera to be used by shaders. (actually just binds the UBO to the shader binding point)
 void ygl::Camera::enable() { ygl::Shader::setUBO(uboMatrices, 0); }
+
+/// @brief Disables the camera. (breaks the UBO binding)
 void ygl::Camera::disable() { ygl::Shader::setUBO(0, 0); }
+
+/// @brief Sends the view and projection matrices to the GPU.
 void ygl::Camera::updateMatricesUBO() {
 	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
 
@@ -55,6 +87,7 @@ void ygl::Camera::updateMatricesUBO() {
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
+/// @brief Updates the camera. Should be called before drawing every frame that some of its properties have changed
 void ygl::Camera::update() {
 	updateViewMatrix();
 	updateMatricesUBO();

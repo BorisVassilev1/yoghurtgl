@@ -35,7 +35,6 @@ int main() {
 	uint shaderInd = renderer->addShader(shader);
 
 	for (int i = 0; i < 4; ++i) {
-		if(i == 1) continue;
 		Mesh *modelMesh = (Mesh *)getModel(aiscene, i);
 
 		Entity model = scene.createEntity();

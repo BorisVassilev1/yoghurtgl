@@ -19,6 +19,17 @@ void ygl::Transformation::updateWorldMatrix() {
 	worldMatrix = glm::rotate(this->worldMatrix, rotation.z, glm::vec3(0, 0, 1));
 	worldMatrix = glm::scale(this->worldMatrix, scale);
 }
+namespace ygl {
+std::ostream &operator<<(std::ostream &os, const glm::vec3 rhs) {
+	os << "( " << rhs.r << rhs.g << rhs.b << " )";
+	return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const Transformation &rhs) {
+	os << " position: " << rhs.position << " rotation: " << rhs.rotation << " scale: " << rhs.scale;
+	return os;
+}
+}	  // namespace ygl
 
 void ygl::Transformation::updateVectors() { decomposeTransform(worldMatrix, position, rotation, scale); }
 

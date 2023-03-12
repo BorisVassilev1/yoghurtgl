@@ -7,11 +7,11 @@
 #include <window.h>
 
 namespace ygl {
+/// @brief A perspective camera
 class Camera {
-
 	struct matrices {
-	glm::mat4x4 projectionMatrix;
-	glm::mat4x4 viewMatrix;
+		glm::mat4x4 projectionMatrix;
+		glm::mat4x4 viewMatrix;
 	} matrices;
 
 	GLuint uboMatrices;
@@ -22,11 +22,11 @@ class Camera {
 
    public:
 	ygl::Transformation transform;
-	
-	Camera(float, float, float, float);
-	Camera(float, float, float, float, ygl::Transformation);
-	Camera(float, ygl::Window &, float, float);
-	Camera(float, ygl::Window &, float, float, ygl::Transformation);
+
+	Camera(float fov, float aspect, float zNear, float zFar);
+	Camera(float fov, float aspect, float zNear, float zFar, ygl::Transformation transform);
+	Camera(float fov, ygl::Window &from_window, float zNear, float zFar);
+	Camera(float fov, ygl::Window &from_window, float zNear, float zFar, ygl::Transformation transform);
 
 	void updateProjectionMatrix();
 	void updateViewMatrix();

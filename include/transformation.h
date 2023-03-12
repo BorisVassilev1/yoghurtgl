@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <ostream>
 
 namespace ygl {
 class Transformation {
@@ -21,5 +22,7 @@ class Transformation {
 
 	static bool decomposeTransform(const glm::mat4 &transform, glm::vec3 &translation, glm::vec3 &rotation,
 							  glm::vec3 &scale);
+
+	friend std::ostream &operator<<(std::ostream &os, const Transformation &rhs);
 };
 }	  // namespace ygl

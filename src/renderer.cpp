@@ -359,6 +359,7 @@ void ygl::Renderer::effectsPass() {
 void ygl::Renderer::doWork() {
 	colorPass();
 	effectsPass();
+	defaultTexture.bind(GL_TEXTURE0); // some things break when nothing is bound to texture0
 }
 
 ygl::Renderer::~Renderer() {

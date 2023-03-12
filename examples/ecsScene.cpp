@@ -12,7 +12,7 @@
 
 #include <iostream>
 #include <random>
-#include "material.h"
+#include <material.h>
 #include <time.h>
 
 using namespace ygl;
@@ -44,7 +44,6 @@ int main(int argc, char *argv[]) {
 
 	// Texture2d *tex = new Texture2d("./res/models/bunny_uv/bunny_uv.jpg");
 	Texture2d *tex = new Texture2d("./res/images/uv_checker.png");
-	tex->bind(GL_TEXTURE1);
 
 	Entity			bunny = scene.createEntity();
 	Transformation &transform =
@@ -55,7 +54,7 @@ int main(int argc, char *argv[]) {
 
 	Material bunnyMat(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1,
 					  0.5);
-	bunnyMat.albedo_map = scene.assetManager.addTexture(tex, "res/images/uv_checker.png"); 
+	bunnyMat.albedo_map		= scene.assetManager.addTexture(tex, "res/images/uv_checker.png");
 	bunnyMat.use_albedo_map = 1.0;
 
 	unsigned int shaderIndex = renderer->addShader(shader);
@@ -79,8 +78,8 @@ int main(int argc, char *argv[]) {
 		for (int j = 0; j < 20; ++j) {
 			Entity curr = scene.createEntity();
 
-			scene.addComponent<Transformation>(curr,
-											   Transformation(glm::vec3(i * 2 - 20, -1, j * 2 - 20), glm::vec3(), glm::vec3(1)));
+			scene.addComponent<Transformation>(
+				curr, Transformation(glm::vec3(i * 2 - 20, -1, j * 2 - 20), glm::vec3(), glm::vec3(1)));
 			RendererComponent rc(shaderIndex, cubeMeshIndex,
 								 renderer->addMaterial(Material(
 									 glm::vec3(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.), .2,
@@ -108,7 +107,6 @@ int main(int argc, char *argv[]) {
 
 		window.swapBuffers();
 	}
-
 	// clean up and exit
 	delete tex;
 	window.~Window();

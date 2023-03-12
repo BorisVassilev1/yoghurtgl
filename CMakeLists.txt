@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2.0)
 
-set(DGLFW_BUILD_DOCS OFF)
+set(GLFW_BUILD_DOCS OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_COMPILER gcc)
@@ -14,11 +14,11 @@ add_subdirectory(libs/glew-cmake)
 
 
 # Set where the ImGui files are stored
-set(IMGUI_PATH  "./libs/imgui")    
-# Compile as static library 
-file(GLOB IMGUI_SOURCES ${IMGUI_PATH}/*.cpp) 
-add_library("ImGui" STATIC 
-${IMGUI_SOURCES} 
+set(IMGUI_PATH  "./libs/imgui")
+# Compile as static library
+file(GLOB IMGUI_SOURCES ${IMGUI_PATH}/*.cpp)
+add_library("ImGui" STATIC
+${IMGUI_SOURCES}
 ${IMGUI_PATH}/backends/imgui_impl_opengl3.cpp
 ${IMGUI_PATH}/backends/imgui_impl_glfw.cpp
 )
@@ -37,8 +37,8 @@ target_link_libraries("ImGuizmo" PUBLIC "ImGui")
 # YoghurtGL compilation
 if (WIN32)
 	set(LIBS glfw assimp)
-endif (WIN32)	
-	
+endif (WIN32)
+
 if (UNIX)
 	set(LIBS glfw GL X11 GLEW assimp)
 endif (UNIX)
@@ -57,7 +57,7 @@ target_link_libraries("YoghurtGL" PUBLIC ${LIBS})
 target_link_libraries("YoghurtGL" PUBLIC libglew_static)
 target_link_libraries("YoghurtGL" PUBLIC ImGuizmo)
 
-set(COMPILE_ARGS 
+set(COMPILE_ARGS
 -Wall -Wextra --pedantic-errors -g
 # -DYGL_NO_ASSIMP
 # -DNDEBUG
