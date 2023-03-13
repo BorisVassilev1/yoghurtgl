@@ -11,12 +11,7 @@
 
 using namespace ygl;
 
-int main() {
-	if (ygl::init()) {
-		dbLog(ygl::LOG_ERROR, "ygl failed to init");
-		exit(1);
-	}
-
+void run() {
 	ygl::Window window = ygl::Window(1200, 800, "rayTracer", true);
 
 	Mesh		  *bunnyMesh = (Mesh *)getModel(loadScene("./res/models/bunny.obj"));
@@ -61,7 +56,16 @@ int main() {
 	std::cerr << std::endl;
 	delete bunnyMesh;
 	delete shader;
-	window.~Window();
+}
+
+int main() {
+	if (ygl::init()) {
+		dbLog(ygl::LOG_ERROR, "ygl failed to init");
+		exit(1);
+	}
+
+	run();
+	
 	ygl::terminate();
 	return 0;
 }

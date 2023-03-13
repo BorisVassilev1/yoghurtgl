@@ -18,15 +18,8 @@
 using namespace ygl;
 using namespace std;
 
-int main(int argc, char *argv[]) {
-	if (init()) {
-		dbLog(ygl::LOG_ERROR, "ygl failed to init");
-		exit(1);
-	}
-
-	srand(time(NULL));
-
-	Window window = Window(800, 600, "Test Window", true);
+void run() {
+		Window window = Window(800, 600, "Test Window", true);
 
 	Mesh *bunnyMesh = (Mesh *)getModel(loadScene("./res/models/bunny_uv/bunny_uv.obj"));
 
@@ -107,9 +100,20 @@ int main(int argc, char *argv[]) {
 
 		window.swapBuffers();
 	}
-	// clean up and exit
+	// clean up
 	delete tex;
-	window.~Window();
+}
+
+int main(int argc, char *argv[]) {
+	if (init()) {
+		dbLog(ygl::LOG_ERROR, "ygl failed to init");
+		exit(1);
+	}
+
+	srand(time(NULL));
+
+	run();
+
 	ygl::terminate();
 	std::cerr << std::endl;
 	return 0;

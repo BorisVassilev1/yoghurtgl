@@ -30,12 +30,7 @@ class VTFShader : public Shader {
 	}
 };
 
-int main(int argc, char *argv[]) {
-	if (init()) {
-		dbLog(ygl::LOG_ERROR, "ygl failed to init");
-		exit(1);
-	}
-
+void run() {
 	Window window = Window(800, 600, "Test Window", true);
 
 	VTFShader *terrainShader = new VTFShader("./shaders/terrain.vs", "./shaders/terrain.tesc", "./shaders/terrain.tese",
@@ -72,9 +67,9 @@ int main(int argc, char *argv[]) {
 
 	Material terrainMat(glm::vec3(1., 1., 1.), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.4,
 						0., 0.);
-	terrainMat.albedo_map = scene.assetManager.addTexture(color, "bricks/albedo");
+	terrainMat.albedo_map	  = scene.assetManager.addTexture(color, "bricks/albedo");
 	terrainMat.use_albedo_map = 1.0;
-	terrainMat.normal_map = scene.assetManager.addTexture(normal, "bricks/normal");
+	terrainMat.normal_map	  = scene.assetManager.addTexture(normal, "bricks/normal");
 	terrainMat.use_normal_map = 1.0;
 
 	Entity terrain = scene.createEntity();
@@ -106,11 +101,20 @@ int main(int argc, char *argv[]) {
 		window.swapBuffers();
 	}
 
-	// clean up and exit
-	window.~Window();
+	// clean up
 	delete height;
 	delete normal;
 	delete color;
+}
+
+int main(int argc, char *argv[]) {
+	if (init()) {
+		dbLog(ygl::LOG_ERROR, "ygl failed to init");
+		exit(1);
+	}
+
+	run();
+
 	ygl::terminate();
 	std::cerr << std::endl;
 	return 0;

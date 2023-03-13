@@ -28,14 +28,7 @@
 using namespace ygl;
 using namespace std;
 
-int main(int argc, char *argv[]) {
-	if (init()) {
-		dbLog(ygl::LOG_ERROR, "ygl failed to init");
-		exit(1);
-	}
-
-	srand(time(NULL));
-
+void run() {
 	Window window = Window(1200, 800, "Grass Test", true);
 
 	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
@@ -114,9 +107,18 @@ int main(int argc, char *argv[]) {
 
 		window.swapBuffers();
 	}
+}
 
-	// clean up and exit
-	window.~Window();
+int main(int argc, char *argv[]) {
+	if (init()) {
+		dbLog(ygl::LOG_ERROR, "ygl failed to init");
+		exit(1);
+	}
+
+	srand(time(NULL));
+
+	run();
+
 	ygl::terminate();
 	std::cerr << std::endl;
 	return 0;

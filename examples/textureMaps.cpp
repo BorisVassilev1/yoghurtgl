@@ -9,12 +9,7 @@
 
 using namespace ygl;
 
-int main() {
-	if (init()) {
-		dbLog(ygl::LOG_ERROR, "ygl failed to init");
-		exit(1);
-	}
-
+void run() {
 	Window window = Window(1000, 800, "Test Window", true);
 
 	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
@@ -35,21 +30,20 @@ int main() {
 	Texture2d *ao		 = new Texture2d("./res/images/stones/ao.png", ITexture::Type::GREY);
 
 	Mesh *modelMesh = makeBox(glm::vec3(1, 1, 1), glm::vec3(20, 20, 20));
-	// Mesh *modelMesh = (Mesh *)getModel(loadScene("./res/models/bunny_uv/bunny_uv.obj"));
 
 	Entity model = scene.createEntity();
 	scene.addComponent<Transformation>(model, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(1)));
 
 	Material modelMat(glm::vec3(1.0, 0.5, 0.0), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.2,
 					  0.0, 0.);
-	modelMat.albedo_map		= scene.assetManager.addTexture(color, "color");
-	modelMat.use_albedo_map = 1.0;
-	modelMat.normal_map		= scene.assetManager.addTexture(normal, "normal");
-	modelMat.use_normal_map = 1.0;
-	modelMat.roughness_map = scene.assetManager.addTexture(roughness, "roughness");
+	modelMat.albedo_map		   = scene.assetManager.addTexture(color, "color");
+	modelMat.use_albedo_map	   = 1.0;
+	modelMat.normal_map		   = scene.assetManager.addTexture(normal, "normal");
+	modelMat.use_normal_map	   = 1.0;
+	modelMat.roughness_map	   = scene.assetManager.addTexture(roughness, "roughness");
 	modelMat.use_roughness_map = 0.0;
-	modelMat.ao_map = scene.assetManager.addTexture(ao, "ao");
-	modelMat.use_ao_map = 1.0;
+	modelMat.ao_map			   = scene.assetManager.addTexture(ao, "ao");
+	modelMat.use_ao_map		   = 1.0;
 
 	RendererComponent modelRenderer;
 	modelRenderer.materialIndex = renderer->addMaterial(modelMat);
@@ -83,12 +77,21 @@ int main() {
 		window.swapBuffers();
 	}
 
-	// clean up and exit
-	window.~Window();
+	// clean up
 	delete color;
 	delete normal;
 	delete roughness;
 	delete ao;
+}
+
+int main() {
+	if (init()) {
+		dbLog(ygl::LOG_ERROR, "ygl failed to init");
+		exit(1);
+	}
+
+	run();
+
 	ygl::terminate();
 	std::cerr << std::endl;
 	return 0;
