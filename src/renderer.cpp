@@ -302,7 +302,7 @@ void ygl::Renderer::drawScene() {
 		Mesh *mesh = meshes[ecr.meshIndex];
 		mesh->bind();
 		// set uniforms
-		sh->setUniform("worldMatrix", transform.getWorldMatrix());
+		if(sh->hasUniform("worldMatrix")) sh->setUniform("worldMatrix", transform.getWorldMatrix());
 		if (sh->hasUniform("material_index")) sh->setUniform("material_index", (GLuint)ecr.materialIndex);
 		// draw
 		glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);

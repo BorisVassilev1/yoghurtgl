@@ -9,6 +9,7 @@
 #include <ecs.h>
 #include <renderer.h>
 #include <texture.h>
+#include <entities.h>
 
 #include <iostream>
 #include <random>
@@ -92,6 +93,7 @@ void cleanup() {
 	delete[] boxes;
 	delete skybox;
 	delete mouse;
+	delete window;
 }
 
 void initScene() {
@@ -124,6 +126,8 @@ void initScene() {
 																glm::vec3(0.0), 0.0, glm::vec3(1.), 0.0, 1.0, 0.))));
 
 	unlitShaderIndex = renderer->addShader(unlitShader);
+	
+	addSkybox(*scene, "./res/images/skybox");
 
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(-1, -2.9, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
 							 3, Light::Type::DIRECTIONAL));
@@ -328,7 +332,6 @@ int main() {
 
 	// clean up and exit
 	cleanup();
-	delete window;
 	ygl::terminate();
 	std::cerr << std::endl;
 	return 0;

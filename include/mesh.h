@@ -16,7 +16,10 @@ class IMesh {
 	GLuint indicesCount	 = 0;
 	GLuint verticesCount = 0;
 
-	int drawMode = GL_TRIANGLES;
+	GLenum drawMode = GL_TRIANGLES;
+	GLenum depthfunc = GL_LESS;
+	GLenum polygonMode = GL_FILL;
+	bool cullFace = true;
 
 	GLuint createVAO();
 	GLuint createIBO(GLuint *data, int size);
@@ -39,6 +42,9 @@ class IMesh {
 	GLuint getIBO();
 
 	void setDrawMode(GLenum drawMode);
+	void setCullFace(bool cullFace);
+	void setDepthFunc(GLenum depthFunc);
+	void setPolygonMode(GLenum polygonMode);
 
 	class VBO {
 	   public:
@@ -48,6 +54,7 @@ class IMesh {
 		VBO(GLuint location, GLuint bufferId, int coordSize)
 			: location(location), bufferId(bufferId), coordSize(coordSize) {}
 	};
+
 };
 
 class MultiBufferMesh : public IMesh {

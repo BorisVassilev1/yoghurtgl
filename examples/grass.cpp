@@ -65,6 +65,8 @@ void run() {
 	Material &modelMat			= renderer->getMaterial(scene.getComponent<RendererComponent>(model));
 	modelMat.specular_roughness = 0.7;
 
+	Entity skybox = addSkybox(scene, "./res/images/skybox/");
+
 	// renderer->addLight(Light(Transformation(glm::vec3(0, 3, 0)), glm::vec3(0.2, 0.2, 1.0), 50, Light::Type::POINT));
 
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(0.5, -0.5, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),

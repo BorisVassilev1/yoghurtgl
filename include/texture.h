@@ -94,7 +94,7 @@ class TextureCubemap : public ITexture {
 
    public:
 	TextureCubemap() {}
-	TextureCubemap(std::string path, std::string format);
+	TextureCubemap(const std::string &path, const std::string &format);
 
 	void save(std::string fileName) override;
 	void bind(int textureUnit) override;

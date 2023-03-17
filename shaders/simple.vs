@@ -19,7 +19,6 @@ void main() {
 	vColor = color;
 	vTexCoord = texCoord;
 	vVertexNormal = normalize(worldMatrix * vec4(normal, 0.0)).xyz;
-	
 	vVertexPos = vPos.xyz;
 
 	vec3 worldSpaceTangent = normalize(vec3(worldMatrix * vec4(tangent, 0.0)));

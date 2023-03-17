@@ -21,4 +21,6 @@ Entity addSphere(Scene &scene, glm::vec3 position = glm::vec3(), glm::vec3 scale
 Entity addModel(Scene &scene, Mesh *mesh, glm::vec3 position = glm::vec3(), glm::vec3 scale = glm::vec3(1.),
 				glm::vec3 color = glm::vec3(1.));
 
+Entity addSkybox(Scene &scene, const std::string &path);
+
 };	   // namespace ygl

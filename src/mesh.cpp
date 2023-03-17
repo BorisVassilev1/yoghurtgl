@@ -20,6 +20,11 @@ GLuint ygl::IMesh::createIBO(GLuint *data, int count) {
 }
 
 void ygl::IMesh::bind() {
+	if (cullFace) glEnable(GL_CULL_FACE);
+	else glDisable(GL_CULL_FACE);
+	glDepthFunc(depthfunc);
+	glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
+	
 	glBindVertexArray(vao);
 	enableVBOs();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
@@ -49,6 +54,12 @@ GLuint ygl::IMesh::getIBO() { return ibo; }
 GLuint ygl::IMesh::getVAO() { return vao; }
 
 void ygl::IMesh::setDrawMode(GLenum mode) { drawMode = mode; }
+
+void ygl::IMesh::setCullFace(bool cullFace) { this->cullFace = cullFace; }
+
+void ygl::IMesh::setDepthFunc(GLenum depthFunc) { this->depthfunc = depthFunc; }
+
+void ygl::IMesh::setPolygonMode(GLenum polygonMode) { this->polygonMode = polygonMode; }
 
 void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint indexDivisor,
 								  GLsizei stride, const void *pointer) {

@@ -19,6 +19,8 @@ ygl::GrassSystem::GrassBladeMesh::GrassBladeMesh(GLuint bladeCount) {
 	this->addVBO(1, 4, grassData, 1, sizeof(BladeData), (const void *)(4 * sizeof(float)));
 	this->addVBO(2, 1, grassData, 1, sizeof(BladeData), (const void *)(8 * sizeof(float)));
 	glBindVertexArray(0);
+
+	cullFace = false;
 }
 
 void ygl::GrassSystem::GrassBladeMesh::setBladeCount(GLuint bladeCount) {

@@ -273,6 +273,7 @@ void ygl::Shader::detectStorageBlocks() {
 }
 
 GLuint ygl::Shader::getUniformLocation(const std::string &uniformName) {
+	if(!hasUniform(uniformName)) dbLog(ygl::LOG_ERROR, "Shader does not have uniform: ", uniformName);
 	assert(hasUniform(uniformName) && "the uniform does not exist in this shader.");
 
 	GLint location = (*(uniforms.find(uniformName))).second;

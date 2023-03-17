@@ -187,7 +187,7 @@ void ygl::Texture2d::unbindImage(int unit) { glBindImageTexture(unit, 0, 0, fals
 int	 ygl::Texture2d::getID() { return id; }
 ygl::Texture2d::~Texture2d() { glDeleteTextures(1, &id); }
 
-ygl::TextureCubemap::TextureCubemap(std::string path, std::string format) {
+ygl::TextureCubemap::TextureCubemap(const std::string &path, const std::string &format) {
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 

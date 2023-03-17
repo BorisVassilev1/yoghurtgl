@@ -113,10 +113,10 @@ class Renderer : public ygl::ISystem {
 	FrameBuffer *frontFrameBuffer;
 	FrameBuffer *backFrameBuffer;
 	Mesh		*screenQuad = makeScreenQuad();
-
 	glm::vec4 clearColor = glm::vec4(0, 0, 0, 1);
 
 	std::vector<std::function<void()> > drawFunctions;
+
    public:
 	std::vector<IScreenEffect *> effects;
 

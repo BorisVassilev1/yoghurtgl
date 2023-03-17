@@ -38,3 +38,23 @@ ygl::Entity ygl::addModel(Scene &scene, Mesh *mesh, glm::vec3 position, glm::vec
 
 	return e;
 }
+
+ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path) {
+	Entity	  e		   = scene.createEntity();
+	Renderer *renderer = scene.getSystem<Renderer>();
+
+	Mesh* mesh = makeCube(1.);
+	mesh->setCullFace(false);
+	mesh->setDepthFunc(GL_LEQUAL);
+	uint meshIndex = renderer->addMesh(mesh);
+	ygl::Material mat;
+	mat.albedo_map	   = scene.assetManager.addTexture(new TextureCubemap(path, ".jpg"), path);
+	mat.use_albedo_map = 1.0;
+	uint materialIndex = renderer->addMaterial(mat);
+	uint shaderIndex   = renderer->addShader(new VFShader("./shaders/skybox.vs", "./shaders/skybox.fs"));
+
+	scene.addComponent(e, Transformation());
+	scene.addComponent(e, RendererComponent(shaderIndex, meshIndex, materialIndex));
+
+	return e;
+}
