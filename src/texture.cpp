@@ -1,9 +1,9 @@
 #include <texture.h>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
+#include <stb_image.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb/stb_image_write.h>
+#include <stb_image_write.h>
 
 void ygl::ITexture::getTypeParameters(Type type, GLint &internalFormat, GLenum &format, uint8_t &pixelSize,
 									  uint8_t &components, GLenum &_type) {

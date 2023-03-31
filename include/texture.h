@@ -3,7 +3,7 @@
 #include <yoghurtgl.h>
 
 #include <string>
-#include <stb/stb_image.h>
+#include <stb_image.h>
 
 namespace ygl {
 enum TexIndex {

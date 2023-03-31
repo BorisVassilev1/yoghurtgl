@@ -5,6 +5,7 @@
 !Makefile
 !Makefile-manual
 !/libs/*
+!libs/*
 
 /build/*
 *.exe

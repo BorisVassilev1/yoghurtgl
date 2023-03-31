@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 3.2.0)
 
+set(YGL_NO_ASSIMP OFF)
 set(GLFW_BUILD_DOCS OFF)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_C_COMPILER gcc)
-set(CMAKE_CXX_COMPILER g++)
+#set(CMAKE_C_COMPILER gcc)
+#set(CMAKE_CXX_COMPILER g++)
 
 project(YoghurtGL)
 
 add_subdirectory(libs/glfw)
 add_subdirectory(libs/glm)
 add_subdirectory(libs/glew-cmake)
-
 
 # Set where the ImGui files are stored
 set(IMGUI_PATH  "./libs/imgui")
@@ -36,12 +36,29 @@ target_link_libraries("ImGuizmo" PUBLIC "ImGui")
 
 # YoghurtGL compilation
 if (WIN32)
-	set(LIBS glfw assimp)
+	set(LIBS glfw)
 endif (WIN32)
 
 if (UNIX)
-	set(LIBS glfw GL X11 GLEW assimp)
+	set(LIBS glfw GL X11 GLEW)
 endif (UNIX)
+
+set(COMPILE_ARGS
+-Wall -Wextra --pedantic-errors -g
+# -DNDEBUG
+# -fsanitize=address
+)
+set(LINK_ARGS
+# -fsanitize=address
+)
+
+if (${YGL_NO_ASSIMP})
+	set(COMPILE_ARGS ${COMPILE_ARGS} -DYGL_NO_ASSIMP)
+	message(NO ASSIMP!!)
+else (${YGL_NO_ASSIMP})
+	set(LIBS ${LIBS} assimp)
+endif (${YGL_NO_ASSIMP})
+
 
 
 file(GLOB_RECURSE YGL_SOURCES
@@ -51,21 +68,13 @@ add_library("YoghurtGL" STATIC ${YGL_SOURCES})
 target_include_directories("YoghurtGL" PUBLIC include)
 target_include_directories("YoghurtGL" PUBLIC libs/glfw/include)
 target_include_directories("YoghurtGL" PUBLIC libs/glm/)
+target_include_directories("YoghurtGL" PUBLIC libs/stb/)
 target_link_directories("YoghurtGL" PUBLIC libs/glfw/src)
 target_link_libraries("YoghurtGL" PUBLIC ImGui)
 target_link_libraries("YoghurtGL" PUBLIC ${LIBS})
 target_link_libraries("YoghurtGL" PUBLIC libglew_static)
 target_link_libraries("YoghurtGL" PUBLIC ImGuizmo)
 
-set(COMPILE_ARGS
--Wall -Wextra --pedantic-errors -g
-# -DYGL_NO_ASSIMP
-# -DNDEBUG
-# -fsanitize=address
-)
-set(LINK_ARGS
-# -fsanitize=address
-)
 
 target_compile_options("YoghurtGL" PRIVATE ${COMPILE_ARGS})
 target_link_options("YoghurtGL" PRIVATE ${LINK_ARGS})
