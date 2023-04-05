@@ -8,6 +8,7 @@
 #include <renderer.h>
 #include <importer.h>
 #include <transformation.h>
+#include <entities.h>
 
 using namespace ygl;
 
@@ -34,25 +35,23 @@ int main() {
 	const aiScene *aiscene = loadScene("./res/models/dragon-gltf/scene.gltf");
 
 	uint shaderInd = renderer->addShader(shader);
+	renderer->setDefaultShader(shaderInd);
 
-	for (int i = 0; i < 4; ++i) {
-		Mesh *modelMesh = (Mesh *)getModel(aiscene, i);
-
-		Entity model = scene.createEntity();
-		scene.addComponent<Transformation>(model, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(1.)));
-
-		Material mat = getMaterial(aiscene, scene.assetManager, "./res/models/dragon-gltf/", i);
-		mat.specular_roughness *= 5;
-
-		RendererComponent modelRenderer;
-		modelRenderer.materialIndex = renderer->addMaterial(mat);
-		modelRenderer.shaderIndex	= shaderInd;
-		modelRenderer.meshIndex		= renderer->addMesh(modelMesh);
-		scene.addComponent(model, modelRenderer);
+	for (int i = 0; i < aiscene->mNumMeshes; ++i) {
+		addModel(scene, aiscene, "./res/models/dragon-gltf/", i);
 	}
 
-	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, .3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 5,
-							 Light::Type::DIRECTIONAL));
+	const aiScene *helmetScene = loadScene("./res/models/helmet/DamagedHelmet.gltf");
+
+	for (int i = 0; i < helmetScene->mNumMeshes; ++i) {
+		Entity			model = addModel(scene, helmetScene, "./res/models/helmet/", i);
+		Transformation &tr	  = scene.getComponent<Transformation>(model);
+		tr.position.x += 2;
+		tr.updateWorldMatrix();
+	}
+
+	Light &directional = renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, .3, 0), glm::vec3(1)),
+												  glm::vec3(1., 1., 1.), 5, Light::Type::DIRECTIONAL));
 	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.11, Light::Type::AMBIENT));
 
 	renderer->loadData();

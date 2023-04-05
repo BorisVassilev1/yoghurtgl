@@ -99,10 +99,10 @@ struct RendererComponent {
 };
 
 class Renderer : public ygl::ISystem {
-	std::vector<Shader *>  shaders;
-	std::vector<Material>  materials;
-	std::vector<Mesh *>	   meshes;
-	std::vector<Light>	   lights;
+	std::vector<Shader *> shaders;
+	std::vector<Material> materials;
+	std::vector<Mesh *>	  meshes;
+	std::vector<Light>	  lights;
 
 	GLuint materialsBuffer = 0;
 	GLuint lightsBuffer	   = 0;
@@ -113,7 +113,7 @@ class Renderer : public ygl::ISystem {
 	FrameBuffer *frontFrameBuffer;
 	FrameBuffer *backFrameBuffer;
 	Mesh		*screenQuad = makeScreenQuad();
-	glm::vec4 clearColor = glm::vec4(0, 0, 0, 1);
+	glm::vec4	 clearColor = glm::vec4(0, 0, 0, 1);
 
 	std::vector<std::function<void()> > drawFunctions;
 
@@ -141,9 +141,11 @@ class Renderer : public ygl::ISystem {
 	unsigned int addMaterial(const Material &);
 	unsigned int addMesh(Mesh *);
 	Light		&addLight(const Light &);
+	Light		&getLight(uint index);
 	void		 addScreenEffect(IScreenEffect *);
 
 	void setDefaultShader(int defaultShader);
+	uint getDefaultShader();
 	void setClearColor(glm::vec4 color);
 
 	void loadData();

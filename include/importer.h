@@ -22,7 +22,6 @@ const aiScene *loadScene(const std::string &file, unsigned int flags);
 const aiScene *loadScene(const std::string &file);
 const Mesh	  *getModel(const aiScene *, unsigned int meshIndex = 0);
 Material	   getMaterial(const aiScene *, AssetManager &asman, std::string filePath, uint i);
-// Entity makeEntity(const aiScene *, AssetManager &asman, std::string filePath, uint i);
 
 void terminateLoader();
 #endif

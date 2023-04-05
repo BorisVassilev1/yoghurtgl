@@ -288,7 +288,7 @@ class Scene {
    public:
 	ygl::Window		*window;
 	std::set<Entity> entities;
-	AssetManager	 assetManager;
+	ygl::AssetManager	 assetManager;
 
 	/**
 	 * @brief Construct an empty Scene

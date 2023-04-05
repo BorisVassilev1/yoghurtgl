@@ -23,4 +23,6 @@ Entity addModel(Scene &scene, Mesh *mesh, glm::vec3 position = glm::vec3(), glm:
 
 Entity addSkybox(Scene &scene, const std::string &path);
 
+ygl::Entity addModel(ygl::Scene &scene, const aiScene *aiscene, std::string filePath, uint i);
+
 };	   // namespace ygl

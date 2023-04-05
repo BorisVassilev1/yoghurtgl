@@ -58,3 +58,25 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path) {
 
 	return e;
 }
+
+ygl::Entity ygl::addModel(ygl::Scene &scene, const aiScene *aiscene, std::string filePath, uint i) {
+	AssetManager &asman = scene.assetManager;
+
+	Mesh *modelMesh = (Mesh *)getModel(aiscene, i);
+
+	Entity model = scene.createEntity();
+	scene.addComponent<Transformation>(model, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(1.)));
+
+	Material mat = getMaterial(aiscene, asman, filePath, i);
+	// mat.specular_roughness *= 0.;
+	// std::cerr << mat.specular_roughness << std::endl;
+
+	Renderer *renderer = scene.getSystem<Renderer>();
+
+	RendererComponent modelRenderer;
+	modelRenderer.materialIndex = renderer->addMaterial(mat);
+	modelRenderer.shaderIndex	= renderer->getDefaultShader();
+	modelRenderer.meshIndex		= renderer->addMesh(modelMesh);
+	scene.addComponent(model, modelRenderer);
+	return model;
+}

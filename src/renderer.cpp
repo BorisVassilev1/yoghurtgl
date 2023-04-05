@@ -212,6 +212,10 @@ ygl::Light &ygl::Renderer::addLight(const Light &light) {
 	return lights.back();
 }
 
+ygl::Light &ygl::Renderer::getLight(uint index) {
+	return lights[index];
+}
+
 void ygl::Renderer::addScreenEffect(IScreenEffect *effect) {
 	effect->setRenderer(this);
 	effects.push_back(effect);
@@ -237,6 +241,8 @@ void ygl::Renderer::loadData() {
 }
 
 void ygl::Renderer::setDefaultShader(int defaultShader) { this->defaultShader = defaultShader; }
+
+uint ygl::Renderer::getDefaultShader() { return defaultShader; }
 
 void ygl::Renderer::setClearColor(glm::vec4 color) {
 	this->clearColor = color;

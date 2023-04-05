@@ -34,6 +34,7 @@ const ygl::Mesh *ygl::getModel(const aiScene *scene, unsigned int meshIndex) {
 	unsigned int numMeshes = scene->mNumMeshes;
 
 	assert(numMeshes >= 1 && "no meshes in the scene?");
+	// assert(numMeshes < meshIndex && "no mesh with that index");
 
 	aiMesh		*mesh		   = meshes[meshIndex];
 	unsigned int verticesCount = mesh->mNumVertices;
@@ -141,6 +142,7 @@ ygl::Material ygl::getMaterial(const aiScene *scene, ygl::AssetManager &asman, s
 					  use_map[3], map[4], use_map[4], map[5], use_map[5]);
 	return mat;
 }
+
 #endif
 
 uint ygl::AssetManager::addMesh(Mesh *mesh, std::string name) {
