@@ -38,7 +38,9 @@ int main() {
 	renderer->setDefaultShader(shaderInd);
 
 	for (int i = 0; i < aiscene->mNumMeshes; ++i) {
-		addModel(scene, aiscene, "./res/models/dragon-gltf/", i);
+		Entity model = addModel(scene, aiscene, "./res/models/dragon-gltf/", i);
+		RendererComponent &rc = scene.getComponent<RendererComponent>(model);
+		renderer->getMaterial(rc.materialIndex).specular_roughness *= 4;
 	}
 
 	const aiScene *helmetScene = loadScene("./res/models/helmet/DamagedHelmet.gltf");
@@ -47,14 +49,19 @@ int main() {
 		Entity			model = addModel(scene, helmetScene, "./res/models/helmet/", i);
 		Transformation &tr	  = scene.getComponent<Transformation>(model);
 		tr.position.x += 2;
+		tr.rotation.y += glm::pi<float>();
 		tr.updateWorldMatrix();
 	}
 
-	Light &directional = renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, .3, 0), glm::vec3(1)),
-												  glm::vec3(1., 1., 1.), 5, Light::Type::DIRECTIONAL));
+	Entity skybox = addSkybox(scene, "./res/images/skybox/");
+
+	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, .3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 5,
+							 Light::Type::DIRECTIONAL));
 	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.11, Light::Type::AMBIENT));
 
 	renderer->loadData();
+
+	Light &directional = renderer->getLight(0);
 
 	glClearColor(0, 0, 0, 1);
 	while (!window.shouldClose()) {

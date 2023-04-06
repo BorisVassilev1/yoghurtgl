@@ -9,6 +9,13 @@ ygl::Light::Light(glm::mat4 transform, glm::vec3 color, float intensity, ygl::Li
 ygl::Light::Light(ygl::Transformation transformation, glm::vec3 color, float intensity, ygl::Light::Type type)
 	: transform(transformation.getWorldMatrix()), color(color), intensity(intensity), type(type) {}
 
+std::ostream &ygl::operator<<(std::ostream &out, const Light &l) {
+	return out << "transform: <matrix4x4>"
+		<< " color: (" << l.color.x << " " << l.color.y << " " << l.color.z
+		<< ") intensity: " << l.intensity
+		<< " type: " << l.type;
+}
+
 ygl::FrameBuffer::FrameBuffer(uint16_t width, uint16_t height, const char *name) {
 	glGenFramebuffers(1, &id);
 	glBindFramebuffer(GL_FRAMEBUFFER, id);

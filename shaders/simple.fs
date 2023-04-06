@@ -11,9 +11,9 @@ in mat3 vTBN;
 out vec4 fragColor;
 
 void main() {
-	vec3 normalizedVertexNormal = normalize(vVertexNormal);
+	vec3	 normalizedVertexNormal = normalize(vVertexNormal);
 	vec3	 finalNormal;
-	Material mat	   = materials[material_index];
+	Material mat = materials[material_index];
 
 	if (mat.use_normal_map != 0.0) {
 		vec3 normal = texture(normalMap, vTexCoord).xyz;
@@ -25,9 +25,10 @@ void main() {
 		finalNormal = normalizedVertexNormal;
 	}
 
+	vec3 color;
 
-	if(!gl_FrontFacing) finalNormal = -finalNormal;
-	vec3 color = calcAllLights(vVertexPos, finalNormal, finalNormal, vTexCoord);
+	if (!gl_FrontFacing) finalNormal = -finalNormal;
+	color = calcAllLights(vVertexPos, finalNormal, finalNormal, vTexCoord);
 
 	// light = vec3(materials[material_index].albedo);
 	// color = vVertexNormal;

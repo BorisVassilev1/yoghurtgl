@@ -77,6 +77,7 @@ layout(std140, binding = 2) uniform Lights {
 };
 
 uniform uint material_index = 0;
+uniform float renderMode = 0;
 
 uniform bool use_texture;
 layout(binding = 1) uniform sampler2D albedoMap;
@@ -123,7 +124,7 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
 	return ggx1 * ggx2;
 }
 
-vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec3 vertexNormal, in vec2 texCoord, Material mat,
+vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec2 texCoord, Material mat,
 			   in vec3 albedo, in float roughness, in float metallic) {
 	vec3 lightPosition = (light.transform * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	vec3 lightForward  = (light.transform * vec4(0.0, 0.0, 1.0, 0.0)).xyz;
@@ -139,9 +140,6 @@ vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec3 vertexNormal, i
 	L		   = normalize(L);
 
 	vec3 V = normalize(camPos - position);
-
-	// if (dot(V, vertexNormal) < -0.001) N = -N;
-	// if(!gl_FrontFacing) N = -N;
 
 	vec3 H = normalize(V + L);
 
@@ -182,14 +180,30 @@ vec3 calcAllLights(in vec3 position, in vec3 normal, in vec3 vertexNormal, in ve
 	vec3  calcAlbedo	= mix(1., ao, mat.use_ao_map) * mix(mat.albedo, diffuse, mat.use_albedo_map);
 	float calcMetallic	= mix(mat.metallic, metallic, mat.use_metallic_map);
 	vec3  calcEmission	= mix(mat.emission, mat.emission * emission, mat.use_emission_map);
-	float calcRoughness = mix(mat.specular_roughness, mat.specular_roughness * roughness, mat.use_roughness_map);
+	float calcRoughness = mix(mat.specular_roughness, mat.specular_roughness * roughness, mat.use_roughness_map) + 0.1;
 
-	for (int i = 0; i < lightsCount; i++) {
-		light += calcLight(lights[i], position, normal, vertexNormal, texCoord, mat, calcAlbedo, calcRoughness,
-						   calcMetallic);
+	if(renderMode == 0) {
+		for (int i = 0; i < lightsCount; i++) {
+			light += calcLight(lights[i], position, normal, texCoord, mat, calcAlbedo, calcRoughness,
+							calcMetallic);
+		}
+		light += calcEmission;
 	}
-	light += calcEmission;
-	return light;
+	if(renderMode == 1) {
+		light += calcRoughness;
+	}
+	if(renderMode == 2) {
+		light += calcMetallic;
+	}
+	if(renderMode == 3) {
+		light += calcAlbedo;
+	}
+	if(renderMode == 4) {
+		light += ao;
+	}
+	if(renderMode == 5) {
+		light += normal;
+	}
 
-	// return vec3(calcRoughness);
+	return light;
 }

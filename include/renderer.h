@@ -9,6 +9,7 @@
 #include <transformation.h>
 #include <texture.h>
 #include <material.h>
+#include <ostream>
 
 namespace ygl {
 
@@ -32,6 +33,8 @@ struct alignas(16) Light {
 	Light(glm::mat4 transform, glm::vec3 color, float intensity, Type type);
 	Light(ygl::Transformation transformation, glm::vec3 color, float intensity, Type type);
 };
+
+std::ostream &operator<<(std::ostream &out, const Light &l);
 
 class FrameBuffer {
 	GLuint	   id;

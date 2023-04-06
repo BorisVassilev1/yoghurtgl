@@ -327,6 +327,15 @@ int main() {
 			Renderer::drawObject(textureOnScreen, screenQuad);
 		}
 
+		Material &mat = renderer->getMaterial(scene->getComponent<RendererComponent>(bunny).materialIndex);
+
+		ImGui::Begin("material");
+		ImGui::SliderFloat3("color", glm::value_ptr(mat.albedo), 0, 1);
+		ImGui::SliderFloat("metallic", &mat.metallic, 0, 1);
+		ImGui::SliderFloat("roughness", &mat.specular_roughness, 0, 1);
+		ImGui::End();
+		renderer->loadData();
+
 		window->swapBuffers();
 	}
 
