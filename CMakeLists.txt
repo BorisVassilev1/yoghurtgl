@@ -2,16 +2,17 @@ cmake_minimum_required(VERSION 3.2.0)
 
 set(YGL_NO_ASSIMP OFF)
 set(GLFW_BUILD_DOCS OFF)
+set(ASSIMP_BUILD_TESTS OFF)
+set(ENABLE_BOOST_WORKAROUND ON)
 
 set(CMAKE_CXX_STANDARD 20)
-#set(CMAKE_C_COMPILER gcc)
-#set(CMAKE_CXX_COMPILER g++)
 
 project(YoghurtGL)
 
 add_subdirectory(libs/glfw)
 add_subdirectory(libs/glm)
 add_subdirectory(libs/glew-cmake)
+add_subdirectory(libs/assimp)
 
 # Set where the ImGui files are stored
 set(IMGUI_PATH  "./libs/imgui")
@@ -69,6 +70,7 @@ target_include_directories("YoghurtGL" PUBLIC include)
 target_include_directories("YoghurtGL" PUBLIC libs/glfw/include)
 target_include_directories("YoghurtGL" PUBLIC libs/glm/)
 target_include_directories("YoghurtGL" PUBLIC libs/stb/)
+target_include_directories("YoghurtGL" PUBLIC libs/assimp/include)
 target_link_directories("YoghurtGL" PUBLIC libs/glfw/src)
 target_link_libraries("YoghurtGL" PUBLIC ImGui)
 target_link_libraries("YoghurtGL" PUBLIC ${LIBS})
