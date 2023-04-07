@@ -10,22 +10,25 @@ In the **examples** directory there are a couple of examples of how the library 
 
 ### - Requirements
 
-The project is built with **cmake** 3.2 and requires [**Assimp**](https://github.com/assimp/assimp) to be installed. (all dependencies except Assimp are included as submodules).
+The project is built with **cmake** 3.2 (all dependencies are included as submodules).
 I use **make** as a build system, but any other should also work. 
 
 The library does not use resources other than those in github, but the examples require models and textures that are uploaded in this [google drive](https://drive.google.com/drive/folders/1VeFO-2s8SJ-MM6P98POKNqDr74to_VAX?usp=share_link)
 
 ### - Build process
 
-The simplest way to build the library if you have **g++** and **make** is to run:
+The simplest way to build the library **make** is to run:
 ```
 ./configure.bat # for Windows or ./configure.sh for Unix-like systems
-cd build/
-make <target>
+cmake --build ./build --target=<target>
 ```
 Target can be YoghurtGL or the name of any example in the **examples** directory.
 
-If you don't have the [**Assimp**](https://github.com/assimp/assimp) library installed, currently the only demo you can run is /examples/textureMaps.cpp. 
+Any CMake configuration should work. Here is a list of things that work/don't work
+ - on Windows MinGW-gcc cannot compile assimp and thus cannot build the project
+ - on Windows MinGW-clang works
+ - on Linux gcc and clang work
+
 ## Images
 Some renders to demonstrate the library's capabilities
 

@@ -21,3 +21,6 @@ compile_commands.json
 doxygen_config.txt
 /cmake-build-debug/
 .idea/
+.vs/
+*.ilk
+*.pdb

@@ -51,7 +51,7 @@ if (UNIX)
 endif (UNIX)
 
 set(COMPILE_ARGS
--Wall -Wextra -g
+#-Wall -Wextra -g
 --pedantic-errors
 # -DNDEBUG
 # -fsanitize=address
