@@ -59,6 +59,7 @@ void run() {
 												renderer->addMaterial(Material(glm::vec3(0.1, 0.5, 0.1), .2,
 																			   glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0,
 																			   glm::vec3(1.), 0.0, 0.3, 0.0, 0.0))));
+	scene.addComponent(plane, GrassSystem::GrassHolder());
 
 	Entity model =
 		addModel(scene, (Mesh *)getModel(loadScene("./res/models/dragon.obj")), {0, 3, 0}, {10, 10, 10}, {1, 1, 1});
@@ -66,6 +67,12 @@ void run() {
 	modelMat.specular_roughness = 0.7;
 
 	Entity skybox = addSkybox(scene, "./res/images/skybox/");
+
+	std::cerr << "renderer: ";
+	renderer->printEntities();
+
+	std::cerr << "grass: ";
+	grassSystem->printEntities();
 
 	// renderer->addLight(Light(Transformation(glm::vec3(0, 3, 0)), glm::vec3(0.2, 0.2, 1.0), 50, Light::Type::POINT));
 

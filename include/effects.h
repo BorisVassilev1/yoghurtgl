@@ -25,7 +25,6 @@ class GrassSystem : public ygl::ISystem {
 		~GrassBladeMesh();
 	};
 
-	struct GrassHolder {};
 
 	glm::ivec2	 resolution = glm::ivec2(1, 1);
 	unsigned int bladeCount = 1;
@@ -37,6 +36,8 @@ class GrassSystem : public ygl::ISystem {
 	unsigned int materialIndex = -1;
 
    public:
+	struct GrassHolder {};
+
 	glm::vec2 size	  = glm::vec2(40, 40);
 	float	  density = 3;
 

@@ -2,8 +2,13 @@ cmake_minimum_required(VERSION 3.2.0)
 
 set(YGL_NO_ASSIMP OFF)
 set(GLFW_BUILD_DOCS OFF)
-set(ASSIMP_BUILD_TESTS OFF)
+
+option(ASSIMP_BUILD_TESTS OFF)
+set(ASSIMP_INSTALL OFF)
+# set(ASSIMP_BUILD_ZLIB ON)
+set(ASSIMP_BUILD_ASSIMP_VIEW OFF)
 set(ENABLE_BOOST_WORKAROUND ON)
+# set(BUILD_SHARED_LIBS ON)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -12,6 +17,7 @@ project(YoghurtGL)
 add_subdirectory(libs/glfw)
 add_subdirectory(libs/glm)
 add_subdirectory(libs/glew-cmake)
+
 add_subdirectory(libs/assimp)
 
 # Set where the ImGui files are stored
@@ -45,7 +51,8 @@ if (UNIX)
 endif (UNIX)
 
 set(COMPILE_ARGS
--Wall -Wextra --pedantic-errors -g
+-Wall -Wextra -g
+--pedantic-errors
 # -DNDEBUG
 # -fsanitize=address
 )

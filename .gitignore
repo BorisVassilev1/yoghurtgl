@@ -19,3 +19,5 @@ compile_commands.json
 /html/*
 /latex/*
 doxygen_config.txt
+/cmake-build-debug/
+.idea/

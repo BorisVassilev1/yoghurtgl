@@ -49,3 +49,10 @@ ygl::Signature ygl::EntityManager::getSignature(ygl::Entity e) {
  * @param s Signature to be set
  */
 void ygl::EntityManager::setSignature(ygl::Entity e, ygl::Signature s) { signatures[e] = s; }
+
+void ygl::ISystem::printEntities() {
+	for(ygl::Entity e : this->entities) {
+		std::cerr << e << " ";
+	}
+	std::cerr << std::endl;
+}

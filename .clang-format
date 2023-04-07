@@ -20,7 +20,6 @@ AlwaysBreakAfterReturnType: None
 PenaltyReturnTypeOnItsOwnLine: 9999
 PointerAlignment: Right
 SortIncludes: Never
-IndentWidth: 4
 # BreakBeforeBraces: Allman
 SpacesBeforeTrailingComments: 5
 AlignAfterOpenBracket: true

@@ -212,6 +212,7 @@ class ISystem {
 
 	virtual void doWork() = 0;
 	virtual void init()	  = 0;
+	void printEntities();
 };
 
 class SystemManager {
@@ -249,7 +250,7 @@ class SystemManager {
 
 	void updateEntitySignature(Entity e, Signature signature) {
 		for (auto pair : systems) {
-			if (signature == signatures[pair.first]) {
+			if ((signature & signatures[pair.first]) == signatures[pair.first]) {
 				pair.second->entities.insert(e);
 			} else {
 				pair.second->entities.erase(e);
