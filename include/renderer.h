@@ -157,7 +157,7 @@ class Renderer : public ygl::ISystem {
 
 	~Renderer() override;
 
-	void addDrawFunction(std::function<void()> func);
+	void addDrawFunction(const std::function<void()> &func);
 	void swapFrameBuffers();
 
 	static void drawObject(Transformation &transform, Shader *shader, Mesh *mesh, GLuint materialIndex);

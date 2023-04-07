@@ -390,7 +390,7 @@ ygl::Renderer::~Renderer() {
 	delete screenQuad;
 }
 
-void ygl::Renderer::addDrawFunction(std::function<void()> func) { drawFunctions.push_back(func); }
+void ygl::Renderer::addDrawFunction(const std::function<void()> &func) { drawFunctions.push_back(func); }
 
 void ygl::Renderer::drawObject(Transformation &transform, Shader *sh, Mesh *mesh, GLuint materialIndex) {
 	sh->bind();

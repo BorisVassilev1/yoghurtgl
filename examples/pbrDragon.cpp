@@ -37,21 +37,19 @@ int main() {
 	uint shaderInd = renderer->addShader(shader);
 	renderer->setDefaultShader(shaderInd);
 
-	for (int i = 0; i < aiscene->mNumMeshes; ++i) {
-		Entity model = addModel(scene, aiscene, "./res/models/dragon-gltf/", i);
-		RendererComponent &rc = scene.getComponent<RendererComponent>(model);
-		renderer->getMaterial(rc.materialIndex).specular_roughness *= 4;
-	}
+	addModels(scene, aiscene, "./res/models/dragon-gltf/", [&scene, &renderer](Entity model) {
+		RendererComponent &rc									   = scene.getComponent<RendererComponent>(model);
+		renderer->getMaterial(rc.materialIndex).specular_roughness = 2.;
+	});
 
 	const aiScene *helmetScene = loadScene("./res/models/helmet/DamagedHelmet.gltf");
 
-	for (int i = 0; i < helmetScene->mNumMeshes; ++i) {
-		Entity			model = addModel(scene, helmetScene, "./res/models/helmet/", i);
-		Transformation &tr	  = scene.getComponent<Transformation>(model);
+	addModels(scene, helmetScene, "./res/models/helmet/", [&scene](Entity model) {
+		Transformation &tr = scene.getComponent<Transformation>(model);
 		tr.position.x += 2;
 		tr.rotation.y += glm::pi<float>();
 		tr.updateWorldMatrix();
-	}
+	});
 
 	Entity skybox = addSkybox(scene, "./res/images/skybox/");
 

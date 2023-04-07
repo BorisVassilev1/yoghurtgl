@@ -193,7 +193,7 @@ void ygl::Window::handleResize(GLFWwindow *window, int width, int height) {
 	}
 }
 
-void ygl::Window::addResizeCallback(std::function<void(GLFWwindow *, int, int)> callback) {
+void ygl::Window::addResizeCallback(const std::function<void(GLFWwindow *, int, int)> &callback) {
 	resizeCallbacks.push_back(callback);
 }
 

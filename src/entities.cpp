@@ -68,8 +68,6 @@ ygl::Entity ygl::addModel(ygl::Scene &scene, const aiScene *aiscene, std::string
 	scene.addComponent<Transformation>(model, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(1.)));
 
 	Material mat = getMaterial(aiscene, asman, filePath, i);
-	// mat.specular_roughness *= 0.;
-	// std::cerr << mat.specular_roughness << std::endl;
 
 	Renderer *renderer = scene.getSystem<Renderer>();
 
@@ -79,4 +77,11 @@ ygl::Entity ygl::addModel(ygl::Scene &scene, const aiScene *aiscene, std::string
 	modelRenderer.meshIndex		= renderer->addMesh(modelMesh);
 	scene.addComponent(model, modelRenderer);
 	return model;
+}
+
+void ygl::addModels(ygl::Scene &scene, const aiScene *aiscene, std::string filePath, const std::function<void(Entity)> &edit = {}) {
+	for (uint i = 0; i < aiscene->mNumMeshes; ++i) {
+		ygl::Entity model = addModel(scene, aiscene, filePath, i);
+		edit(model);
+	}
 }

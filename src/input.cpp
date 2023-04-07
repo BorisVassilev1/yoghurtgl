@@ -61,7 +61,7 @@ int ygl::Keyboard::getKey(ygl::Window &window, int key) { return glfwGetKey(wind
 int ygl::Keyboard::getKey(int key) { return glfwGetKey(window->getHandle(), key); }
 
 void ygl::Keyboard::addKeyCallback(
-	std::function<void(GLFWwindow *window, int key, int scancode, int action, int mods)> callback) {
+	const std::function<void(GLFWwindow *window, int key, int scancode, int action, int mods)> &callback) {
 	callbacks.push_back(callback);
 }
 

@@ -47,7 +47,7 @@ class Keyboard {
 	static void init(ygl::Window *);
 	static int	getKey(ygl::Window &, int);
 	static int	getKey(int);
-	static void addKeyCallback(std::function<void(GLFWwindow *, int, int, int, int)>);
+	static void addKeyCallback(const std::function<void(GLFWwindow *, int, int, int, int)> &);
 };
 
 class FPController {

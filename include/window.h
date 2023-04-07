@@ -39,7 +39,7 @@ class Window {
 	void		destroy();
 	bool		isFocused();
 	static void handleResize(GLFWwindow *, int, int);
-	void		addResizeCallback(std::function<void(GLFWwindow *, int, int)>);
+	void		addResizeCallback(const std::function<void(GLFWwindow *, int, int)> &);
 
 	static void defaultFrameCallback(long, long);
 };
