@@ -436,4 +436,4 @@ class Scene {
 		return sys;
 	}
 };
-};	   // namespace ygl
+}	   // namespace ygl
