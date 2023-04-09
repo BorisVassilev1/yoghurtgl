@@ -42,6 +42,16 @@ target_include_directories("ImGuizmo" PUBLIC ${IMGUIZMO_PATH})
 target_link_libraries("ImGuizmo" PUBLIC "ImGui")
 
 # YoghurtGL compilation
+<<<<<<< HEAD
+=======
+if (WIN32)
+	set(LIBS glfw)
+endif (WIN32)
+
+if (UNIX)
+	set(LIBS glfw GL X11)
+endif (UNIX)
+>>>>>>> ab5542d1609585a81c9a49ffe60371f9dffca0d0
 
 set(COMPILE_ARGS
 --pedantic-errors
