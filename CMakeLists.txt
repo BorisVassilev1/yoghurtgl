@@ -42,23 +42,28 @@ target_include_directories("ImGuizmo" PUBLIC ${IMGUIZMO_PATH})
 target_link_libraries("ImGuizmo" PUBLIC "ImGui")
 
 # YoghurtGL compilation
-if (WIN32)
-	set(LIBS glfw)
-endif (WIN32)
-
-if (UNIX)
-	set(LIBS glfw GL X11 GLEW)
-endif (UNIX)
 
 set(COMPILE_ARGS
--Wall -Wextra -Wpedantic -g
 --pedantic-errors
-# -DNDEBUG
 # -fsanitize=address
 )
 set(LINK_ARGS
 # -fsanitize=address
 )
+
+if (MSVC)
+	set(COMPILE_ARGS ${COMPILE_ARGS} \Wall)
+else ()
+	set(COMPILE_ARGS ${COMPILE_ARGS} -Wall -Wextra -Wpedantic -g --pedantic-errors)
+endif ()
+
+if (WIN32)
+	set(LIBS glfw)
+endif (WIN32)
+
+if (UNIX)
+	set(LIBS glfw GL X11)
+endif (UNIX)
 
 if (${YGL_NO_ASSIMP})
 	set(COMPILE_ARGS ${COMPILE_ARGS} -DYGL_NO_ASSIMP)

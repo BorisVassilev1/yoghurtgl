@@ -13,7 +13,7 @@ In the **examples** directory there are a couple of examples of how the library 
 The project is built with **cmake** 3.2 (all dependencies are included as submodules).
 I use **make** as a build system, but any other should also work. 
 
-The library does not use resources other than those in github, but the examples require models and textures that are uploaded in this [google drive](https://drive.google.com/drive/folders/1VeFO-2s8SJ-MM6P98POKNqDr74to_VAX?usp=share_link)
+The library does not use resources other than those in github, but the examples require models and textures that are uploaded in this [google drive](https://drive.google.com/drive/folders/1NYudbCy1uhkO4FWUEhxi7uQqQz1VXAd2?usp=share_link)
 
 ### - Build process
 
