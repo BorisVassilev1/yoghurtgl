@@ -47,7 +47,7 @@ if (WIN32)
 endif (WIN32)
 
 if (UNIX)
-	set(LIBS glfw GL X11 GLEW)
+	set(LIBS glfw GL X11)
 endif (UNIX)
 
 set(COMPILE_ARGS
