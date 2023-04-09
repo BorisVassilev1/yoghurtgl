@@ -27,7 +27,7 @@ void ygl::GrassSystem::GrassBladeMesh::setBladeCount(GLuint bladeCount) {
 	glBindBuffer(GL_ARRAY_BUFFER, grassData);
 	glBufferData(GL_ARRAY_BUFFER, bladeCount * sizeof(BladeData), nullptr, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-};
+}
 
 ygl::GrassSystem::GrassBladeMesh::~GrassBladeMesh() { glDeleteBuffers(1, &grassData); }
 

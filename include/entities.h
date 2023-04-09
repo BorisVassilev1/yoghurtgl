@@ -28,4 +28,4 @@ Entity addSkybox(Scene &scene, const std::string &path);
 Entity addModel(ygl::Scene &scene, const aiScene *aiscene, std::string filePath, uint i);
 
 void addModels(ygl::Scene &scene, const aiScene *aiscene, std::string filePath, const std::function<void(Entity)> &edit);
-};	   // namespace ygl
+}	   // namespace ygl
