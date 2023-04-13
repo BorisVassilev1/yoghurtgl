@@ -54,3 +54,6 @@ bool inline f_dbLog(T arg, Types... args) {
 #endif
 
 }	  // namespace ygl
+
+using uint = unsigned int;
+using uchar = unsigned char;

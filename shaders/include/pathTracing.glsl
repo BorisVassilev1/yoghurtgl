@@ -56,6 +56,7 @@ struct RayHit {
 		1: ground plane
 		2: sphere
 		3: triangle
+		4: box
 	*/
 };
 
@@ -89,8 +90,11 @@ struct AABB {
 };
 
 struct BVHNode {
-	AABB box;
-	int	 obj_index;
+	AABB box; // bounding box of node
+	uint right; // right child. Left child is next in the array
+
+	uint objOffset; // offset for objects if it is a leaf
+	uint objCount;
 };
 
 uniform int spheresCount = 0;
@@ -323,12 +327,12 @@ bool intersectAABB(in Ray ray, in AABB box) {
 	return t1 <= t2;
 }
 
-Triangle get_triangle(in int index) {
-	int i = index * 3;
+Triangle get_triangle(in uint index) {
+	uint i = index * 3;
 
-	int i0 = indices[i] * 3;
-	int i1 = indices[i + 1] * 3;
-	int i2 = indices[i + 2] * 3;
+	uint i0 = indices[i] * 3;
+	uint i1 = indices[i + 1] * 3;
+	uint i2 = indices[i + 2] * 3;
 
 	vec3 v0 = vec3(vertices[i0], vertices[i0 + 1], vertices[i0 + 2]);
 	vec3 v1 = vec3(vertices[i1], vertices[i1 + 1], vertices[i1 + 2]);
@@ -374,15 +378,5 @@ float fresnelReflectAmount(float n1, float n2, vec3 normal, vec3 incident, float
 }
 
 vec3 get_sky_color(in Ray ray) {
-	// float t = 0.5*(ray.direction.y + 1.0);
-	// return mix(vec3(1.0), vec3(1.0, 1.0, 1.0), t) * 1.0;
-
-	// return vec3(0.0);
-	// return vec3(1.0);
 	return textureLod(skybox, ray.direction, 2.).xyz;
-
-	// vec3 sun_direction = normalize(vec3(1.,2.,1.));
-	// float angle = dot(sun_direction, ray.direction);
-	// vec3 sun_color = vec3(1000.);
-	// return mix(sun_color, vec3(.1), float(angle <= .9999));
 }

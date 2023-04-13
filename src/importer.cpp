@@ -64,7 +64,6 @@ const ygl::Mesh *ygl::getModel(const aiScene *scene, unsigned int meshIndex) {
 
 	ygl::Mesh *result = new ygl::Mesh(verticesCount, (GLfloat *)mesh->mVertices, (GLfloat *)mesh->mNormals, texCoords,
 									  (GLfloat *)mesh->mColors[0], (GLfloat *)mesh->mTangents, indicesCount, indices);
-	// result->setDrawMode(GL_POINTS);
 
 	delete[] indices;
 	if (texCoords != nullptr) delete[] texCoords;

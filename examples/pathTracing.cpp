@@ -10,12 +10,12 @@
 #include <renderer.h>
 #include <texture.h>
 #include <entities.h>
+#include <bvh.h>
 
 #include <iostream>
 #include <random>
 #include <time.h>
 
-using namespace ygl;
 using namespace std;
 
 struct alignas(16) Sphere {
@@ -38,30 +38,57 @@ struct alignas(16) Box {
    private:
 };
 
-Window *window;
-Mouse  *mouse;
+struct SpherePrimitive : Primitive {
+	glm::vec3 position;
+	float	  radius = 1;
+	uint	  matIdx;
 
-Texture2d	 *tex;
-Scene		 *scene;
-Renderer	 *renderer;
-VFShader	 *shader;
-VFShader	 *unlitShader;
-uint		  unlitShaderIndex = -1;
-Camera		 *camera;
-FPController *controller;
-Mesh		 *sphereMesh;
-Mesh		 *bunnyMesh;
-Mesh		 *cubeMesh;
+	SpherePrimitive() {}
+	SpherePrimitive(const glm::vec3 &position, float radius, uint matIdx) : position(position), radius(radius), matIdx(matIdx) {
+		box = BBox(position - radius, position + radius);
+	}
+	
+	bool intersect(const Ray &ray, float tMin, float tMax, Intersection &intersection) { return false; }
+	
+	glm::vec3 getCenter() { return position; }
+};
 
-Entity bunny;
+struct BoxPrimitive : Primitive {
+	uint	  matIdx;
 
-ComputeShader  *pathTracer;
-ComputeShader  *normalizer;
-Texture2d	   *renderTexture;
-Texture2d	   *rawTexture;
-VFShader	   *textureOnScreen;
-Mesh		   *screenQuad;
-TextureCubemap *skybox;
+	BoxPrimitive() {}
+	BoxPrimitive(const glm::vec3 &min, const glm::vec3 &max, uint matIdx) : matIdx(matIdx) {
+		box = BBox(min, max);
+	}
+	
+	bool intersect(const Ray &ray, float tMin, float tMax, Intersection &intersection) override { return false; }
+   private:
+};
+
+ygl::Window *window;
+ygl::Mouse	*mouse;
+
+ygl::Texture2d	  *tex;
+ygl::Scene		  *scene;
+ygl::Renderer	  *renderer;
+ygl::VFShader	  *shader;
+ygl::VFShader	  *unlitShader;
+uint			   unlitShaderIndex = -1;
+ygl::Camera		  *camera;
+ygl::FPController *controller;
+ygl::Mesh		  *sphereMesh;
+ygl::Mesh		  *bunnyMesh;
+ygl::Mesh		  *cubeMesh;
+
+ygl::Entity bunny;
+
+ygl::ComputeShader	*pathTracer;
+ygl::ComputeShader	*normalizer;
+ygl::Texture2d		*renderTexture;
+ygl::Texture2d		*rawTexture;
+ygl::VFShader		*textureOnScreen;
+ygl::Mesh			*screenQuad;
+ygl::TextureCubemap *skybox;
 
 Sphere *spheres;
 int		sphereCount;
@@ -77,6 +104,8 @@ bool cullFace  = true;
 
 int sampleCount = 0;
 int maxSamples	= 100000;
+
+BVHTree *bvh = new BVHTree();
 
 void cleanup() {
 	delete tex;
@@ -97,41 +126,43 @@ void cleanup() {
 }
 
 void initScene() {
-	bunnyMesh  = (Mesh *)getModel(loadScene("./res/models/bunny_uv/bunny_uv.obj"));
-	sphereMesh = makeUnitSphere();
-	cubeMesh   = makeBox(glm::vec3(1, 1, 1), glm::vec3(1, 1, 1));
+	bunnyMesh  = (ygl::Mesh *)ygl::getModel(ygl::loadScene("./res/models/bunny_uv/bunny_uv.obj"));
+	sphereMesh = ygl::makeUnitSphere();
+	cubeMesh   = ygl::makeBox(glm::vec3(1, 1, 1), glm::vec3(1, 1, 1));
 
-	shader		= new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
-	unlitShader = new VFShader("./shaders/unlit.vs", "./shaders/unlit.fs");
-	camera		= new Camera(glm::radians(70.f), *window, 0.01, 1000);
-	controller	= new FPController(window, mouse, camera->transform);
+	shader		= new ygl::VFShader("./shaders/simple.vs", "./shaders/simple.fs");
+	unlitShader = new ygl::VFShader("./shaders/unlit.vs", "./shaders/unlit.fs");
+	camera		= new ygl::Camera(glm::radians(70.f), *window, 0.01, 1000);
+	controller	= new ygl::FPController(window, mouse, camera->transform);
 
-	scene = new Scene(window);
-	scene->registerComponent<Transformation>();
+	scene = new ygl::Scene(window);
+	scene->registerComponent<ygl::Transformation>();
 
-	renderer = scene->registerSystem<Renderer>();
+	renderer = scene->registerSystem<ygl::Renderer>();
 
-	tex = new Texture2d("./res/images/uv_checker.png");
+	tex = new ygl::Texture2d("./res/images/uv_checker.png");
 	tex->bind(GL_TEXTURE1);		// albedo texture
 
 	bunny = scene->createEntity();
-	scene->addComponent<Transformation>(bunny, Transformation(glm::vec3(-3, 0, 0), glm::vec3(0), glm::vec3(10)));
-	RendererComponent bunnyRenderer;
+	scene->addComponent<ygl::Transformation>(bunny,
+											 ygl::Transformation(glm::vec3(-3, 0, 0), glm::vec3(0), glm::vec3(10)));
+	ygl::RendererComponent bunnyRenderer;
 
 	unsigned int shaderIndex = renderer->addShader(shader);
 	renderer->setDefaultShader(shaderIndex);
-	scene->addComponent<RendererComponent>(
-		bunny, RendererComponent(-1, renderer->addMesh(bunnyMesh),
-								 renderer->addMaterial(Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 1.0,
-																glm::vec3(0.0), 0.0, glm::vec3(1.), 0.0, 1.0, 0.))));
+	scene->addComponent<ygl::RendererComponent>(
+		bunny,
+		ygl::RendererComponent(-1, renderer->addMesh(bunnyMesh),
+							   renderer->addMaterial(ygl::Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 1.0,
+																   glm::vec3(0.0), 0.0, glm::vec3(1.), 0.0, 1.0, 0.))));
 
 	unlitShaderIndex = renderer->addShader(unlitShader);
-	
+
 	addSkybox(*scene, "./res/images/skybox");
 
-	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(-1, -2.9, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
-							 3, Light::Type::DIRECTIONAL));
-	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
+	renderer->addLight(ygl::Light(ygl::Transformation(glm::vec3(0), glm::vec3(-1, -2.9, 0), glm::vec3(1)),
+								  glm::vec3(1., 1., 1.), 3, ygl::Light::Type::DIRECTIONAL));
+	renderer->addLight(ygl::Light(ygl::Transformation(), glm::vec3(1., 1., 1.), 0.01, ygl::Light::Type::AMBIENT));
 
 	renderer->loadData();
 }
@@ -142,37 +173,40 @@ void initSpheres() {
 
 	spheres[0] = Sphere(
 		glm::vec3(0.2, 1.8, 0.2), 0.5,
-		renderer->addMaterial(Material(glm::vec3(1.0, 1.0, 0.5), 1.0, glm::vec3(0.0, 0.0, 0.0), 1.0,
-									   glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.0, 1.0, 0.5), 0.00, 0.05, 0.)));
-	spheres[1] = Sphere(glm::vec3(1.0, 0.7, 0.7), 0.7,
-						renderer->addMaterial(Material(glm::vec3(0.1, 1.0, 0.1), 0.2, glm::vec3(0.0, 0.0, 0.0), 1.0,
-													   glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.), 0.00, 0.03, 0.)));
-	spheres[2] = Sphere(glm::vec3(-0.7, 1.0, 0.2), 0.5,
-						renderer->addMaterial(Material(glm::vec3(0.0, 1.0, 1.0), 0.0, glm::vec3(0.0, 0.0, 0.0), 1.7,
-													   glm::vec3(1.0, 0.0, 0.0), 1.0, glm::vec3(1.), 0.05, 0.05, 0.)));
-	spheres[3] = Sphere(glm::vec3(-0.1, 1.8, 1.7), 0.4,
-						renderer->addMaterial(Material(glm::vec3(1.0, 1.0, 1.0), 0.0, glm::vec3(10.0, 10.0, 10.0), 1.0,
-													   glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.), 0.00, 0.00, 0.)));
+		renderer->addMaterial(ygl::Material(glm::vec3(1.0, 1.0, 0.5), 1.0, glm::vec3(0.0, 0.0, 0.0), 1.0,
+											glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.0, 1.0, 0.5), 0.00, 0.05, 0.)));
+	spheres[1] =
+		Sphere(glm::vec3(1.0, 0.7, 0.7), 0.7,
+			   renderer->addMaterial(ygl::Material(glm::vec3(0.1, 1.0, 0.1), 0.2, glm::vec3(0.0, 0.0, 0.0), 1.0,
+												   glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.), 0.00, 0.03, 0.)));
+	spheres[2] =
+		Sphere(glm::vec3(-0.7, 1.0, 0.2), 0.5,
+			   renderer->addMaterial(ygl::Material(glm::vec3(0.0, 1.0, 1.0), 0.0, glm::vec3(0.0, 0.0, 0.0), 1.7,
+												   glm::vec3(1.0, 0.0, 0.0), 1.0, glm::vec3(1.), 0.05, 0.05, 0.)));
+	spheres[3] =
+		Sphere(glm::vec3(-0.1, 1.8, 1.7), 0.4,
+			   renderer->addMaterial(ygl::Material(glm::vec3(1.0, 1.0, 1.0), 0.0, glm::vec3(10.0, 10.0, 10.0), 1.0,
+												   glm::vec3(0.0, 0.0, 0.0), 0.0, glm::vec3(1.), 0.00, 0.00, 0.)));
 
-	renderer->addLight(Light(Transformation(spheres[3].position), glm::vec3(1.), 10, Light::POINT));
+	renderer->addLight(ygl::Light(ygl::Transformation(spheres[3].position), glm::vec3(1.), 10, ygl::Light::POINT));
 
-	Entity sphere;
+	ygl::Entity sphere;
 	for (int i = 0; i < 7; ++i) {
 		// glm::vec3 randomColor(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.);
 		glm::vec3 randomColor(1, 0.5, 0);
 
 		spheres[i + 4] = Sphere(glm::vec3(i * 1.5 - 5, 0.5, 3), 0.5,
-								renderer->addMaterial(Material(randomColor, 0.02, glm::vec3(0.0, 0.0, 0.0), 1.7,
-															   glm::vec3(1.0) - randomColor, 1., glm::vec3(1.),
-															   0.05 + i * 0.1, 0.05 + i * 0.1, 0.)));
+								renderer->addMaterial(ygl::Material(randomColor, 0.02, glm::vec3(0.0, 0.0, 0.0), 1.7,
+																	glm::vec3(1.0) - randomColor, 1., glm::vec3(1.),
+																	0.05 + i * 0.1, 0.05 + i * 0.1, 0.)));
 	}
 
 	uint meshIndex = renderer->addMesh(sphereMesh);
 	for (int i = 0; i < sphereCount; ++i) {
 		sphere = scene->createEntity();
-		scene->addComponent<Transformation>(
-			sphere, Transformation(spheres[i].position, glm::vec3(0), glm::vec3(spheres[i].radius)));
-		scene->addComponent<RendererComponent>(sphere, RendererComponent(-1, meshIndex, spheres[i].matIdx));
+		scene->addComponent<ygl::Transformation>(
+			sphere, ygl::Transformation(spheres[i].position, glm::vec3(0), glm::vec3(spheres[i].radius)));
+		scene->addComponent<ygl::RendererComponent>(sphere, ygl::RendererComponent(-1, meshIndex, spheres[i].matIdx));
 	}
 
 	renderer->loadData();
@@ -182,23 +216,24 @@ void initBoxes() {
 	boxesCount = 7;
 	boxes	   = new Box[7];
 
-	Entity box;
+	ygl::Entity box;
 	for (int i = 0; i < 7; ++i) {
 		glm::vec3 randomColor(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.);
 
 		glm::vec3 min = glm::vec3(i * 1.5 - 5, 0.5, 4.5);
 
 		boxes[i] = Box(min, min + glm::vec3(1.0),
-					   renderer->addMaterial(Material(randomColor, 0.01, glm::vec3(0.0, 0.0, 0.0), 1.45,
-													  glm::vec3(1.0) - randomColor, 1.0, glm::vec3(1.), 0.05 + i * 0.1,
-													  0.05 + i * 0.1, 0.)));
+					   renderer->addMaterial(ygl::Material(randomColor, 0.01, glm::vec3(0.0, 0.0, 0.0), 1.45,
+														   glm::vec3(1.0) - randomColor, 1.0, glm::vec3(1.),
+														   0.05 + i * 0.1, 0.05 + i * 0.1, 0.)));
 	}
 
 	uint meshIndex = renderer->addMesh(cubeMesh);
 	for (int i = 0; i < boxesCount; ++i) {
 		box = scene->createEntity();
-		scene->addComponent<Transformation>(box, Transformation(boxes[i].min + glm::vec3(0.5)));
-		scene->addComponent<RendererComponent>(box, RendererComponent(-1, meshIndex, boxes[i].matIdx));
+		scene->addComponent<ygl::Transformation>(box, ygl::Transformation(boxes[i].min + glm::vec3(0.5)));
+		scene->addComponent<ygl::RendererComponent>(box, ygl::RendererComponent(-1, meshIndex, boxes[i].matIdx));
+		bvh->addPrimitive(new BoxPrimitive(boxes[i].min, boxes[i].max, boxes[i].matIdx));
 	}
 
 	renderer->loadData();
@@ -212,21 +247,23 @@ void initBoxes() {
 }
 
 void initPathTracer() {
-	screenQuad = makeScreenQuad();
+	screenQuad = ygl::makeScreenQuad();
 
-	pathTracer	  = new ComputeShader("./shaders/pathTracing/tracer.comp");
-	normalizer	  = new ComputeShader("./shaders/pathTracing/normalizer.comp");
-	renderTexture = new Texture2d(window->getWidth(), window->getHeight());
+	pathTracer	  = new ygl::ComputeShader("./shaders/pathTracing/tracer.comp");
+	normalizer	  = new ygl::ComputeShader("./shaders/pathTracing/normalizer.comp");
+	renderTexture = new ygl::Texture2d(window->getWidth(), window->getHeight());
 	renderTexture->bindImage(0);
 
-	rawTexture = new Texture2d(window->getWidth(), window->getHeight());
+	rawTexture = new ygl::Texture2d(window->getWidth(), window->getHeight());
 	rawTexture->bindImage(1);
 
-	skybox = new TextureCubemap("./res/images/skybox", ".jpg");
+	skybox = new ygl::TextureCubemap("./res/images/skybox", ".jpg");
 	skybox->bind(GL_TEXTURE6);
 
 	initSpheres();
 	initBoxes();
+	bvh->build(BVHTree::Purpose::Generic);
+	// TODO: write BVH to GPU memory
 
 	pathTracer->bind();
 	pathTracer->setUniform("resolution", glm::vec2(window->getWidth(), window->getHeight()));
@@ -242,7 +279,7 @@ void initPathTracer() {
 	renderTexture->bind(GL_TEXTURE10);
 	rawTexture->bind(GL_TEXTURE11);
 
-	textureOnScreen = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/ui/textureOnScreen.fs");
+	textureOnScreen = new ygl::VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/ui/textureOnScreen.fs");
 	textureOnScreen->bind();
 	textureOnScreen->setUniform("sampler_color", 10);
 	textureOnScreen->setUniform("sampler_depth", 10);
@@ -258,17 +295,19 @@ void initPathTracer() {
 }
 
 int main() {
-	if (init()) {
+	if (ygl::init()) {
 		dbLog(ygl::LOG_ERROR, "ygl failed to init");
 		exit(1);
 	}
 
 	srand(time(NULL));
 
-	window = new Window(1280, 1000, "Test Window", true, false);
-	mouse  = new Mouse(*window);
+	cout << endl << sizeof(Box) << endl << endl;
 
-	Keyboard::addKeyCallback([&](GLFWwindow *windowHandle, int key, int, int action, int) {
+	window = new ygl::Window(1280, 1000, "Test Window", true, false);
+	mouse  = new ygl::Mouse(*window);
+
+	ygl::Keyboard::addKeyCallback([&](GLFWwindow *windowHandle, int key, int, int action, int) {
 		if (windowHandle != window->getHandle()) return;
 		if (key == GLFW_KEY_T && action == GLFW_RELEASE) {
 			pathTrace = !pathTrace;
@@ -307,34 +346,25 @@ int main() {
 
 			if (sampleCount < maxSamples) {
 				pathTracer->bind();
-				Transformation t =
-					Transformation(camera->transform.position, -camera->transform.rotation, camera->transform.scale);
+				ygl::Transformation t = ygl::Transformation(camera->transform.position, -camera->transform.rotation,
+															camera->transform.scale);
 				pathTracer->setUniform("cameraMatrix", t.getWorldMatrix());
 				pathTracer->setUniform("random_seed", (GLuint)rand());
 
 				// pathTracer->unbind();
 
-				Renderer::compute(pathTracer, window->getWidth(), window->getHeight(), 1);
+				ygl::Renderer::compute(pathTracer, window->getWidth(), window->getHeight(), 1);
 
 				sampleCount++;
 				normalizer->bind();
 				normalizer->setUniform("samples", sampleCount);
 				// normalizer->unbind();
 
-				Renderer::compute(normalizer, window->getWidth(), window->getHeight(), 1);
+				ygl::Renderer::compute(normalizer, window->getWidth(), window->getHeight(), 1);
 			}
 
-			Renderer::drawObject(textureOnScreen, screenQuad);
+			ygl::Renderer::drawObject(textureOnScreen, screenQuad);
 		}
-
-		Material &mat = renderer->getMaterial(scene->getComponent<RendererComponent>(bunny).materialIndex);
-
-		ImGui::Begin("material");
-		ImGui::SliderFloat3("color", glm::value_ptr(mat.albedo), 0, 1);
-		ImGui::SliderFloat("metallic", &mat.metallic, 0, 1);
-		ImGui::SliderFloat("roughness", &mat.specular_roughness, 0, 1);
-		ImGui::End();
-		renderer->loadData();
 
 		window->swapBuffers();
 	}

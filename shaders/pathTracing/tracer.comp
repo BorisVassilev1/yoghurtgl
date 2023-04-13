@@ -21,25 +21,25 @@ void write_sample(in ivec2 pixel_coords, in vec4 color) {
 }
 
 // gets the index of the left child of a node in a heap tree
-int left(in int index) { return 2 * index; }
+uint left(in uint index) { return 2 * index; }
 
 // gets the index of the right child of a node in a heap tree
-int right(in int index) { return 2 * index + 1; }
+uint right(in uint index) { return 2 * index + 1; }
 
 // gets the idex of the parent of a node in a heap tree
-int parent(in int index) { return index / 2; }
+uint parent(in uint index) { return index / 2; }
 
 // gets the "closest node to the right". If a node is a left child of another, its sibling is returned.
 // if not, the tree is rearched for its lowest parent that is a left child. Then that parent's sibling is returned.
-int right_sibling(in int index) {
-	int zeros_mask = ~index;
-	int res		   = index >> (int(log2(zeros_mask ^ (zeros_mask & (zeros_mask - 1)))));
+uint right_sibling(in uint index) {
+	uint zeros_mask = ~index;
+	uint res		   = index >> (uint(log2(zeros_mask ^ (zeros_mask & (zeros_mask - 1)))));
 	return res + int(res != 1);
 }
 
 // traces a ray through the geometry
 void trace_geometry(in Ray ray, inout RayHit hit) {
-	int		 index = 1;		// this is the root of the tree. The traversion functions work better this way
+	uint		 index = 1;		// this is the root of the tree. The traversion functions work better this way
 	BVHNode	 node;			// current node
 	Triangle t;				// current triangle
 	bool	 res;			// has the ray hit the current AABB
@@ -49,13 +49,13 @@ void trace_geometry(in Ray ray, inout RayHit hit) {
 		node = nodes[index - 1];
 		res	 = intersectAABB(ray, node.box);	 // check for intersection with the AABB
 
-		if (res && node.obj_index != -1) {		  // if a node that contains an object (triangle) is hit
-			t = get_triangle(node.obj_index);	  // this is inefficient because the triangle normal is never needed if
+		if (res && node.objOffset != -1) {		  // if a node that contains an object (triangle) is hit
+			t = get_triangle(node.objOffset);	  // this is inefficient because the triangle normal is never needed if
 												  // there is no intersectionq
 			intersectTriangle(ray, t, hit);
 		}
 		// don't ask me what is this. It has no if-s and works.
-		index = int(mix(right_sibling(index), left(index), !((res && node.obj_index != -1) || !res)));
+		index = uint(mix(right_sibling(index), left(index), !((res && node.objOffset != -1) || !res)));
 
 		// if index points to the
 		must_break = (index == 1);

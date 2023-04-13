@@ -5,10 +5,8 @@ set(GLFW_BUILD_DOCS OFF)
 
 option(ASSIMP_BUILD_TESTS OFF)
 set(ASSIMP_INSTALL OFF)
-# set(ASSIMP_BUILD_ZLIB ON)
 set(ASSIMP_BUILD_ASSIMP_VIEW OFF)
 set(ENABLE_BOOST_WORKAROUND ON)
-# set(BUILD_SHARED_LIBS ON)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -17,7 +15,6 @@ project(YoghurtGL)
 add_subdirectory(libs/glfw)
 add_subdirectory(libs/glm)
 add_subdirectory(libs/glew-cmake)
-
 add_subdirectory(libs/assimp)
 
 # Set where the ImGui files are stored
@@ -42,16 +39,6 @@ target_include_directories("ImGuizmo" PUBLIC ${IMGUIZMO_PATH})
 target_link_libraries("ImGuizmo" PUBLIC "ImGui")
 
 # YoghurtGL compilation
-<<<<<<< HEAD
-=======
-if (WIN32)
-	set(LIBS glfw)
-endif (WIN32)
-
-if (UNIX)
-	set(LIBS glfw GL X11)
-endif (UNIX)
->>>>>>> ab5542d1609585a81c9a49ffe60371f9dffca0d0
 
 set(COMPILE_ARGS
 --pedantic-errors
@@ -98,7 +85,6 @@ target_link_libraries("YoghurtGL" PUBLIC ImGui)
 target_link_libraries("YoghurtGL" PUBLIC ${LIBS})
 target_link_libraries("YoghurtGL" PUBLIC libglew_static)
 target_link_libraries("YoghurtGL" PUBLIC ImGuizmo)
-
 
 target_compile_options("YoghurtGL" PRIVATE ${COMPILE_ARGS})
 target_link_options("YoghurtGL" PRIVATE ${LINK_ARGS})
