@@ -1,4 +1,11 @@
 #include <bvh.h>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+#include <iomanip>
+#include "assimp/types.h"
+#include "shader.h"
+#include <glm/gtc/type_ptr.hpp>
 
 BBox::BBox(const glm::vec3 &min, const glm::vec3 &max) : min(min), max(max) {}
 
@@ -76,11 +83,10 @@ float BBox::surfaceArea() const {
 }
 
 /// source https://github.com/anrieff/quaddamage/blob/master/src/mesh.cpp
-bool intersectTriangleFast(const Ray& ray, const glm::vec3& A, const glm::vec3& B, const glm::vec3& C, float& dist)
-{
+bool intersectTriangleFast(const Ray &ray, const glm::vec3 &A, const glm::vec3 &B, const glm::vec3 &C, float &dist) {
 	const glm::vec3 AB = B - A;
 	const glm::vec3 AC = C - A;
-	const glm::vec3 D = -ray.dir;
+	const glm::vec3 D  = -ray.dir;
 	//              0               A
 	const glm::vec3 H = ray.origin - A;
 
@@ -96,148 +102,114 @@ bool intersectTriangleFast(const Ray& ray, const glm::vec3& A, const glm::vec3& 
 
 	// Find the determinant of the left part of the equation:
 	const glm::vec3 ABcrossAC = glm::cross(AB, AC);
-	const float Dcr = glm::dot(ABcrossAC, D);
+	const float		Dcr		  = glm::dot(ABcrossAC, D);
 
 	// are the ray and triangle parallel?
-	if (fabs(Dcr) < 1e-12) {
-		return false;
-	}
+	if (fabs(Dcr) < 1e-12) { return false; }
 
-	const float lambda2 = glm::dot( glm::cross( H, AC), D ) / Dcr;
-	const float lambda3 = glm::dot( glm::cross(AB, H), D ) / Dcr;
-	const float gamma   = glm::dot( ABcrossAC, H ) / Dcr;
+	const float lambda2 = glm::dot(glm::cross(H, AC), D) / Dcr;
+	const float lambda3 = glm::dot(glm::cross(AB, H), D) / Dcr;
+	const float gamma	= glm::dot(ABcrossAC, H) / Dcr;
 
 	// is intersection behind us, or too far?
-	if (gamma < 0 || gamma > dist) {
-		return false;
-	}
+	if (gamma < 0 || gamma > dist) { return false; }
 
 	// is the intersection outside the triangle?
-	if (lambda2 < 0 || lambda2 > 1 || lambda3 < 0 || lambda3 > 1 || lambda2 + lambda3 > 1) {
-		return false;
-	}
+	if (lambda2 < 0 || lambda2 > 1 || lambda3 < 0 || lambda3 > 1 || lambda2 + lambda3 > 1) { return false; }
 
 	dist = gamma;
 
 	return true;
 }
 
-/// source: https://github.com/anrieff/quaddamage/blob/master/src/bbox.h
-bool Triangle::intersect(const Ray& ray, float tMin, float tMax, Intersection& intersection) {
-	const glm::vec3 AB = B - A;
-	const glm::vec3 AC = C - A;
+bool Triangle::boxIntersect(const BBox &box) {
+	if (box.inside(A) || box.inside(B) || box.inside(C)) { return true; }
 
-	const glm::vec3 normal = glm::normalize(glm::cross(AB, AC));
-
-	if (dot(ray.dir, normal) > 0) {
-		return false;
-	}
-
-	const glm::vec3 ABcrossAC = glm::cross(AB, AC);
-	
-	const glm::vec3 H = ray.origin - A;
-	const glm::vec3 D = ray.dir;
-	
-	const float Dcr = - glm::dot(ABcrossAC, D);
-
-	if (fabs(Dcr) < 1e-12) {
-		return false;
-	}
-
-	const float rDcr = 1.f / Dcr;
-	const float gamma = glm::dot(ABcrossAC, H) * rDcr;
-	if (gamma < tMin || gamma > tMax) {
-		return false;
-	}
-
-	const glm::vec3 HcrossD = glm::cross(H, D);
-	const float lambda2 = glm::dot(HcrossD, AC) * rDcr;
-	if (lambda2 < 0 || lambda2 > 1) {
-		return false;
-	}
-
-	const float lambda3 = -glm::dot(AB, HcrossD) * rDcr;
-	if (lambda3 < 0 || lambda3 > 1) {
-		return false;
-	}
-
-	if (lambda2 + lambda3 > 1) {
-		return false;
-	}
-
-	intersection.t = gamma;
-	intersection.p = ray.origin + ray.dir * gamma;
-	intersection.normal = normal;
-	intersection.material = nullptr;
-
-	return true;
-}
-
-bool Triangle::boxIntersect(const BBox& box) {
-	if (box.inside(A) || box.inside(B) || box.inside(C)) {
-		return true;
-	}
-
-	Ray ray;
-	glm::vec3 t[3] = { A, B, C };
+	Ray		  ray;
+	glm::vec3 t[3] = {A, B, C};
 	for (int i = 0; i < 3; i++) {
 		for (int j = i + 1; j < 3; j++) {
 			ray.origin = t[i];
-			ray.dir = t[j] - t[i];
+			ray.dir	   = t[j] - t[i];
 			if (box.testIntersect(ray)) {
 				ray.origin = t[j];
-				ray.dir = t[i] - t[j];
-				if (box.testIntersect(ray)) {
-					return true;
-				}
+				ray.dir	   = t[i] - t[j];
+				if (box.testIntersect(ray)) { return true; }
 			}
 		}
 	}
-	glm::vec3 AB = B - A;
-	glm::vec3 AC = C - A;
+	glm::vec3 AB		= B - A;
+	glm::vec3 AC		= C - A;
 	glm::vec3 ABcrossAC = cross(AB, AC);
-	float D = glm::dot(A, ABcrossAC);
+	float	  D			= glm::dot(A, ABcrossAC);
 	for (int mask = 0; mask < 7; mask++) {
 		for (int j = 0; j < 3; j++) {
-			if (mask & (1 << j)) {
-				continue;
-			}
-			ray.origin = {
-				(mask & 1) ? box.max.x : box.min.x,
-				(mask & 2) ? box.max.y : box.min.y,
-				(mask & 4) ? box.max.z : box.min.z
-			};
+			if (mask & (1 << j)) { continue; }
+			ray.origin = {(mask & 1) ? box.max.x : box.min.x, (mask & 2) ? box.max.y : box.min.y,
+						  (mask & 4) ? box.max.z : box.min.z};
 			glm::vec3 rayEnd = ray.origin;
-			rayEnd[j] = box.max[j];
+			rayEnd[j]		 = box.max[j];
 			if (glm::sign(glm::dot(ray.origin, ABcrossAC) - D) != glm::sign(glm::dot(rayEnd, ABcrossAC) - D)) {
-				ray.dir = rayEnd - ray.origin;
+				ray.dir		= rayEnd - ray.origin;
 				float gamma = 1.0000001;
-				if (intersectTriangleFast(ray, A, B, C, gamma)) {
-					return true;
-				}
+				if (intersectTriangleFast(ray, A, B, C, gamma)) { return true; }
 			}
 		}
 	}
 	return false;
 }
 
-void Triangle::expandBox(BBox& box) {
+void Triangle::expandBox(BBox &box) {
 	for (int c = 0; c < 3; c++) {
 		box.add(positions[c]);
 	}
 }
 
 glm::vec3 Triangle::getCenter() {
-	glm::vec3 sum(0,0,0);
+	glm::vec3 sum(0, 0, 0);
 	for (int c = 0; c < 3; c++) {
 		sum += positions[c];
 	}
 	return sum / 3.f;
 }
 
-AcceleratorPtr makeDefaultAccelerator() {
-	return AcceleratorPtr(new BVHTree());
+void Triangle::writeTo(char *buff, std::size_t offset) {
+	PrimitiveType type = PrimitiveType::TRIANGLE;
+	memcpy(buff + offset + 0 * sizeof(uint), &type, sizeof(uint));
+	memcpy(buff + offset + 1 * sizeof(uint), indices, 4 * sizeof(uint));
 }
+
+void Triangle::print(std::ostream &os) {
+	os << "TRIANGLE : " << indices[0] << ' ' << indices[1] << ' ' << indices[2] << ';';
+}
+
+void SpherePrimitive::writeTo(char *buff, std::size_t offset) {
+	PrimitiveType type = PrimitiveType::SPHERE;
+	memcpy(buff + offset + 0 * sizeof(uint), &type, sizeof(uint));
+	memcpy(buff + offset + 1 * sizeof(uint), glm::value_ptr(position), 3 * sizeof(float));
+	memcpy(buff + offset + 4 * sizeof(uint), &radius, sizeof(float));
+	memcpy(buff + offset + 5 * sizeof(uint), &matIdx, sizeof(uint));
+}
+
+void SpherePrimitive::print(std::ostream &os) {
+	os << "SPHERE : " << position.x << ' ' << position.y << ' ' << position.z << ' ' << radius << ';'; 
+}
+
+void BoxPrimitive::writeTo(char *buff, std::size_t offset) {
+	PrimitiveType type = PrimitiveType::BOX;
+	memcpy(buff + offset + 0 * sizeof(uint), &type, sizeof(uint));
+	memcpy(buff + offset + 1 * sizeof(uint), glm::value_ptr(box.min), 3 * sizeof(float));
+	memcpy(buff + offset + 4 * sizeof(uint), &matIdx, 1 * sizeof(uint));
+	memcpy(buff + offset + 5 * sizeof(uint), glm::value_ptr(box.max), 3 * sizeof(float));
+}
+
+void BoxPrimitive::print(std::ostream &os) {
+	os << "BOX" << 
+	std::setw(4) << box.min.x << ' ' << std::setw(4) << box.min.y << ' ' << std::setw(4) << box.min.z << ' ' << 
+	std::setw(4) << box.max.x << ' ' << std::setw(4) << box.max.y << ' ' << std::setw(4) << box.max.z << ';';
+}
+
+AcceleratorPtr makeDefaultAccelerator() { return AcceleratorPtr(new BVHTree()); }
 
 void BVHTree::addPrimitive(Intersectable *prim) { allPrimitives.push_back(prim); }
 
@@ -250,17 +222,15 @@ void BVHTree::clear(Node *node) {
 }
 
 void BVHTree::clear() {
-    if(root != nullptr)
-        clear(root);
-    fastNodes.clear();
-    allPrimitives.clear();
-    built = false;
+	if (root != nullptr) clear(root);
+	allPrimitives.clear();
+	built = false;
 }
 
 void BVHTree::clearConstructionTree() {
 	clear(root);
 	delete (root);
-    root = nullptr;
+	root = nullptr;
 }
 
 void BVHTree::build(Node *node, int depth) {
@@ -360,80 +330,14 @@ void BVHTree::build(Purpose purpose) {
 
 	// build both trees
 	build(root, 0);
-	buildFastTree();
+	buildGPUTree();
 
 	// construction tree is no longer needed
 	clearConstructionTree();
 
 	built = true;
-	printf(" done in %lldms, nodes: %ld, leaves: %ld, depth %d, %d leaf size\n", timer.toMs(timer.elapsedNs()),
-		   nodeCount, leavesCount, depth, leafSize);
-}
-
-bool BVHTree::intersect(long unsigned int nodeIndex, const Ray &ray, float tMin, float &tMax,
-						Intersection &intersection) {
-	bool	  hasHit = false;
-	FastNode *node	 = &(fastNodes[nodeIndex]);
-
-	if (node->isLeaf()) {
-		// printf("intersecting leaf: %d, %d\n", nodeIndex, node->primitives[0] == nullptr);
-		//  iterate either to a invalid pointer or to the max leaf size
-		for (int i = 0; i < leafSize && node->primitives[i] != nullptr; i++) {
-			// copypasta from the octree
-			if (node->primitives[i]->intersect(ray, tMin, tMax, intersection)) {
-				tMax   = intersection.t;
-				hasHit = true;
-			}
-		}
-	} else {
-		// If the ray moves towards the positive direction, then will traverse in order left->right
-		// and right->left if else.
-		// First intersect with both child bounding boxes. Intersection with things inside the second box can
-		// be skipped if distance to intersection found in the first one is closer than that with the second box
-		//				 left 		 right
-		//             +---------+----+--------+
-		//       ray   |         |    |        |
-		//     --------+-->/\    |    |   /\   |
-		//             |  /--\   |    |  /--\  |
-		//             |         |    |        |
-		//             +---------+----+        |
-		//                       |             |
-		//                       +-------------+
-
-		// I know that the next section is almost unreadable,
-		// won't be much better if I replace it with a lot of copy-pasted if-statements
-
-		// the distances to both children boxes
-		float			  dist[2];
-		long unsigned int childIndices[2]  = {nodeIndex + 1, node->right};
-		bool			  testIntersect[2] = {fastNodes[childIndices[0]].box.testIntersect(ray, dist[0]),
-											  fastNodes[childIndices[1]].box.testIntersect(ray, dist[1])};
-
-		int direction = ray.dir[node->splitAxis] > 0.f;
-
-		if (testIntersect[!direction]) {
-			if (intersect(childIndices[!direction], ray, tMin, tMax, intersection)) {
-				tMax   = intersection.t;
-				hasHit = true;
-			}
-		}
-		// if the closest found intersection is farther than the intersection
-		// with the second box, traverse it, otherwise skip it
-		if (tMax > dist[direction] && testIntersect[direction]) {
-			if (intersect(childIndices[direction], ray, tMin, tMax, intersection)) {
-				tMax   = intersection.t;
-				hasHit = true;
-			}
-		}
-	}
-
-	return hasHit;
-}
-
-bool BVHTree::intersect(const Ray &ray, float tMin, float tMax, Intersection &intersection) {
-	if (fastNodes[0].box.testIntersect(ray)) {
-		return intersect(0, ray, tMin, tMax, intersection);
-	} else return false;
+	printf(" done in %lldms, nodes: %ld, leaves: %ld, depth %d, %d leaf size\n",
+		   (long long int)timer.toMs(timer.elapsedNs()), nodeCount, leavesCount, depth, leafSize);
 }
 
 float BVHTree::costSAH(const Node *node, int axis, float ratio) {
@@ -453,48 +357,64 @@ float BVHTree::costSAH(const Node *node, int axis, float ratio) {
 	return SAH_TRAVERSAL_COST + (s[0] * count[0] + s[1] * count[1]) / s0;
 }
 
-void BVHTree::buildFastTree() {
-	// no reallocations whould happen
-	fastNodes.reserve(nodeCount);
-
-	// every leaf will have a list of primitives that ends with a null pointer.
-	fastTreePrimitives.init(primitivesCount + leavesCount);
-
-	// the other function expects the parent node to already have been pushed to the vector
-	fastNodes.push_back(makeFastLeaf(root));
-	// leaves must not be traced down
-	if (!(root->isLeaf())) { buildFastTree(root, fastNodes); }
-}
-
-void BVHTree::buildFastTree(Node *node, std::vector<FastNode> &allNodes) {
-	int parentIndex = allNodes.size() - 1;
-
-	// insert the left child
-	allNodes.push_back(makeFastLeaf(node->left));
-
-	// trace down left
-	if (!(node->left->isLeaf())) { buildFastTree(node->left, allNodes); }
-
-	// add right child
-	allNodes.push_back(makeFastLeaf(node->right));
-
-	// write to the parent right pointer
-	allNodes[parentIndex].right = allNodes.size() - 1;
-
-	// trace down right
-	if (!(node->right->isLeaf())) { buildFastTree(node->right, allNodes); }
-}
-
-BVHTree::FastNode BVHTree::makeFastLeaf(BVHTree::Node *node) {
+void BVHTree::buildGPUTree_h(BVHTree::Node *node, unsigned long int parent, std::vector<BVHTree::GPUNode> &gpuNodes,
+					std::vector<Intersectable *> &primitives) {
+	BVHTree::GPUNode current;
+	current.min	   = node->box.min;
+	current.max	   = node->box.max;
+	current.parent = parent;
 	if (node->isLeaf()) {
-		// This should have sped up things because continuous allocation should be better for cache.
-		// But it has no effect. It looks like the access of primitives is random enough that
-		// it always generates a cache miss.
-		Intersectable **primitives = fastTreePrimitives.alloc(node->primitives.size() + 1);
-		// Intersectable** primitives = new Primitive*[node->primitives.size() + 1];
-		memcpy(primitives, &(node->primitives[0]), node->primitives.size() * sizeof(Intersectable *));
-		return FastNode{node->box, 0, primitives, node->splitAxis};
+		current.right = 0;
+		current.primOffset = primitives.size();
+		current.primCount  = node->primitives.size();
+		for (Intersectable *p : node->primitives) {
+			primitives.push_back(p);
+		}
 	} else {
-		return FastNode{node->box, 0, nullptr, node->splitAxis};
+		current.primOffset = 0;
+		current.primCount  = 0;
 	}
+	gpuNodes.push_back(current);
+	unsigned long int currIndex = gpuNodes.size() - 1;
+
+	if (node->isLeaf()) return;
+
+	buildGPUTree_h(node->left, currIndex, gpuNodes, primitives);
+	gpuNodes[currIndex].right = gpuNodes.size();
+	buildGPUTree_h(node->right, currIndex, gpuNodes, primitives);
+}
+
+void BVHTree::buildGPUTree() {
+	gpuNodes.reserve(nodeCount);
+	std::vector<Intersectable *> orderedPrimitives;
+
+	if (!(root->isLeaf())) buildGPUTree_h(root, 0, gpuNodes, orderedPrimitives);
+
+	// TODO: convert all primitives to GPU format and figure out how to access them by indices
+	// primitive data:
+	//		uint type = {box, sphere, triangle}
+	//		<28 bytes other data>
+	// total 32 bytes
+	std::size_t buffSize = 8 * sizeof(uint) * orderedPrimitives.size();
+	char	   *buff	 = new char[buffSize];
+	for (uint i = 0; i < orderedPrimitives.size(); ++i) {
+		orderedPrimitives[i]->writeTo(buff, i * 8 * sizeof(uint));
+	}
+	
+	// send buff to gpu
+	GLuint primitivesBuff;
+	glGenBuffers(1, &primitivesBuff);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, primitivesBuff);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, buffSize, buff, GL_STATIC_COPY);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	ygl::Shader::setSSBO(primitivesBuff, 7);
+
+	GLuint nodesBuff;
+	glGenBuffers(1, &nodesBuff);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, nodesBuff);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, gpuNodes.size() * sizeof(GPUNode), gpuNodes.data(), GL_STATIC_COPY);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	ygl::Shader::setSSBO(nodesBuff, 5);
 }

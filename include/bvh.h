@@ -3,7 +3,9 @@
 // COPY PASTA FROM https://github.com/BorisVassilev1/urban-spork
 // with some edits, of course
 
+#include <cstring>
 #include <glm/glm.hpp>
+#include <ostream>
 #include <vector>
 #include <memory>
 #include <timer.h>
@@ -72,14 +74,6 @@ struct Intersectable {
 	///	       Used to build acceleration structures
 	virtual void onBeforeRender() {}
 
-	/// @brief Intersect a ray with the primitive allowing intersection in (tMin, tMax) along the ray
-	/// @param ray - the ray
-	/// @param tMin - near clip distance
-	/// @param tMax - far clip distance
-	/// @param intersection [out] - data for intersection if one is found
-	/// @return true when intersection is found, false otherwise
-	virtual bool intersect(const Ray &ray, float tMin, float tMax, Intersection &intersection) = 0;
-
 	/// @brief Default implementation intersecting the bbox of the primitive, overriden if possible more efficiently
 	virtual bool boxIntersect(const BBox &other) = 0;
 
@@ -88,6 +82,9 @@ struct Intersectable {
 
 	/// @brief Get the center
 	virtual glm::vec3 getCenter() = 0;
+
+	virtual void writeTo(char *buff, std::size_t offset) = 0;
+	virtual void print(std::ostream &os)				 = 0;
 
 	virtual ~Intersectable() = default;
 };
@@ -111,8 +108,15 @@ struct Primitive : Intersectable {
 typedef std::unique_ptr<Primitive> PrimPtr;
 typedef std::shared_ptr<Primitive> SharedPrimPtr;
 
+enum PrimitiveType : uint {
+	TRIANGLE = 0,
+	SPHERE	 = 1,
+	BOX		 = 2,
+};
+
 struct Triangle : public Primitive {
-	int indices[3];
+	uint indices[3];
+	uint matIdx;
 	union {
 		glm::vec3 positions[3];
 		static struct {
@@ -120,16 +124,44 @@ struct Triangle : public Primitive {
 		};
 	};
 
-	Triangle(int v1, int v2, int v3, glm::vec3 A, glm::vec3 B, glm::vec3 C) : indices{v1, v2, v3}, A(A), B(B), C(C) {
+	Triangle(uint v1, uint v2, uint v3, glm::vec3 A, glm::vec3 B, glm::vec3 C, uint matIdx)
+		: indices{v1, v2, v3}, matIdx(matIdx), A(A), B(B), C(C) {
 		box.add(A);
 		box.add(B);
 		box.add(C);
 	}
 
-	bool	  intersect(const Ray &ray, float tMin, float tMax, Intersection &intersection) override;
 	bool	  boxIntersect(const BBox &box) override;
 	void	  expandBox(BBox &box) override;
 	glm::vec3 getCenter() override;
+	void	  writeTo(char *buff, std::size_t offset) override;
+	void	  print(std::ostream &os) override;
+};
+
+struct SpherePrimitive : Primitive {
+	glm::vec3 position;
+	float	  radius = 1;
+	uint	  matIdx;
+
+	SpherePrimitive() {}
+	SpherePrimitive(const glm::vec3 &position, float radius, uint matIdx)
+		: position(position), radius(radius), matIdx(matIdx) {
+		box = BBox(position - radius, position + radius);
+	}
+
+	glm::vec3 getCenter() override { return position; }
+	void	  writeTo(char *buff, std::size_t offset) override;
+	void	  print(std::ostream &os) override;
+};
+
+struct BoxPrimitive : Primitive {
+	uint matIdx;
+
+	BoxPrimitive() {}
+	BoxPrimitive(const glm::vec3 &min, const glm::vec3 &max, uint matIdx) : matIdx(matIdx) { box = BBox(min, max); }
+
+	void writeTo(char *buff, std::size_t offset) override;
+	void print(std::ostream &os) override;
 };
 
 /// Interface for an acceleration structure for any intersectable primitives
@@ -150,16 +182,13 @@ struct IntersectionAccelerator {
 	/// @brief Check if the accelerator is built
 	virtual bool isBuilt() const = 0;
 
-	/// @brief Implement intersect from Intersectable but don't inherit the Interface
-	virtual bool intersect(const Ray &ray, float tMin, float tMax, Intersection &intersection) = 0;
-
 	virtual ~IntersectionAccelerator() = default;
 };
 
 typedef std::unique_ptr<IntersectionAccelerator> AcceleratorPtr;
 AcceleratorPtr									 makeDefaultAccelerator();
 
-struct BVHTree : IntersectionAccelerator {
+class BVHTree : public IntersectionAccelerator {
 	// Node structure
 	// does not need a parent pointer since the intersection implementation will be recursive
 	// I can afford that since the code will run on CPU which will not suffer from it.
@@ -191,12 +220,33 @@ struct BVHTree : IntersectionAccelerator {
 		}
 	};
 
+	struct alignas(16) GPUNode {
+		glm::vec3 min;
+		uint	  parent;
+		glm::vec3 max;
+		uint	  right;
+		uint	  primOffset;
+		uint	  primCount;
+		bool	  isLeaf() { return right == 0; }
+	};
+
 	// the simplest possible allocator that could be
 	template <class T>
 	class StackAllocator {
 		T				 *buff	  = nullptr;
 		long unsigned int maxSize = 0;
 		long unsigned	  size	  = 0;
+
+		void resize(long unsigned int newSize) {
+			assert(this->buff != nullptr);
+			T *newBuff = new T[newSize];
+			memcpy(newBuff, this->buff, this->size);
+			delete[] buff;
+			this->buff	  = newBuff;
+			this->maxSize = newSize;
+		}
+
+		void resize() { resize(this->maxSize << 1); }
 
 	   public:
 		StackAllocator(){};
@@ -211,10 +261,15 @@ struct BVHTree : IntersectionAccelerator {
 		}
 
 		T *alloc(size_t size) {
-			assert(size + this->size <= maxSize);
+			if (size + this->size > maxSize) resize();
 			T *res = &(buff[this->size]);
 			this->size += size;
 			return res;
+		}
+
+		void trim() {
+			assert(this->size != 0);
+			resize(this->size);
 		}
 
 		~StackAllocator() {
@@ -232,16 +287,14 @@ struct BVHTree : IntersectionAccelerator {
 	// root of the construction tree
 	Node *root = nullptr;
 	// nodes of the fast traversal tree
-	std::vector<FastNode> fastNodes;
-	// the primitives sorted for fast traversal
-	StackAllocator<Intersectable *> fastTreePrimitives;
-	bool							built = false;
+	std::vector<GPUNode> gpuNodes;
+	bool				 built = false;
 	// cost for traversing a parent node. It is assumed that the intersection cost with a primitive is 1.0
 	static constexpr float SAH_TRAVERSAL_COST = 0.125;
 	// the number of splits SAH will try.
 	static constexpr int SAH_TRY_COUNT		  = 5;
 	static constexpr int MAX_DEPTH			  = 50;
-	static constexpr int MIN_PRIMITIVES_COUNT = 4;
+	static constexpr int MIN_PRIMITIVES_COUNT = 2;
 	// when a node has less than that number of primitives it will sort them and always split in the middle
 	//
 	// theoretically:
@@ -254,7 +307,7 @@ struct BVHTree : IntersectionAccelerator {
 	// Perfect splits clearly produce shallower trees, which should make rendering faster ... but it doesn't.
 	//
 	// I guess SAH is too good
-	static constexpr int PERFECT_SPLIT_THRESHOLD = 0;
+	static constexpr int PERFECT_SPLIT_THRESHOLD = 10;
 
 	int		 depth			 = 0;
 	int		 leafSize		 = 0;
@@ -262,29 +315,34 @@ struct BVHTree : IntersectionAccelerator {
 	long int nodeCount		 = 0;
 	long int primitivesCount = 0;
 
+   public:
 	void addPrimitive(Intersectable *prim) override;
 
+   private:
 	void clear(Node *node);
+
+   public:
 	void clear() override;
+
+   private:
 	void clearConstructionTree();
 
 	void build(Node *node, int depth);
-	void build(Purpose purpose) override;
-	bool isBuilt() const override { return built; }
 
-	bool intersect(long unsigned int nodeIndex, const Ray &ray, float tMin, float &tMax, Intersection &intersection);
-	bool intersect(const Ray &ray, float tMin, float tMax, Intersection &intersection) override;
+   public:
+	void build(Purpose purpose = Purpose::Generic) override;
+
+   private:
+	bool isBuilt() const override { return built; }
 
 	// computes the SAH cost for a split on a given axis.
 	// ratio equals the size of the left child on the chosen axis over
 	// the size of the parent node size on that axis.
 	float costSAH(const Node *node, int axis, float ratio);
 
+	void buildGPUTree_h(BVHTree::Node *node, unsigned long int parent, std::vector<BVHTree::GPUNode> &gpuNodes,
+						std::vector<Intersectable *> &primitives);
+
 	// builds a tree for fast traversal
-	void buildFastTree();
-
-	void buildFastTree(Node *node, std::vector<FastNode> &allNodes);
-
-	// copies the data from a Node to a FastNode when constructing the traversal tree
-	FastNode makeFastLeaf(Node *node);
+	void buildGPUTree();
 };

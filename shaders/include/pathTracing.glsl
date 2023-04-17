@@ -86,11 +86,12 @@ struct Box {
 struct AABB {
 	vec3 min;
 	vec3 max;
-	vec3 center;
 };
 
 struct BVHNode {
-	AABB box; // bounding box of node
+	vec3 min;
+	uint parent;
+	vec3 max;
 	uint right; // right child. Left child is next in the array
 
 	uint objOffset; // offset for objects if it is a leaf
@@ -105,13 +106,15 @@ layout(binding = 4) uniform uBoxes { Box boxes[40]; };
 
 layout(std140, binding = 1) uniform Materials { Material materials[100]; };
 
-layout(std430, binding = 2) buffer Vertices { float vertices[]; };
+layout(std430, binding = 2) readonly buffer Vertices { float vertices[]; };
 
-layout(std430, binding = 3) buffer Normals { float normals[]; };
+layout(std430, binding = 3) readonly buffer Normals { float normals[]; };
 
-layout(std430, binding = 4) buffer Indices { int indices[]; };
+layout(std430, binding = 4) readonly buffer Indices { int indices[]; };
 
-layout(std430, binding = 5) buffer BVH { BVHNode nodes[]; };
+layout(std430, binding = 5) readonly buffer BVH { BVHNode nodes[]; };
+
+layout(std430, binding = 7) readonly buffer Primitives { uint primitives[]; };
 
 layout(binding = 6) uniform samplerCube skybox;
 
@@ -178,11 +181,9 @@ vec3 random_in_unit_disk(inout uint seed) {
 float getSmallestPositive(float t1, float t2) {
 	// Assumes at least one float > 0
 	return t1 <= 0 ? t2 : t1;
-	// return mix(t1, t2, t1 < 0);
 }
 
-void intersectBox(in Ray ray, in uint boxIdx, inout RayHit rec) {
-	Box box = boxes[boxIdx];
+void intersectBox(in Ray ray, in Box box, in uint objIdx, inout RayHit rec) {
 
 	// Source:
 	// https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
@@ -199,30 +200,22 @@ void intersectBox(in Ray ray, in uint boxIdx, inout RayHit rec) {
 	t1 = max(t1, max(tsmaller.x, max(tsmaller.y, tsmaller.z)));
 	t2 = min(t2, min(tbigger.x, min(tbigger.y, tbigger.z)));
 
-	// if (t1 <= t2 && t2 > phi && t1 < rec.dist) {
-	// 	float dist = getSmallestPositive(t1, t2);
-	// 	rec.dist   = dist;
-	// 	rec.type   = 4;
-	// 	rec.objIdx = boxIdx;
-	// }
-
 	if (t1 <= t2) {
 		if (t2 > phi && t2 < rec.dist) {
 			rec.dist   = t2;
 			rec.type   = 4;
-			rec.objIdx = boxIdx;
+			rec.objIdx = objIdx;
 		}
 		if (t1 > phi && t1 < rec.dist) {
 			rec.dist   = t1;
 			rec.type   = 4;
-			rec.objIdx = boxIdx;
+			rec.objIdx = objIdx;
 		}
 	}
 }
 
-void intersectSphere(in Ray r, in uint sphIdx, inout RayHit rec) {
+void intersectSphere(in Ray r, in Sphere sphere, in uint objIdx, inout RayHit rec) {
 	// source: https://antongerdelan.net/opengl/raycasting.html
-	Sphere sphere = sphs[sphIdx];
 
 	float t1 = FLOAT_MAX, t2 = FLOAT_MAX;
 	vec3  sphereToRay = r.origin - sphere.position;
@@ -240,7 +233,7 @@ void intersectSphere(in Ray r, in uint sphIdx, inout RayHit rec) {
 	if (t > 0.001 && t < rec.dist) {
 		rec.type   = 2;
 		rec.dist   = t;
-		rec.objIdx = sphIdx;
+		rec.objIdx = objIdx;
 	}
 }
 
@@ -310,14 +303,15 @@ bool intersectTriangle(in Ray ray, in vec3 v0, in vec3 v1, in vec3 v2, in vec3 n
 	return false;
 }
 
-bool intersectAABB(in Ray ray, in AABB box) {
+bool intersectAABB(in Ray ray, in vec3 _min, in vec3 _max) {
 	// Source:
 	// https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
+	
 	float t1 = -FLOAT_MAX;
 	float t2 = FLOAT_MAX;
 
-	vec3 t0s = (box.min - ray.origin) * (1.0 / ray.direction);
-	vec3 t1s = (box.max - ray.origin) * (1.0 / ray.direction);
+	vec3 t0s = (_min - ray.origin) * (1.0 / ray.direction);
+	vec3 t1s = (_max - ray.origin) * (1.0 / ray.direction);
 
 	vec3 tsmaller = min(t0s, t1s);
 	vec3 tbigger  = max(t0s, t1s);
@@ -325,6 +319,14 @@ bool intersectAABB(in Ray ray, in AABB box) {
 	t1 = max(t1, max(tsmaller.x, max(tsmaller.y, tsmaller.z)));
 	t2 = min(t2, min(tbigger.x, min(tbigger.y, tbigger.z)));
 	return t1 <= t2;
+}
+
+bool intersectAABB(in Ray ray, in AABB box) {
+	return intersectAABB(ray, box.min, box.max);
+}
+
+bool intersectNode(in Ray ray, in BVHNode node) {
+	return intersectAABB(ray, node.min, node.max);
 }
 
 Triangle get_triangle(in uint index) {

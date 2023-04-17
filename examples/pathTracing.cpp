@@ -15,6 +15,7 @@
 #include <iostream>
 #include <random>
 #include <time.h>
+#include <glm/gtc/random.hpp>
 
 using namespace std;
 
@@ -35,33 +36,6 @@ struct alignas(16) Box {
 	Box() {}
 	Box(const glm::vec3 &min, const glm::vec3 &max, uint matIdx) : min(min), max(max), matIdx(matIdx) {}
 
-   private:
-};
-
-struct SpherePrimitive : Primitive {
-	glm::vec3 position;
-	float	  radius = 1;
-	uint	  matIdx;
-
-	SpherePrimitive() {}
-	SpherePrimitive(const glm::vec3 &position, float radius, uint matIdx) : position(position), radius(radius), matIdx(matIdx) {
-		box = BBox(position - radius, position + radius);
-	}
-	
-	bool intersect(const Ray &ray, float tMin, float tMax, Intersection &intersection) { return false; }
-	
-	glm::vec3 getCenter() { return position; }
-};
-
-struct BoxPrimitive : Primitive {
-	uint	  matIdx;
-
-	BoxPrimitive() {}
-	BoxPrimitive(const glm::vec3 &min, const glm::vec3 &max, uint matIdx) : matIdx(matIdx) {
-		box = BBox(min, max);
-	}
-	
-	bool intersect(const Ray &ray, float tMin, float tMax, Intersection &intersection) override { return false; }
    private:
 };
 
@@ -92,11 +66,9 @@ ygl::TextureCubemap *skybox;
 
 Sphere *spheres;
 int		sphereCount;
-GLuint	spheresBuff;
 
-Box	  *boxes;
-int	   boxesCount;
-GLuint boxesBuff;
+Box *boxes;
+int	 boxesCount;
 
 bool pathTrace = false;
 bool shade	   = true;
@@ -207,25 +179,28 @@ void initSpheres() {
 		scene->addComponent<ygl::Transformation>(
 			sphere, ygl::Transformation(spheres[i].position, glm::vec3(0), glm::vec3(spheres[i].radius)));
 		scene->addComponent<ygl::RendererComponent>(sphere, ygl::RendererComponent(-1, meshIndex, spheres[i].matIdx));
+		bvh->addPrimitive(new SpherePrimitive(spheres[i].position, spheres[i].radius, spheres[i].matIdx));
 	}
 
 	renderer->loadData();
 }
 
 void initBoxes() {
-	boxesCount = 7;
-	boxes	   = new Box[7];
+	boxesCount = 20;
+	boxes	   = new Box[20];
 
 	ygl::Entity box;
-	for (int i = 0; i < 7; ++i) {
+	for (int i = 0; i < boxesCount; ++i) {
 		glm::vec3 randomColor(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.);
 
-		glm::vec3 min = glm::vec3(i * 1.5 - 5, 0.5, 4.5);
+		// glm::vec3 min = glm::vec3(i * 1.5 - 5, 0.5, 4.5);
+		glm::vec3 min		= glm::ballRand(3.0f) + glm::vec3(0, 3, 5);
+		float	  roughness = glm::linearRand(0.f, 1.f);
 
 		boxes[i] = Box(min, min + glm::vec3(1.0),
 					   renderer->addMaterial(ygl::Material(randomColor, 0.01, glm::vec3(0.0, 0.0, 0.0), 1.45,
 														   glm::vec3(1.0) - randomColor, 1.0, glm::vec3(1.),
-														   0.05 + i * 0.1, 0.05 + i * 0.1, 0.)));
+														   0.05 + roughness, 0.05 + roughness, 0.)));
 	}
 
 	uint meshIndex = renderer->addMesh(cubeMesh);
@@ -237,13 +212,6 @@ void initBoxes() {
 	}
 
 	renderer->loadData();
-
-	glGenBuffers(1, &boxesBuff);
-	glBindBuffer(GL_UNIFORM_BUFFER, boxesBuff);
-	glBufferData(GL_UNIFORM_BUFFER, boxesCount * sizeof(Box), boxes, GL_STATIC_DRAW);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-	pathTracer->setUBO(boxesBuff, 4);
 }
 
 void initPathTracer() {
@@ -262,17 +230,13 @@ void initPathTracer() {
 
 	initSpheres();
 	initBoxes();
-	bvh->build(BVHTree::Purpose::Generic);
-	// TODO: write BVH to GPU memory
+	bvh->build();
 
 	pathTracer->bind();
 	pathTracer->setUniform("resolution", glm::vec2(window->getWidth(), window->getHeight()));
 	pathTracer->setUniform("img_output", 1);
 	pathTracer->setUniform("fov", camera->getFov());
-	pathTracer->setUniform("spheresCount", sphereCount);
-	pathTracer->setUniform("boxesCount", boxesCount);
-	pathTracer->setUniform("max_bounces", 20);
-	pathTracer->setUniform("do_trace_spheres", true);
+	pathTracer->setUniform("max_bounces", 10);
 	pathTracer->setUniform("fov", glm::radians(70.f));
 	pathTracer->unbind();
 
@@ -285,13 +249,6 @@ void initPathTracer() {
 	textureOnScreen->setUniform("sampler_depth", 10);
 	textureOnScreen->setUniform("sampler_stencil", 10);
 	textureOnScreen->unbind();
-
-	glGenBuffers(1, &spheresBuff);
-	glBindBuffer(GL_UNIFORM_BUFFER, spheresBuff);
-	glBufferData(GL_UNIFORM_BUFFER, sphereCount * sizeof(Sphere), spheres, GL_STATIC_DRAW);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-	pathTracer->setUBO(spheresBuff, 3);
 }
 
 int main() {
