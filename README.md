@@ -39,9 +39,9 @@ Credit to **ricocilliers** on sketchfab for the model
 
 
 ### Path tracer
-Image produced in about 30-40 seconds on a GTX 1060
+Image Produced in about 3 minutes (418 samples/pixel)
 
-<a href="https://drive.google.com/uc?export=view&id=1Nxj9I452-T5ziNONsY4iTGvq9hLVFz7l"><img src="https://drive.google.com/uc?export=view&id=1Nxj9I452-T5ziNONsY4iTGvq9hLVFz7l" style="width: 800px; max-width: 100%; height: auto" title="Click to enlarge picture" /></a>
+<a href="https://drive.google.com/uc?export=view&id=1ADTU-RrXpkhYPIFIpeL6FyOn0rVvInly"><img src="https://drive.google.com/uc?export=view&id=1ADTU-RrXpkhYPIFIpeL6FyOn0rVvInly" style="width: 800px; max-width: 100%; height: auto" title="Click to enlarge picture" /></a>
 
 ### Grass System
 Instanced bezier-curve grass renderer like in Ghost of Tsushuma
