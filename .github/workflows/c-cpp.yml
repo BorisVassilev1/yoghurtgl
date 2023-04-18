@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: configure
-      run: ./configure.sh
+      run: cmake -S ./ -B ./build/ -G "Unix Makefiles" -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang
     - name: make
       run: cmake --build ./build
     - name: make check
