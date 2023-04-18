@@ -21,7 +21,3 @@ jobs:
       run: cmake -S ./ -B ./build/ -G "Unix Makefiles" -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang
     - name: make
       run: cmake --build ./build
-    - name: make check
-      run: make check
-    - name: make distcheck
-      run: make distcheck
