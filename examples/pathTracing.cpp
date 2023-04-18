@@ -16,6 +16,9 @@
 #include <random>
 #include <time.h>
 #include <glm/gtc/random.hpp>
+#include "importer.h"
+#include <material.h>
+#include <timer.h>
 
 using namespace std;
 
@@ -74,8 +77,10 @@ bool pathTrace = false;
 bool shade	   = true;
 bool cullFace  = true;
 
-int sampleCount = 0;
-int maxSamples	= 100000;
+int	  sampleCount = 0;
+int	  maxSamples  = 100000;
+float PI		  = glm::pi<float>();
+Timer timer;
 
 BVHTree *bvh = new BVHTree();
 
@@ -98,7 +103,8 @@ void cleanup() {
 }
 
 void initScene() {
-	bunnyMesh  = (ygl::Mesh *)ygl::getModel(ygl::loadScene("./res/models/bunny_uv/bunny_uv.obj"));
+	const aiScene *aiscene = ygl::loadScene("./res/models/dragon-gltf/scene.gltf");
+	bunnyMesh  = (ygl::Mesh *)ygl::getModel(aiscene, 2);
 	sphereMesh = ygl::makeUnitSphere();
 	cubeMesh   = ygl::makeBox(glm::vec3(1, 1, 1), glm::vec3(1, 1, 1));
 
@@ -112,23 +118,36 @@ void initScene() {
 
 	renderer = scene->registerSystem<ygl::Renderer>();
 
+	renderer->addMaterial(
+		ygl::Material(glm::vec3(1.f), 0.02, glm::vec3(0.f), 1.0, glm::vec3(0.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 0.0));
+	
+//	ygl::Material geometryMaterial = ygl::Material(glm::vec3(1., 0., 0.), .02, glm::vec3(0.), 2.4, glm::vec3(0.0),
+//													   0.0, glm::vec3(1.), 0.0, 0.01, 0.);
+
+	ygl::Material geometryMaterial = ygl::getMaterial(aiscene, scene->assetManager, "./res/models/dragon-gltf/", 2);
+
 	tex = new ygl::Texture2d("./res/images/uv_checker.png");
 	tex->bind(GL_TEXTURE1);		// albedo texture
 
 	bunny = scene->createEntity();
-	scene->addComponent<ygl::Transformation>(bunny,
-											 ygl::Transformation(glm::vec3(-3, 0, 0), glm::vec3(0), glm::vec3(10)));
+	scene->addComponent<ygl::Transformation>(
+		bunny, ygl::Transformation(glm::vec3(-2, 3, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(1.f)));
 	ygl::RendererComponent bunnyRenderer;
 
 	unsigned int shaderIndex = renderer->addShader(shader);
 	renderer->setDefaultShader(shaderIndex);
 	scene->addComponent<ygl::RendererComponent>(
-		bunny,
-		ygl::RendererComponent(-1, renderer->addMesh(bunnyMesh),
-							   renderer->addMaterial(ygl::Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 1.0,
-																   glm::vec3(0.0), 0.0, glm::vec3(1.), 0.0, 1.0, 0.))));
+		bunny, ygl::RendererComponent(
+				   -1, renderer->addMesh(bunnyMesh),
+				   renderer->addMaterial(geometryMaterial)));
 
 	unlitShaderIndex = renderer->addShader(unlitShader);
+
+	ygl::Shader::setSSBO(bunnyMesh->getVertices().bufferId, 2);
+	ygl::Shader::setSSBO(bunnyMesh->getNormals().bufferId, 3);
+	ygl::Shader::setSSBO(bunnyMesh->getTexCoords().bufferId, 8);
+	ygl::Shader::setSSBO(bunnyMesh->getTangents().bufferId, 9);
+	ygl::Shader::setSSBO(bunnyMesh->getIBO(), 4);
 
 	addSkybox(*scene, "./res/images/skybox");
 
@@ -186,16 +205,16 @@ void initSpheres() {
 }
 
 void initBoxes() {
-	boxesCount = 20;
-	boxes	   = new Box[20];
+	boxesCount = 10;
+	boxes	   = new Box[10];
 
 	ygl::Entity box;
 	for (int i = 0; i < boxesCount; ++i) {
 		glm::vec3 randomColor(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.);
 
-		// glm::vec3 min = glm::vec3(i * 1.5 - 5, 0.5, 4.5);
-		glm::vec3 min		= glm::ballRand(3.0f) + glm::vec3(0, 3, 5);
-		float	  roughness = glm::linearRand(0.f, 1.f);
+		glm::vec3 min = glm::vec3((i / 2) * 1.5 - 5, 0.5 + 1.5 * (i % 2), -1.5);
+		// glm::vec3 min		= glm::ballRand(3.0f) + glm::vec3(0, 3, 5);
+		float roughness = glm::linearRand(0.f, 0.5f);
 
 		boxes[i] = Box(min, min + glm::vec3(1.0),
 					   renderer->addMaterial(ygl::Material(randomColor, 0.01, glm::vec3(0.0, 0.0, 0.0), 1.45,
@@ -226,10 +245,12 @@ void initPathTracer() {
 	rawTexture->bindImage(1);
 
 	skybox = new ygl::TextureCubemap("./res/images/skybox", ".jpg");
-	skybox->bind(GL_TEXTURE6);
+	skybox->bind(GL_TEXTURE11);
 
-	initSpheres();
+	// initSpheres();
 	initBoxes();
+	bvh->addPrimitive(bunnyMesh, scene->getComponent<ygl::Transformation>(bunny));
+
 	bvh->build();
 
 	pathTracer->bind();
@@ -238,6 +259,7 @@ void initPathTracer() {
 	pathTracer->setUniform("fov", camera->getFov());
 	pathTracer->setUniform("max_bounces", 10);
 	pathTracer->setUniform("fov", glm::radians(70.f));
+	pathTracer->setUniform("bvh_matrix", scene->getComponent<ygl::Transformation>(bunny).getWorldMatrix());
 	pathTracer->unbind();
 
 	renderTexture->bind(GL_TEXTURE10);
@@ -259,8 +281,6 @@ int main() {
 
 	srand(time(NULL));
 
-	cout << endl << sizeof(Box) << endl << endl;
-
 	window = new ygl::Window(1280, 1000, "Test Window", true, false);
 	mouse  = new ygl::Mouse(*window);
 
@@ -270,14 +290,18 @@ int main() {
 			pathTrace = !pathTrace;
 			glfwSwapInterval(!pathTrace);
 		}
-		if (key == GLFW_KEY_G && action == GLFW_RELEASE) { renderTexture->save("./res/images/result.png"); }
+		if (key == GLFW_KEY_G && action == GLFW_RELEASE) {
+			std::cout << "Saving image...\n samples: " << sampleCount << "\n time: " << timer.toMs(timer.elapsedNs())
+					  << std::endl;
+			renderTexture->save("./res/images/result.png");
+		}
 	});
 
 	initScene();
 
 	initPathTracer();
 
-	tex->bind();
+	//tex->bind();
 
 	renderer->setClearColor(glm::vec4(0, 0, 0, 1));
 	while (!window->shouldClose()) {
@@ -291,6 +315,7 @@ int main() {
 			float clearColor[]{0., 0., 0., 0.};
 			glClearTexImage(rawTexture->getID(), 0, GL_RGBA, GL_FLOAT, &clearColor);
 			sampleCount = 0;
+			timer		= Timer();
 		}
 
 		if (!pathTrace) {

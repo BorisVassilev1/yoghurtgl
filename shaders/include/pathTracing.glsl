@@ -50,6 +50,7 @@ struct Ray {
 struct RayHit {
 	float dist;
 	uint  type;
+	vec2 uv;
 	uint  objIdx;
 	/*
 		0: nothing
@@ -64,17 +65,31 @@ struct HitInfo {
 	vec3  pos;
 	float dist;
 	vec3  normal;
+	vec2 texCoords;
 	float isFrontFace;
 	uint  matIdx;
 };
 
 struct Triangle {
 	vec3 v0;
+	uint matIdx;
 	vec3 v1;
 	vec3 v2;
 	vec3 normal0;
 	vec3 normal1;
 	vec3 normal2;
+	vec2 tc0;
+	vec2 tc1;
+	vec2 tc2;
+	vec3 t0;
+	vec3 t1;
+	vec3 t2;
+};
+
+struct FastTriangle {
+	vec3 v0;
+	vec3 v1;
+	vec3 v2;
 };
 
 struct Box {
@@ -98,25 +113,25 @@ struct BVHNode {
 	uint objCount;
 };
 
-uniform int spheresCount = 0;
-layout(binding = 3) uniform uSpheres { Sphere sphs[40]; };
-
-uniform int boxesCount = 0;
-layout(binding = 4) uniform uBoxes { Box boxes[40]; };
-
 layout(std140, binding = 1) uniform Materials { Material materials[100]; };
 
 layout(std430, binding = 2) readonly buffer Vertices { float vertices[]; };
-
 layout(std430, binding = 3) readonly buffer Normals { float normals[]; };
-
+layout(std430, binding = 8) readonly buffer TexCoords { float texCoords[]; };
+layout(std430, binding = 9) readonly buffer Tangents { float tangents[]; };
 layout(std430, binding = 4) readonly buffer Indices { int indices[]; };
 
 layout(std430, binding = 5) readonly buffer BVH { BVHNode nodes[]; };
-
 layout(std430, binding = 7) readonly buffer Primitives { uint primitives[]; };
 
-layout(binding = 6) uniform samplerCube skybox;
+layout(binding = 11) uniform samplerCube skybox;
+layout(binding = 1) uniform sampler2D albedoMap;
+layout(binding = 2) uniform sampler2D normalMap;
+layout(binding = 3) uniform sampler2D heightMap;
+layout(binding = 4) uniform sampler2D roughnessMap;
+layout(binding = 5) uniform sampler2D aoMap;
+layout(binding = 6) uniform sampler2D emissionMap;
+layout(binding = 10) uniform sampler2D metallicMap;
 
 uniform mat4  cameraMatrix;
 uniform vec2  resolution;
@@ -281,8 +296,7 @@ uniform Material geometry_material	 = Material(vec3(1.), .2, vec3(0.), 0.99, vec
 												0.0, 0, 0.0, 0, 0.0, 0, 0.0, 0, 0.0, 0, 0.0);
 uniform uint	 geometryMaterialIdx = 0;
 
-bool intersectTriangle(in Ray ray, in vec3 v0, in vec3 v1, in vec3 v2, in vec3 normal0, in vec3 normal1,
-					   in vec3 normal2, inout RayHit hit) {
+bool intersectTriangle(in Ray ray, in vec3 v0, in vec3 v1, in vec3 v2, in uint objIdx, inout RayHit hit) {
 	vec3 orig = ray.origin;
 	vec3 dir  = ray.direction;
 	vec2 uv;
@@ -292,12 +306,11 @@ bool intersectTriangle(in Ray ray, in vec3 v0, in vec3 v1, in vec3 v2, in vec3 n
 	if (t > phi && t < hit.dist) {
 		hit.type = 3;
 		hit.dist = t;
+		hit.objIdx = objIdx;
+		hit.uv = uv;
 
 		// hit.normal = normalize((1. - uv.x - uv.y) * normal0 + uv.x * normal1 + uv.y * normal2);
 
-		// float d			  = dot(ray.direction, hit.normal);
-		// hit.is_front_face = d < 0.0;
-		// hit.normal		  = -(step(0.0, d) * 2.0 - 1.0) * hit.normal;
 		return true;
 	}
 	return false;
@@ -329,34 +342,8 @@ bool intersectNode(in Ray ray, in BVHNode node) {
 	return intersectAABB(ray, node.min, node.max);
 }
 
-Triangle get_triangle(in uint index) {
-	uint i = index * 3;
-
-	uint i0 = indices[i] * 3;
-	uint i1 = indices[i + 1] * 3;
-	uint i2 = indices[i + 2] * 3;
-
-	vec3 v0 = vec3(vertices[i0], vertices[i0 + 1], vertices[i0 + 2]);
-	vec3 v1 = vec3(vertices[i1], vertices[i1 + 1], vertices[i1 + 2]);
-	vec3 v2 = vec3(vertices[i2], vertices[i2 + 1], vertices[i2 + 2]);
-
-	v0 = (bvh_matrix * vec4(v0, 1.0)).xyz;
-	v1 = (bvh_matrix * vec4(v1, 1.0)).xyz;
-	v2 = (bvh_matrix * vec4(v2, 1.0)).xyz;
-
-	vec3 normal0 = vec3(normals[i0], normals[i0 + 1], normals[i0 + 2]);
-	vec3 normal1 = vec3(normals[i1], normals[i1 + 1], normals[i1 + 2]);
-	vec3 normal2 = vec3(normals[i2], normals[i2 + 1], normals[i2 + 2]);
-
-	normal0 = (bvh_matrix * vec4(normal0, 0.0)).xyz;
-	normal1 = (bvh_matrix * vec4(normal1, 0.0)).xyz;
-	normal2 = (bvh_matrix * vec4(normal2, 0.0)).xyz;
-
-	return Triangle(v0, v1, v2, normal0, normal1, normal2);
-}
-
-bool intersectTriangle(in Ray ray, in Triangle t, inout RayHit hit) {
-	return intersectTriangle(ray, t.v0, t.v1, t.v2, t.normal0, t.normal1, t.normal2, hit);
+bool intersectTriangle(in Ray ray, in FastTriangle t, in uint objIdx, inout RayHit hit) {
+	return intersectTriangle(ray, t.v0, t.v1, t.v2, objIdx, hit);
 }
 
 float fresnelReflectAmount(float n1, float n2, vec3 normal, vec3 incident, float f0, float f90) {

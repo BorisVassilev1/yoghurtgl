@@ -24,7 +24,7 @@ void ygl::IMesh::bind() {
 	else glDisable(GL_CULL_FACE);
 	glDepthFunc(depthfunc);
 	glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
-	
+
 	glBindVertexArray(vao);
 	enableVBOs();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
@@ -131,6 +131,8 @@ ygl::IMesh::VBO ygl::Mesh::getNormals() { return vbos[1]; }
 ygl::IMesh::VBO ygl::Mesh::getTexCoords() { return vbos[2]; }
 
 ygl::IMesh::VBO ygl::Mesh::getColors() { return vbos[3]; }
+
+ygl::IMesh::VBO ygl::Mesh::getTangents() { return vbos[4]; }
 
 ygl::Mesh *ygl::makeTriangle() {
 	// clang-format off

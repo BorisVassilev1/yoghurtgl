@@ -1,10 +1,14 @@
 #include <bvh.h>
+#include <cstddef>
+#include <cstdio>
 #include <cstring>
 #include <algorithm>
 #include <vector>
 #include <iomanip>
 #include "assimp/types.h"
+#include "glm/fwd.hpp"
 #include "shader.h"
+#include "transformation.h"
 #include <glm/gtc/type_ptr.hpp>
 
 BBox::BBox(const glm::vec3 &min, const glm::vec3 &max) : min(min), max(max) {}
@@ -192,7 +196,7 @@ void SpherePrimitive::writeTo(char *buff, std::size_t offset) {
 }
 
 void SpherePrimitive::print(std::ostream &os) {
-	os << "SPHERE : " << position.x << ' ' << position.y << ' ' << position.z << ' ' << radius << ';'; 
+	os << "SPHERE : " << position.x << ' ' << position.y << ' ' << position.z << ' ' << radius << ';';
 }
 
 void BoxPrimitive::writeTo(char *buff, std::size_t offset) {
@@ -204,14 +208,45 @@ void BoxPrimitive::writeTo(char *buff, std::size_t offset) {
 }
 
 void BoxPrimitive::print(std::ostream &os) {
-	os << "BOX" << 
-	std::setw(4) << box.min.x << ' ' << std::setw(4) << box.min.y << ' ' << std::setw(4) << box.min.z << ' ' << 
-	std::setw(4) << box.max.x << ' ' << std::setw(4) << box.max.y << ' ' << std::setw(4) << box.max.z << ';';
+	os << "BOX" << std::setw(4) << box.min.x << ' ' << std::setw(4) << box.min.y << ' ' << std::setw(4) << box.min.z
+	   << ' ' << std::setw(4) << box.max.x << ' ' << std::setw(4) << box.max.y << ' ' << std::setw(4) << box.max.z
+	   << ';';
 }
 
 AcceleratorPtr makeDefaultAccelerator() { return AcceleratorPtr(new BVHTree()); }
 
 void BVHTree::addPrimitive(Intersectable *prim) { allPrimitives.push_back(prim); }
+
+void BVHTree::addPrimitive(ygl::Mesh *mesh, ygl::Transformation &transform) {
+	glm::mat4x4 &mat		   = transform.getWorldMatrix();
+	std::size_t	 verticesCount = mesh->getVerticesCount();
+	std::size_t	 indicesCount  = mesh->getIndicesCount();
+
+	float *vertices = new float[verticesCount * 3];
+	uint32_t  *indices	= new uint32_t[indicesCount * 3];
+	glBindBuffer(GL_ARRAY_BUFFER, mesh->getVertices().bufferId);
+	glGetBufferSubData(GL_ARRAY_BUFFER, 0, verticesCount * sizeof(float) * 3, vertices);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, mesh->getIBO());
+	glGetBufferSubData(GL_ARRAY_BUFFER, 0, indicesCount * sizeof(uint32_t), indices);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	for (std::size_t i = 0; i < indicesCount; i += 3) {
+		uint32_t i0 = indices[i + 0];
+		uint32_t i1 = indices[i + 1];
+		uint32_t i2 = indices[i + 2];
+
+		glm::vec3 v0 = glm::vec3(vertices[i0 * 3 + 0], vertices[i0 * 3 + 1], vertices[i0 * 3 + 2]);
+		glm::vec3 v1 = glm::vec3(vertices[i1 * 3 + 0], vertices[i1 * 3 + 1], vertices[i1 * 3 + 2]);
+		glm::vec3 v2 = glm::vec3(vertices[i2 * 3 + 0], vertices[i2 * 3 + 1], vertices[i2 * 3 + 2]);
+
+		v0 = mat * glm::vec4(v0, 1.0f);
+		v1 = mat * glm::vec4(v1, 1.0f);
+		v2 = mat * glm::vec4(v2, 1.0f);
+		this->addPrimitive(new Triangle(i0, i1, i2, v0, v1, v2, 0));
+	}
+}
 
 void BVHTree::clear(Node *node) {
 	if (node == nullptr) return;
@@ -317,7 +352,8 @@ void BVHTree::build(Node *node, int depth) {
 
 void BVHTree::build(Purpose purpose) {
 	// purpose is ignored. what works best for triangles seems to also work best for objects
-	printf("Building BVH tree with %d primitives... ", int(allPrimitives.size()));
+	printf("Building BVH tree with %d primitives... \n", int(allPrimitives.size()));
+	fflush(stdout);
 	Timer timer;
 
 	primitivesCount = allPrimitives.size();
@@ -327,10 +363,15 @@ void BVHTree::build(Purpose purpose) {
 	for (unsigned long int c = 0; c < root->primitives.size(); ++c) {
 		root->primitives[c]->expandBox(root->box);
 	}
-
 	// build both trees
+	Timer buildTimer;
 	build(root, 0);
+	printf("Main Tree built: %lldms\n", (long long int)buildTimer.toMs(buildTimer.elapsedNs()));
+
+
+	Timer gpuTimer;
 	buildGPUTree();
+	printf("GPU Tree built: %lldms\n", (long long int)gpuTimer.toMs(gpuTimer.elapsedNs()));
 
 	// construction tree is no longer needed
 	clearConstructionTree();
@@ -358,13 +399,13 @@ float BVHTree::costSAH(const Node *node, int axis, float ratio) {
 }
 
 void BVHTree::buildGPUTree_h(BVHTree::Node *node, unsigned long int parent, std::vector<BVHTree::GPUNode> &gpuNodes,
-					std::vector<Intersectable *> &primitives) {
+							 std::vector<Intersectable *> &primitives) {
 	BVHTree::GPUNode current;
 	current.min	   = node->box.min;
 	current.max	   = node->box.max;
 	current.parent = parent;
 	if (node->isLeaf()) {
-		current.right = 0;
+		current.right	   = 0;
 		current.primOffset = primitives.size();
 		current.primCount  = node->primitives.size();
 		for (Intersectable *p : node->primitives) {
@@ -400,12 +441,12 @@ void BVHTree::buildGPUTree() {
 	for (uint i = 0; i < orderedPrimitives.size(); ++i) {
 		orderedPrimitives[i]->writeTo(buff, i * 8 * sizeof(uint));
 	}
-	
+
 	// send buff to gpu
 	GLuint primitivesBuff;
 	glGenBuffers(1, &primitivesBuff);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, primitivesBuff);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, buffSize, buff, GL_STATIC_COPY);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, buffSize, buff, GL_STATIC_DRAW);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	ygl::Shader::setSSBO(primitivesBuff, 7);
@@ -413,7 +454,7 @@ void BVHTree::buildGPUTree() {
 	GLuint nodesBuff;
 	glGenBuffers(1, &nodesBuff);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, nodesBuff);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, gpuNodes.size() * sizeof(GPUNode), gpuNodes.data(), GL_STATIC_COPY);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, gpuNodes.size() * sizeof(GPUNode), gpuNodes.data(), GL_STATIC_DRAW);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	ygl::Shader::setSSBO(nodesBuff, 5);

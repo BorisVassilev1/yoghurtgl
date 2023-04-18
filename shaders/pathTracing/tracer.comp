@@ -47,6 +47,60 @@ void getSphere(in uint i, out Sphere sph) {
 	sph.matIdx = matIdx;
 }
 
+void getFastTriangle(uint i, out FastTriangle tri) {
+	uvec3 indices = uvec3(
+			primitives[i + 1] * 3, 
+			primitives[i + 2] * 3,
+			primitives[i + 3] * 3
+			);
+	tri.v0 = vec3( vertices[indices[0] + 0], vertices[indices[0] + 1], vertices[indices[0] + 2]);
+	tri.v1 = vec3( vertices[indices[1] + 0], vertices[indices[1] + 1], vertices[indices[1] + 2]);
+	tri.v2 = vec3( vertices[indices[2] + 0], vertices[indices[2] + 1], vertices[indices[2] + 2]);
+
+	tri.v0 = (bvh_matrix * vec4(tri.v0, 1.0)).xyz;
+	tri.v1 = (bvh_matrix * vec4(tri.v1, 1.0)).xyz;
+	tri.v2 = (bvh_matrix * vec4(tri.v2, 1.0)).xyz;
+}
+
+void getTriangle(in uint i, out Triangle tri) {
+	uvec3 indices = uvec3(
+			primitives[i + 1] * 3, 
+			primitives[i + 2] * 3,
+			primitives[i + 3] * 3
+			);
+	tri.v0 = vec3( vertices[indices[0] + 0], vertices[indices[0] + 1], vertices[indices[0] + 2]);
+	tri.v1 = vec3( vertices[indices[1] + 0], vertices[indices[1] + 1], vertices[indices[1] + 2]);
+	tri.v2 = vec3( vertices[indices[2] + 0], vertices[indices[2] + 1], vertices[indices[2] + 2]);
+
+	tri.normal0 = vec3( normals[indices[0] + 0], normals[indices[0] + 1], normals[indices[0] + 2]);
+	tri.normal1 = vec3( normals[indices[1] + 0], normals[indices[1] + 1], normals[indices[1] + 2]);
+	tri.normal2 = vec3( normals[indices[2] + 0], normals[indices[2] + 1], normals[indices[2] + 2]);
+
+	tri.normal0 = (bvh_matrix * vec4(tri.normal0, 0.0)).xyz;
+	tri.normal1 = (bvh_matrix * vec4(tri.normal1, 0.0)).xyz;
+	tri.normal2 = (bvh_matrix * vec4(tri.normal2, 0.0)).xyz;
+
+	tri.v0 = (bvh_matrix * vec4(tri.v0, 1.0)).xyz;
+	tri.v1 = (bvh_matrix * vec4(tri.v1, 1.0)).xyz;
+	tri.v2 = (bvh_matrix * vec4(tri.v2, 1.0)).xyz;
+	
+	uvec3 tci = uvec3(
+			primitives[i + 1] * 2,
+			primitives[i + 2] * 2,
+			primitives[i + 3] * 2
+			);
+
+	tri.tc0 = vec2( texCoords[tci[0] + 0], texCoords[tci[0] + 1]);
+	tri.tc1 = vec2( texCoords[tci[1] + 0], texCoords[tci[1] + 1]);
+	tri.tc2 = vec2( texCoords[tci[2] + 0], texCoords[tci[2] + 1]);
+	
+	tri.t0 = vec3( tangents[indices[0] + 0], tangents[indices[0] + 1], tangents[indices[0] + 2]);
+	tri.t1 = vec3( tangents[indices[1] + 0], tangents[indices[1] + 1], tangents[indices[1] + 2]);
+	tri.t2 = vec3( tangents[indices[2] + 0], tangents[indices[2] + 1], tangents[indices[2] + 2]);
+
+	tri.matIdx = primitives[i + 4];
+}
+
 // left child -> i + 1
 // right child -> node.right
 // parent -> node.parent
@@ -74,6 +128,11 @@ void processLeaf(in Ray ray, in BVHNode node, inout RayHit hit) {
 			Sphere sph;
 			getSphere(current, sph);
 			intersectSphere(ray, sph, current, hit);
+		}
+		if(type == 0) {
+			FastTriangle tri;
+			getFastTriangle(current, tri);
+			intersectTriangle(ray, tri, current, hit);
 		}
 	}
 }
@@ -168,6 +227,7 @@ void computeHitInfo(out HitInfo info, in RayHit hit, in Ray ray) {
 	if (hit.type == 0) return;
 	if (hit.type == 1) {
 		info.normal		 = vec3(0.0, 1.0, 0.0);
+		info.texCoords	 = vec2(0.);
 		float d			 = dot(ray.direction, info.normal);
 		info.isFrontFace = step(d, 0.0);
 		info.normal		 = (info.isFrontFace * 2.0 - 1.0) * info.normal;
@@ -179,13 +239,23 @@ void computeHitInfo(out HitInfo info, in RayHit hit, in Ray ray) {
 		getSphere(hit.objIdx, sphere);
 
 		info.normal		 = (info.pos - sphere.position.xyz) / sphere.radius;
+		info.texCoords	 = vec2(0.);
 		info.isFrontFace = step(dot(info.normal, ray.direction), 0.);
 		info.normal		 = (info.isFrontFace * 2. - 1.) * info.normal;
 		info.matIdx		 = sphere.matIdx;
 		return;
 	}
 	if (hit.type == 3) {
-		info.matIdx = geometryMaterialIdx;
+		Triangle tri;
+		getTriangle(hit.objIdx, tri);
+		
+		vec3 uvw = vec3((1. - hit.uv.x - hit.uv.y), hit.uv);
+
+		info.normal		 = normalize(uvw.x * tri.normal0 + uvw.y * tri.normal1 + uvw.z * tri.normal2);
+		info.texCoords	 = uvw.x * tri.tc0 + uvw.y * tri.tc1 + uvw.z * tri.tc2;
+		info.isFrontFace = step(dot(info.normal, ray.direction), 0.);
+		info.normal		 = (info.isFrontFace * 2. - 1.) * info.normal;
+		info.matIdx		 = 1;
 		return;
 	}
 	if (hit.type == 4) {
@@ -197,6 +267,7 @@ void computeHitInfo(out HitInfo info, in RayHit hit, in Ray ray) {
 
 		info.normal = step(diffmax, vec3(phi)) - step(diffmin, vec3(phi));
 		normalize(info.normal);
+		info.texCoords	 = vec2(0.);
 
 		info.isFrontFace = step(dot(info.normal, ray.direction), 0);
 		info.normal		 = (float(info.isFrontFace) * 2. - 1.) * info.normal;
@@ -232,10 +303,7 @@ void main() {
 
 		// if hit the sky, write sky color and exit
 		if (hit.type == 0) {
-			// if(i == 0) pixel = vec4(0.);
-			// else {
 			pixel += vec4(get_sky_color(ray) * attenuation, 1.0f);
-			// }
 			break;
 		}
 
@@ -243,6 +311,16 @@ void main() {
 		computeHitInfo(info, hit, ray);
 
 		Material mat = materials[info.matIdx];
+		
+		vec3  base_diffuse	= texture(albedoMap, info.texCoords).xyz;
+		float base_roughness = texture(roughnessMap, info.texCoords).y;
+		vec3  base_emission	= texture(emissionMap, info.texCoords).xyz;
+		float base_metallic	= texture(metallicMap, info.texCoords).z;
+
+		vec3  albedo	= mix(mat.albedo, base_diffuse, mat.use_albedo_map);
+		float metallic	= mix(mat.metallic, base_metallic, mat.use_metallic_map);
+		vec3  emission	= mix(mat.emission, mat.emission * base_emission, mat.use_emission_map);
+		float roughness = mix(mat.specular_roughness, mat.specular_roughness * base_roughness, mat.use_roughness_map) + 0.1;
 
 		// do absorption if we are hitting from inside the object
 		if (info.isFrontFace == 0.0f) { attenuation *= exp(-mat.transparency_color * info.dist); }
@@ -255,18 +333,12 @@ void main() {
 		// specular takes priority.
 		// chanceMultiplier makes sure we keep diffuse / refraction ratio the same.
 		float rayProbability = 1.0f;
-		// if (specularChance > 0.0f) {
 		specularChance = fresnelReflectAmount(info.isFrontFace == 1.0f ? 1.0f : mat.ior,
 				info.isFrontFace == 1.0f ? mat.ior : 1.0f, ray.direction, info.normal,
 				mat.specular_chance, 1.0f);
 
 		float chanceMultiplier = (1.0f - specularChance) / (1.0f - mat.specular_chance);
 		refractionChance *= chanceMultiplier;
-
-		// if(refractionChance == 0.0) {
-		// 	pixel += vec4(1.0, 0., 0., 0.0);
-		// }
-		// }
 
 		// calculate whether we are going to do a diffuse, specular, or refractive ray
 		float doSpecular	= 0.0f;
@@ -275,21 +347,11 @@ void main() {
 		if (specularChance > 0.0f && raySelectRoll < specularChance) { // specular reflection
 			doSpecular	   = 1.0f;
 			rayProbability = specularChance;
-
-			// if(info.normal == vec3(0.0, 0.0, 0.0)) {
-			// 	pixel += vec4(1.0, 0.0, 0.0, 1.0);
-			// }
-
-			// pixel += vec4(info.normal, 1.0);
 		} else if (refractionChance > 0.0f && raySelectRoll < specularChance + refractionChance) { // refraction
 			doRefraction   = 1.0f;
 			rayProbability = refractionChance;
-
-			// pixel += vec4(info.normal, 1.0);
 		} else { // lambertian disperse
 			rayProbability = 1.0f - (specularChance + refractionChance);
-
-			// pixel += vec4(info.normal, 1.0);
 		}
 
 		// avoid numerical issues causing a divide by zero, or nearly so (more important later, when we add refraction)
@@ -311,7 +373,7 @@ void main() {
 
 		vec3 specularRayDir = reflect(ray.direction, info.normal);
 
-		float specR = mat.specular_roughness * mat.specular_roughness;
+		float specR = roughness * roughness;
 		specR = specR * specR;
 
 		specularRayDir = normalize(mix(specularRayDir, diffuseRayDir, specR));
@@ -333,11 +395,11 @@ void main() {
 		ray.direction = mix(ray.direction, refractionRayDir, doRefraction);
 
 		// emission
-		pixel += vec4(mat.emission * attenuation, 0);
+		pixel += vec4(emission * attenuation, 0);
 
 		// update the colorMultiplier. refraction doesn't alter the color until we hit the next thing, so we can do
 		// light absorption over distance.
-		if (doRefraction == 0.0f) attenuation *= mix(mat.albedo, mat.specular_color, doSpecular);
+		if (doRefraction == 0.0f) attenuation *= mix(albedo, mat.specular_color, doSpecular);
 
 		attenuation /= rayProbability;
 

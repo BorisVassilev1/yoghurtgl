@@ -8,6 +8,7 @@
 #include <ostream>
 #include <vector>
 #include <memory>
+#include "transformation.h"
 #include <timer.h>
 
 #include <material.h>
@@ -230,58 +231,6 @@ class BVHTree : public IntersectionAccelerator {
 		bool	  isLeaf() { return right == 0; }
 	};
 
-	// the simplest possible allocator that could be
-	template <class T>
-	class StackAllocator {
-		T				 *buff	  = nullptr;
-		long unsigned int maxSize = 0;
-		long unsigned	  size	  = 0;
-
-		void resize(long unsigned int newSize) {
-			assert(this->buff != nullptr);
-			T *newBuff = new T[newSize];
-			memcpy(newBuff, this->buff, this->size);
-			delete[] buff;
-			this->buff	  = newBuff;
-			this->maxSize = newSize;
-		}
-
-		void resize() { resize(this->maxSize << 1); }
-
-	   public:
-		StackAllocator(){};
-
-		void init(size_t maxSize) {
-			if (buff != nullptr) delete buff;
-
-			this->maxSize = maxSize;
-			size		  = 0;
-			buff		  = new T[maxSize];
-			memset(buff, 0, maxSize * sizeof(T));
-		}
-
-		T *alloc(size_t size) {
-			if (size + this->size > maxSize) resize();
-			T *res = &(buff[this->size]);
-			this->size += size;
-			return res;
-		}
-
-		void trim() {
-			assert(this->size != 0);
-			resize(this->size);
-		}
-
-		~StackAllocator() {
-			if (buff != nullptr) {
-				delete[] buff;
-				buff = nullptr;
-			}
-		}
-
-		long unsigned int getSize() { return size; }
-	};
-
 	// all primitives added
 	std::vector<Intersectable *> allPrimitives;
 	// root of the construction tree
@@ -294,7 +243,7 @@ class BVHTree : public IntersectionAccelerator {
 	// the number of splits SAH will try.
 	static constexpr int SAH_TRY_COUNT		  = 5;
 	static constexpr int MAX_DEPTH			  = 50;
-	static constexpr int MIN_PRIMITIVES_COUNT = 2;
+	static constexpr int MIN_PRIMITIVES_COUNT = 6;
 	// when a node has less than that number of primitives it will sort them and always split in the middle
 	//
 	// theoretically:
@@ -307,7 +256,7 @@ class BVHTree : public IntersectionAccelerator {
 	// Perfect splits clearly produce shallower trees, which should make rendering faster ... but it doesn't.
 	//
 	// I guess SAH is too good
-	static constexpr int PERFECT_SPLIT_THRESHOLD = 10;
+	static constexpr int PERFECT_SPLIT_THRESHOLD = 20;
 
 	int		 depth			 = 0;
 	int		 leafSize		 = 0;
@@ -317,6 +266,7 @@ class BVHTree : public IntersectionAccelerator {
 
    public:
 	void addPrimitive(Intersectable *prim) override;
+	void addPrimitive(ygl::Mesh *mesh, ygl::Transformation &transform);
 
    private:
 	void clear(Node *node);
