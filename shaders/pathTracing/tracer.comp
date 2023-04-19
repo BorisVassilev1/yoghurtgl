@@ -209,7 +209,7 @@ uniform float focus_dist = 3.1;
 vec3 cam_pos = (cameraMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 
 // TODO: fix depth of field effect!!!
-void get_ray(inout Ray ray, in vec3 cam_pos, in ivec2 pixel_coords, in vec2 pixel_position, uint random_seed) {
+void get_ray(out Ray ray, in vec3 cam_pos, in ivec2 pixel_coords, in vec2 pixel_position, uint random_seed) {
 	vec2 ray_coords = vec2(pixel_position.x + (randomFloat(random_seed)) / resolution.x,
 			pixel_position.y + (randomFloat(random_seed)) / resolution.y);
 
