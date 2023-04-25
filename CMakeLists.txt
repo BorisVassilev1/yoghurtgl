@@ -51,7 +51,7 @@ set(LINK_ARGS
 if (MSVC)
 	set(COMPILE_ARGS ${COMPILE_ARGS} \Wall)
 else ()
-	set(COMPILE_ARGS ${COMPILE_ARGS} -Wall -Wextra -Wpedantic -g --pedantic-errors -fsanitize=address)
+	set(COMPILE_ARGS ${COMPILE_ARGS} -Wall -Wextra -Wpedantic -g --pedantic-errors -O3)
 endif ()
 
 if (WIN32)

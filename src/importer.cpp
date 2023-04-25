@@ -1,5 +1,6 @@
 #include <importer.h>
 #include <renderer.h>
+#include "assimp/types.h"
 
 #ifndef YGL_NO_ASSIMP
 	#include <assimp/Importer.hpp>
@@ -102,16 +103,22 @@ ygl::Material ygl::getMaterial(const aiScene *scene, ygl::AssetManager &asman, s
 
 	aiColor3D diff(0, 0, 0);
 	ret = material->Get(AI_MATKEY_COLOR_DIFFUSE, diff);
+	if (ret != AI_SUCCESS) diff = aiColor3D(1, 0, 1);
 	aiColor3D emission(0, 0, 0);
 	ret = material->Get(AI_MATKEY_COLOR_EMISSIVE, emission);
+	if (ret != AI_SUCCESS) emission = aiColor3D(0, 0, 0);
 	aiColor3D specular(0, 0, 0);
 	ret = material->Get(AI_MATKEY_COLOR_SPECULAR, specular);
+	if (ret != AI_SUCCESS) specular = aiColor3D(1, 1, 1);
 	aiColor3D transparent(0, 0, 0);
 	ret = material->Get(AI_MATKEY_COLOR_TRANSPARENT, transparent);
+	if (ret != AI_SUCCESS) transparent = aiColor3D(0, 0, 0);
 	float roughness_factor;
-	ret		  = material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness_factor);
+	ret = material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness_factor);
+	if (ret != AI_SUCCESS) roughness_factor = 1.0f;
 	float ior = 1.;
 	ret		  = material->Get(AI_MATKEY_REFRACTI, ior);
+	if (ret != AI_SUCCESS) ior = 1.;
 
 	glm::vec3 glmAlbedo(diff.r, diff.g, diff.b);
 	glm::vec3 glmEmission(emission.r, emission.g, emission.b);
@@ -188,7 +195,7 @@ void ygl::AssetManager::printTextures() {
 }
 
 ygl::AssetManager::~AssetManager() {
-	for(auto tex : this->textures) {
-		delete tex;	
+	for (auto tex : this->textures) {
+		delete tex;
 	}
 }

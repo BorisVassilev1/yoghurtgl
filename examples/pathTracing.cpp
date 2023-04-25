@@ -119,10 +119,9 @@ void initScene() {
 	renderer = scene->registerSystem<ygl::Renderer>();
 
 	renderer->addMaterial(
-		ygl::Material(glm::vec3(1.f), 0.02, glm::vec3(0.f), 1.0, glm::vec3(0.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 0.0));
+		ygl::Material(glm::vec3(1.f), 0.1, glm::vec3(0.f), 1.0, glm::vec3(0.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 0.0));
 	
-//	ygl::Material geometryMaterial = ygl::Material(glm::vec3(1., 0., 0.), .02, glm::vec3(0.), 2.4, glm::vec3(0.0),
-//													   0.0, glm::vec3(1.), 0.0, 0.01, 0.);
+	//ygl::Material geometryMaterial = ygl::Material(glm::vec3(0.5, 0., 0.), .02, glm::vec3(0.), 1, glm::vec3(0.0), 0.0, glm::vec3(1.), 0.0, 0.1, 1.);
 
 	ygl::Material geometryMaterial = ygl::getMaterial(aiscene, scene->assetManager, "./res/models/dragon-gltf/", 2);
 
@@ -131,7 +130,7 @@ void initScene() {
 
 	bunny = scene->createEntity();
 	scene->addComponent<ygl::Transformation>(
-		bunny, ygl::Transformation(glm::vec3(-2, 3, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(1.f)));
+		bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(1.f)));
 	ygl::RendererComponent bunnyRenderer;
 
 	unsigned int shaderIndex = renderer->addShader(shader);
@@ -257,7 +256,7 @@ void initPathTracer() {
 	pathTracer->setUniform("resolution", glm::vec2(window->getWidth(), window->getHeight()));
 	pathTracer->setUniform("img_output", 1);
 	pathTracer->setUniform("fov", camera->getFov());
-	pathTracer->setUniform("max_bounces", 10);
+	pathTracer->setUniform("max_bounces", 5);
 	pathTracer->setUniform("fov", glm::radians(70.f));
 	pathTracer->setUniform("bvh_matrix", scene->getComponent<ygl::Transformation>(bunny).getWorldMatrix());
 	pathTracer->unbind();
