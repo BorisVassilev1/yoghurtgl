@@ -67,6 +67,7 @@ void run() {
 
 	Material terrainMat(glm::vec3(1., 1., 1.), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.4,
 						0., 0.);
+	scene.assetManager.addTexture(height, "bricks/height");
 	terrainMat.albedo_map	  = scene.assetManager.addTexture(color, "bricks/albedo");
 	terrainMat.use_albedo_map = 1.0;
 	terrainMat.normal_map	  = scene.assetManager.addTexture(normal, "bricks/normal");
@@ -100,11 +101,6 @@ void run() {
 
 		window.swapBuffers();
 	}
-
-	// clean up
-	delete height;
-	delete normal;
-	delete color;
 }
 
 int main(int argc, char *argv[]) {

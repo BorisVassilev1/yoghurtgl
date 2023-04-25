@@ -186,3 +186,9 @@ void ygl::AssetManager::printTextures() {
 		std::cerr << it.first << ' ' << it.second << '\n';
 	}
 }
+
+ygl::AssetManager::~AssetManager() {
+	for(auto tex : this->textures) {
+		delete tex;	
+	}
+}

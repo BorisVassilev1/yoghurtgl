@@ -100,8 +100,6 @@ void run() {
 
 		window.swapBuffers();
 	}
-	// clean up
-	delete tex;
 }
 
 int main(int argc, char *argv[]) {

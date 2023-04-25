@@ -76,12 +76,6 @@ void run() {
 
 		window.swapBuffers();
 	}
-
-	// clean up
-	delete color;
-	delete normal;
-	delete roughness;
-	delete ao;
 }
 
 int main() {

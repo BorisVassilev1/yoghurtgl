@@ -48,5 +48,6 @@ class AssetManager {
 	}
 
 	void printTextures();
+	~AssetManager();
 };
 }	  // namespace ygl

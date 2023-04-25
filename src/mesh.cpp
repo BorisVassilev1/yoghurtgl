@@ -361,7 +361,7 @@ ygl::Mesh *ygl::makeBox(float x, float y, float z) {
 		22, 12, 14,
 		23, 15, 17};
 	// clang-format on
-	return new Mesh((GLuint)24 * 3, vertices, normals, texCoords, colors, (GLfloat *)nullptr, (GLuint)12 * 3, indices);
+	return new Mesh((GLuint)24 , vertices, normals, texCoords, colors, (GLfloat *)nullptr, (GLuint)12 * 3, indices);
 }
 
 ygl::Mesh *ygl::makeBox(const glm::vec3 &dim) { return makeBox(dim.x, dim.y, dim.z); }
@@ -376,21 +376,23 @@ ygl::Mesh *ygl::makeScreenQuad() {
 		-1.0,  1.0, -0.,
 		 1.0,  1.0, -0.,
 		 1.0, -1.0, -0.,
-		-1.0, -1.0, -0.};
+		-1.0, -1.0, -0.,
+	};
 	GLfloat texCoords[]  = {
 		0.0, 1.0,
 		1.0, 1.0,
 		1.0, 0.0, 
-		0.0, 0.0};
+		0.0, 0.0
+	};
 	GLfloat colors[]   = {
 		1.0, 0.0, 0.0, 1.0,
 		0.0, 1.0, 0.0, 1.0,
 		0.0, 0.0, 1.0, 1.0,
 		0.0, 1.0, 1.0, 1.0
-		};
+	};
 	GLuint	indices[]  = {2, 1, 0, 3, 2, 0};
 	// clang-format on
-	return new Mesh((GLuint)12, vertices, (GLfloat *)nullptr, texCoords, colors, (GLfloat *)nullptr, (GLuint)6,
+	return new Mesh((GLuint)4, vertices, (GLfloat *)nullptr, texCoords, colors, (GLfloat *)nullptr, (GLuint)6,
 					indices);
 }
 
