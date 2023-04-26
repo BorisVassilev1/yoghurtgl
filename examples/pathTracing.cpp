@@ -16,7 +16,6 @@
 #include <random>
 #include <time.h>
 #include <glm/gtc/random.hpp>
-#include "importer.h"
 #include <material.h>
 #include <timer.h>
 

@@ -24,3 +24,5 @@ doxygen_config.txt
 .vs/
 *.ilk
 *.pdb
+*.so
+*.dll

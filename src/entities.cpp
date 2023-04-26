@@ -43,10 +43,10 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path) {
 	Entity	  e		   = scene.createEntity();
 	Renderer *renderer = scene.getSystem<Renderer>();
 
-	Mesh* mesh = makeCube(1.);
+	Mesh *mesh = makeCube(1.);
 	mesh->setCullFace(false);
 	mesh->setDepthFunc(GL_LEQUAL);
-	uint meshIndex = renderer->addMesh(mesh);
+	uint		  meshIndex = renderer->addMesh(mesh);
 	ygl::Material mat;
 	mat.albedo_map	   = scene.assetManager.addTexture(new TextureCubemap(path, ".jpg"), path);
 	mat.use_albedo_map = 1.0;
@@ -79,9 +79,18 @@ ygl::Entity ygl::addModel(ygl::Scene &scene, const aiScene *aiscene, std::string
 	return model;
 }
 
-void ygl::addModels(ygl::Scene &scene, const aiScene *aiscene, std::string filePath, const std::function<void(Entity)> &edit = {}) {
+void ygl::addModels(ygl::Scene &scene, const aiScene *aiscene, std::string filePath,
+					const std::function<void(Entity)> &edit) {
 	for (uint i = 0; i < aiscene->mNumMeshes; ++i) {
 		ygl::Entity model = addModel(scene, aiscene, filePath, i);
 		edit(model);
 	}
+}
+
+void ygl::addScene(ygl::Scene &scene, const std::string &filename, const std::function<void(Entity)> &edit) {
+	const aiScene *aiscene = ygl::loadScene(filename);
+	std::size_t	   cut	   = filename.rfind('/');
+	std::string	   dir	   = filename.substr(0, cut + 1);
+	std::cout << dir << std::endl;
+	addModels(scene, aiscene, dir, edit);
 }

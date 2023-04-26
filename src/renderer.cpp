@@ -2,6 +2,7 @@
 
 #include <transformation.h>
 #include <assert.h>
+#include <iterator>
 
 ygl::Light::Light(glm::mat4 transform, glm::vec3 color, float intensity, ygl::Light::Type type)
 	: transform(transform), color(color), intensity(intensity), type(type) {}
@@ -265,7 +266,8 @@ void ygl::Renderer::drawScene() {
 		shaders[defaultShader]->bind();
 		prevShaderIndex = defaultShader;
 	} else {
-		shaders[0]->bind();		// there has to be at least one shader
+		if(shaders.size())
+			shaders[0]->bind();		// there has to be at least one shader
 		prevShaderIndex = 0;
 	}
 
@@ -322,7 +324,8 @@ void ygl::Renderer::drawScene() {
 		// clean up
 		mesh->unbind();
 	}
-	shaders[prevShaderIndex]->unbind();		// unbind the last used shader
+	if(shaders.size() > prevShaderIndex)
+		shaders[prevShaderIndex]->unbind();		// unbind the last used shader
 }
 
 void ygl::Renderer::colorPass() {

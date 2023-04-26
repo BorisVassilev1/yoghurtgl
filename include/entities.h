@@ -27,5 +27,10 @@ Entity addSkybox(Scene &scene, const std::string &path);
 
 Entity addModel(ygl::Scene &scene, const aiScene *aiscene, std::string filePath, uint i);
 
-void addModels(ygl::Scene &scene, const aiScene *aiscene, std::string filePath, const std::function<void(Entity)> &edit);
-}	   // namespace ygl
+void addModels(
+	ygl::Scene &scene, const aiScene *aiscene, std::string filePath,
+	const std::function<void(Entity)> &edit = [](Entity _) {});
+
+void addScene(
+	ygl::Scene &scene, const std::string &filename, const std::function<void(Entity)> &edit = [](Entity _) {});
+}	  // namespace ygl

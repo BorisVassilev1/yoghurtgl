@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: Compile Check
 
 on:
   push:
@@ -20,4 +20,4 @@ jobs:
     - name: configure
       run: cmake -S ./ -B ./build/ -G "Unix Makefiles" -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang
     - name: make
-      run: cmake --build ./build
+      run: cmake --build ./build -j4

@@ -19,7 +19,7 @@ using namespace ygl;
 using namespace std;
 
 void run() {
-		Window window = Window(800, 600, "Test Window", true);
+	Window window = Window(800, 600, "Test Window", true);
 
 	Mesh *bunnyMesh = (Mesh *)getModel(loadScene("./res/models/bunny_uv/bunny_uv.obj"));
 

@@ -12,12 +12,7 @@
 
 using namespace ygl;
 
-int main() {
-	if (init()) {
-		dbLog(ygl::LOG_ERROR, "ygl failed to init");
-		exit(1);
-	}
-
+void run() {
 	Window window = Window(1280, 1000, "Test Window", true, false);
 
 	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
@@ -32,19 +27,15 @@ int main() {
 
 	Renderer *renderer = scene.registerSystem<Renderer>();
 
-	const aiScene *aiscene = loadScene("./res/models/dragon-gltf/scene.gltf");
-
 	uint shaderInd = renderer->addShader(shader);
 	renderer->setDefaultShader(shaderInd);
 
-	addModels(scene, aiscene, "./res/models/dragon-gltf/", [&scene, &renderer](Entity model) {
+	addScene(scene, "./res/models/dragon-gltf/scene.gltf", [&scene, &renderer](Entity model) {
 		RendererComponent &rc									   = scene.getComponent<RendererComponent>(model);
 		renderer->getMaterial(rc.materialIndex).specular_roughness = 2.;
 	});
 
-	const aiScene *helmetScene = loadScene("./res/models/helmet/DamagedHelmet.gltf");
-
-	addModels(scene, helmetScene, "./res/models/helmet/", [&scene](Entity model) {
+	addScene(scene, "./res/models/helmet/DamagedHelmet.gltf", [&scene](Entity model) {
 		Transformation &tr = scene.getComponent<Transformation>(model);
 		tr.position.x += 2;
 		tr.rotation.y += glm::pi<float>();
@@ -59,8 +50,6 @@ int main() {
 
 	renderer->loadData();
 
-	Light &directional = renderer->getLight(0);
-
 	glClearColor(0, 0, 0, 1);
 	while (!window.shouldClose()) {
 		window.beginFrame();
@@ -73,9 +62,16 @@ int main() {
 
 		window.swapBuffers();
 	}
+}
 
-	// clean up and exit
-	window.~Window();
+int main() {
+	if (init()) {
+		dbLog(ygl::LOG_ERROR, "ygl failed to init");
+		exit(1);
+	}
+
+	run();
+
 	ygl::terminate();
 	std::cerr << std::endl;
 	return 0;
