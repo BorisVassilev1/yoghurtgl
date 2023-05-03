@@ -101,3 +101,8 @@ bool ygl::Transformation::decomposeTransform(const glm::mat4 &transform, glm::ve
 
 	return true;
 }
+
+
+bool ygl::Transformation::operator==(const ygl::Transformation &other) {
+	return this->worldMatrix == other.worldMatrix;
+}

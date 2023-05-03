@@ -23,6 +23,8 @@ class Transformation {
 	static bool decomposeTransform(const glm::mat4 &transform, glm::vec3 &translation, glm::vec3 &rotation,
 							  glm::vec3 &scale);
 
+	bool operator==(const Transformation &other);
+
 	friend std::ostream &operator<<(std::ostream &os, const Transformation &rhs);
 };
 }	  // namespace ygl

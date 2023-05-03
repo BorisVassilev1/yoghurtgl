@@ -31,3 +31,5 @@ file(GLOB IMGUIZMO_SOURCES ${IMGUIZMO_PATH}/*.cpp)
 add_library("ImGuizmo" SHARED ${IMGUIZMO_SOURCES})
 target_include_directories("ImGuizmo" PUBLIC ${IMGUIZMO_PATH})
 target_link_libraries("ImGuizmo" PUBLIC "ImGui")
+
+set(DOCTEST_INCLUDE_DIR ./libs/doctest/doctest/ CACHE INTERNAL "Path to include folder for doctest")

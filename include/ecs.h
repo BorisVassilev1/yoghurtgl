@@ -284,8 +284,6 @@ class Scene {
 	EntityManager	 entityManager;
 	SystemManager	 systemManager;
 
-	Scene();
-
    public:
 	ygl::Window		*window;
 	std::set<Entity> entities;
@@ -297,6 +295,7 @@ class Scene {
 	 * @param window a window for the scene to be attached to
 	 */
 	Scene(ygl::Window *window) : window(window) {}
+	Scene() : window(nullptr) {}
 
 	/**
 	 * @brief Create an Entity.

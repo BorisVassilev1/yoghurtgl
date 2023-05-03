@@ -76,3 +76,10 @@ foreach(CURR_FILE ${TARGET_FILES})
 	target_link_options(${CURR_TARGET} PRIVATE ${LINK_ARGS})
 
 endforeach(CURR_FILE ${TARGET_FILES})
+
+add_executable(test tests/test.cpp)
+set_target_properties(test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../)
+target_link_libraries(test PRIVATE YoghurtGL)
+target_include_directories(test PUBLIC ${DOCTEST_INCLUDE_DIR})
+target_link_options(test PRIVATE ${COMPILE_ARGS})
+target_link_options(test PRIVATE ${LINK_ARGS})
