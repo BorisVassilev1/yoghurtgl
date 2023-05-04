@@ -1,6 +1,7 @@
 #include <ecs.h>
 
 #include <assert.h>
+#include <stdexcept>
 
 ygl::EntityManager::EntityManager() {}
 
@@ -25,7 +26,7 @@ ygl::Entity ygl::EntityManager::createEntity() {
  * @param e The entity to be destroyed. 
  */
 void ygl::EntityManager::destroyEntity(ygl::Entity e) {
-	assert(e < entityCount && "entity out of range");
+	if(e >= entityCount) throw std::runtime_error("Entity out of range");
 	signatures[e].reset();
 	freePositions.push(e);
 	--entityCount;
@@ -38,7 +39,7 @@ void ygl::EntityManager::destroyEntity(ygl::Entity e) {
  * @return e's signature
  */
 ygl::Signature ygl::EntityManager::getSignature(ygl::Entity e) {
-	assert(e < entityCount && "entity out of range");
+	if(e >= entityCount) throw std::runtime_error("Entity out of range");
 	return signatures[e];
 }
 

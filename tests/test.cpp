@@ -13,9 +13,12 @@ TEST_CASE("Test Scene creation") {
 	SUBCASE("Register Component") {
 		scene.registerComponent<ygl::Transformation>();
 	}
-	
 
 	SUBCASE("Create Entity") {
+		ygl::Entity e = scene.createEntity();
+	}
+
+	SUBCASE("Add Component") {
 		scene.registerComponent<ygl::Transformation>();
 
 		ygl::Entity e = scene.createEntity();
@@ -24,8 +27,25 @@ TEST_CASE("Test Scene creation") {
 		scene.addComponent<ygl::Transformation>(e, t);
 		
 		ygl::Transformation &t1 = scene.getComponent<ygl::Transformation>(e);
-		t1.updateWorldMatrix();
-		t.updateWorldMatrix();
 		CHECK(t == t1);	
+	}
+
+	SUBCASE("Add Component Twice") {
+		scene.registerComponent<ygl::Transformation>();
+		
+		ygl::Entity e = scene.createEntity();
+		scene.addComponent(e, ygl::Transformation(glm::vec3(1.)));
+		CHECK_THROWS(scene.addComponent(e, ygl::Transformation(glm::vec3(1.))));
+	}
+
+	SUBCASE("Delete Entity") {
+		scene.registerComponent<ygl::Transformation>();
+		
+		ygl::Entity e = scene.createEntity();
+		scene.addComponent(e, ygl::Transformation(glm::vec3(1.)));
+
+		scene.destroyEntity(e);
+
+		CHECK_THROWS(scene.getComponent<ygl::Transformation>(e));
 	}
 }

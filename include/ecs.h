@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdexcept>
 #include <vector>
 #include <bitset>
 #include <queue>
@@ -93,7 +94,9 @@ class ComponentArray : public IComponentArray {
 	 * @return T& a reference to the inserted data
 	 */
 	T &addComponent(Entity e, const T &component) {
-		assert(entityToIndexMap.find(e) == entityToIndexMap.end() && "This entity already has that component");
+		if (entityToIndexMap.find(e) != entityToIndexMap.end()) {
+			throw std::runtime_error("This entity already has that component");
+		}
 
 		int index				= components.size();
 		entityToIndexMap[e]		= index;
@@ -108,7 +111,10 @@ class ComponentArray : public IComponentArray {
 	 * @param e The entity whose component is to be removed
 	 */
 	void removeComponent(Entity e) {
-		assert(entityToIndexMap.find(e) != entityToIndexMap.end() && "cannot remove a non-existing component");
+		if (entityToIndexMap.find(e) == entityToIndexMap.end()) {
+			throw std::runtime_error("cannot remove a non-existing component");
+		}
+
 		size_t index	  = entityToIndexMap[e];
 		components[index] = components.back();
 
@@ -128,7 +134,9 @@ class ComponentArray : public IComponentArray {
 	 * @param e an entity
 	 */
 	void deleteEntity(Entity e) override {
-		if (entityToIndexMap.find(e) != entityToIndexMap.end()) { removeComponent(e); }
+		if (entityToIndexMap.find(e) == entityToIndexMap.end())
+			throw std::runtime_error("Cannot delete a non-existing entity");
+		removeComponent(e);
 	}
 
 	/**
@@ -138,7 +146,8 @@ class ComponentArray : public IComponentArray {
 	 * @return A reference to the component data
 	 */
 	T &getComponent(ygl::Entity e) {
-		assert(entityToIndexMap.find(e) != entityToIndexMap.end() && "component not found on that entity");
+		if(entityToIndexMap.find(e) == entityToIndexMap.end())
+			throw std::runtime_error("component not found on that entity");
 		return components[entityToIndexMap[e]];
 	}
 };
@@ -212,7 +221,7 @@ class ISystem {
 
 	virtual void doWork() = 0;
 	virtual void init()	  = 0;
-	void printEntities();
+	void		 printEntities();
 };
 
 class SystemManager {
@@ -220,7 +229,8 @@ class SystemManager {
 	std::unordered_map<const char *, Signature> signatures;
 
    public:
-	template <class T> requires std::is_base_of<ISystem, T>::value
+	template <class T>
+		requires std::is_base_of<ISystem, T>::value
 	T *registerSystem(Scene *scene) {
 		const char *type = typeid(T).name();
 
@@ -274,10 +284,10 @@ class SystemManager {
 /**
  * @brief A Scene object.
  * A scene contains a set of entities that all have components and Systems that can manage entities and their data.
- * 
- * Components can be user-defined. Systems must extend ygl::ISystem. 
- * This type of Scene is modeled after Unity3D's ECS model 
- * 
+ *
+ * Components can be user-defined. Systems must extend ygl::ISystem.
+ * This type of Scene is modeled after Unity3D's ECS model
+ *
  */
 class Scene {
 	ComponentManager componentManager;
@@ -285,9 +295,9 @@ class Scene {
 	SystemManager	 systemManager;
 
    public:
-	ygl::Window		*window;
-	std::set<Entity> entities;
-	ygl::AssetManager	 assetManager;
+	ygl::Window		 *window;
+	std::set<Entity>  entities;
+	ygl::AssetManager assetManager;
 
 	/**
 	 * @brief Construct an empty Scene
@@ -352,8 +362,8 @@ class Scene {
 	}
 
 	/**
-	 * @brief Removes a component from an Entity. 
-	 * 
+	 * @brief Removes a component from an Entity.
+	 *
 	 * @tparam T Component type to be removed
 	 * @param e Entity
 	 */
@@ -369,15 +379,15 @@ class Scene {
 
 	/**
 	 * @brief Get the Signature of an Entity.
-	 * 
+	 *
 	 * @param e Entity
-	 * @return e's Signature 
+	 * @return e's Signature
 	 */
 	Signature getSignature(Entity e) { return entityManager.getSignature(e); }
 
 	/**
 	 * @brief Set a System's Signature. The system will have access to all objects that have the required components.
-	 * 
+	 *
 	 * @tparam System a system to set signature
 	 * @tparam ...T component types for the system to require
 	 */
@@ -390,8 +400,8 @@ class Scene {
 
 	/**
 	 * @brief Get a System object if a System of that type exists.
-	 * 
-	 * @tparam T 
+	 *
+	 * @tparam T
 	 * @return a pointer to the system if it exists. If not, nullptr
 	 */
 	template <class T>
@@ -401,7 +411,7 @@ class Scene {
 
 	/**
 	 * @brief Get an Entity's Component by type.
-	 * 
+	 *
 	 * @tparam T the wanted component's type
 	 * @param e Entity
 	 * @return a reference to the component
@@ -413,9 +423,9 @@ class Scene {
 
 	/**
 	 * @brief Get the ComponentType assigned to a Component Type, registered in the system.
-	 * 
+	 *
 	 * @tparam T the Component type.
-	 * @return ComponentType 
+	 * @return ComponentType
 	 */
 	template <typename T>
 	ComponentType getComponentType() {
@@ -424,7 +434,7 @@ class Scene {
 
 	/**
 	 * @brief Registers a System in the Scene. Creates an instance of the System and returns a reference to it.
-	 * 
+	 *
 	 * @tparam T System Type
 	 * @return T* A reference to the created instance
 	 */
@@ -435,4 +445,4 @@ class Scene {
 		return sys;
 	}
 };
-}	   // namespace ygl
+}	  // namespace ygl
