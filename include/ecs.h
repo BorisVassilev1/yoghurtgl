@@ -106,6 +106,14 @@ class ComponentArray : public IComponentArray {
 	}
 
 	/**
+	 * @brief Checks if a given entity has this array's component assigned to it
+	 *
+	 * @param e the entity to check for the component
+	 * @return true if the entity has a component of the array's type , false otherwise
+	 */
+	bool hasComponent(Entity e) { return entityToIndexMap.find(e) != entityToIndexMap.end(); }
+
+	/**
 	 * @brief Removes a component from an entity.
 	 *
 	 * @param e The entity whose component is to be removed
@@ -146,7 +154,7 @@ class ComponentArray : public IComponentArray {
 	 * @return A reference to the component data
 	 */
 	T &getComponent(ygl::Entity e) {
-		if(entityToIndexMap.find(e) == entityToIndexMap.end())
+		if (entityToIndexMap.find(e) == entityToIndexMap.end())
 			throw std::runtime_error("component not found on that entity");
 		return components[entityToIndexMap[e]];
 	}
@@ -168,11 +176,19 @@ class ComponentManager {
 
 	template <typename T>
 	void registerComponent() {
-		ComponentType type	   = componentTypeCounter++;
-		const char	 *typeName = typeid(T).name();
-		assert(componentTypes.find(typeName) == componentTypes.end() && "component already registered");
+		const char *typeName = typeid(T).name();
+		if (componentTypes.find(typeName) != componentTypes.end()) {
+			throw std::runtime_error("component already registered");
+		}
+		ComponentType type		  = componentTypeCounter++;
 		componentTypes[typeName]  = type;
 		componentArrays[typeName] = new ygl::ComponentArray<T>();
+	}
+
+	template <typename T>
+	bool isComponentRegistered() {
+		const char *typeName = typeid(T).name();
+		return componentTypes.find(typeName) != componentTypes.end();
 	}
 
 	template <typename T>
@@ -192,6 +208,11 @@ class ComponentManager {
 	template <typename T>
 	T &getComponent(Entity e) {
 		return getComponentArray<T>()->getComponent(e);
+	}
+
+	template <typename T>
+	bool hasComponent(Entity e) {
+		return getComponentArray<T>()->hasComponent(e);
 	}
 
 	template <typename T>
@@ -340,6 +361,21 @@ class Scene {
 		componentManager.registerComponent<T>();
 	}
 
+	template <typename T>
+	void registerComponentIfCan() {
+		if(!isComponentRegistered<T>()) registerComponent<T>();
+	}
+
+	/**
+	 * @brief Checks if the given component is registered for the scene.
+	 *
+	 * @tparam T component data type
+	 */
+	template <typename T>
+	bool isComponentRegistered() {
+		return componentManager.isComponentRegistered<T>();
+	}
+
 	/**
 	 * @brief Adds a Component to an Entity. The component type must have been registered in the scene.
 	 * One component cannot be assigned twise to the same Entity.
@@ -359,6 +395,11 @@ class Scene {
 		systemManager.updateEntitySignature(e, signature);
 
 		return res;
+	}
+
+	template <typename T>
+	bool hasComponent(Entity e) {
+		return componentManager.hasComponent<T>(e);
 	}
 
 	/**
@@ -386,7 +427,8 @@ class Scene {
 	Signature getSignature(Entity e) { return entityManager.getSignature(e); }
 
 	/**
-	 * @brief Set a System's Signature. The system will have access to all objects that have the required components.
+	 * @brief Set a System's Signature. The system will have access to all objects that have the required
+	 * components.
 	 *
 	 * @tparam System a system to set signature
 	 * @tparam ...T component types for the system to require
