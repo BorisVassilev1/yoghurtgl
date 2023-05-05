@@ -264,25 +264,10 @@ class BVHTree : public IntersectionAccelerator {
 	long int nodeCount		 = 0;
 	long int primitivesCount = 0;
 
-   public:
-	void addPrimitive(Intersectable *prim) override;
-	void addPrimitive(ygl::Mesh *mesh, ygl::Transformation &transform);
-
-   private:
 	void clear(Node *node);
-
-   public:
-	void clear() override;
-
-   private:
 	void clearConstructionTree();
-
 	void build(Node *node, int depth);
-
-   public:
-	void build(Purpose purpose = Purpose::Generic) override;
-
-   private:
+	
 	bool isBuilt() const override { return built; }
 
 	// computes the SAH cost for a split on a given axis.
@@ -295,4 +280,12 @@ class BVHTree : public IntersectionAccelerator {
 
 	// builds a tree for fast traversal
 	void buildGPUTree();
+	
+   public:
+	
+	void addPrimitive(Intersectable *prim) override;
+	void addPrimitive(ygl::Mesh *mesh, ygl::Transformation &transform);
+	void clear() override;
+	void build(Purpose purpose = Purpose::Generic) override;
+	~BVHTree();
 };

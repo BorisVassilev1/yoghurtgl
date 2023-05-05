@@ -222,8 +222,8 @@ void BVHTree::addPrimitive(ygl::Mesh *mesh, ygl::Transformation &transform) {
 	std::size_t	 verticesCount = mesh->getVerticesCount();
 	std::size_t	 indicesCount  = mesh->getIndicesCount();
 
-	float *vertices = new float[verticesCount * 3];
-	uint32_t  *indices	= new uint32_t[indicesCount * 3];
+	float	 *vertices = new float[verticesCount * 3];
+	uint32_t *indices  = new uint32_t[indicesCount * 3];
 	glBindBuffer(GL_ARRAY_BUFFER, mesh->getVertices().bufferId);
 	glGetBufferSubData(GL_ARRAY_BUFFER, 0, verticesCount * sizeof(float) * 3, vertices);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -246,10 +246,15 @@ void BVHTree::addPrimitive(ygl::Mesh *mesh, ygl::Transformation &transform) {
 		v2 = mat * glm::vec4(v2, 1.0f);
 		this->addPrimitive(new Triangle(i0, i1, i2, v0, v1, v2, 0));
 	}
+	delete[] vertices;
+	delete[] indices;
 }
 
 void BVHTree::clear(Node *node) {
 	if (node == nullptr) return;
+	for(Intersectable *i : node->primitives) {
+		delete i;
+	}
 	for (int i = 0; i < 2; i++) {
 		clear(node->children[i]);
 		delete node->children[i];
@@ -258,6 +263,7 @@ void BVHTree::clear(Node *node) {
 
 void BVHTree::clear() {
 	if (root != nullptr) clear(root);
+	clearConstructionTree();
 	allPrimitives.clear();
 	built = false;
 }
@@ -368,7 +374,6 @@ void BVHTree::build(Purpose purpose) {
 	build(root, 0);
 	printf("Main Tree built: %lldms\n", (long long int)buildTimer.toMs(buildTimer.elapsedNs()));
 
-
 	Timer gpuTimer;
 	buildGPUTree();
 	printf("GPU Tree built: %lldms\n", (long long int)gpuTimer.toMs(gpuTimer.elapsedNs()));
@@ -458,4 +463,10 @@ void BVHTree::buildGPUTree() {
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	ygl::Shader::setSSBO(nodesBuff, 5);
+	delete[] buff;
+}
+
+BVHTree::~BVHTree() {
+	clear();
+	clearConstructionTree();
 }

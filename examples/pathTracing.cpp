@@ -36,7 +36,7 @@ struct alignas(16) Box {
 	glm::vec3 max;
 
 	Box() {}
-	Box(const glm::vec3 &min, const glm::vec3 &max, uint matIdx) : min(min), max(max), matIdx(matIdx) {}
+	Box(const glm::vec3 &min, const glm::vec3 &max, uint matIdx) : min(min), matIdx(matIdx), max(max) {}
 
    private:
 };
@@ -66,10 +66,10 @@ ygl::VFShader		*textureOnScreen;
 ygl::Mesh			*screenQuad;
 ygl::TextureCubemap *skybox;
 
-Sphere *spheres;
+Sphere *spheres = nullptr;
 int		sphereCount;
 
-Box *boxes;
+Box *boxes = nullptr;
 int	 boxesCount;
 
 bool pathTrace = false;
@@ -94,8 +94,11 @@ void cleanup() {
 	delete rawTexture;
 	delete textureOnScreen;
 	delete screenQuad;
-	delete[] spheres;
-	delete[] boxes;
+	delete bvh;
+	if(spheres != nullptr)
+		delete[] spheres;
+	if(spheres != nullptr)
+		delete[] boxes;
 	delete skybox;
 	delete mouse;
 	delete window;
