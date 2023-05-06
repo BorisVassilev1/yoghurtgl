@@ -169,4 +169,6 @@ class Renderer : public ygl::ISystem {
 	static GLuint loadLights(int count, Light *materials);
 };
 
+std::ostream &operator<<(std::ostream &out, const ygl::RendererComponent &rhs);
+
 }	  // namespace ygl

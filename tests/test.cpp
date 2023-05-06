@@ -93,3 +93,19 @@ TEST_CASE("Scene System") {
 		CHECK(t.position == glm::vec3(1.));
 	}
 }
+
+
+TEST_CASE("Scene Serialization") {
+	ygl::Scene scene;
+
+	scene.registerSystem<Translator>();
+
+	ygl::Entity e;
+	e = scene.createEntity();
+	scene.addComponent(e, ygl::Transformation());
+	
+	e = scene.createEntity();
+	scene.addComponent(e, ygl::Transformation(glm::vec3(1.)));
+
+	scene.serialize(std::cout);
+}

@@ -86,3 +86,7 @@ void ygl::GrassSystem::reload() {
 }
 
 void ygl::GrassSystem::doWork() { this->update((float)scene->window->globalTime); }
+
+std::ostream &ygl::operator<<(std::ostream &out, const ygl::GrassSystem::GrassHolder &rhs) {
+	return out << "GrassHolder";
+}

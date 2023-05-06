@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstring>
+#include <ostream>
 #include <stdexcept>
 #include <vector>
 #include <bitset>
@@ -56,7 +58,8 @@ class IComponentArray {
 	 *
 	 * @param e
 	 */
-	virtual void deleteEntity(Entity e) = 0;
+	virtual void deleteEntity(Entity e)						 = 0;
+	virtual void writeComponent(Entity e, std::ostream &out) = 0;
 	virtual ~IComponentArray() {}
 };
 
@@ -158,12 +161,28 @@ class ComponentArray : public IComponentArray {
 			throw std::runtime_error("component not found on that entity");
 		return components[entityToIndexMap[e]];
 	}
+
+	void writeComponent(Entity e, std::ostream &out) override;
 };
 
+template <typename T>
+void ComponentArray<T>::writeComponent(Entity e, std::ostream &out) {
+	 out << getComponent(e);
+
+	//char *data		= new char[sizeof(T) + 1];
+	//T	 *component = &getComponent(e);
+	//memcpy(data, component, sizeof(T));
+	//data[sizeof(T)] = 0;
+	//for (std::size_t i = 0; i < sizeof(T); ++i)
+	//	out << data[i];
+
+	//delete[] data;
+}
+
 class ComponentManager {
-	std::unordered_map<const char *, ComponentType>		componentTypes;
-	std::unordered_map<const char *, IComponentArray *> componentArrays;
-	ComponentType										componentTypeCounter = 0;
+	std::unordered_map<const char *, ComponentType>		 componentTypes;
+	std::unordered_map<ComponentType, IComponentArray *> componentArrays;
+	ComponentType										 componentTypeCounter = 0;
 
    public:
 	ComponentManager() {}
@@ -180,9 +199,9 @@ class ComponentManager {
 		if (componentTypes.find(typeName) != componentTypes.end()) {
 			throw std::runtime_error("component already registered");
 		}
-		ComponentType type		  = componentTypeCounter++;
-		componentTypes[typeName]  = type;
-		componentArrays[typeName] = new ygl::ComponentArray<T>();
+		ComponentType type		 = componentTypeCounter++;
+		componentTypes[typeName] = type;
+		componentArrays[type]	 = new ygl::ComponentArray<T>();
 	}
 
 	template <typename T>
@@ -200,19 +219,25 @@ class ComponentManager {
 
 	template <typename T>
 	ComponentArray<T> *getComponentArray() {
-		const char *typeName = typeid(T).name();
-		assert(componentArrays.find(typeName) != componentArrays.end() && "component has not been registered");
-		return static_cast<ComponentArray<T> *>(componentArrays[typeName]);
+		const char	 *typeName = typeid(T).name();
+		ComponentType type	   = componentTypes[typeName];
+		assert(componentArrays.find(type) != componentArrays.end() && "component has not been registered");
+		return static_cast<ComponentArray<T> *>(componentArrays[type]);
+	}
+
+	IComponentArray *getComponentArray(ComponentType t) {
+		assert(componentArrays.find(t) != componentArrays.end());
+		return componentArrays[t];
 	}
 
 	template <typename T>
 	T &getComponent(Entity e) {
-		return getComponentArray<T>()->getComponent(e);
+		return this->getComponentArray<T>()->getComponent(e);
 	}
 
 	template <typename T>
 	bool hasComponent(Entity e) {
-		return getComponentArray<T>()->hasComponent(e);
+		return this->getComponentArray<T>()->hasComponent(e);
 	}
 
 	template <typename T>
@@ -230,6 +255,16 @@ class ComponentManager {
 			pair.second->deleteEntity(e);
 		}
 	}
+
+	void writeComponentTypes(std::ostream &out) {
+		out << "Components: {\n";
+		for (auto &t : this->componentTypes) {
+			out << t.first << ',' << (int)t.second << std::endl;
+		}
+		out << "}\n";
+	}
+
+	uint getComponentsCount() { return componentTypeCounter; }
 };
 
 class ISystem {
@@ -250,14 +285,14 @@ class SystemManager {
 	std::unordered_map<const char *, Signature> signatures;
 
    public:
-	template <class T>
+	template <class T, typename... Args>
 		requires std::is_base_of<ISystem, T>::value
-	T *registerSystem(Scene *scene) {
+	T *registerSystem(Scene *scene, Args &&...args) {
 		const char *type = typeid(T).name();
 
 		assert(systems.find(type) == systems.end() && "system type already registered");
 
-		T *sys = new T(scene);
+		T *sys = new T(scene, args...);
 		systems.insert({type, sys});
 		return sys;
 	}
@@ -299,6 +334,14 @@ class SystemManager {
 		for (auto pair : systems) {
 			delete pair.second;
 		}
+	}
+
+	void writeSystems(std::ostream &out) {
+		out << "Systems: {\n";
+		for (auto &t : this->systems) {
+			out << t.first << ',' << t.second << ',' << this->signatures[t.first] << '\n';
+		}
+		out << "}\n";
 	}
 };
 
@@ -363,7 +406,7 @@ class Scene {
 
 	template <typename T>
 	void registerComponentIfCan() {
-		if(!isComponentRegistered<T>()) registerComponent<T>();
+		if (!isComponentRegistered<T>()) registerComponent<T>();
 	}
 
 	/**
@@ -480,11 +523,13 @@ class Scene {
 	 * @tparam T System Type
 	 * @return T* A reference to the created instance
 	 */
-	template <class T>
-	T *registerSystem() {
-		T *sys = systemManager.registerSystem<T>(this);
+	template <class T, class... Args>
+	T *registerSystem(Args &&...args) {
+		T *sys = systemManager.registerSystem<T>(this, args...);
 		sys->init();
 		return sys;
 	}
+
+	void serialize(std::ostream &out);
 };
 }	  // namespace ygl

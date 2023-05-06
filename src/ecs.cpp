@@ -57,3 +57,23 @@ void ygl::ISystem::printEntities() {
 	}
 	std::cerr << std::endl;
 }
+
+void ygl::Scene::serialize(std::ostream &out) {
+	out << "ygl::Scene {\n";
+	this->componentManager.writeComponentTypes(out);
+	this->systemManager.writeSystems(out);
+	out << "Entities: {\n";
+	for(Entity e : this->entities) {
+		Signature s = this->getSignature(e);
+		out << e << "{";
+		for(uint i = 0; i < componentManager.getComponentsCount(); ++ i) {
+			IComponentArray * array = this->componentManager.getComponentArray(ComponentType(i));
+			std::cout << i << std::endl;
+			array->writeComponent(e, out);
+		}
+		out << "}\n";
+	}
+	out << "}\n";
+	out << "}\n";
+	out << std::flush;
+}

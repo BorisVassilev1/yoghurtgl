@@ -3,6 +3,7 @@
 #include <transformation.h>
 #include <assert.h>
 #include <iterator>
+#include <ostream>
 
 ygl::Light::Light(glm::mat4 transform, glm::vec3 color, float intensity, ygl::Light::Type type)
 	: transform(transform), color(color), intensity(intensity), type(type) {}
@@ -12,9 +13,8 @@ ygl::Light::Light(ygl::Transformation transformation, glm::vec3 color, float int
 
 std::ostream &ygl::operator<<(std::ostream &out, const Light &l) {
 	return out << "transform: <matrix4x4>"
-		<< " color: (" << l.color.x << " " << l.color.y << " " << l.color.z
-		<< ") intensity: " << l.intensity
-		<< " type: " << l.type;
+			   << " color: (" << l.color.x << " " << l.color.y << " " << l.color.z << ") intensity: " << l.intensity
+			   << " type: " << l.type;
 }
 
 ygl::FrameBuffer::FrameBuffer(uint16_t width, uint16_t height, const char *name) {
@@ -220,9 +220,7 @@ ygl::Light &ygl::Renderer::addLight(const Light &light) {
 	return lights.back();
 }
 
-ygl::Light &ygl::Renderer::getLight(uint index) {
-	return lights[index];
-}
+ygl::Light &ygl::Renderer::getLight(uint index) { return lights[index]; }
 
 void ygl::Renderer::addScreenEffect(IScreenEffect *effect) {
 	effect->setRenderer(this);
@@ -266,8 +264,7 @@ void ygl::Renderer::drawScene() {
 		shaders[defaultShader]->bind();
 		prevShaderIndex = defaultShader;
 	} else {
-		if(shaders.size())
-			shaders[0]->bind();		// there has to be at least one shader
+		if (shaders.size()) shaders[0]->bind();		// there has to be at least one shader
 		prevShaderIndex = 0;
 	}
 
@@ -317,15 +314,14 @@ void ygl::Renderer::drawScene() {
 		Mesh *mesh = meshes[ecr.meshIndex];
 		mesh->bind();
 		// set uniforms
-		if(sh->hasUniform("worldMatrix")) sh->setUniform("worldMatrix", transform.getWorldMatrix());
+		if (sh->hasUniform("worldMatrix")) sh->setUniform("worldMatrix", transform.getWorldMatrix());
 		if (sh->hasUniform("material_index")) sh->setUniform("material_index", (GLuint)ecr.materialIndex);
 		// draw
 		glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
 		// clean up
 		mesh->unbind();
 	}
-	if(shaders.size() > prevShaderIndex)
-		shaders[prevShaderIndex]->unbind();		// unbind the last used shader
+	if (shaders.size() > prevShaderIndex) shaders[prevShaderIndex]->unbind();	  // unbind the last used shader
 }
 
 void ygl::Renderer::colorPass() {
@@ -375,7 +371,7 @@ void ygl::Renderer::effectsPass() {
 void ygl::Renderer::doWork() {
 	colorPass();
 	effectsPass();
-	defaultTexture.bind(GL_TEXTURE0); // some things break when nothing is bound to texture0
+	defaultTexture.bind(GL_TEXTURE0);	  // some things break when nothing is bound to texture0
 }
 
 ygl::Renderer::~Renderer() {
@@ -446,4 +442,8 @@ GLuint ygl::Renderer::loadLights(int count, Light *lights) {
 	Shader::setUBO(lightsBuffer, 2);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	return lightsBuffer;
+}
+
+std::ostream &ygl::operator<<(std::ostream &out, const ygl::RendererComponent &rhs) {
+	return out << "shader: " << rhs.shaderIndex << " material: " << rhs.materialIndex << " mesh: " << rhs.meshIndex;
 }

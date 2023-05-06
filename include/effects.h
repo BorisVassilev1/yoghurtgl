@@ -25,7 +25,6 @@ class GrassSystem : public ygl::ISystem {
 		~GrassBladeMesh();
 	};
 
-
 	glm::ivec2	 resolution = glm::ivec2(1, 1);
 	unsigned int bladeCount = 1;
 
@@ -49,5 +48,7 @@ class GrassSystem : public ygl::ISystem {
 	void reload();
 	void doWork() override;
 };
+
+std::ostream &operator<<(std::ostream &out, const ygl::GrassSystem::GrassHolder &rhs);
 
 }	  // namespace ygl

@@ -21,7 +21,7 @@ void ygl::Transformation::updateWorldMatrix() {
 }
 namespace ygl {
 std::ostream &operator<<(std::ostream &os, const glm::vec3 rhs) {
-	os << "( " << rhs.r << rhs.g << rhs.b << " )";
+	os << "( " << rhs.r << ", " << rhs.g << ", " << rhs.b << " )";
 	return os;
 }
 
