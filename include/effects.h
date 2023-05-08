@@ -1,6 +1,8 @@
 #include <yoghurtgl.h>
 
 #include <glm/glm.hpp>
+#include <istream>
+#include <ostream>
 #include <mesh.h>
 #include <shader.h>
 #include <ecs.h>
@@ -35,7 +37,10 @@ class GrassSystem : public ygl::ISystem {
 	unsigned int materialIndex = -1;
 
    public:
-	struct GrassHolder {};
+	struct GrassHolder : public ygl::ISerializable<GrassHolder> {
+		void serialize(std::ostream &out);
+		void deserialize(std::istream &in);
+	};
 
 	glm::vec2 size	  = glm::vec2(40, 40);
 	float	  density = 3;

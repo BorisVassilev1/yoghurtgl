@@ -29,8 +29,9 @@ Entity addModel(ygl::Scene &scene, const aiScene *aiscene, std::string filePath,
 
 void addModels(
 	ygl::Scene &scene, const aiScene *aiscene, std::string filePath,
-	const std::function<void(Entity)> &edit = [](Entity _) {});
+	const std::function<void(Entity)> &edit = [](Entity _) { static_cast<void>(_); });
 
 void addScene(
-	ygl::Scene &scene, const std::string &filename, const std::function<void(Entity)> &edit = [](Entity _) {});
+	ygl::Scene &scene, const std::string &filename,
+	const std::function<void(Entity)> &edit = [](Entity _) { static_cast<void>(_); });
 }	  // namespace ygl

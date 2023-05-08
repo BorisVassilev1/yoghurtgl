@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cstring>
+#include <istream>
 #include <ostream>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 #include <bitset>
 #include <queue>
@@ -13,6 +15,7 @@
 #include <set>
 #include <window.h>
 #include <importer.h>
+#include <serializable.h>
 
 namespace ygl {
 
@@ -167,16 +170,7 @@ class ComponentArray : public IComponentArray {
 
 template <typename T>
 void ComponentArray<T>::writeComponent(Entity e, std::ostream &out) {
-	 out << getComponent(e);
-
-	//char *data		= new char[sizeof(T) + 1];
-	//T	 *component = &getComponent(e);
-	//memcpy(data, component, sizeof(T));
-	//data[sizeof(T)] = 0;
-	//for (std::size_t i = 0; i < sizeof(T); ++i)
-	//	out << data[i];
-
-	//delete[] data;
+	getComponent(e).serialize(out);
 }
 
 class ComponentManager {
@@ -353,7 +347,7 @@ class SystemManager {
  * This type of Scene is modeled after Unity3D's ECS model
  *
  */
-class Scene {
+class Scene : public ygl::ISerializable<Scene> {
 	ComponentManager componentManager;
 	EntityManager	 entityManager;
 	SystemManager	 systemManager;
@@ -399,7 +393,7 @@ class Scene {
 	 *
 	 * @tparam T Component data type
 	 */
-	template <typename T>
+	template <typename T> requires (std::is_base_of<ygl::Serializable, T>())
 	void registerComponent() {
 		componentManager.registerComponent<T>();
 	}
@@ -531,5 +525,6 @@ class Scene {
 	}
 
 	void serialize(std::ostream &out);
+	void deserialize(std::istream &in);
 };
 }	  // namespace ygl

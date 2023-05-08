@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <istream>
 #include <vector>
 #include <functional>
 #include <shader.h>
@@ -93,12 +94,14 @@ class BloomEffect : public IScreenEffect {
 	~BloomEffect();
 };
 
-struct RendererComponent {
+struct RendererComponent : ygl::ISerializable<ygl::RendererComponent>{
 	uint shaderIndex;
 	uint meshIndex;
 	uint materialIndex;
 	RendererComponent() : shaderIndex(-1), meshIndex(-1), materialIndex(-1) {}
 	RendererComponent(uint shaderIndex, uint meshIndex, uint materialIndex);
+	void serialize(std::ostream &out);
+	void deserialize(std::istream &in);
 };
 
 class Renderer : public ygl::ISystem {

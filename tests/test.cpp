@@ -99,10 +99,12 @@ TEST_CASE("Scene Serialization") {
 	ygl::Scene scene;
 
 	scene.registerSystem<Translator>();
+	scene.registerComponent<ygl::RendererComponent>();
 
 	ygl::Entity e;
 	e = scene.createEntity();
 	scene.addComponent(e, ygl::Transformation());
+	scene.addComponent(e, ygl::RendererComponent());
 	
 	e = scene.createEntity();
 	scene.addComponent(e, ygl::Transformation(glm::vec3(1.)));

@@ -159,6 +159,12 @@ void ygl::BloomEffect::apply(FrameBuffer *front, FrameBuffer *back) {
 ygl::RendererComponent::RendererComponent(unsigned int shaderIndex, unsigned int meshIndex, unsigned int materialIndex)
 	: shaderIndex(shaderIndex), meshIndex(meshIndex), materialIndex(materialIndex) {}
 
+void ygl::RendererComponent::serialize(std::ostream &out) {
+	out << shaderIndex << " " << meshIndex << " " << materialIndex;
+}
+
+void ygl::RendererComponent::deserialize(std::istream &in) { in >> shaderIndex >> meshIndex >> materialIndex; }
+
 void ygl::Renderer::init() {
 	GLint texture_units;
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);

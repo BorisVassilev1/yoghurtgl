@@ -67,6 +67,7 @@ void ygl::Scene::serialize(std::ostream &out) {
 		Signature s = this->getSignature(e);
 		out << e << "{";
 		for(uint i = 0; i < componentManager.getComponentsCount(); ++ i) {
+			if(!s[i]) continue;
 			IComponentArray * array = this->componentManager.getComponentArray(ComponentType(i));
 			std::cout << i << std::endl;
 			array->writeComponent(e, out);
@@ -76,4 +77,8 @@ void ygl::Scene::serialize(std::ostream &out) {
 	out << "}\n";
 	out << "}\n";
 	out << std::flush;
+}
+
+void ygl::Scene::deserialize(std::istream &in) {
+	static_cast<void>(in);
 }

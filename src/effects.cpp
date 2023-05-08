@@ -31,6 +31,14 @@ void ygl::GrassSystem::GrassBladeMesh::setBladeCount(GLuint bladeCount) {
 
 ygl::GrassSystem::GrassBladeMesh::~GrassBladeMesh() { glDeleteBuffers(1, &grassData); }
 
+void ygl::GrassSystem::GrassHolder::serialize(std::ostream &out) {
+	static_cast<void>(out);
+}
+
+void ygl::GrassSystem::GrassHolder::deserialize(std::istream &in) {
+	static_cast<void>(in);
+}
+
 void ygl::GrassSystem::init() {
 	reload();
 	bladeMesh = new GrassBladeMesh(bladeCount);
@@ -88,5 +96,6 @@ void ygl::GrassSystem::reload() {
 void ygl::GrassSystem::doWork() { this->update((float)scene->window->globalTime); }
 
 std::ostream &ygl::operator<<(std::ostream &out, const ygl::GrassSystem::GrassHolder &rhs) {
+	static_cast<void>(rhs);
 	return out << "GrassHolder";
 }
