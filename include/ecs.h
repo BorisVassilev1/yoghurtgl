@@ -251,11 +251,12 @@ class ComponentManager {
 	}
 
 	void writeComponentTypes(std::ostream &out) {
-		out << "Components: {\n";
+		auto size = this->componentTypes.size();
+		out.write((char *)&size, sizeof(size));
 		for (auto &t : this->componentTypes) {
-			out << t.first << ',' << (int)t.second << std::endl;
+			out.write(t.first, strlen(t.first) + 1);
+			out.write((char *)&t.second, sizeof(ComponentType));
 		}
-		out << "}\n";
 	}
 
 	uint getComponentsCount() { return componentTypeCounter; }
@@ -331,11 +332,12 @@ class SystemManager {
 	}
 
 	void writeSystems(std::ostream &out) {
-		out << "Systems: {\n";
+		auto size = this->systems.size();
+		out.write((char *)&size, sizeof(size));
 		for (auto &t : this->systems) {
-			out << t.first << ',' << t.second << ',' << this->signatures[t.first] << '\n';
+			out.write(t.first, strlen(t.first) + 1);
+			// TODO: t.second.serialize(out);
 		}
-		out << "}\n";
 	}
 };
 
@@ -393,7 +395,8 @@ class Scene : public ygl::ISerializable<Scene> {
 	 *
 	 * @tparam T Component data type
 	 */
-	template <typename T> requires (std::is_base_of<ygl::Serializable, T>())
+	template <typename T>
+		requires(std::is_base_of<ygl::Serializable, T>())
 	void registerComponent() {
 		componentManager.registerComponent<T>();
 	}

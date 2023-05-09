@@ -94,7 +94,7 @@ class BloomEffect : public IScreenEffect {
 	~BloomEffect();
 };
 
-struct RendererComponent : ygl::ISerializable<ygl::RendererComponent>{
+struct RendererComponent : ygl::ISerializable<ygl::RendererComponent> {
 	uint shaderIndex;
 	uint meshIndex;
 	uint materialIndex;
@@ -102,6 +102,7 @@ struct RendererComponent : ygl::ISerializable<ygl::RendererComponent>{
 	RendererComponent(uint shaderIndex, uint meshIndex, uint materialIndex);
 	void serialize(std::ostream &out);
 	void deserialize(std::istream &in);
+	bool operator==(const RendererComponent &other);
 };
 
 class Renderer : public ygl::ISystem {

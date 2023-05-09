@@ -160,10 +160,21 @@ ygl::RendererComponent::RendererComponent(unsigned int shaderIndex, unsigned int
 	: shaderIndex(shaderIndex), meshIndex(meshIndex), materialIndex(materialIndex) {}
 
 void ygl::RendererComponent::serialize(std::ostream &out) {
-	out << shaderIndex << " " << meshIndex << " " << materialIndex;
+	out.write((char *) (&this->shaderIndex), sizeof(uint));
+	out.write((char *) (&this->materialIndex), sizeof(uint));
+	out.write((char *) (&this->meshIndex), sizeof(uint));
 }
 
-void ygl::RendererComponent::deserialize(std::istream &in) { in >> shaderIndex >> meshIndex >> materialIndex; }
+void ygl::RendererComponent::deserialize(std::istream &in) {
+	in.read((char *) (&this->shaderIndex), sizeof(uint));
+	in.read((char *) (&this->materialIndex), sizeof(uint));
+	in.read((char *) (&this->meshIndex), sizeof(uint));
+} 
+
+bool ygl::RendererComponent::operator==(const RendererComponent &other) {
+	return this->shaderIndex == other.shaderIndex && this->materialIndex == other.materialIndex &&
+		   this->meshIndex == other.meshIndex;
+}
 
 void ygl::Renderer::init() {
 	GLint texture_units;

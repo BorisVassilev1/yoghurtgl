@@ -1,5 +1,7 @@
 #include <transformation.h>
 #include <glm/gtx/matrix_decompose.hpp>
+#include <glm/fwd.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 ygl::Transformation::Transformation() : Transformation(glm::vec3(0), glm::vec3(0), glm::vec3(1)) {}
 
@@ -107,9 +109,11 @@ bool ygl::Transformation::operator==(const ygl::Transformation &other) {
 }
 
 void ygl::Transformation::deserialize(std::istream &in) {
-	static_cast<void>(in);
+	in.read((char*)glm::value_ptr(this->worldMatrix), sizeof(glm::mat4x4));
+	updateVectors();
 }
 
 void ygl::Transformation::serialize(std::ostream &out) {
-	out << *this;
+	updateWorldMatrix();
+	out.write((char*)glm::value_ptr(this->worldMatrix), sizeof(glm::mat4x4));
 }
