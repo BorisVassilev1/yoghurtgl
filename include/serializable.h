@@ -13,13 +13,13 @@ class Serializable {
 };
 
 class SerializableFactory {
-	using SerializableConstructor = std::function<Serializable *(std::istream &)>;
+	using SerializableConstructor = std::function<void(std::istream &, ygl::Serializable *)>;
 
 	static std::map<std::string, SerializableConstructor> fabricators;
 
    public:
-	static Serializable *makeSerializable(const std::string &name, std::istream &in);
-	static void			 registerSerializable(const std::string &name, SerializableConstructor f);
+	static void makeSerializable(const std::string &name, std::istream &in, ygl::Serializable *res);
+	static void registerSerializable(const std::string &name, SerializableConstructor f);
 };
 
 template <class Child>
@@ -29,11 +29,8 @@ class ISerializable : public Serializable {
    public:
 	ISerializable<Child>() {
 		if (!ISerializable<Child>::registered)
-			SerializableFactory::registerSerializable(typeid(Child).name(), [](std::istream &in) -> Serializable * {
-				Child *res = new Child();
-				res->deserialize(in);
-				return res;
-			});
+			SerializableFactory::registerSerializable(
+				typeid(Child).name(), [](std::istream &in, Serializable *res) -> void { ((Child *)res)->deserialize(in); });
 		ISerializable<Child>::registered = true;
 	}
 };

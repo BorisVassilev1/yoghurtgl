@@ -1,12 +1,12 @@
 #include <serializable.h>
 #include <istream>
 #include <typeinfo>
-
+#include "ecs.h"
 
 auto ygl::SerializableFactory::fabricators = std::map<std::string, ygl::SerializableFactory::SerializableConstructor>();
 
-ygl::Serializable *ygl::SerializableFactory::makeSerializable(const std::string &name, std::istream &in) {
-	return fabricators[name](in);
+void ygl::SerializableFactory::makeSerializable(const std::string &name, std::istream &in, Serializable *res) {
+	return fabricators[name](in, res);
 }
 
 void ygl::SerializableFactory::registerSerializable(const std::string								 &name,

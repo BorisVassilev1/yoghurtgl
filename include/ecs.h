@@ -44,6 +44,7 @@ class EntityManager {
 	EntityManager();
 
 	Entity	  createEntity();
+	void	  createEntity(Entity e);
 	void	  destroyEntity(Entity);
 	Signature getSignature(Entity);
 	void	  setSignature(Entity, Signature);
@@ -61,8 +62,9 @@ class IComponentArray {
 	 *
 	 * @param e
 	 */
-	virtual void deleteEntity(Entity e)						 = 0;
-	virtual void writeComponent(Entity e, std::ostream &out) = 0;
+	virtual void		  deleteEntity(Entity e)					  = 0;
+	virtual void		  writeComponent(Entity e, std::ostream &out) = 0;
+	virtual Serializable &readComponent(Entity e, std::istream &in)	  = 0;
 	virtual ~IComponentArray() {}
 };
 
@@ -165,12 +167,20 @@ class ComponentArray : public IComponentArray {
 		return components[entityToIndexMap[e]];
 	}
 
-	void writeComponent(Entity e, std::ostream &out) override;
+	void		  writeComponent(Entity e, std::ostream &out) override;
+	Serializable &readComponent(Entity e, std::istream &in) override;
 };
 
 template <typename T>
 void ComponentArray<T>::writeComponent(Entity e, std::ostream &out) {
 	getComponent(e).serialize(out);
+}
+
+template <typename T>
+Serializable &ComponentArray<T>::readComponent(Entity e, std::istream &in) {
+	Serializable &res = this->addComponent(e, T());
+	((T *)&res)->deserialize(in);
+	return res;
 }
 
 class ComponentManager {
@@ -358,6 +368,8 @@ class Scene : public ygl::ISerializable<Scene> {
 	ygl::Window		 *window;
 	std::set<Entity>  entities;
 	ygl::AssetManager assetManager;
+
+	void createEntity(Entity e) { entityManager.createEntity(e); }
 
 	/**
 	 * @brief Construct an empty Scene

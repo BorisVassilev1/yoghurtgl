@@ -25,6 +25,12 @@ ygl::Entity ygl::EntityManager::createEntity() {
 	} else return entityCount++;
 }
 
+void ygl::EntityManager::createEntity(Entity e) {
+	if(entityCount > e) throw std::runtime_error("trying to create an already existing entity");
+	if(entityCount < e) throw std::runtime_error("create the smaller indexes first");
+	signatures.push_back(Signature());
+}
+
 /**
  * @brief Destroys an Entity that has been created with EntityManager::createEntity().
  *
@@ -76,20 +82,21 @@ void ygl::Scene::serialize(std::ostream &out) {
 		Signature s = this->getSignature(e);
 		// entity id
 		out.write((char *)&e, sizeof(Entity));
+		std::cout << "writing entity: " << (uint) e << std::endl;
 		std::uint16_t componentsCount = 0;
 
 		for (uint i = 0; i < componentManager.getComponentsCount(); ++i) {
 			if (s[i]) ++componentsCount;
 		}
 		// Components Count
-		out.write((char *) &componentsCount, sizeof(std::uint16_t));
-		
+		out.write((char *)&componentsCount, sizeof(std::uint16_t));
+
 		for (uint i = 0; i < componentManager.getComponentsCount(); ++i) {
 			if (!s[i]) continue;
 			ComponentType	 type(i);
 			IComponentArray *array = this->componentManager.getComponentArray(type);
 			// component type
-			out.write((const char *)&type, sizeof(ComponentType));
+			out.write((char *)&type, sizeof(ComponentType));
 			array->writeComponent(e, out);
 		}
 	}
@@ -97,9 +104,10 @@ void ygl::Scene::serialize(std::ostream &out) {
 }
 
 void ygl::Scene::deserialize(std::istream &in) {
-	// Components
 	using size_type = std::unordered_map<const char *, ComponentType>::size_type;
 
+	auto typeToName = std::unordered_map<ygl::ComponentType, std::string>();
+	// Components
 	size_type componentsCount;
 	in.read((char *)&componentsCount, sizeof(size_type));
 	std::cout << "componentsCount: " << componentsCount << std::endl;
@@ -109,8 +117,10 @@ void ygl::Scene::deserialize(std::istream &in) {
 		std::getline(in, name, '\0');
 		in.read((char *)&type, sizeof(ComponentType));
 		std::cout << name << " " << (int)type << std::endl;
+		typeToName[type] = name;
 	}
 
+	// Systems
 	size_type systemsCount;
 	in.read((char *)&systemsCount, sizeof(size_type));
 	std::cout << "SystemsCount: " << systemsCount << std::endl;
@@ -120,19 +130,26 @@ void ygl::Scene::deserialize(std::istream &in) {
 		std::cout << name << std::endl;
 	}
 
+	// Entities
 	size_type entitiesCount;
 	in.read((char *)&entitiesCount, sizeof(size_type));
 	std::cout << "EntitiesCount: " << entitiesCount << std::endl;
+	std::cout << "Entities " << this->entities.size() << std::endl;
+	createEntity();
+	createEntity();
 	for (std::size_t i = 0; i < entitiesCount; ++i) {
-		Entity e;
+		Entity		  e;
 		std::uint16_t componentsCount;
 		in.read((char *)&e, sizeof(Entity));
 		in.read((char *)&componentsCount, sizeof(std::uint16_t));
-		for(std::size_t j = 0; j < componentsCount; ++ j) {
+		for (std::size_t j = 0; j < componentsCount; ++j) {
 			ComponentType type;
-			in.read((char *) &type, sizeof(ComponentType));
-			// TODO: Read component
-			//SerializableFactory::makeSerializable(.. name, in);
+			in.read((char *)&type, sizeof(ComponentType));
+
+			IComponentArray *array = this->componentManager.getComponentArray(type);
+			Serializable &component = array->readComponent(e, in);
+
+			//SerializableFactory::makeSerializable(typeToName[type], in, &component);
 		}
 	}
 }

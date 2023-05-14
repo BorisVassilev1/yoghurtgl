@@ -128,6 +128,10 @@ TEST_CASE("Serialization") {
 		scene.serialize(ss);
 
 		ygl::Scene other;
+		other.registerComponent<ygl::Transformation>();
+		other.registerComponent<ygl::RendererComponent>();
 		other.deserialize(ss);
+
+		//assert(scene == other);
 	}
 }
