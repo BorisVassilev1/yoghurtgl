@@ -60,6 +60,7 @@ target_link_options(YoghurtGL PRIVATE ${LINK_ARGS})
 
 set_target_properties(YoghurtGL PROPERTIES PUBLIC_HEADER include/)
 set_target_properties(YoghurtGL PROPERTIES LIBRARY_OUTPUT_DIRECTORY ../)
+set_target_properties(YoghurtGL PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../)
 
 file(GLOB_RECURSE TARGET_FILES examples/*.cpp)
 
@@ -79,10 +80,11 @@ endforeach(CURR_FILE ${TARGET_FILES})
 
 add_executable(testExec tests/test.cpp)
 set_target_properties(testExec PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../)
-target_link_libraries(testExec PRIVATE YoghurtGL)
+target_link_libraries(testExec PUBLIC YoghurtGL)
 target_include_directories(testExec PUBLIC ${DOCTEST_INCLUDE_DIR})
 target_link_options(testExec PRIVATE ${COMPILE_ARGS})
 target_link_options(testExec PRIVATE ${LINK_ARGS})
+add_dependencies(testExec YoghurtGL)
 
 include(CTest)
 enable_testing()

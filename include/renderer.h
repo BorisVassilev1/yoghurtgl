@@ -94,7 +94,7 @@ class BloomEffect : public IScreenEffect {
 	~BloomEffect();
 };
 
-struct RendererComponent : ygl::ISerializable<ygl::RendererComponent> {
+struct RendererComponent : ygl::Serializable {
 	uint shaderIndex;
 	uint meshIndex;
 	uint materialIndex;
@@ -171,6 +171,9 @@ class Renderer : public ygl::ISystem {
 
 	static GLuint loadMaterials(int count, Material *materials);
 	static GLuint loadLights(int count, Light *materials);
+
+	void serialize(std::ostream &out) override { static_cast<void>(out); }
+	void deserialize(std::istream &in) override { static_cast<void>(in); }
 };
 
 std::ostream &operator<<(std::ostream &out, const ygl::RendererComponent &rhs);

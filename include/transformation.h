@@ -6,7 +6,7 @@
 #include <serializable.h>
 
 namespace ygl {
-class Transformation : public ygl::ISerializable<Transformation> {
+class Transformation : public ygl::Serializable {
 	glm::mat4x4 worldMatrix;
 
    public:

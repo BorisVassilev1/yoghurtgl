@@ -76,6 +76,7 @@ class IComponentArray {
 template <class T>
 class ComponentArray : public IComponentArray {
 	std::vector<T> components;
+	const char *type_name;
 
 	std::unordered_map<Entity, size_t> entityToIndexMap;
 	std::unordered_map<size_t, Entity> indexToEntityMap;
@@ -85,7 +86,7 @@ class ComponentArray : public IComponentArray {
 	 * @brief Construct a new Component Array object.
 	 *
 	 */
-	ComponentArray() {}
+	ComponentArray() { type_name = typeid(T).name(); }
 
 	/**
 	 * @brief How many entities is the ComponentArray storing data.
@@ -270,9 +271,13 @@ class ComponentManager {
 	}
 
 	uint getComponentsCount() { return componentTypeCounter; }
+
+	const auto &getComponentTypes() {
+		return componentTypes;
+	}
 };
 
-class ISystem {
+class ISystem : public ISerializable {
    public:
 	std::set<Entity> entities;
 	Scene			*scene = nullptr;
@@ -309,6 +314,13 @@ class SystemManager {
 		assert(systems.find(type) != systems.end() && "system type has not been registered");
 
 		return (T *)(systems[type]);
+	}
+
+	ISystem *getSystem(const std::string &name) {
+		for(const auto &pair : systems) {
+			if(pair.first == name) return pair.second;
+		}
+		return nullptr;
 	}
 
 	template <class T>
@@ -359,7 +371,7 @@ class SystemManager {
  * This type of Scene is modeled after Unity3D's ECS model
  *
  */
-class Scene : public ygl::ISerializable<Scene> {
+class Scene : public ygl::Serializable {
 	ComponentManager componentManager;
 	EntityManager	 entityManager;
 	SystemManager	 systemManager;
@@ -408,7 +420,7 @@ class Scene : public ygl::ISerializable<Scene> {
 	 * @tparam T Component data type
 	 */
 	template <typename T>
-		requires(std::is_base_of<ygl::Serializable, T>())
+		requires(std::is_base_of<ygl::Serializable, T>::value)
 	void registerComponent() {
 		componentManager.registerComponent<T>();
 	}
@@ -501,6 +513,16 @@ class Scene : public ygl::ISerializable<Scene> {
 	template <class T>
 	T *getSystem() {
 		return systemManager.getSystem<T>();
+	}
+
+	/**
+	 * @brief Get a System object if a System of that type exists.
+	 * 
+	 * @param name - typeid().name() of the system type
+	 * @return ISystem* - the system or nullptr if it os not found
+	 */
+	ISystem *getSystem(const std::string &name) {
+		return systemManager.getSystem(name);
 	}
 
 	/**

@@ -24,6 +24,9 @@ target_include_directories("ImGui" PUBLIC ${IMGUI_PATH})
 target_include_directories("ImGui" PUBLIC ${IMGUI_PATH}/backends/)
 target_include_directories("ImGui" PUBLIC glfw/include)
 target_link_directories("ImGui" PUBLIC glfw/src)
+target_link_libraries("ImGui" PUBLIC glfw)
+set_target_properties("ImGui" PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../)
+
 
 # ImGuizmo target
 set(IMGUIZMO_PATH "./ImGuizmo")
@@ -31,5 +34,10 @@ file(GLOB IMGUIZMO_SOURCES ${IMGUIZMO_PATH}/*.cpp)
 add_library("ImGuizmo" SHARED ${IMGUIZMO_SOURCES})
 target_include_directories("ImGuizmo" PUBLIC ${IMGUIZMO_PATH})
 target_link_libraries("ImGuizmo" PUBLIC "ImGui")
+set_target_properties("ImGuizmo" PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../)
 
 set(DOCTEST_INCLUDE_DIR ./libs/doctest/doctest/ CACHE INTERNAL "Path to include folder for doctest")
+
+set_target_properties(assimp PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../../../)
+set_target_properties(glfw PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../)
+set_target_properties(libglew_shared PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../../)

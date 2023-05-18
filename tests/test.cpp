@@ -63,6 +63,9 @@ class Translator : public ygl::ISystem {
 			t.position += glm::vec3(1.);
 		}
 	}
+
+	void serialize(std::ostream &out) override { static_cast<void>(out); }
+	void deserialize(std::istream &in) override { static_cast<void>(in); }
 };
 
 TEST_CASE("Scene System") {
@@ -97,12 +100,12 @@ TEST_CASE("Serialization") {
 
 		t.serialize(ss);
 		u.deserialize(ss);
-		
+
 		CHECK(t == u);
-		
+
 		ygl::RendererComponent r(1, 2, 3);
 		ygl::RendererComponent r1;
-		
+
 		ss.clear();
 		r.serialize(ss);
 		r1.deserialize(ss);
@@ -128,10 +131,10 @@ TEST_CASE("Serialization") {
 		scene.serialize(ss);
 
 		ygl::Scene other;
-		other.registerComponent<ygl::Transformation>();
 		other.registerComponent<ygl::RendererComponent>();
+		other.registerComponent<ygl::Transformation>();
 		other.deserialize(ss);
 
-		//assert(scene == other);
+		// assert(scene == other);
 	}
 }

@@ -26,8 +26,8 @@ ygl::Entity ygl::EntityManager::createEntity() {
 }
 
 void ygl::EntityManager::createEntity(Entity e) {
-	if(entityCount > e) throw std::runtime_error("trying to create an already existing entity");
-	if(entityCount < e) throw std::runtime_error("create the smaller indexes first");
+	if (entityCount > e) throw std::runtime_error("trying to create an already existing entity");
+	if (entityCount < e) throw std::runtime_error("create the smaller indexes first");
 	signatures.push_back(Signature());
 }
 
@@ -75,14 +75,17 @@ void ygl::Scene::serialize(std::ostream &out) {
 	// Systems
 	this->systemManager.writeSystems(out);
 	// Entities
-	auto size = this->entities.size();
-	out.write((char *)&size, sizeof(size));
+	auto entitiesCount = this->entities.size();
+	out.write((char *)&entitiesCount, sizeof(entitiesCount));
+
+	for (Entity e : this->entities) {
+		out.write((char *)&e, sizeof(Entity));
+	}
 
 	for (Entity e : this->entities) {
 		Signature s = this->getSignature(e);
 		// entity id
 		out.write((char *)&e, sizeof(Entity));
-		std::cout << "writing entity: " << (uint) e << std::endl;
 		std::uint16_t componentsCount = 0;
 
 		for (uint i = 0; i < componentManager.getComponentsCount(); ++i) {
@@ -106,50 +109,79 @@ void ygl::Scene::serialize(std::ostream &out) {
 void ygl::Scene::deserialize(std::istream &in) {
 	using size_type = std::unordered_map<const char *, ComponentType>::size_type;
 
+	auto nameToType = std::unordered_map<std::string, ygl::ComponentType>();
 	auto typeToName = std::unordered_map<ygl::ComponentType, std::string>();
+
 	// Components
 	size_type componentsCount;
 	in.read((char *)&componentsCount, sizeof(size_type));
-	std::cout << "componentsCount: " << componentsCount << std::endl;
 	for (std::size_t i = 0; i < componentsCount; ++i) {
 		std::string	  name;
 		ComponentType type;
 		std::getline(in, name, '\0');
 		in.read((char *)&type, sizeof(ComponentType));
-		std::cout << name << " " << (int)type << std::endl;
+
+		nameToType[name] = type;
 		typeToName[type] = name;
+	}
+
+	std::map<ygl::ComponentType, ygl::ComponentType> newComponentTypes;
+
+	{
+		// find how the scene being loaded's components map to the existing ones
+		const auto &componentTypes = componentManager.getComponentTypes();
+		for (const auto &pair : componentTypes) {
+			const char	 *type_name = pair.first;
+			ComponentType newType	= pair.second;
+
+			ComponentType type		= nameToType[type_name];
+			newComponentTypes[type] = newType;
+		}
 	}
 
 	// Systems
 	size_type systemsCount;
 	in.read((char *)&systemsCount, sizeof(size_type));
-	std::cout << "SystemsCount: " << systemsCount << std::endl;
 	for (std::size_t i = 0; i < systemsCount; ++i) {
 		std::string name;
 		std::getline(in, name, '\0');
+		getSystem(name);
 		std::cout << name << std::endl;
 	}
 
 	// Entities
 	size_type entitiesCount;
 	in.read((char *)&entitiesCount, sizeof(size_type));
-	std::cout << "EntitiesCount: " << entitiesCount << std::endl;
-	std::cout << "Entities " << this->entities.size() << std::endl;
-	createEntity();
-	createEntity();
+
+	// we need to create all entities in the loaded scene;
+	// they will have new ids
+	std::map<ygl::Entity, ygl::Entity> newIds;
+	for (std::size_t i = 0; i < entitiesCount; ++i) {
+		Entity e;
+		in.read((char *)&e, sizeof(Entity));
+
+		Entity newId = createEntity();
+		newIds[e]	 = newId;
+	}
+
 	for (std::size_t i = 0; i < entitiesCount; ++i) {
 		Entity		  e;
 		std::uint16_t componentsCount;
 		in.read((char *)&e, sizeof(Entity));
 		in.read((char *)&componentsCount, sizeof(std::uint16_t));
+
+		Entity result = newIds[e];
 		for (std::size_t j = 0; j < componentsCount; ++j) {
 			ComponentType type;
 			in.read((char *)&type, sizeof(ComponentType));
 
-			IComponentArray *array = this->componentManager.getComponentArray(type);
-			Serializable &component = array->readComponent(e, in);
+			auto typeSearch = newComponentTypes.find(type);
+			if (typeSearch == newComponentTypes.end())
+				throw std::runtime_error("component is not registered in the scene: " + typeToName[type]);
 
-			//SerializableFactory::makeSerializable(typeToName[type], in, &component);
+			ComponentType	 newType = typeSearch->second;
+			IComponentArray *array	 = this->componentManager.getComponentArray(newType);
+			array->readComponent(result, in);
 		}
 	}
 }

@@ -37,7 +37,7 @@ class GrassSystem : public ygl::ISystem {
 	unsigned int materialIndex = -1;
 
    public:
-	struct GrassHolder : public ygl::ISerializable<GrassHolder> {
+	struct GrassHolder : public ygl::Serializable {
 		void serialize(std::ostream &out);
 		void deserialize(std::istream &in);
 	};
@@ -52,6 +52,9 @@ class GrassSystem : public ygl::ISystem {
 	void render(float time);
 	void reload();
 	void doWork() override;
+
+	void serialize(std::ostream &out) override { static_cast<void>(out); }
+	void deserialize(std::istream &in) override { static_cast<void>(in); }
 };
 
 std::ostream &operator<<(std::ostream &out, const ygl::GrassSystem::GrassHolder &rhs);
