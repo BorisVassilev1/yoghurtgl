@@ -2,6 +2,7 @@
 
 #include <effects.h>
 #include <renderer.h>
+#include <stdexcept>
 
 ygl::GrassSystem::GrassBladeMesh::GrassBladeMesh(GLuint bladeCount) {
 	this->bladeCount = bladeCount;
@@ -41,6 +42,8 @@ void ygl::GrassSystem::GrassHolder::deserialize(std::istream &in) {
 
 void ygl::GrassSystem::init() {
 	reload();
+	if(!scene->hasSystem<Renderer>()) throw std::runtime_error("Renderer system must be registered in the scene.");
+
 	bladeMesh = new GrassBladeMesh(bladeCount);
 
 	materialIndex = scene->getSystem<Renderer>()->addMaterial(

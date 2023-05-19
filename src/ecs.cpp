@@ -145,7 +145,10 @@ void ygl::Scene::deserialize(std::istream &in) {
 	for (std::size_t i = 0; i < systemsCount; ++i) {
 		std::string name;
 		std::getline(in, name, '\0');
-		getSystem(name);
+		ISystem *system = getSystem(name);
+		if (system == nullptr)
+			throw std::runtime_error("trying to load a system that has not been registered: " + name);
+		system->deserialize(in);
 		std::cout << name << std::endl;
 	}
 

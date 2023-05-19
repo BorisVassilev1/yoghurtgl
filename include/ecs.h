@@ -323,6 +323,11 @@ class SystemManager {
 		return nullptr;
 	}
 
+	template<class T>
+	bool hasSystem() {
+		return systems.find(typeid(T).name()) != systems.end();
+	}
+
 	template <class T>
 	void setSignature(Signature signature) {
 		const char *type = typeid(T).name();
@@ -358,7 +363,7 @@ class SystemManager {
 		out.write((char *)&size, sizeof(size));
 		for (auto &t : this->systems) {
 			out.write(t.first, strlen(t.first) + 1);
-			// TODO: t.second.serialize(out);
+			t.second->serialize(out);
 		}
 	}
 };
@@ -523,6 +528,11 @@ class Scene : public ygl::Serializable {
 	 */
 	ISystem *getSystem(const std::string &name) {
 		return systemManager.getSystem(name);
+	}
+
+	template<class T>
+	bool hasSystem() {
+		return systemManager.hasSystem<T>();
 	}
 
 	/**
