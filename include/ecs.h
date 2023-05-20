@@ -10,12 +10,12 @@
 #include <queue>
 #include <unordered_map>
 #include <typeinfo>
-#include <assert.h>
 #include <iostream>
 #include <set>
 #include <window.h>
 #include <importer.h>
 #include <serializable.h>
+#include <transformation.h>
 
 namespace ygl {
 
@@ -26,10 +26,24 @@ typedef std::bitset<MAX_COMPONENTS> Signature;
 typedef uint8_t						ComponentType;
 
 class EntityManager;
+
 template <class T>
+concept IsNamed = requires(T) {
+	{ T::name } -> std::convertible_to<const char *>;
+};
+
+template <class T>
+concept IsComponent = std::is_base_of<ygl::Serializable, T>::value && IsNamed<T>;
+
+class ISystem;
+
+template <class T>
+concept IsSystem = std::is_base_of<ygl::ISystem, T>::value && IsNamed<T>;
+
+template <class T>
+	requires IsComponent<T>
 class ComponentArray;
 class ComponentManager;
-class ISystem;
 class Scene;
 
 /**
@@ -74,9 +88,10 @@ class IComponentArray {
  * @tparam T Type of the component data stored
  */
 template <class T>
+	requires IsComponent<T>
 class ComponentArray : public IComponentArray {
 	std::vector<T> components;
-	const char *type_name;
+	const char	  *type_name;
 
 	std::unordered_map<Entity, size_t> entityToIndexMap;
 	std::unordered_map<size_t, Entity> indexToEntityMap;
@@ -86,7 +101,7 @@ class ComponentArray : public IComponentArray {
 	 * @brief Construct a new Component Array object.
 	 *
 	 */
-	ComponentArray() { type_name = typeid(T).name(); }
+	ComponentArray() { type_name = T::name; }
 
 	/**
 	 * @brief How many entities is the ComponentArray storing data.
@@ -168,21 +183,13 @@ class ComponentArray : public IComponentArray {
 		return components[entityToIndexMap[e]];
 	}
 
-	void		  writeComponent(Entity e, std::ostream &out) override;
-	Serializable &readComponent(Entity e, std::istream &in) override;
+	void		  writeComponent(Entity e, std::ostream &out) override { getComponent(e).serialize(out); }
+	Serializable &readComponent(Entity e, std::istream &in) override {
+		Serializable &res = this->addComponent(e, T());
+		((T *)&res)->deserialize(in);
+		return res;
+	}
 };
-
-template <typename T>
-void ComponentArray<T>::writeComponent(Entity e, std::ostream &out) {
-	getComponent(e).serialize(out);
-}
-
-template <typename T>
-Serializable &ComponentArray<T>::readComponent(Entity e, std::istream &in) {
-	Serializable &res = this->addComponent(e, T());
-	((T *)&res)->deserialize(in);
-	return res;
-}
 
 class ComponentManager {
 	std::unordered_map<const char *, ComponentType>		 componentTypes;
@@ -199,8 +206,9 @@ class ComponentManager {
 	}
 
 	template <typename T>
+		requires IsComponent<T>
 	void registerComponent() {
-		const char *typeName = typeid(T).name();
+		const char *typeName = T::name;
 		if (componentTypes.find(typeName) != componentTypes.end()) {
 			throw std::runtime_error("component already registered");
 		}
@@ -211,31 +219,36 @@ class ComponentManager {
 
 	template <typename T>
 	bool isComponentRegistered() {
-		const char *typeName = typeid(T).name();
-		return componentTypes.find(typeName) != componentTypes.end();
+		const char *typeName = T::name;
+		bool res = componentTypes.find(typeName) != componentTypes.end();
+		return res;
 	}
 
 	template <typename T>
 	ComponentType getComponentType() {
-		const char *typeName = typeid(T).name();
-		assert(componentTypes.find(typeName) != componentTypes.end() && "component has not been registered");
+		const char *typeName = T::name;
+		if (!isComponentRegistered<T>())
+			throw std::runtime_error("component has not been registered: " + std::string(typeName));
 		return componentTypes[typeName];
 	}
 
 	template <typename T>
 	ComponentArray<T> *getComponentArray() {
-		const char	 *typeName = typeid(T).name();
+		const char	 *typeName = T::name;
 		ComponentType type	   = componentTypes[typeName];
-		assert(componentArrays.find(type) != componentArrays.end() && "component has not been registered");
+		if(componentArrays.find(type) == componentArrays.end())
+			throw std::runtime_error("component has not been registered: " + std::string(typeName));
 		return static_cast<ComponentArray<T> *>(componentArrays[type]);
 	}
 
 	IComponentArray *getComponentArray(ComponentType t) {
-		assert(componentArrays.find(t) != componentArrays.end());
+		if(componentArrays.find(t) == componentArrays.end())
+			throw std::runtime_error("no component has that id: " + std::to_string(t));
 		return componentArrays[t];
 	}
 
 	template <typename T>
+		requires IsComponent<T>
 	T &getComponent(Entity e) {
 		return this->getComponentArray<T>()->getComponent(e);
 	}
@@ -272,9 +285,7 @@ class ComponentManager {
 
 	uint getComponentsCount() { return componentTypeCounter; }
 
-	const auto &getComponentTypes() {
-		return componentTypes;
-	}
+	const auto &getComponentTypes() { return componentTypes; }
 };
 
 class ISystem : public ISerializable {
@@ -296,11 +307,12 @@ class SystemManager {
 
    public:
 	template <class T, typename... Args>
-		requires std::is_base_of<ISystem, T>::value
+		requires IsSystem<T>
 	T *registerSystem(Scene *scene, Args &&...args) {
-		const char *type = typeid(T).name();
+		const char *type = T::name;
 
-		assert(systems.find(type) == systems.end() && "system type already registered");
+		if(systems.find(type) != systems.end())
+			throw std::runtime_error("system already registered");
 
 		T *sys = new T(scene, args...);
 		systems.insert({type, sys});
@@ -308,31 +320,35 @@ class SystemManager {
 	}
 
 	template <class T>
+		requires IsSystem<T>
 	T *getSystem() {
-		const char *type = typeid(T).name();
+		const char *type = T::name;
 
-		assert(systems.find(type) != systems.end() && "system type has not been registered");
+		if(systems.find(type) == systems.end())
+			throw std::runtime_error("system type has not been registered");
 
 		return (T *)(systems[type]);
 	}
 
 	ISystem *getSystem(const std::string &name) {
-		for(const auto &pair : systems) {
-			if(pair.first == name) return pair.second;
+		for (const auto &pair : systems) {
+			if (pair.first == name) return pair.second;
 		}
 		return nullptr;
 	}
 
-	template<class T>
+	template <class T>
+		requires IsSystem<T>
 	bool hasSystem() {
-		return systems.find(typeid(T).name()) != systems.end();
+		return systems.find(T::name) != systems.end();
 	}
 
 	template <class T>
+		requires IsSystem<T>
 	void setSignature(Signature signature) {
-		const char *type = typeid(T).name();
-		assert(systems.find(type) != systems.end() && "System not registered");
-
+		const char *type = T::name;
+		if (systems.find(type) == systems.end())
+			throw std::runtime_error("System not registered: " + std::string(type));
 		signatures[type] = signature;
 	}
 
@@ -382,7 +398,6 @@ class Scene : public ygl::Serializable {
 	SystemManager	 systemManager;
 
    public:
-	ygl::Window		 *window;
 	std::set<Entity>  entities;
 	ygl::AssetManager assetManager;
 
@@ -393,8 +408,7 @@ class Scene : public ygl::Serializable {
 	 *
 	 * @param window a window for the scene to be attached to
 	 */
-	Scene(ygl::Window *window) : window(window) {}
-	Scene() : window(nullptr) {}
+	Scene() {}
 
 	/**
 	 * @brief Create an Entity.
@@ -425,7 +439,7 @@ class Scene : public ygl::Serializable {
 	 * @tparam T Component data type
 	 */
 	template <typename T>
-		requires(std::is_base_of<ygl::Serializable, T>::value)
+		requires IsComponent<T>
 	void registerComponent() {
 		componentManager.registerComponent<T>();
 	}
@@ -522,15 +536,14 @@ class Scene : public ygl::Serializable {
 
 	/**
 	 * @brief Get a System object if a System of that type exists.
-	 * 
+	 *
 	 * @param name - typeid().name() of the system type
 	 * @return ISystem* - the system or nullptr if it os not found
 	 */
-	ISystem *getSystem(const std::string &name) {
-		return systemManager.getSystem(name);
-	}
+	ISystem *getSystem(const std::string &name) { return systemManager.getSystem(name); }
 
-	template<class T>
+	template <class T>
+		requires IsSystem<T>
 	bool hasSystem() {
 		return systemManager.hasSystem<T>();
 	}
@@ -543,6 +556,7 @@ class Scene : public ygl::Serializable {
 	 * @return a reference to the component
 	 */
 	template <typename T>
+		requires IsComponent<T>
 	T &getComponent(Entity e) {
 		return componentManager.getComponent<T>(e);
 	}

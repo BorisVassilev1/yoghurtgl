@@ -117,3 +117,5 @@ void ygl::Transformation::serialize(std::ostream &out) {
 	updateWorldMatrix();
 	out.write((char*)glm::value_ptr(this->worldMatrix), sizeof(glm::mat4x4));
 }
+
+const char *ygl::Transformation::name = "ygl::Transformation";

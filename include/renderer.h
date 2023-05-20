@@ -11,6 +11,7 @@
 #include <texture.h>
 #include <material.h>
 #include <ostream>
+#include "imgui.h"
 
 namespace ygl {
 
@@ -95,9 +96,10 @@ class BloomEffect : public IScreenEffect {
 };
 
 struct RendererComponent : ygl::Serializable {
-	uint shaderIndex;
-	uint meshIndex;
-	uint materialIndex;
+	static const char *name;
+	uint						 shaderIndex;
+	uint						 meshIndex;
+	uint						 materialIndex;
 	RendererComponent() : shaderIndex(-1), meshIndex(-1), materialIndex(-1) {}
 	RendererComponent(uint shaderIndex, uint meshIndex, uint materialIndex);
 	void serialize(std::ostream &out);
@@ -123,17 +125,17 @@ class Renderer : public ygl::ISystem {
 	glm::vec4	 clearColor = glm::vec4(0, 0, 0, 1);
 
 	std::vector<std::function<void()> > drawFunctions;
+	Window							   *window = nullptr;
 
-   public:
-	std::vector<IScreenEffect *> effects;
-
-   private:
 	void drawScene();
 	void colorPass();
 	void effectsPass();
 
    public:
-	using ISystem::ISystem;
+	std::vector<IScreenEffect *>	   effects;
+	static const char *name;
+
+	Renderer(Scene *scene, Window *window) : ISystem(scene), window(window) {}
 	void init() override;
 
 	Shader	 *getShader(RendererComponent &);
@@ -171,6 +173,8 @@ class Renderer : public ygl::ISystem {
 
 	static GLuint loadMaterials(int count, Material *materials);
 	static GLuint loadLights(int count, Light *materials);
+
+	Window *getWindow() { return window; }
 
 	void serialize(std::ostream &out) override { static_cast<void>(out); }
 	void deserialize(std::istream &in) override { static_cast<void>(in); }

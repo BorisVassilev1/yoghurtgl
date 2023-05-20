@@ -37,13 +37,17 @@ class GrassSystem : public ygl::ISystem {
 	unsigned int materialIndex = -1;
 
    public:
+	static const char *name;
 	struct GrassHolder : public ygl::Serializable {
+		static const char *name;
+
 		void serialize(std::ostream &out);
 		void deserialize(std::istream &in);
 	};
 
 	glm::vec2 size	  = glm::vec2(40, 40);
 	float	  density = 3;
+	Window	 *window;
 
 	using ISystem::ISystem;
 	void init() override;

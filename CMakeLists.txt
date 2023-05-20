@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.2.0)
 
 set(YGL_NO_ASSIMP OFF)
 set(CMAKE_CXX_STANDARD 20)
+set(YGL_STATIC ON CACHE BOOL "static libs")
 
 project(YoghurtGL)
 
@@ -43,7 +44,12 @@ endif (${YGL_NO_ASSIMP})
 file(GLOB_RECURSE YGL_SOURCES
 	./src/*.cpp
 )
-add_library(YoghurtGL SHARED ${YGL_SOURCES})
+if (${YGL_STATIC})
+	add_library(YoghurtGL STATIC ${YGL_SOURCES})
+else (${YGL_STATIC})
+	add_library(YoghurtGL SHARED ${YGL_SOURCES})
+endif (${YGL_STATIC})
+
 target_include_directories(YoghurtGL PUBLIC include)
 target_include_directories(YoghurtGL PUBLIC libs/glfw/include)
 target_include_directories(YoghurtGL PUBLIC libs/glm/)
@@ -52,7 +58,11 @@ target_include_directories(YoghurtGL PUBLIC libs/assimp/include)
 target_link_directories(YoghurtGL PUBLIC libs/glfw/src)
 target_link_libraries(YoghurtGL PUBLIC ImGui)
 target_link_libraries(YoghurtGL PUBLIC ${LIBS})
-target_link_libraries(YoghurtGL PUBLIC libglew_shared)
+if (${YGL_STATIC})
+	target_link_libraries(YoghurtGL PUBLIC libglew_static)
+else (${YGL_STATIC})
+	target_link_libraries(YoghurtGL PUBLIC libglew_shared)
+endif (${YGL_STATIC})
 target_link_libraries(YoghurtGL PUBLIC ImGuizmo)
 
 target_compile_options(YoghurtGL PRIVATE ${COMPILE_ARGS})

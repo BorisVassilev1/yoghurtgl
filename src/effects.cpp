@@ -32,17 +32,13 @@ void ygl::GrassSystem::GrassBladeMesh::setBladeCount(GLuint bladeCount) {
 
 ygl::GrassSystem::GrassBladeMesh::~GrassBladeMesh() { glDeleteBuffers(1, &grassData); }
 
-void ygl::GrassSystem::GrassHolder::serialize(std::ostream &out) {
-	static_cast<void>(out);
-}
+void ygl::GrassSystem::GrassHolder::serialize(std::ostream &out) { static_cast<void>(out); }
 
-void ygl::GrassSystem::GrassHolder::deserialize(std::istream &in) {
-	static_cast<void>(in);
-}
+void ygl::GrassSystem::GrassHolder::deserialize(std::istream &in) { static_cast<void>(in); }
 
 void ygl::GrassSystem::init() {
 	reload();
-	if(!scene->hasSystem<Renderer>()) throw std::runtime_error("Renderer system must be registered in the scene.");
+	if (!scene->hasSystem<Renderer>()) throw std::runtime_error("Renderer system must be registered in the scene.");
 
 	bladeMesh = new GrassBladeMesh(bladeCount);
 
@@ -56,7 +52,9 @@ void ygl::GrassSystem::init() {
 
 	scene->registerComponent<GrassHolder>();
 	scene->setSystemSignature<GrassSystem, Transformation, GrassHolder>();
-	scene->getSystem<Renderer>()->addDrawFunction([this]() -> void { render(this->scene->window->globalTime); });
+	Renderer *renderer = scene->getSystem<Renderer>();
+	this->window	   = renderer->getWindow();
+	renderer->addDrawFunction([this, renderer]() -> void { render(renderer->getWindow()->globalTime); });
 }
 
 ygl::GrassSystem::~GrassSystem() { delete bladeMesh; }
@@ -96,9 +94,12 @@ void ygl::GrassSystem::reload() {
 	if (bladeMesh != nullptr) { bladeMesh->setBladeCount(bladeCount); }
 }
 
-void ygl::GrassSystem::doWork() { this->update((float)scene->window->globalTime); }
+void ygl::GrassSystem::doWork() { this->update((float)window->globalTime); }
 
 std::ostream &ygl::operator<<(std::ostream &out, const ygl::GrassSystem::GrassHolder &rhs) {
 	static_cast<void>(rhs);
 	return out << "GrassHolder";
 }
+
+const char *ygl::GrassSystem::name			   = "ygl::GrassSystem";
+const char *ygl::GrassSystem::GrassHolder::name = "ygl::GrassSystem::GrassHolder";

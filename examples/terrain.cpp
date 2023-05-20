@@ -45,10 +45,10 @@ void run() {
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);
 
-	Scene scene(&window);
+	Scene scene;
 	scene.registerComponent<Transformation>();
 
-	Renderer *renderer = scene.registerSystem<Renderer>();
+	Renderer *renderer = scene.registerSystem<Renderer>(&window);
 
 	// Texture2d *height = new Texture2d("./res/images/heightmap.png");
 	// Texture2d *normal = new Texture2d("./res/images/NormalMap.png");

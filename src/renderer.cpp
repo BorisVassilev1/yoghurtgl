@@ -77,7 +77,7 @@ void ygl::ACESEffect::apply(FrameBuffer *front, FrameBuffer *back) {
 }
 
 ygl::BloomEffect::BloomEffect(Renderer *renderer) {
-	Window *window = renderer->scene->window;
+	Window *window = renderer->getWindow();
 	tex1		   = new Texture2d(window->getWidth(), window->getHeight());
 	tex2		   = new Texture2d(window->getWidth(), window->getHeight());
 
@@ -120,7 +120,7 @@ void ygl::BloomEffect::apply(FrameBuffer *front, FrameBuffer *back) {
 	front->getColor()->bindImage(1);
 	tex1->bindImage(0);
 	filterShader->bind();
-	Window *window = renderer->scene->window;
+	Window *window = renderer->getWindow();
 	Renderer::compute(filterShader, window->getWidth(), window->getHeight(), 1);
 	tex2->bindImage(1);
 
@@ -183,14 +183,15 @@ void ygl::Renderer::init() {
 		defaultTexture.bind(GL_TEXTURE0 + i);
 	}
 
-	uint16_t width = scene->window->getWidth(), height = scene->window->getHeight();
+	uint16_t width = window->getWidth(), height = window->getHeight();
 	frontFrameBuffer = new FrameBuffer(width, height, "Front frameBuffer");
 	backFrameBuffer	 = new FrameBuffer(width, height, "Back frameBuffer");
 
 	// addScreenEffect(new BloomEffect(this));
 	addScreenEffect(new ACESEffect());
 
-	scene->registerComponent<RendererComponent>();
+	scene->registerComponentIfCan<RendererComponent>();
+	scene->registerComponentIfCan<Transformation>();
 	scene->setSystemSignature<Renderer, Transformation, RendererComponent>();
 }
 
@@ -345,7 +346,7 @@ void ygl::Renderer::colorPass() {
 	backFrameBuffer->bind();
 	glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
 	backFrameBuffer->clear();
-	if (scene->window->shade) {
+	if (window->shade) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	} else {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -460,6 +461,9 @@ GLuint ygl::Renderer::loadLights(int count, Light *lights) {
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	return lightsBuffer;
 }
+
+const char *ygl::Renderer::name = "ygl::Renderer";
+const char *ygl::RendererComponent::name = "ygl::RendererComponent";
 
 std::ostream &ygl::operator<<(std::ostream &out, const ygl::RendererComponent &rhs) {
 	return out << "shader: " << rhs.shaderIndex << " material: " << rhs.materialIndex << " mesh: " << rhs.meshIndex;

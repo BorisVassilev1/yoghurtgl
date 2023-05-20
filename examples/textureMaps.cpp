@@ -19,10 +19,10 @@ void run() {
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);
 
-	Scene scene(&window);
+	Scene scene;
 	scene.registerComponent<Transformation>();
 
-	Renderer *renderer = scene.registerSystem<Renderer>();
+	Renderer *renderer = scene.registerSystem<Renderer>(&window);
 
 	Texture2d *color	 = new Texture2d("./res/images/stones/albedo.png", ITexture::Type::SRGB);
 	Texture2d *normal	 = new Texture2d("./res/images/stones/normal.png", ITexture::Type::RGB);

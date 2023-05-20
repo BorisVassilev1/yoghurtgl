@@ -51,10 +51,12 @@ TEST_CASE("Test Scene creation") {
 
 class Translator : public ygl::ISystem {
    public:
+	static const char * name;
+
 	std::size_t dummyData = 42;
-	
+
 	using ygl::ISystem::ISystem;
-	
+
 	void init() override {
 		this->scene->registerComponentIfCan<ygl::Transformation>();
 		this->scene->setSystemSignature<Translator, ygl::Transformation>();
@@ -67,13 +69,11 @@ class Translator : public ygl::ISystem {
 		}
 	}
 
-	void serialize(std::ostream &out) override {
-		out.write((char*)&dummyData, sizeof(dummyData));
-	}
-	void deserialize(std::istream &in) override {
-		in.read((char*) &dummyData, sizeof(dummyData));
-	}
+	void serialize(std::ostream &out) override { out.write((char *)&dummyData, sizeof(dummyData)); }
+	void deserialize(std::istream &in) override { in.read((char *)&dummyData, sizeof(dummyData)); }
 };
+const char *Translator::name = "ygl::Translator";
+
 
 TEST_CASE("Scene System") {
 	ygl::Scene scene;
@@ -143,8 +143,8 @@ TEST_CASE("Serialization") {
 		other.registerSystem<Translator>();
 		other.deserialize(ss);
 
-		CHECK(other.getComponent<ygl::Transformation>((ygl::Entity) 0) == ygl::Transformation());
-		CHECK(other.getComponent<ygl::RendererComponent>((ygl::Entity) 0) == ygl::RendererComponent());
+		CHECK(other.getComponent<ygl::Transformation>((ygl::Entity)0) == ygl::Transformation());
+		CHECK(other.getComponent<ygl::RendererComponent>((ygl::Entity)0) == ygl::RendererComponent());
 		CHECK(other.getComponent<ygl::Transformation>((ygl::Entity)1) == ygl::Transformation(glm::vec3(1.)));
 		CHECK(other.getSystem<Translator>()->dummyData == 42);
 	}

@@ -22,10 +22,10 @@ void run() {
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);
 
-	Scene scene(&window);
-	scene.registerComponent<Transformation>();
+	Scene scene;
+	scene.registerComponentIfCan<ygl::Transformation>();
 
-	Renderer *renderer = scene.registerSystem<Renderer>();
+	Renderer *renderer = scene.registerSystem<Renderer>(&window);
 
 	uint shaderInd = renderer->addShader(shader);
 	renderer->setDefaultShader(shaderInd);

@@ -38,14 +38,14 @@ void run() {
 	FPController	controller(&window, &mouse, cam.transform);
 	TransformGuizmo guizmo(&window, &cam, (Transformation *)nullptr);
 
-	Scene scene(&window);
+	Scene scene;
 	scene.registerComponent<Transformation>();
 
 	Texture2d uvChecker = Texture2d("./res/images/uv_checker.png");
 
 	uvChecker.bind(GL_TEXTURE1);
 
-	Renderer *renderer = scene.registerSystem<Renderer>();
+	Renderer *renderer = scene.registerSystem<Renderer>(&window);
 	renderer->addShader(shader);
 	renderer->setDefaultShader(0);
 

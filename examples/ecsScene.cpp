@@ -30,10 +30,10 @@ void run() {
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);
 
-	Scene scene(&window);
+	Scene scene;
 	scene.registerComponent<Transformation>();
 
-	Renderer *renderer = scene.registerSystem<Renderer>();
+	Renderer *renderer = scene.registerSystem<Renderer>(&window);
 
 	// Texture2d *tex = new Texture2d("./res/models/bunny_uv/bunny_uv.jpg");
 	Texture2d *tex = new Texture2d("./res/images/uv_checker.png");

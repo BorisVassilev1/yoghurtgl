@@ -10,6 +10,7 @@ class Transformation : public ygl::Serializable {
 	glm::mat4x4 worldMatrix;
 
    public:
+	static const char* name;
 	glm::vec3 position;
 	glm::vec3 rotation;
 	glm::vec3 scale;
@@ -32,4 +33,5 @@ class Transformation : public ygl::Serializable {
 	void serialize(std::ostream &out);
 	void deserialize(std::istream &in);
 };
+
 }	  // namespace ygl
