@@ -1,5 +1,6 @@
 #include <yoghurtgl.h>
 #include <iostream>
+#include <serializable.h>
 #include <assert.h>
 
 bool ygl::gl_init		= false;
@@ -16,6 +17,8 @@ int ygl::init() {
 		std::cerr << "glfwInit failed.";
 		return 1;
 	}
+
+	SerializableFactory::init();
 
 	return 0;
 }

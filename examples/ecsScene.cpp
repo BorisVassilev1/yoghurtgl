@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <random>
+#include "importer.h"
 #include <material.h>
 #include <time.h>
 
@@ -47,7 +48,8 @@ void run() {
 
 	Material bunnyMat(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1,
 					  0.5);
-	bunnyMat.albedo_map		= scene.assetManager.addTexture(tex, "res/images/uv_checker.png");
+	AssetManager *asman = scene.registerSystem<AssetManager>();
+	bunnyMat.albedo_map		= asman->addTexture(tex, "res/images/uv_checker.png");
 	bunnyMat.use_albedo_map = 1.0;
 
 	unsigned int shaderIndex = renderer->addShader(shader);

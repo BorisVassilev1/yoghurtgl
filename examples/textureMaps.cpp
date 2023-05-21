@@ -6,6 +6,7 @@
 #include <camera.h>
 #include <ecs.h>
 #include <renderer.h>
+#include "importer.h"
 
 using namespace ygl;
 
@@ -36,13 +37,14 @@ void run() {
 
 	Material modelMat(glm::vec3(1.0, 0.5, 0.0), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.2,
 					  0.0, 0.);
-	modelMat.albedo_map		   = scene.assetManager.addTexture(color, "color");
+	AssetManager *asman = scene.registerSystem<AssetManager>();
+	modelMat.albedo_map		   = asman->addTexture(color, "color");
 	modelMat.use_albedo_map	   = 1.0;
-	modelMat.normal_map		   = scene.assetManager.addTexture(normal, "normal");
+	modelMat.normal_map		   = asman->addTexture(normal, "normal");
 	modelMat.use_normal_map	   = 1.0;
-	modelMat.roughness_map	   = scene.assetManager.addTexture(roughness, "roughness");
+	modelMat.roughness_map	   = asman->addTexture(roughness, "roughness");
 	modelMat.use_roughness_map = 0.0;
-	modelMat.ao_map			   = scene.assetManager.addTexture(ao, "ao");
+	modelMat.ao_map			   = asman->addTexture(ao, "ao");
 	modelMat.use_ao_map		   = 1.0;
 
 	RendererComponent modelRenderer;

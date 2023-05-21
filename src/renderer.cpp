@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <iterator>
 #include <ostream>
+#include "importer.h"
 
 ygl::Light::Light(glm::mat4 transform, glm::vec3 color, float intensity, ygl::Light::Type type)
 	: transform(transform), color(color), intensity(intensity), type(type) {}
@@ -193,6 +194,9 @@ void ygl::Renderer::init() {
 	scene->registerComponentIfCan<RendererComponent>();
 	scene->registerComponentIfCan<Transformation>();
 	scene->setSystemSignature<Renderer, Transformation, RendererComponent>();
+
+	scene->registerSystemIfCan<ygl::AssetManager>();
+	asman = scene->getSystem<AssetManager>();
 }
 
 ygl::Shader *ygl::Renderer::getShader(RendererComponent &comp) { return getShader(comp.shaderIndex); }
@@ -212,8 +216,7 @@ ygl::Material &ygl::Renderer::getMaterial(uint index) {
 ygl::Mesh *ygl::Renderer::getMesh(RendererComponent &comp) { return getMesh(comp.meshIndex); }
 
 ygl::Mesh *ygl::Renderer::getMesh(uint index) {
-	assert(index < meshes.size() && "invalid index");
-	return meshes[index];
+	return asman->getMesh(index);
 }
 
 ygl::Mesh *ygl::Renderer::getScreenQuad() { return screenQuad; }
@@ -226,11 +229,6 @@ unsigned int ygl::Renderer::addShader(Shader *shader) {
 unsigned int ygl::Renderer::addMaterial(const Material &mat) {
 	materials.push_back(mat);
 	return materials.size() - 1;
-}
-
-unsigned int ygl::Renderer::addMesh(Mesh *mesh) {
-	meshes.push_back(mesh);
-	return meshes.size() - 1;
 }
 
 ygl::Light &ygl::Renderer::addLight(const Light &light) {
@@ -316,20 +314,21 @@ void ygl::Renderer::drawScene() {
 		}
 		// sh is never null and the current bound shader
 
+		AssetManager *asman = scene->getSystem<AssetManager>();
 		if (materials[ecr.materialIndex].use_albedo_map)
-			scene->assetManager.getTexture(materials[ecr.materialIndex].albedo_map)->bind(ygl::TexIndex::COLOR);
+			asman->getTexture(materials[ecr.materialIndex].albedo_map)->bind(ygl::TexIndex::COLOR);
 		if (materials[ecr.materialIndex].use_normal_map)
-			scene->assetManager.getTexture(materials[ecr.materialIndex].normal_map)->bind(ygl::TexIndex::NORMAL);
+			asman->getTexture(materials[ecr.materialIndex].normal_map)->bind(ygl::TexIndex::NORMAL);
 		if (materials[ecr.materialIndex].use_roughness_map)
-			scene->assetManager.getTexture(materials[ecr.materialIndex].roughness_map)->bind(ygl::TexIndex::ROUGHNESS);
+			asman->getTexture(materials[ecr.materialIndex].roughness_map)->bind(ygl::TexIndex::ROUGHNESS);
 		if (materials[ecr.materialIndex].use_ao_map)
-			scene->assetManager.getTexture(materials[ecr.materialIndex].ao_map)->bind(ygl::TexIndex::AO);
+			asman->getTexture(materials[ecr.materialIndex].ao_map)->bind(ygl::TexIndex::AO);
 		if (materials[ecr.materialIndex].use_emission_map)
-			scene->assetManager.getTexture(materials[ecr.materialIndex].emission_map)->bind(ygl::TexIndex::EMISSION);
+			asman->getTexture(materials[ecr.materialIndex].emission_map)->bind(ygl::TexIndex::EMISSION);
 		if (materials[ecr.materialIndex].use_metallic_map)
-			scene->assetManager.getTexture(materials[ecr.materialIndex].metallic_map)->bind(ygl::TexIndex::METALLIC);
+			asman->getTexture(materials[ecr.materialIndex].metallic_map)->bind(ygl::TexIndex::METALLIC);
 
-		Mesh *mesh = meshes[ecr.meshIndex];
+		Mesh *mesh = getMesh(ecr.meshIndex);
 		mesh->bind();
 		// set uniforms
 		if (sh->hasUniform("worldMatrix")) sh->setUniform("worldMatrix", transform.getWorldMatrix());
@@ -395,9 +394,6 @@ void ygl::Renderer::doWork() {
 ygl::Renderer::~Renderer() {
 	for (Shader *sh : shaders) {
 		delete sh;
-	}
-	for (Mesh *mesh : meshes) {
-		delete mesh;
 	}
 	for (IScreenEffect *effect : effects) {
 		delete effect;

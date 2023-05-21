@@ -13,7 +13,6 @@
 #include <iostream>
 #include <set>
 #include <window.h>
-#include <importer.h>
 #include <serializable.h>
 #include <transformation.h>
 
@@ -29,7 +28,7 @@ class EntityManager;
 
 template <class T>
 concept IsNamed = requires(T) {
-	{ T::name } -> std::convertible_to<const char *>;
+	{ T::name } -> std::same_as<const char *&>;
 };
 
 template <class T>
@@ -399,7 +398,6 @@ class Scene : public ygl::Serializable {
 
    public:
 	std::set<Entity>  entities;
-	ygl::AssetManager assetManager;
 
 	void createEntity(Entity e) { entityManager.createEntity(e); }
 
@@ -583,6 +581,13 @@ class Scene : public ygl::Serializable {
 		T *sys = systemManager.registerSystem<T>(this, args...);
 		sys->init();
 		return sys;
+	}
+
+	template <class T, class... Args>
+	T *registerSystemIfCan(Args &&...args) {
+		if(!systemManager.hasSystem<T>())
+			return registerSystem<T>(args...);
+		return nullptr;
 	}
 
 	void serialize(std::ostream &out);

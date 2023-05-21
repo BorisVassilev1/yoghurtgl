@@ -1,4 +1,6 @@
 #include <texture.h>
+#include <istream>
+#include <cstring>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -85,9 +87,7 @@ void ygl::Texture2d::init(GLsizei width, GLsizei height, GLint internalFormat, G
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	// glTexImage2D(GL_TEXTURE_2D, (GLuint)0, internalFormat, width, height, (GLint)0, format, type, data);
 	glTexStorage2D(GL_TEXTURE_2D, 1, internalFormat, width, height);
-	if(data != nullptr) {
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, type, data);
-	}
+	if (data != nullptr) { glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, type, data); }
 
 	if (format != GL_STENCIL_INDEX) glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -129,7 +129,7 @@ ygl::Texture2d::Texture2d(GLsizei width, GLsizei height, GLint internalFormat, G
 	init(width, height, internalFormat, format, pixelSize, components, type, data);
 }
 
-ygl::Texture2d::Texture2d(GLsizei width, GLsizei height, Type type, stbi_uc *data) : width(width), height(height) {
+ygl::Texture2d::Texture2d(GLsizei width, GLsizei height, Type type, stbi_uc *data) : width(width), height(height), type(type){
 	init(width, height, type, data);
 }
 
@@ -140,7 +140,7 @@ ygl::Texture2d::Texture2d(std::string fileName, GLint internalFormat, GLenum for
 	init(fileName, internalFormat, format, pixelSize, components);
 }
 
-ygl::Texture2d::Texture2d(std::string fileName, Type type) {
+ygl::Texture2d::Texture2d(std::string fileName, Type type) : type(type){
 	GLint	internalFormat = 0;
 	GLenum	format		   = 0;
 	uint8_t pixelSize	   = 0;
@@ -153,6 +153,29 @@ ygl::Texture2d::Texture2d(std::string fileName, Type type) {
 }
 
 ygl::Texture2d::Texture2d(std::string fileName) : Texture2d(fileName, Type::RGBA) {}
+
+ygl::Texture2d::Texture2d(std::istream &in, const std::string &path) {
+	in.read((char *) &type, sizeof(Type));
+
+	GLint	internalFormat = 0;
+	GLenum	format		   = 0;
+	uint8_t pixelSize	   = 0;
+	uint8_t components	   = 0;
+	GLenum	_type		   = 0;
+
+	ITexture::getTypeParameters(type, internalFormat, format, pixelSize, components, _type);
+
+	init(path, internalFormat, format, pixelSize, components);
+}
+
+void ygl::Texture2d::serialize(std::ostream &out) {
+	out.write(name, std::strlen(name) + 1);
+	out.write((char*) &type, sizeof(Type));
+}
+
+void ygl::Texture2d::deserialize(std::istream &in) {
+	static_cast<void>(in);
+}
 
 void ygl::Texture2d::save(std::string fileName) {
 	uint8_t *buff = new uint8_t[width * height * pixelSize];
@@ -187,7 +210,7 @@ void ygl::Texture2d::unbindImage(int unit) { glBindImageTexture(unit, 0, 0, fals
 int	 ygl::Texture2d::getID() { return id; }
 ygl::Texture2d::~Texture2d() { glDeleteTextures(1, &id); }
 
-ygl::TextureCubemap::TextureCubemap(const std::string &path, const std::string &format) {
+void ygl::TextureCubemap::init() {
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 
@@ -220,6 +243,22 @@ ygl::TextureCubemap::TextureCubemap(const std::string &path, const std::string &
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
+ygl::TextureCubemap::TextureCubemap(const std::string &path, const std::string &format) : path(path), format(format) {
+	init();
+}
+
+ygl::TextureCubemap::TextureCubemap(std::istream &in, const std::string &path) : path(path) {
+	std::getline(in, format, '\0');
+	init();
+}
+
+void ygl::TextureCubemap::serialize(std::ostream &out) {
+	out.write(name, std::strlen(name) + 1);
+	out.write(format.c_str(), format.size() + 1);
+}
+
+void ygl::TextureCubemap::deserialize(std::istream &in) { static_cast<void>(in); }
+
 void ygl::TextureCubemap::save(std::string) {
 	// TODO: implement this
 }
@@ -248,4 +287,6 @@ void ygl::TextureCubemap::unbindImage(int textureUnit) {
 
 int ygl::TextureCubemap::getID() { return id; }
 
+const char *ygl::Texture2d::name	  = "ygl::Texture2d";
+const char *ygl::TextureCubemap::name = "ygl::TextureCubemap";
 // ygl::TextureCubemap::~TextureCubemap() { glDeleteTextures(1, &id); }

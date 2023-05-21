@@ -2,7 +2,10 @@
 
 #include <yoghurtgl.h>
 
+#include <istream>
 #include <string>
+#include <type_traits>
+#include <serializable.h>
 #include <stb_image.h>
 
 namespace ygl {
@@ -15,7 +18,8 @@ enum TexIndex {
 	EMISSION  = GL_TEXTURE6,
 	METALLIC  = GL_TEXTURE10
 };
-class ITexture {
+
+class ITexture : public ISerializable {
    public:
 	enum Type {
 		RGB,
@@ -52,11 +56,15 @@ class ITexture {
 								  uint8_t &components, GLenum &_type);
 };
 
+template <class T>
+concept IsTexture = std::is_base_of<ygl::ITexture, T>::value;
+
 class Texture2d : public ITexture {
 	GLsizei width = -1, height = -1;
 	uint8_t pixelSize  = 16;
 	uint8_t components = 4;
 	GLuint	id		   = -1;
+	Type type;
 
 	void init(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
 			  GLenum type, stbi_uc *data);
@@ -64,6 +72,7 @@ class Texture2d : public ITexture {
 	void init(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components);
 
    public:
+	static const char *name;
 	Texture2d(){};
 
 	Texture2d(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
@@ -73,6 +82,7 @@ class Texture2d : public ITexture {
 	Texture2d(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components);
 	Texture2d(std::string fileName, Type type);
 	Texture2d(std::string fileName);
+	Texture2d(std::istream &in, const std::string &path);
 
 	void save(std::string filename) override;
 	void bind(int textureUnit) override;
@@ -83,6 +93,9 @@ class Texture2d : public ITexture {
 	void unbindImage(int unit) override;
 	int	 getID() override;
 	virtual ~Texture2d();
+	
+	void serialize(std::ostream &out) override;
+	void deserialize(std::istream &out) override;
 };
 
 class TextureCubemap : public ITexture {
@@ -91,10 +104,16 @@ class TextureCubemap : public ITexture {
 	GLsizei width = -1, height = -1;
 	GLuint	id		 = -1;
 	int		channels = 4;
+	std::string path;
+	std::string format;
+
+	void init();
 
    public:
+	static const char *name;
 	TextureCubemap() {}
 	TextureCubemap(const std::string &path, const std::string &format);
+	TextureCubemap(std::istream &in, const std::string &path);
 
 	void save(std::string fileName) override;
 	void bind(int textureUnit) override;
@@ -106,6 +125,9 @@ class TextureCubemap : public ITexture {
 	int	 getID() override;
 
 	virtual ~TextureCubemap(){};
+
+	void serialize(std::ostream &out) override;
+	void deserialize(std::istream &out) override;
 };
 
 }	  // namespace ygl

@@ -13,6 +13,7 @@
 #include <texture.h>
 #include <effects.h>
 #include <entities.h>
+#include <importer.h>
 
 #include <iostream>
 #include <random>
@@ -40,10 +41,6 @@ void run() {
 
 	Scene scene;
 	scene.registerComponent<Transformation>();
-
-	Texture2d uvChecker = Texture2d("./res/images/uv_checker.png");
-
-	uvChecker.bind(GL_TEXTURE1);
 
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
 	renderer->addShader(shader);

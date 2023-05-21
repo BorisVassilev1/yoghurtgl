@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.2.0)
 
 set(YGL_NO_ASSIMP OFF)
 set(CMAKE_CXX_STANDARD 20)
-set(YGL_STATIC ON CACHE BOOL "static libs")
+set(YGL_STATIC OFF)
 
 project(YoghurtGL)
 

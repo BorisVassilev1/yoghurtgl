@@ -3,7 +3,6 @@ option(ASSIMP_BUILD_TESTS OFF)
 set(ASSIMP_INSTALL OFF)
 set(ASSIMP_BUILD_ASSIMP_VIEW OFF)
 set(ENABLE_BOOST_WORKAROUND ON)
-option(YGL_STATIC "static libs" OFF)
 
 add_subdirectory(glfw)
 add_subdirectory(glm)

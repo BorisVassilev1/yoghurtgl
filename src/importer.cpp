@@ -1,6 +1,8 @@
 #include <importer.h>
 #include <renderer.h>
 #include "assimp/types.h"
+#include "serializable.h"
+#include "texture.h"
 
 #ifndef YGL_NO_ASSIMP
 	#include <assimp/Importer.hpp>
@@ -8,6 +10,8 @@
 	#include <assimp/postprocess.h>
 
 Assimp::Importer *ygl::importer = nullptr;
+
+const char *ygl::AssetManager::name = "ygl::AssetManager";
 
 const aiScene *ygl::loadScene(const std::string &file, unsigned int flags) {
 	if (ygl::importer == nullptr) { ygl::importer = new Assimp::Importer(); }
@@ -199,3 +203,49 @@ ygl::AssetManager::~AssetManager() {
 		delete tex;
 	}
 }
+
+void ygl::AssetManager::serialize(std::ostream &out) {
+	auto meshCount = meshNames.size();
+	auto textureCount = textureNames.size();
+	out.write((char*) &meshCount, sizeof(meshCount));
+	out.write((char *) &textureCount, sizeof(textureCount));
+
+	for(auto& pair : textureNames) {
+		out.write(pair.first.c_str(), pair.first.size() + 1);
+		out.write((char*) &pair.second, sizeof(uint));
+		textures[pair.second]->serialize(out);
+	}
+	
+	for(auto& pair : meshNames) {
+		out.write(pair.first.c_str(), pair.first.size() + 1);
+		out.write((char*) &pair.second, sizeof(uint));
+	}
+}
+
+void ygl::AssetManager::deserialize(std::istream &in) {
+	auto meshCount = meshNames.size();
+	auto textureCount = textureNames.size();
+	in.read((char*) &meshCount, sizeof(meshCount));
+	in.read((char *) &textureCount, sizeof(textureCount));
+
+	for(std::size_t i = 0; i < textureCount; ++ i) {
+		std::string texName;
+		uint texIndex;
+		std::getline(in, texName, '\0');
+		in.read((char*) &texIndex, sizeof(uint));
+		std::cout << "tex: " << texName << " " << texIndex << std::endl;
+		
+		ITexture *tex = dynamic_cast<ITexture *>(SerializableFactory::makeSerializable(in, texName));
+		addTexture(tex, texName);
+	}
+
+	for(std::size_t i = 0; i < meshCount; ++ i) {
+		std::string meshName;
+		uint meshIndex;
+		std::getline(in, meshName, '\0');
+		in.read((char*) &meshIndex, sizeof(uint));
+		std::cout << "mesh: " << meshName << " " << meshIndex << std::endl;
+		
+	}
+}
+

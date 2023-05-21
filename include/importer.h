@@ -10,6 +10,7 @@
 #include <vector>
 #include <unordered_map>
 #include <material.h>
+#include <ecs.h>
 
 namespace ygl {
 
@@ -26,15 +27,16 @@ Material	   getMaterial(const aiScene *, AssetManager &asman, std::string filePa
 void terminateLoader();
 #endif
 
-class AssetManager {
+class AssetManager : public ygl::ISystem {
 	std::unordered_map<std::string, uint> meshNames;
 	std::vector<Mesh *>					  meshes;
 	std::unordered_map<std::string, uint> textureNames;
 	std::vector<ITexture *>				  textures;
 
    public:
-	uint addMesh(Mesh *mesh, std::string name);
-	uint addTexture(ITexture *tex, std::string name);
+	static const char *name;
+	uint			   addMesh(Mesh *mesh, std::string name);
+	uint			   addTexture(ITexture *tex, std::string name);
 
 	uint getMeshIndex(std::string name);
 	uint getTextureIndex(std::string name);
@@ -42,12 +44,19 @@ class AssetManager {
 	Mesh	 *getMesh(uint i);
 	ITexture *getTexture(uint i);
 
-	template <typename T, typename = std::enable_if<std::is_base_of<ITexture, T>::value>>
+	template <typename T>
+		requires IsTexture<T>
 	T getTexture(uint i) {
 		return (T)getTexture(i);
 	}
 
 	void printTextures();
+	AssetManager(Scene *scene) : ISystem(scene){};
 	~AssetManager();
+
+	void init() override {}
+	void doWork() override {}
+	void serialize(std::ostream &out) override;
+	void deserialize(std::istream &in) override;
 };
 }	  // namespace ygl

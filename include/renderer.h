@@ -11,7 +11,8 @@
 #include <texture.h>
 #include <material.h>
 #include <ostream>
-#include "imgui.h"
+#include <imgui.h>
+#include <importer.h>
 
 namespace ygl {
 
@@ -110,7 +111,6 @@ struct RendererComponent : ygl::Serializable {
 class Renderer : public ygl::ISystem {
 	std::vector<Shader *> shaders;
 	std::vector<Material> materials;
-	std::vector<Mesh *>	  meshes;
 	std::vector<Light>	  lights;
 
 	GLuint materialsBuffer = 0;
@@ -126,6 +126,7 @@ class Renderer : public ygl::ISystem {
 
 	std::vector<std::function<void()> > drawFunctions;
 	Window							   *window = nullptr;
+	AssetManager *asman;
 
 	void drawScene();
 	void colorPass();
@@ -148,7 +149,6 @@ class Renderer : public ygl::ISystem {
 
 	unsigned int addShader(Shader *);
 	unsigned int addMaterial(const Material &);
-	unsigned int addMesh(Mesh *);
 	Light		&addLight(const Light &);
 	Light		&getLight(uint index);
 	void		 addScreenEffect(IScreenEffect *);

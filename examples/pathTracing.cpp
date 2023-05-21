@@ -11,6 +11,7 @@
 #include <texture.h>
 #include <entities.h>
 #include <bvh.h>
+#include <importer.h>
 
 #include <iostream>
 #include <random>
@@ -125,7 +126,7 @@ void initScene() {
 	
 	//ygl::Material geometryMaterial = ygl::Material(glm::vec3(0.5, 0., 0.), .02, glm::vec3(0.), 1, glm::vec3(0.0), 0.0, glm::vec3(1.), 0.0, 0.1, 1.);
 
-	ygl::Material geometryMaterial = ygl::getMaterial(aiscene, scene->assetManager, "./res/models/dragon-gltf/", 2);
+	ygl::Material geometryMaterial = ygl::getMaterial(aiscene, *scene->getSystem<ygl::AssetManager>(), "./res/models/dragon-gltf/", 2);
 
 	tex = new ygl::Texture2d("./res/images/uv_checker.png");
 	tex->bind(GL_TEXTURE1);		// albedo texture

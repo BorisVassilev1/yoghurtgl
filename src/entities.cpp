@@ -1,9 +1,12 @@
 #include <entities.h>
+#include <importer.h>
+#include <string>
 
 ygl::Entity ygl::addBox(Scene &scene, glm::vec3 position, glm::vec3 scale, glm::vec3 color) {
-	Entity	  e		   = scene.createEntity();
-	Renderer *renderer = scene.getSystem<Renderer>();
-	if (canonicalCubeIndex == (uint)-1) { canonicalCubeIndex = renderer->addMesh(makeCube(1.)); }
+	Entity		  e		   = scene.createEntity();
+	Renderer	 *renderer = scene.getSystem<Renderer>();
+	AssetManager *asman	   = scene.getSystem<AssetManager>();
+	if (canonicalCubeIndex == (uint)-1) { canonicalCubeIndex = asman->addMesh(makeCube(1.), "canonincalCube"); }
 	uint	  materialIndex = renderer->addMaterial(Material());
 	Material &mat			= renderer->getMaterial(materialIndex);
 	mat.albedo				= color;
@@ -14,9 +17,12 @@ ygl::Entity ygl::addBox(Scene &scene, glm::vec3 position, glm::vec3 scale, glm::
 }
 
 ygl::Entity ygl::addSphere(Scene &scene, glm::vec3 position, glm::vec3 scale, glm::vec3 color) {
-	Entity	  e		   = scene.createEntity();
-	Renderer *renderer = scene.getSystem<Renderer>();
-	if (canonicalSphereIndex == (uint)-1) { canonicalSphereIndex = renderer->addMesh(makeUnitSphere()); }
+	Entity		  e		   = scene.createEntity();
+	Renderer	 *renderer = scene.getSystem<Renderer>();
+	AssetManager *asman	   = scene.getSystem<AssetManager>();
+	if (canonicalSphereIndex == (uint)-1) {
+		canonicalSphereIndex = asman->addMesh(makeUnitSphere(), "canonicalSphere");
+	}
 	uint	  materialIndex = renderer->addMaterial(Material());
 	Material &mat			= renderer->getMaterial(materialIndex);
 	mat.albedo				= color;
@@ -29,7 +35,8 @@ ygl::Entity ygl::addSphere(Scene &scene, glm::vec3 position, glm::vec3 scale, gl
 ygl::Entity ygl::addModel(Scene &scene, Mesh *mesh, glm::vec3 position, glm::vec3 scale, glm::vec3 color) {
 	Entity	  e				= scene.createEntity();
 	Renderer *renderer		= scene.getSystem<Renderer>();
-	uint	  meshIndex		= renderer->addMesh(mesh);
+	AssetManager *asman = scene.getSystem<AssetManager>();
+	uint	  meshIndex		= asman->addMesh(mesh, "some mesh??"); // TODO: this is bad!
 	uint	  materialIndex = renderer->addMaterial(Material());
 	Material &mat			= renderer->getMaterial(materialIndex);
 	mat.albedo				= color;
@@ -46,9 +53,10 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path) {
 	Mesh *mesh = makeCube(1.);
 	mesh->setCullFace(false);
 	mesh->setDepthFunc(GL_LEQUAL);
-	uint		  meshIndex = renderer->addMesh(mesh);
+	AssetManager *asman = scene.getSystem<AssetManager>();
+	uint		  meshIndex = asman->addMesh(mesh, "skybox");
 	ygl::Material mat;
-	mat.albedo_map	   = scene.assetManager.addTexture(new TextureCubemap(path, ".jpg"), path);
+	mat.albedo_map	   = scene.getSystem<AssetManager>()->addTexture(new TextureCubemap(path, ".jpg"), path);
 	mat.use_albedo_map = 1.0;
 	uint materialIndex = renderer->addMaterial(mat);
 	uint shaderIndex   = renderer->addShader(new VFShader("./shaders/skybox.vs", "./shaders/skybox.fs"));
@@ -60,7 +68,7 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path) {
 }
 
 ygl::Entity ygl::addModel(ygl::Scene &scene, const aiScene *aiscene, std::string filePath, uint i) {
-	AssetManager &asman = scene.assetManager;
+	ygl::AssetManager &asman = *scene.getSystem<AssetManager>();
 
 	Mesh *modelMesh = (Mesh *)getModel(aiscene, i);
 
@@ -74,7 +82,7 @@ ygl::Entity ygl::addModel(ygl::Scene &scene, const aiScene *aiscene, std::string
 	RendererComponent modelRenderer;
 	modelRenderer.materialIndex = renderer->addMaterial(mat);
 	modelRenderer.shaderIndex	= renderer->getDefaultShader();
-	modelRenderer.meshIndex		= renderer->addMesh(modelMesh);
+	modelRenderer.meshIndex		= asman.addMesh(modelMesh, filePath + std::to_string(i));
 	scene.addComponent(model, modelRenderer);
 	return model;
 }
