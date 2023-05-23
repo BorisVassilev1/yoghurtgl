@@ -235,7 +235,7 @@ void ygl::AssetManager::deserialize(std::istream &in) {
 		in.read((char*) &texIndex, sizeof(uint));
 		std::cout << "tex: " << texName << " " << texIndex << std::endl;
 		
-		ITexture *tex = dynamic_cast<ITexture *>(SerializableFactory::makeSerializable(in, texName));
+		ITexture *tex = dynamic_cast<ITexture *>(ResourceFactory::fabricate(in, texName));
 		addTexture(tex, texName);
 	}
 

@@ -54,13 +54,13 @@ void run() {
 
 	unsigned int shaderIndex = renderer->addShader(shader);
 
-	bunnyRenderer.meshIndex = renderer->addMesh(bunnyMesh);
+	bunnyRenderer.meshIndex = asman->addMesh(bunnyMesh, "bunny");
 
 	bunnyRenderer.shaderIndex	= shaderIndex;
 	bunnyRenderer.materialIndex = renderer->addMaterial(bunnyMat);
 	scene.addComponent<RendererComponent>(bunny, bunnyRenderer);
 
-	unsigned int cubeMeshIndex = renderer->addMesh(cubeMesh);
+	unsigned int cubeMeshIndex = asman->addMesh(cubeMesh, "cube");
 
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 0,
 							 Light::Type::DIRECTIONAL));

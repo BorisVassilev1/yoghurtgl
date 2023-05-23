@@ -18,7 +18,7 @@ int ygl::init() {
 		return 1;
 	}
 
-	SerializableFactory::init();
+	ResourceFactory::init();
 
 	return 0;
 }

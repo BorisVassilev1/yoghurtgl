@@ -1,9 +1,12 @@
 #pragma once
 
 #include <yoghurtgl.h>
+#include <iostream>
+#include <ostream>
 #include <vector>
 #include <glm/glm.hpp>
 #include <string>
+#include <serializable.h>
 
 typedef unsigned int uint;
 
@@ -16,10 +19,10 @@ class IMesh {
 	GLuint indicesCount	 = 0;
 	GLuint verticesCount = 0;
 
-	GLenum drawMode = GL_TRIANGLES;
-	GLenum depthfunc = GL_LESS;
+	GLenum drawMode	   = GL_TRIANGLES;
+	GLenum depthfunc   = GL_LESS;
 	GLenum polygonMode = GL_FILL;
-	bool cullFace = true;
+	bool   cullFace	   = true;
 
 	GLuint createVAO();
 	GLuint createIBO(GLuint *data, int size);
@@ -54,7 +57,6 @@ class IMesh {
 		VBO(GLuint location, GLuint bufferId, int coordSize)
 			: location(location), bufferId(bufferId), coordSize(coordSize) {}
 	};
-
 };
 
 class MultiBufferMesh : public IMesh {
@@ -84,6 +86,14 @@ class Mesh : public MultiBufferMesh {
 	ygl::IMesh::VBO getTexCoords();
 	ygl::IMesh::VBO getColors();
 	ygl::IMesh::VBO getTangents();
+};
+
+class BoxMesh : public Mesh, public ISerializable {
+   public:
+	BoxMesh(std::istream &in, const std::string &path) {};
+	static const char *name;
+	void			   serialize(std::ostream &out) override {};
+	void			   deserialize(std::istream &in) override {};
 };
 
 Mesh *makeTriangle();

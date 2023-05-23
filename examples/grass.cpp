@@ -47,12 +47,13 @@ void run() {
 	renderer->setDefaultShader(0);
 
 	GrassSystem *grassSystem = scene.registerSystem<GrassSystem>();
+	AssetManager *asman = scene.getSystem<AssetManager>();
 
 	Mesh *planeMesh = makePlane(glm::vec2(40, 40), glm::vec2(1, 1));
 
 	Entity plane = scene.createEntity();
 	scene.addComponent(plane, Transformation());
-	scene.addComponent(plane, RendererComponent(-1, renderer->addMesh(planeMesh),
+	scene.addComponent(plane, RendererComponent(-1, asman->addMesh(planeMesh, "plane"),
 												renderer->addMaterial(Material(glm::vec3(0.1, 0.5, 0.1), .2,
 																			   glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0,
 																			   glm::vec3(1.), 0.0, 0.3, 0.0, 0.0))));

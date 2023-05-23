@@ -134,6 +134,8 @@ ygl::IMesh::VBO ygl::Mesh::getColors() { return vbos[3]; }
 
 ygl::IMesh::VBO ygl::Mesh::getTangents() { return vbos[4]; }
 
+const char *ygl::BoxMesh::name = "ygl::BoxMesh";
+
 ygl::Mesh *ygl::makeTriangle() {
 	// clang-format off
 	GLfloat vertices[] = {

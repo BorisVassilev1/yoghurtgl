@@ -126,7 +126,8 @@ void initScene() {
 	
 	//ygl::Material geometryMaterial = ygl::Material(glm::vec3(0.5, 0., 0.), .02, glm::vec3(0.), 1, glm::vec3(0.0), 0.0, glm::vec3(1.), 0.0, 0.1, 1.);
 
-	ygl::Material geometryMaterial = ygl::getMaterial(aiscene, *scene->getSystem<ygl::AssetManager>(), "./res/models/dragon-gltf/", 2);
+	ygl::AssetManager *asman = scene->getSystem<ygl::AssetManager>();
+	ygl::Material geometryMaterial = ygl::getMaterial(aiscene, *asman, "./res/models/dragon-gltf/", 2);
 
 	tex = new ygl::Texture2d("./res/images/uv_checker.png");
 	tex->bind(GL_TEXTURE1);		// albedo texture
@@ -140,7 +141,7 @@ void initScene() {
 	renderer->setDefaultShader(shaderIndex);
 	scene->addComponent<ygl::RendererComponent>(
 		bunny, ygl::RendererComponent(
-				   -1, renderer->addMesh(bunnyMesh),
+				   -1, asman->addMesh(bunnyMesh, "bunny"),
 				   renderer->addMaterial(geometryMaterial)));
 
 	unlitShaderIndex = renderer->addShader(unlitShader);
@@ -194,7 +195,7 @@ void initSpheres() {
 																	0.05 + i * 0.1, 0.05 + i * 0.1, 0.)));
 	}
 
-	uint meshIndex = renderer->addMesh(sphereMesh);
+	uint meshIndex = scene->getSystem<ygl::AssetManager>()->addMesh(sphereMesh, "sphere");
 	for (int i = 0; i < sphereCount; ++i) {
 		sphere = scene->createEntity();
 		scene->addComponent<ygl::Transformation>(
@@ -224,7 +225,7 @@ void initBoxes() {
 														   0.05 + roughness, 0.05 + roughness, 0.)));
 	}
 
-	uint meshIndex = renderer->addMesh(cubeMesh);
+	uint meshIndex = scene->getSystem<ygl::AssetManager>()->addMesh(cubeMesh, "cube");
 	for (int i = 0; i < boxesCount; ++i) {
 		box = scene->createEntity();
 		scene->addComponent<ygl::Transformation>(box, ygl::Transformation(boxes[i].min + glm::vec3(0.5)));

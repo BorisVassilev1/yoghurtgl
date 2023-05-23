@@ -4,12 +4,13 @@
 #include <string>
 #include <type_traits>
 #include <typeinfo>
+#include "mesh.h"
 #include <texture.h>
 #include <ecs.h>
 
-auto ygl::SerializableFactory::fabricators = std::map<std::string, ygl::SerializableFactory::SerializableConstructor>();
+auto ygl::ResourceFactory::fabricators = std::map<std::string, ygl::ResourceFactory::ResourceConstructor>();
 
-ygl::ISerializable *ygl::SerializableFactory::makeSerializable(std::istream &in, const std::string &path) {
+ygl::ISerializable *ygl::ResourceFactory::fabricate(std::istream &in, const std::string &path) {
 	std::string name;
 	std::getline(in, name, '\0');
 
@@ -18,18 +19,19 @@ ygl::ISerializable *ygl::SerializableFactory::makeSerializable(std::istream &in,
 	return fabricators[name](in, path);
 }
 
-void ygl::SerializableFactory::registerSerializable(const std::string								 &name,
-													ygl::SerializableFactory::SerializableConstructor f) {
+void ygl::ResourceFactory::registerResource(const std::string								 &name,
+													ygl::ResourceFactory::ResourceConstructor f) {
 	fabricators[name] = f;
 }
 
 template <class T>
-	requires ygl::IsISerializable<T>
+	requires ygl::IsResource<T>
 void registerSerializable() {
-	ygl::SerializableFactory::registerSerializable(
+	ygl::ResourceFactory::registerResource(
 		T::name, [](std::istream &in, const std::string &path) { return new T(in, path); });
 }
-void ygl::SerializableFactory::init() {
+void ygl::ResourceFactory::init() {
 	::registerSerializable<ygl::Texture2d>();
 	::registerSerializable<ygl::TextureCubemap>();
+	::registerSerializable<ygl::BoxMesh>();
 };

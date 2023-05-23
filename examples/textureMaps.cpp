@@ -50,7 +50,7 @@ void run() {
 	RendererComponent modelRenderer;
 	modelRenderer.materialIndex = renderer->addMaterial(modelMat);
 	modelRenderer.shaderIndex	= renderer->addShader(shader);
-	modelRenderer.meshIndex		= renderer->addMesh(modelMesh);
+	modelRenderer.meshIndex		= asman->addMesh(modelMesh, "canonicalCube");
 	scene.addComponent(model, modelRenderer);
 
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 3,

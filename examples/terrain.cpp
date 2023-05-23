@@ -81,7 +81,7 @@ void run() {
 	RendererComponent terrainRenderer;
 	terrainRenderer.materialIndex = renderer->addMaterial(terrainMat);
 	terrainRenderer.shaderIndex	  = renderer->addShader(terrainShader);
-	terrainRenderer.meshIndex	  = renderer->addMesh(terrainMesh);
+	terrainRenderer.meshIndex	  = asman->addMesh(terrainMesh, "terrain");
 	scene.addComponent(terrain, terrainRenderer);
 
 	glPatchParameteri(GL_PATCH_VERTICES, 3);
