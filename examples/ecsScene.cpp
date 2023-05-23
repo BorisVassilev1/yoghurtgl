@@ -22,9 +22,9 @@ using namespace std;
 void run() {
 	Window window = Window(800, 600, "Test Window", true);
 
-	Mesh *bunnyMesh = (Mesh *)getModel(loadScene("./res/models/bunny_uv/bunny_uv.obj"));
+	Mesh *bunnyMesh = new MeshFromFile("./res/models/bunny_uv/bunny_uv.obj");
 
-	Mesh	 *cubeMesh = makeCube();
+	Mesh	 *cubeMesh = new BoxMesh();
 	VFShader *shader   = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 	Camera	  cam(glm::radians(70.f), window, 0.01, 1000);
 

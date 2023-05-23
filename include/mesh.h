@@ -11,7 +11,7 @@
 typedef unsigned int uint;
 
 namespace ygl {
-class IMesh {
+class IMesh : public ISerializable{
    protected:
 	GLuint vao = -1;
 	GLuint ibo = -1;
@@ -28,7 +28,7 @@ class IMesh {
 	GLuint createIBO(GLuint *data, int size);
 
 	IMesh(){};	   // protected constructor so that noone can instantiate this
-
+	IMesh(std::istream &in);
    public:
 	virtual ~IMesh();
 
@@ -49,6 +49,9 @@ class IMesh {
 	void setDepthFunc(GLenum depthFunc);
 	void setPolygonMode(GLenum polygonMode);
 
+	void			   serialize(std::ostream &out) override;
+	void			   deserialize(std::istream &in) override {};
+
 	class VBO {
 	   public:
 		GLuint location;
@@ -63,6 +66,7 @@ class MultiBufferMesh : public IMesh {
    protected:
 	std::vector<VBO> vbos;
 	MultiBufferMesh() {}
+	MultiBufferMesh(std::istream &in) : IMesh(in) {}
 
    public:
 	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint indexDivisor, GLsizei stride,
@@ -78,6 +82,12 @@ class MultiBufferMesh : public IMesh {
 };
 
 class Mesh : public MultiBufferMesh {
+protected:
+	Mesh() {}
+	Mesh(std::istream &in) : MultiBufferMesh(in) {}
+
+	void init(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
+		 GLfloat *tangents, GLuint indicesCount, GLuint *indices);
    public:
 	Mesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
 		 GLfloat *tangents, GLuint indicesCount, GLuint *indices);
@@ -88,27 +98,44 @@ class Mesh : public MultiBufferMesh {
 	ygl::IMesh::VBO getTangents();
 };
 
-class BoxMesh : public Mesh, public ISerializable {
+class BoxMesh : public Mesh {
+	glm::vec3 size;
+	glm::vec3 resolution;
+	protected:
+	void init(const glm::vec3 &size, const glm::vec3 &detail);
    public:
-	BoxMesh(std::istream &in, const std::string &path) {};
+	BoxMesh(std::istream &in, const std::string &path);
+	BoxMesh(const glm::vec3 &size, const glm::vec3 &detail);
+	BoxMesh(const glm::vec3 &dim);
+	BoxMesh(float size);
+	BoxMesh();
+	
 	static const char *name;
-	void			   serialize(std::ostream &out) override {};
-	void			   deserialize(std::istream &in) override {};
+	void			   serialize(std::ostream &out) override;
+	void			   deserialize(std::istream &in) override;
+};
+
+class SphereMesh : public Mesh {
+	float radius;
+	uint detailX, detailY;
+	protected:
+
+	void init(float radius, uint detailX, uint detailY);
+	public:
+	
+	SphereMesh(float radius, uint detailX, uint detailY);
+	SphereMesh(float radius);
+	SphereMesh();
+	SphereMesh(std::istream &in, const std::string&path);
+
+	static const char *name;
+	void			   serialize(std::ostream &out) override;
+	void			   deserialize(std::istream &in) override;
 };
 
 Mesh *makeTriangle();
 
-Mesh *makeBox(const glm::vec3 &size, const glm::vec3 &detail);
-Mesh *makeBox(float x, float y, float z);
-Mesh *makeBox(const glm::vec3 &dim);
-Mesh *makeCube(float size);
-Mesh *makeCube();
-
 Mesh *makeScreenQuad();
-
-Mesh *makeSphere(float radius, uint detailX, uint detailY);
-Mesh *makeSphere(float radius);
-Mesh *makeUnitSphere();
 
 Mesh *makePlane(const glm::vec2 &size, const glm::vec2 &detail);
 Mesh *makePlane(const glm::vec2 &detail);

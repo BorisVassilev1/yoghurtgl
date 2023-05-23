@@ -33,6 +33,7 @@ struct alignas(16) Light {
 	Type	  type;
 
    public:
+	Light() : transform(), color(0.), intensity(0), type(Type::DIRECTIONAL) {}
 	Light(glm::mat4 transform, glm::vec3 color, float intensity, Type type);
 	Light(ygl::Transformation transformation, glm::vec3 color, float intensity, Type type);
 };
@@ -176,8 +177,8 @@ class Renderer : public ygl::ISystem {
 
 	Window *getWindow() { return window; }
 
-	void serialize(std::ostream &out) override { static_cast<void>(out); }
-	void deserialize(std::istream &in) override { static_cast<void>(in); }
+	void serialize(std::ostream &out) override;
+	void deserialize(std::istream &in) override;
 };
 
 std::ostream &operator<<(std::ostream &out, const ygl::RendererComponent &rhs);

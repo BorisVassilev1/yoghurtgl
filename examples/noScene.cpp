@@ -15,7 +15,7 @@ using namespace ygl;
 void run() {
 	ygl::Window window = ygl::Window(1200, 800, "rayTracer", true);
 
-	Mesh		  *bunnyMesh = (Mesh *)getModel(loadScene("./res/models/bunny.obj"));
+	Mesh		  *bunnyMesh = new MeshFromFile("./res/models/bunny.obj");
 	Transformation bunnyTransform;
 
 	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");

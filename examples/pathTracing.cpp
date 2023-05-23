@@ -96,20 +96,17 @@ void cleanup() {
 	delete textureOnScreen;
 	delete screenQuad;
 	delete bvh;
-	if(spheres != nullptr)
-		delete[] spheres;
-	if(spheres != nullptr)
-		delete[] boxes;
+	if (spheres != nullptr) delete[] spheres;
+	if (spheres != nullptr) delete[] boxes;
 	delete skybox;
 	delete mouse;
 	delete window;
 }
 
 void initScene() {
-	const aiScene *aiscene = ygl::loadScene("./res/models/dragon-gltf/scene.gltf");
-	bunnyMesh  = (ygl::Mesh *)ygl::getModel(aiscene, 2);
-	sphereMesh = ygl::makeUnitSphere();
-	cubeMesh   = ygl::makeBox(glm::vec3(1, 1, 1), glm::vec3(1, 1, 1));
+	bunnyMesh  = new ygl::MeshFromFile("./res/models/dragon-gltf/scene.gltf", 2);
+	sphereMesh = new ygl::SphereMesh();
+	cubeMesh   = new ygl::BoxMesh(glm::vec3(1, 1, 1), glm::vec3(1, 1, 1));
 
 	shader		= new ygl::VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 	unlitShader = new ygl::VFShader("./shaders/unlit.vs", "./shaders/unlit.fs");
@@ -123,11 +120,13 @@ void initScene() {
 
 	renderer->addMaterial(
 		ygl::Material(glm::vec3(1.f), 0.1, glm::vec3(0.f), 1.0, glm::vec3(0.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 0.0));
-	
-	//ygl::Material geometryMaterial = ygl::Material(glm::vec3(0.5, 0., 0.), .02, glm::vec3(0.), 1, glm::vec3(0.0), 0.0, glm::vec3(1.), 0.0, 0.1, 1.);
+
+	// ygl::Material geometryMaterial = ygl::Material(glm::vec3(0.5, 0., 0.), .02, glm::vec3(0.), 1, glm::vec3(0.0),
+	// 0.0, glm::vec3(1.), 0.0, 0.1, 1.);
 
 	ygl::AssetManager *asman = scene->getSystem<ygl::AssetManager>();
-	ygl::Material geometryMaterial = ygl::getMaterial(aiscene, *asman, "./res/models/dragon-gltf/", 2);
+	ygl::Material	   geometryMaterial =
+		ygl::getMaterial(ygl::MeshFromFile::loadedScene, *asman, "./res/models/dragon-gltf/", 2);
 
 	tex = new ygl::Texture2d("./res/images/uv_checker.png");
 	tex->bind(GL_TEXTURE1);		// albedo texture
@@ -140,9 +139,7 @@ void initScene() {
 	unsigned int shaderIndex = renderer->addShader(shader);
 	renderer->setDefaultShader(shaderIndex);
 	scene->addComponent<ygl::RendererComponent>(
-		bunny, ygl::RendererComponent(
-				   -1, asman->addMesh(bunnyMesh, "bunny"),
-				   renderer->addMaterial(geometryMaterial)));
+		bunny, ygl::RendererComponent(-1, asman->addMesh(bunnyMesh, "bunny"), renderer->addMaterial(geometryMaterial)));
 
 	unlitShaderIndex = renderer->addShader(unlitShader);
 
@@ -304,7 +301,7 @@ int main() {
 
 	initPathTracer();
 
-	//tex->bind();
+	// tex->bind();
 
 	renderer->setClearColor(glm::vec4(0, 0, 0, 1));
 	while (!window->shouldClose()) {

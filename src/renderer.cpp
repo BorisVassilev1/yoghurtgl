@@ -4,7 +4,8 @@
 #include <assert.h>
 #include <iterator>
 #include <ostream>
-#include "importer.h"
+#include <importer.h>
+#include <material.h>
 
 ygl::Light::Light(glm::mat4 transform, glm::vec3 color, float intensity, ygl::Light::Type type)
 	: transform(transform), color(color), intensity(intensity), type(type) {}
@@ -456,6 +457,37 @@ GLuint ygl::Renderer::loadLights(int count, Light *lights) {
 	Shader::setUBO(lightsBuffer, 2);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	return lightsBuffer;
+}
+
+void ygl::Renderer::serialize(std::ostream &out) {
+	std::size_t materialsCount = materials.size();
+	out.write((char*) &materialsCount, sizeof(materialsCount));
+	for(std::size_t i = 0; i < materialsCount; ++ i) {
+		out.write((char*) &materials[i], sizeof(Material));
+	}
+
+	std::size_t lightsCount = lights.size();
+	out.write((char*) &lightsCount, sizeof(lightsCount));
+	for(std::size_t i = 0; i < lightsCount; ++ i) {
+		out.write((char*) &lights[i], sizeof(Light));
+	}
+}
+
+void ygl::Renderer::deserialize(std::istream &in) {
+	std::size_t materialsCount;
+	in.read((char*) &materialsCount, sizeof(materialsCount));
+	materials.resize(materialsCount);
+	for(std::size_t i = 0; i < materialsCount; ++ i) {
+		in.read((char*) &materials[i], sizeof(Material));
+	}
+	
+	std::size_t lightsCount;
+	in.read((char*) &lightsCount, sizeof(lightsCount));
+	lights.resize(lightsCount);
+	for(std::size_t i = 0; i < lightsCount; ++ i) {
+		in.read((char*) &lights[i], sizeof(Light));
+	}
+	loadData();
 }
 
 const char *ygl::Renderer::name = "ygl::Renderer";

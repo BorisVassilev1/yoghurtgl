@@ -60,7 +60,7 @@ void run() {
 	scene.addComponent(plane, GrassSystem::GrassHolder());
 
 	Entity model =
-		addModel(scene, (Mesh *)getModel(loadScene("./res/models/dragon.obj")), {0, 3, 0}, {10, 10, 10}, {1, 1, 1});
+		addModel(scene, new MeshFromFile("./res/models/dragon.obj"), {0, 3, 0}, {10, 10, 10}, {1, 1, 1});
 	Material &modelMat			= renderer->getMaterial(scene.getComponent<RendererComponent>(model));
 	modelMat.specular_roughness = 0.7;
 

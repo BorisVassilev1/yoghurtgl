@@ -1,9 +1,11 @@
+#include <istream>
 #define _USE_MATH_DEFINES
 #include <mesh.h>
 
 #include <assert.h>
 #include <iostream>
 #include <math.h>
+#include <glm/gtc/type_ptr.hpp>
 
 GLuint ygl::IMesh::createVAO() {
 	glGenVertexArrays(1, &vao);
@@ -61,6 +63,20 @@ void ygl::IMesh::setDepthFunc(GLenum depthFunc) { this->depthfunc = depthFunc; }
 
 void ygl::IMesh::setPolygonMode(GLenum polygonMode) { this->polygonMode = polygonMode; }
 
+ygl::IMesh::IMesh(std::istream &in) {
+	in.read((char *)&drawMode, sizeof(drawMode));
+	in.read((char *)&depthfunc, sizeof(depthfunc));
+	in.read((char *)&polygonMode, sizeof(polygonMode));
+	in.read((char *)&cullFace, sizeof(cullFace));
+}
+
+void ygl::IMesh::serialize(std::ostream &out) {
+	out.write((char *)&drawMode, sizeof(drawMode));
+	out.write((char *)&depthfunc, sizeof(depthfunc));
+	out.write((char *)&polygonMode, sizeof(polygonMode));
+	out.write((char *)&cullFace, sizeof(cullFace));
+}
+
 void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint indexDivisor,
 								  GLsizei stride, const void *pointer) {
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
@@ -109,9 +125,8 @@ void ygl::MultiBufferMesh::disableVBOs() {
 	}
 }
 
-// constructs a simple mesh with vertex position (vec3), normal(vec3), texCoord(vec2) and color(vec4).
-ygl::Mesh::Mesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
-				GLfloat *tangents, GLuint indicesCount, GLuint *indices) {
+void ygl::Mesh::init(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
+					 GLfloat *tangents, GLuint indicesCount, GLuint *indices) {
 	this->createVAO();
 	glBindVertexArray(this->getVAO());
 	this->verticesCount = vertexCount;
@@ -122,6 +137,12 @@ ygl::Mesh::Mesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat
 	this->addVBO(3, 4, colors, vertexCount);
 	this->addVBO(4, 3, tangents, vertexCount);
 	glBindVertexArray(0);
+}
+
+// constructs a simple mesh with vertex position (vec3), normal(vec3), texCoord(vec2) and color(vec4).
+ygl::Mesh::Mesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
+				GLfloat *tangents, GLuint indicesCount, GLuint *indices) {
+	init(vertexCount, vertices, normals, texCoords, colors, tangents, indicesCount, indices);
 }
 
 ygl::IMesh::VBO ygl::Mesh::getVertices() { return vbos[0]; }
@@ -136,28 +157,8 @@ ygl::IMesh::VBO ygl::Mesh::getTangents() { return vbos[4]; }
 
 const char *ygl::BoxMesh::name = "ygl::BoxMesh";
 
-ygl::Mesh *ygl::makeTriangle() {
-	// clang-format off
-	GLfloat vertices[] = {
-		-0.5, -0.5, -0.,
-		 0.5, -0.5, -0.,
-		 0.0,  0.5, -0.};
-	GLfloat normals[]  = {
-		0.0, 0.0, 1.0,
-		0.0, 0.0, 1.0,
-		0.0, 0.0, 1.0};
-	GLfloat colors[]   = {
-		1.0, 0.0, 0.0,
-		1.0, 0.0, 1.0,
-		0.0, 1.0, 0.0,
-		0.0, 1.0, 1.0};
-	GLuint	indices[]  = {0, 1, 2};
-	// clang-format on
-	return new Mesh((GLuint)9, vertices, normals, (GLfloat *)nullptr, colors, (GLfloat *)nullptr, (GLuint)3, indices);
-}
-
 // TODO: this must have better texture coords;
-ygl::Mesh *ygl::makeBox(const glm::vec3 &size, const glm::vec3 &detail) {
+void ygl::BoxMesh::init(const glm::vec3 &size, const glm::vec3 &detail) {
 	uint vertexCount =
 		(detail.x + 1) * (detail.y + 1) + (detail.x + 1) * (detail.z + 1) + (detail.y + 1) * (detail.z + 1);
 	vertexCount <<= 1;	   // 2 sides per axis
@@ -233,7 +234,7 @@ ygl::Mesh *ygl::makeBox(const glm::vec3 &size, const glm::vec3 &detail) {
 		indexOffset += faceIndices * 2;
 	}
 
-	Mesh *mesh = new Mesh(vertexCount, vertices, normals, uvs, colors, tangents, faceCount * 6, indices);
+	Mesh::init(vertexCount, vertices, normals, uvs, colors, tangents, faceCount * 6, indices);
 
 	delete[] vertices;
 	delete[] normals;
@@ -241,164 +242,37 @@ ygl::Mesh *ygl::makeBox(const glm::vec3 &size, const glm::vec3 &detail) {
 	delete[] indices;
 	delete[] uvs;
 	delete[] tangents;
-
-	return mesh;
 }
 
-ygl::Mesh *ygl::makeBox(float x, float y, float z) {
-	float sx = x / 2, sy = y / 2, sz = z / 2;
-	// clang-format off
-	GLfloat vertices[] = {
-		sx, -sy, sz,
-		-sx, -sy, sz,
-		-sx, -sy, -sz,
-		-sx, sy, -sz,
-		-sx, sy, sz,
-		sx, sy, sz,
-		sx, sy, -sz,
-		sx, sy, sz,
-		sx, -sy, sz,
-		sx, sy, sz,
-		-sx, sy, sz,
-		-sx, -sy, sz,
-		-sx, -sy, sz,
-		-sx, sy, sz,
-		-sx, sy, -sz,
-		sx, -sy, -sz,
-		-sx, -sy, -sz,
-		-sx, sy, -sz,
-		sx, -sy, -sz,
-		sx, sy, -sz,
-		sx, -sy, -sz,
-		sx, -sy, sz,
-		-sx, -sy, -sz,
-		sx, sy, -sz};
-	GLfloat normals[] = {
-		0.0f, -1.0f, 0.0f,
-		0.0f, -1.0f, 0.0f,
-		0.0f, -1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		-0.0f, 0.0f, 1.0f,
-		-0.0f, 0.0f, 1.0f,
-		-0.0f, 0.0f, 1.0f,
-		-1.0f, -0.0f, -0.0f,
-		-1.0f, -0.0f, -0.0f,
-		-1.0f, -0.0f, -0.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, -1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		-0.0f, 0.0f, 1.0f,
-		-1.0f, -0.0f, -0.0f,
-		0.0f, 0.0f, -1.0f};
-	GLfloat texCoords[] = {
-		1.0f     , 0.333333f,
-		1.0f     , 0.666667f,
-		0.666667f, 0.666667f,
-		1.0f     , 0.333333f,
-		0.666667f, 0.333333f,
-		0.666667f, 0.0f     ,
-		0.0f     , 0.333333f,
-		0.0f     , 0.0f     ,
-		0.333333f, 0.0f     ,
-		0.333333f, 0.0f     ,
-		0.666667f, 0.0f     ,
-		0.666667f, 0.333333f,
-		0.333333f, 1.0f     ,
-		0.0f     , 1.0f     ,
-		0.0f     , 0.666667f,
-		0.333333f, 0.333333f,
-		0.333333f, 0.666667f,
-		0.0f     , 0.666667f,
-		0.666667f, 0.333333f,
-		1.0f     , 0.0f     ,
-		0.333333f, 0.333333f,
-		0.333333f, 0.333333f,
-		0.333333f, 0.666667f,
-		0.0f     , 0.333333f
-	};
-	GLfloat colors[] = {
-		1, 0, 0, 1,
-		0, 1, 0, 1,
-		0, 0, 1, 1,
-		1, 1, 0, 1,
-		0, 1, 1, 1,
-		1, 0, 1, 1,
-		1, 1, 1, 1,
-		1, 0, 0, 1,
-		1, 0, 0, 1,
-		0, 1, 0, 1,
-		0, 0, 1, 1,
-		1, 1, 0, 1,
-		0, 1, 1, 1,
-		1, 0, 1, 1,
-		1, 1, 1, 1,
-		1, 0, 0, 1,
-		1, 0, 0, 1,
-		0, 1, 0, 1,
-		0, 0, 1, 1,
-		1, 1, 0, 1,
-		0, 1, 1, 1,
-		1, 0, 1, 1,
-		1, 1, 1, 1,
-		1, 0, 0, 1,};
-	GLuint indices[] = {
-		0, 1, 2,
-		3, 4, 5,
-		6, 7, 8,
-		9, 10, 11,
-		12, 13, 14,
-		15, 16, 17,
-		18, 0, 2,
-		19, 3, 5,
-		20, 6, 8,
-		21, 9, 11,
-		22, 12, 14,
-		23, 15, 17};
-	// clang-format on
-	return new Mesh((GLuint)24 , vertices, normals, texCoords, colors, (GLfloat *)nullptr, (GLuint)12 * 3, indices);
+ygl::BoxMesh::BoxMesh(const glm::vec3 &size, const glm::vec3 &detail) : Mesh(), size(size), resolution(detail) {
+	init(size, detail);
 }
 
-ygl::Mesh *ygl::makeBox(const glm::vec3 &dim) { return makeBox(dim.x, dim.y, dim.z); }
+ygl::BoxMesh::BoxMesh(const glm::vec3 &dim) : BoxMesh(dim, glm::vec3(1.)) {}
 
-ygl::Mesh *ygl::makeCube(float size) { return makeBox(size, size, size); }
+ygl::BoxMesh::BoxMesh(float size) : BoxMesh(glm::vec3(size)) {}
 
-ygl::Mesh *ygl::makeCube() { return makeBox(1, 1, 1); }
+ygl::BoxMesh::BoxMesh() : BoxMesh(1.f) {}
 
-ygl::Mesh *ygl::makeScreenQuad() {
-	// clang-format off
-	GLfloat vertices[] = {
-		-1.0,  1.0, -0.,
-		 1.0,  1.0, -0.,
-		 1.0, -1.0, -0.,
-		-1.0, -1.0, -0.,
-	};
-	GLfloat texCoords[]  = {
-		0.0, 1.0,
-		1.0, 1.0,
-		1.0, 0.0, 
-		0.0, 0.0
-	};
-	GLfloat colors[]   = {
-		1.0, 0.0, 0.0, 1.0,
-		0.0, 1.0, 0.0, 1.0,
-		0.0, 0.0, 1.0, 1.0,
-		0.0, 1.0, 1.0, 1.0
-	};
-	GLuint	indices[]  = {2, 1, 0, 3, 2, 0};
-	// clang-format on
-	return new Mesh((GLuint)4, vertices, (GLfloat *)nullptr, texCoords, colors, (GLfloat *)nullptr, (GLuint)6,
-					indices);
+void ygl::BoxMesh::serialize(std::ostream &out) {
+	out.write(name, std::strlen(name) + 1);
+	IMesh::serialize(out);
+	out.write((char *)glm::value_ptr(size), sizeof(size));
+	out.write((char *)glm::value_ptr(resolution), sizeof(resolution));
 }
 
-ygl::Mesh *ygl::makeSphere(float radius, uint detailX, uint detailY) {
+void ygl::BoxMesh::deserialize(std::istream &in) {}
+
+ygl::BoxMesh::BoxMesh(std::istream &in, const std::string &path) : Mesh(in){
+	static_cast<void>(path);
+	in.read((char *)glm::value_ptr(size), sizeof(size));
+	in.read((char *)glm::value_ptr(resolution), sizeof(resolution));
+	init(size, resolution);
+}
+
+const char *ygl::SphereMesh::name = "ygl::SphereMesh";
+
+void ygl::SphereMesh::init(float radius, uint detailX, uint detailY) {
 	uint vertexCount = (detailX * 2 + 1) * detailY;
 
 	GLfloat *vertices = new GLfloat[vertexCount * 3];
@@ -448,20 +322,86 @@ ygl::Mesh *ygl::makeSphere(float radius, uint detailX, uint detailY) {
 		}
 	}
 
-	Mesh *mesh = new Mesh(vertexCount, vertices, normals, uvs, colors, (GLfloat *)nullptr, faceCount * 6, indices);
+	Mesh::init(vertexCount, vertices, normals, uvs, colors, (GLfloat *)nullptr, faceCount * 6, indices);
 
 	delete[] vertices;
 	delete[] normals;
 	delete[] colors;
 	delete[] indices;
 	delete[] uvs;
-
-	return mesh;
 }
 
-ygl::Mesh *ygl::makeSphere(float radius) { return makeSphere(radius, 20, 20); }
+ygl::SphereMesh::SphereMesh(float radius, uint detailX, uint detailY)
+	: radius(radius), detailX(detailX), detailY(detailY) {
+	init(radius, detailX, detailY);
+}
 
-ygl::Mesh *ygl::makeUnitSphere() { return makeSphere(1.); }
+ygl::SphereMesh::SphereMesh(float radius) : SphereMesh(radius, 20, 20) {}
+
+ygl::SphereMesh::SphereMesh() : SphereMesh(1.f) {}
+
+void ygl::SphereMesh::serialize(std::ostream &out) {
+	out.write(name, std::strlen(name) + 1);
+	IMesh::serialize(out);
+	out.write((char *)&radius, sizeof(radius));
+	out.write((char *)&detailX, sizeof(detailX));
+	out.write((char *)&detailY, sizeof(detailY));
+}
+
+void ygl::SphereMesh::deserialize(std::istream &in) {}
+
+ygl::SphereMesh::SphereMesh(std::istream &in, const std::string &path) : Mesh(in) {
+	static_cast<void>(path);
+	in.read((char *)&radius, sizeof(radius));
+	in.read((char *)&detailX, sizeof(detailX));
+	in.read((char *)&detailY, sizeof(detailY));
+	init(radius, detailX, detailY);
+}
+
+ygl::Mesh *ygl::makeTriangle() {
+	// clang-format off
+	GLfloat vertices[] = {
+		-0.5, -0.5, -0.,
+		 0.5, -0.5, -0.,
+		 0.0,  0.5, -0.};
+	GLfloat normals[]  = {
+		0.0, 0.0, 1.0,
+		0.0, 0.0, 1.0,
+		0.0, 0.0, 1.0};
+	GLfloat colors[]   = {
+		1.0, 0.0, 0.0,
+		1.0, 0.0, 1.0,
+		0.0, 1.0, 0.0,
+		0.0, 1.0, 1.0};
+	GLuint	indices[]  = {0, 1, 2};
+	// clang-format on
+	return new Mesh((GLuint)9, vertices, normals, (GLfloat *)nullptr, colors, (GLfloat *)nullptr, (GLuint)3, indices);
+}
+
+ygl::Mesh *ygl::makeScreenQuad() {
+	// clang-format off
+	GLfloat vertices[] = {
+		-1.0,  1.0, -0.,
+		 1.0,  1.0, -0.,
+		 1.0, -1.0, -0.,
+		-1.0, -1.0, -0.,
+	};
+	GLfloat texCoords[]  = {
+		0.0, 1.0,
+		1.0, 1.0,
+		1.0, 0.0, 
+		0.0, 0.0
+	};
+	GLfloat colors[]   = {
+		1.0, 0.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 0.0, 1.0, 1.0,
+		0.0, 1.0, 1.0, 1.0
+	};
+	GLuint	indices[]  = {2, 1, 0, 3, 2, 0};
+	// clang-format on
+	return new Mesh((GLuint)4, vertices, (GLfloat *)nullptr, texCoords, colors, (GLfloat *)nullptr, (GLuint)6, indices);
+}
 
 ygl::Mesh *ygl::makePlane(const glm::vec2 &size, const glm::vec2 &detail) {
 	uint vertexCount = (detail.x + 1) * (detail.y + 1);

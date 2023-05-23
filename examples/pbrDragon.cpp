@@ -31,12 +31,12 @@ void run() {
 	uint shaderInd = renderer->addShader(shader);
 	renderer->setDefaultShader(shaderInd);
 
-	addScene(scene, "./res/models/dragon-gltf/scene.gltf", [&scene, &renderer](Entity model) {
+	addModels(scene, "./res/models/dragon-gltf/scene.gltf", [&scene, &renderer](Entity model) {
 		RendererComponent &rc									   = scene.getComponent<RendererComponent>(model);
 		renderer->getMaterial(rc.materialIndex).specular_roughness = 2.;
 	});
 
-	addScene(scene, "./res/models/helmet/DamagedHelmet.gltf", [&scene](Entity model) {
+	addModels(scene, "./res/models/helmet/DamagedHelmet.gltf", [&scene](Entity model) {
 		Transformation &tr = scene.getComponent<Transformation>(model);
 		tr.position.x += 2;
 		tr.rotation.y += glm::pi<float>();
@@ -65,6 +65,11 @@ void run() {
 	}
 	std::ofstream of = std::ofstream("pbrDragon.sc");
 	scene.serialize(of);
+	of.close();
+
+	for(Entity i = 0; i < scene.entitiesCount(); ++ i) {
+	std::cout << scene.getComponent<RendererComponent>(i) << std::endl;
+	}
 }
 
 int main() {

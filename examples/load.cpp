@@ -30,15 +30,10 @@ void run() {
 
 	uint shaderInd = renderer->addShader(shader);
 	renderer->setDefaultShader(shaderInd);
+	renderer->addShader(new VFShader("./shaders/skybox.vs", "./shaders/skybox.fs"));
 
 	std::ifstream is = std::ifstream("pbrDragon.sc");
 	scene.deserialize(is);
-
-	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, .3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 5,
-							 Light::Type::DIRECTIONAL));
-	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.11, Light::Type::AMBIENT));
-
-	renderer->loadData();
 
 	glClearColor(0, 0, 0, 1);
 	while (!window.shouldClose()) {

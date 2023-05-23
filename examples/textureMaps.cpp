@@ -6,7 +6,8 @@
 #include <camera.h>
 #include <ecs.h>
 #include <renderer.h>
-#include "importer.h"
+#include <importer.h>
+#include <mesh.h>
 
 using namespace ygl;
 
@@ -30,7 +31,7 @@ void run() {
 	Texture2d *roughness = new Texture2d("./res/images/stones/roughness.png", ITexture::Type::GREY);
 	Texture2d *ao		 = new Texture2d("./res/images/stones/ao.png", ITexture::Type::GREY);
 
-	Mesh *modelMesh = makeBox(glm::vec3(1, 1, 1), glm::vec3(20, 20, 20));
+	Mesh *modelMesh = new BoxMesh(glm::vec3(1, 1, 1), glm::vec3(20, 20, 20));
 
 	Entity model = scene.createEntity();
 	scene.addComponent<Transformation>(model, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(1)));

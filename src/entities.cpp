@@ -1,12 +1,13 @@
 #include <entities.h>
 #include <importer.h>
 #include <string>
+#include "mesh.h"
 
 ygl::Entity ygl::addBox(Scene &scene, glm::vec3 position, glm::vec3 scale, glm::vec3 color) {
 	Entity		  e		   = scene.createEntity();
 	Renderer	 *renderer = scene.getSystem<Renderer>();
 	AssetManager *asman	   = scene.getSystem<AssetManager>();
-	if (canonicalCubeIndex == (uint)-1) { canonicalCubeIndex = asman->addMesh(makeCube(1.), "canonincalCube"); }
+	if (canonicalCubeIndex == (uint)-1) { canonicalCubeIndex = asman->addMesh(new BoxMesh(1.), "canonincalCube"); }
 	uint	  materialIndex = renderer->addMaterial(Material());
 	Material &mat			= renderer->getMaterial(materialIndex);
 	mat.albedo				= color;
@@ -21,7 +22,7 @@ ygl::Entity ygl::addSphere(Scene &scene, glm::vec3 position, glm::vec3 scale, gl
 	Renderer	 *renderer = scene.getSystem<Renderer>();
 	AssetManager *asman	   = scene.getSystem<AssetManager>();
 	if (canonicalSphereIndex == (uint)-1) {
-		canonicalSphereIndex = asman->addMesh(makeUnitSphere(), "canonicalSphere");
+		canonicalSphereIndex = asman->addMesh(new SphereMesh(), "canonicalSphere");
 	}
 	uint	  materialIndex = renderer->addMaterial(Material());
 	Material &mat			= renderer->getMaterial(materialIndex);
@@ -50,7 +51,7 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path) {
 	Entity	  e		   = scene.createEntity();
 	Renderer *renderer = scene.getSystem<Renderer>();
 
-	Mesh *mesh = makeCube(1.);
+	Mesh *mesh = new BoxMesh(1.);
 	mesh->setCullFace(false);
 	mesh->setDepthFunc(GL_LEQUAL);
 	AssetManager *asman = scene.getSystem<AssetManager>();
@@ -67,15 +68,15 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path) {
 	return e;
 }
 
-ygl::Entity ygl::addModel(ygl::Scene &scene, const aiScene *aiscene, std::string filePath, uint i) {
+ygl::Entity ygl::addModel(ygl::Scene &scene, std::string filePath, uint i) {
 	ygl::AssetManager &asman = *scene.getSystem<AssetManager>();
 
-	Mesh *modelMesh = (Mesh *)getModel(aiscene, i);
+	Mesh *modelMesh = new MeshFromFile(filePath, i);
 
 	Entity model = scene.createEntity();
 	scene.addComponent<Transformation>(model, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(1.)));
 
-	Material mat = getMaterial(aiscene, asman, filePath, i);
+	Material mat = getMaterial(MeshFromFile::loadedScene, asman, filePath, i);
 
 	Renderer *renderer = scene.getSystem<Renderer>();
 
@@ -87,18 +88,11 @@ ygl::Entity ygl::addModel(ygl::Scene &scene, const aiScene *aiscene, std::string
 	return model;
 }
 
-void ygl::addModels(ygl::Scene &scene, const aiScene *aiscene, std::string filePath,
+void ygl::addModels(ygl::Scene &scene, std::string filePath,
 					const std::function<void(Entity)> &edit) {
-	for (uint i = 0; i < aiscene->mNumMeshes; ++i) {
-		ygl::Entity model = addModel(scene, aiscene, filePath, i);
+	MeshFromFile::loadSceneIfNeeded(filePath);
+	for (uint i = 0; i < MeshFromFile::loadedScene->mNumMeshes; ++i) {
+		ygl::Entity model = addModel(scene, filePath, i);
 		edit(model);
 	}
-}
-
-void ygl::addScene(ygl::Scene &scene, const std::string &filename, const std::function<void(Entity)> &edit) {
-	const aiScene *aiscene = ygl::loadScene(filename);
-	std::size_t	   cut	   = filename.rfind('/');
-	std::string	   dir	   = filename.substr(0, cut + 1);
-	std::cout << dir << std::endl;
-	addModels(scene, aiscene, dir, edit);
 }

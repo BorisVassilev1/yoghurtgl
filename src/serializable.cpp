@@ -4,6 +4,7 @@
 #include <string>
 #include <type_traits>
 #include <typeinfo>
+#include "importer.h"
 #include "mesh.h"
 #include <texture.h>
 #include <ecs.h>
@@ -34,4 +35,6 @@ void ygl::ResourceFactory::init() {
 	::registerSerializable<ygl::Texture2d>();
 	::registerSerializable<ygl::TextureCubemap>();
 	::registerSerializable<ygl::BoxMesh>();
+	::registerSerializable<ygl::SphereMesh>();
+	::registerSerializable<ygl::MeshFromFile>();
 };

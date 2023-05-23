@@ -1,5 +1,6 @@
 #include <importer.h>
 #include <renderer.h>
+#include <stdexcept>
 #include "assimp/types.h"
 #include "serializable.h"
 #include "texture.h"
@@ -30,52 +31,6 @@ const aiScene *ygl::loadScene(const std::string &file) {
 							   aiProcess_GenNormals | aiProcess_PreTransformVertices);
 }
 
-const ygl::Mesh *ygl::getModel(const aiScene *scene, unsigned int meshIndex) {
-	using namespace std;
-	assert(scene->HasMeshes() && "scene does not have any meshes");
-	if (!scene->HasMeshes()) { return nullptr; }
-
-	aiMesh	   **meshes	   = scene->mMeshes;
-	unsigned int numMeshes = scene->mNumMeshes;
-
-	assert(numMeshes >= 1 && "no meshes in the scene?");
-	// assert(numMeshes < meshIndex && "no mesh with that index");
-
-	aiMesh		*mesh		   = meshes[meshIndex];
-	unsigned int verticesCount = mesh->mNumVertices;
-	unsigned int indicesCount  = mesh->mNumFaces * 3;
-	GLuint		*indices	   = new GLuint[indicesCount * sizeof(GLuint)];
-
-	unsigned int indexCounter = 0;
-	for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
-		indices[indexCounter++] = mesh->mFaces[i].mIndices[0];
-		indices[indexCounter++] = mesh->mFaces[i].mIndices[1];
-		indices[indexCounter++] = mesh->mFaces[i].mIndices[2];
-	}
-
-	GLfloat *texCoords = nullptr;
-	if (mesh->HasTextureCoords(0)) {
-		texCoords = new GLfloat[verticesCount * sizeof(float) * 2];
-		for (unsigned int i = 0; i < verticesCount; ++i) {
-			texCoords[i * 2]	 = mesh->mTextureCoords[0][i].x;
-			texCoords[i * 2 + 1] = mesh->mTextureCoords[0][i].y;
-		}
-	}
-
-	assert(indexCounter == indicesCount && "something went very wrong");
-
-	if (!(mesh->HasTextureCoords(0))) { dbLog(ygl::LOG_WARNING, "tex coords cannot be loaded for model!"); }
-	if (!(mesh->HasVertexColors(0))) { dbLog(ygl::LOG_WARNING, "colors cannot be loaded for model!"); }
-
-	ygl::Mesh *result = new ygl::Mesh(verticesCount, (GLfloat *)mesh->mVertices, (GLfloat *)mesh->mNormals, texCoords,
-									  (GLfloat *)mesh->mColors[0], (GLfloat *)mesh->mTangents, indicesCount, indices);
-
-	delete[] indices;
-	if (texCoords != nullptr) delete[] texCoords;
-
-	return result;
-}
-
 bool getTexture(aiMaterial *mat, aiTextureType type, std::string &fileName) {
 	uint	 numTextures = mat->GetTextureCount(aiTextureType(type));	  // Amount of diffuse textures
 	aiString textureName;	  // Filename of the texture using the aiString assimp structure
@@ -99,6 +54,7 @@ ygl::Material ygl::getMaterial(const aiScene *scene, ygl::AssetManager &asman, s
 	aiMaterial *material = scene->mMaterials[m];	 // Get the current material
 	aiString	materialName;						 // The name of the material found in mesh file
 	aiReturn	ret;	 // Code which says whether loading something has been successful of not
+	std::string dir = filePath.substr(0, filePath.rfind('/') + 1);
 
 	ret = material->Get(AI_MATKEY_NAME, materialName);	   // Get the material name (pass by reference)
 	if (ret != AI_SUCCESS) materialName = "";			   // Failed to find material name so makes var empty
@@ -139,7 +95,7 @@ ygl::Material ygl::getMaterial(const aiScene *scene, ygl::AssetManager &asman, s
 
 	for (int i = 0; i < 6; ++i) {
 		use_map[i]	= getTexture(material, mapType[i], map_file[i]);
-		map_file[i] = filePath + map_file[i];
+		map_file[i] = dir + map_file[i];
 
 		if (use_map[i]) {
 			map[i] = asman.getTextureIndex(map_file[i]);
@@ -205,47 +161,126 @@ ygl::AssetManager::~AssetManager() {
 }
 
 void ygl::AssetManager::serialize(std::ostream &out) {
-	auto meshCount = meshNames.size();
+	auto meshCount	  = meshNames.size();
 	auto textureCount = textureNames.size();
-	out.write((char*) &meshCount, sizeof(meshCount));
-	out.write((char *) &textureCount, sizeof(textureCount));
+	out.write((char *)&meshCount, sizeof(meshCount));
+	out.write((char *)&textureCount, sizeof(textureCount));
 
-	for(auto& pair : textureNames) {
+	for (auto &pair : textureNames) {
 		out.write(pair.first.c_str(), pair.first.size() + 1);
-		out.write((char*) &pair.second, sizeof(uint));
+		out.write((char *)&pair.second, sizeof(uint));
 		textures[pair.second]->serialize(out);
 	}
-	
-	for(auto& pair : meshNames) {
+
+	for (auto &pair : meshNames) {
 		out.write(pair.first.c_str(), pair.first.size() + 1);
-		out.write((char*) &pair.second, sizeof(uint));
+		out.write((char *)&pair.second, sizeof(uint));
+		meshes[pair.second]->serialize(out);
 	}
 }
 
 void ygl::AssetManager::deserialize(std::istream &in) {
-	auto meshCount = meshNames.size();
+	auto meshCount	  = meshNames.size();
 	auto textureCount = textureNames.size();
-	in.read((char*) &meshCount, sizeof(meshCount));
-	in.read((char *) &textureCount, sizeof(textureCount));
+	in.read((char *)&meshCount, sizeof(meshCount));
+	in.read((char *)&textureCount, sizeof(textureCount));
 
-	for(std::size_t i = 0; i < textureCount; ++ i) {
+	textures.resize(textureCount);
+	for (std::size_t i = 0; i < textureCount; ++i) {
 		std::string texName;
-		uint texIndex;
+		uint		texIndex;
 		std::getline(in, texName, '\0');
-		in.read((char*) &texIndex, sizeof(uint));
+		in.read((char *)&texIndex, sizeof(uint));
 		std::cout << "tex: " << texName << " " << texIndex << std::endl;
-		
+
 		ITexture *tex = dynamic_cast<ITexture *>(ResourceFactory::fabricate(in, texName));
-		addTexture(tex, texName);
+		textures[texIndex] = tex;
 	}
 
-	for(std::size_t i = 0; i < meshCount; ++ i) {
+	meshes.resize(meshCount);
+	for (std::size_t i = 0; i < meshCount; ++i) {
 		std::string meshName;
-		uint meshIndex;
+		uint		meshIndex;
 		std::getline(in, meshName, '\0');
-		in.read((char*) &meshIndex, sizeof(uint));
+		in.read((char *)&meshIndex, sizeof(uint));
 		std::cout << "mesh: " << meshName << " " << meshIndex << std::endl;
-		
+
+		Mesh *mesh = dynamic_cast<Mesh *>(ResourceFactory::fabricate(in, meshName));
+		meshes[meshIndex] = mesh;
 	}
 }
 
+const char	  *ygl::MeshFromFile::name		  = "ygl::MeshFromFile";
+const aiScene *ygl::MeshFromFile::loadedScene = nullptr;
+std::string	   ygl::MeshFromFile::loadedFile  = "";
+
+void ygl::MeshFromFile::loadSceneIfNeeded(const std::string &path) {
+	if (loadedScene == nullptr || loadedFile != path) {
+		loadedScene = loadScene(path);
+		loadedFile	= path;
+	}
+}
+
+void ygl::MeshFromFile::init(const std::string &path, uint index) {
+	loadSceneIfNeeded(path);
+#define scene loadedScene
+
+	if (!scene->HasMeshes()) { throw std::runtime_error("no meshes in the scene!"); }
+
+	aiMesh	   **meshes	   = scene->mMeshes;
+	unsigned int numMeshes = scene->mNumMeshes;
+
+	assert(numMeshes >= 1 && "no meshes in the scene?");
+	// assert(numMeshes < meshIndex && "no mesh with that index");
+
+	aiMesh		*mesh		   = meshes[index];
+	unsigned int verticesCount = mesh->mNumVertices;
+	unsigned int indicesCount  = mesh->mNumFaces * 3;
+	GLuint		*indices	   = new GLuint[indicesCount * sizeof(GLuint)];
+
+	unsigned int indexCounter = 0;
+	for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
+		indices[indexCounter++] = mesh->mFaces[i].mIndices[0];
+		indices[indexCounter++] = mesh->mFaces[i].mIndices[1];
+		indices[indexCounter++] = mesh->mFaces[i].mIndices[2];
+	}
+
+	GLfloat *texCoords = nullptr;
+	if (mesh->HasTextureCoords(0)) {
+		texCoords = new GLfloat[verticesCount * sizeof(float) * 2];
+		for (unsigned int i = 0; i < verticesCount; ++i) {
+			texCoords[i * 2]	 = mesh->mTextureCoords[0][i].x;
+			texCoords[i * 2 + 1] = mesh->mTextureCoords[0][i].y;
+		}
+	}
+
+	assert(indexCounter == indicesCount && "something went very wrong");
+
+	if (!(mesh->HasTextureCoords(0))) { dbLog(ygl::LOG_WARNING, "tex coords cannot be loaded for model!"); }
+	if (!(mesh->HasVertexColors(0))) { dbLog(ygl::LOG_WARNING, "colors cannot be loaded for model!"); }
+
+	Mesh::init(verticesCount, (GLfloat *)mesh->mVertices, (GLfloat *)mesh->mNormals, texCoords,
+			   (GLfloat *)mesh->mColors[0], (GLfloat *)mesh->mTangents, indicesCount, indices);
+
+	delete[] indices;
+	if (texCoords != nullptr) delete[] texCoords;
+
+#undef scene
+}
+
+ygl::MeshFromFile::MeshFromFile(const std::string &path, uint index) : path(path), index(index) { init(path, index); }
+
+
+ygl::MeshFromFile::MeshFromFile(std::istream &in, const std::string &path) {
+	std::getline(in, this->path, '\0');
+	in.read((char *)&index, sizeof(index));
+	init(this->path, index);
+}
+
+void ygl::MeshFromFile::serialize(std::ostream &out) {
+	out.write(name, std::strlen(name) + 1);
+	out.write(path.c_str(), path.size() + 1);
+	out.write((char *)&index, sizeof(index));
+}
+
+void ygl::MeshFromFile::deserialize(std::istream &in) {}

@@ -77,7 +77,7 @@ class IComponentArray {
 	 */
 	virtual void		  deleteEntity(Entity e)					  = 0;
 	virtual void		  writeComponent(Entity e, std::ostream &out) = 0;
-	virtual Serializable &readComponent(Entity e, std::istream &in)	  = 0;
+	virtual Serializable &readComponent(Entity e, std::istream &in, Scene *scene)	  = 0;
 	virtual ~IComponentArray() {}
 };
 
@@ -183,11 +183,7 @@ class ComponentArray : public IComponentArray {
 	}
 
 	void		  writeComponent(Entity e, std::ostream &out) override { getComponent(e).serialize(out); }
-	Serializable &readComponent(Entity e, std::istream &in) override {
-		Serializable &res = this->addComponent(e, T());
-		((T *)&res)->deserialize(in);
-		return res;
-	}
+	Serializable &readComponent(Entity e, std::istream &in, Scene *scene) override;
 };
 
 class ComponentManager {
@@ -592,5 +588,17 @@ class Scene : public ygl::Serializable {
 
 	void serialize(std::ostream &out);
 	void deserialize(std::istream &in);
+
+	std::size_t entitiesCount() {
+		return entities.size();
+	}
 };
+
+template<class T>
+	requires IsComponent<T>
+	Serializable &ygl::ComponentArray<T>::readComponent(Entity e, std::istream &in, Scene *scene) {
+		Serializable &res = scene->addComponent(e, T());
+		((T *)&res)->deserialize(in);
+		return res;
+	}
 }	  // namespace ygl

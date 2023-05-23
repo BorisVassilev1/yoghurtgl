@@ -184,7 +184,7 @@ void ygl::Scene::deserialize(std::istream &in) {
 
 			ComponentType	 newType = typeSearch->second;
 			IComponentArray *array	 = this->componentManager.getComponentArray(newType);
-			array->readComponent(result, in);
+			array->readComponent(result, in, this);
 		}
 	}
 }
