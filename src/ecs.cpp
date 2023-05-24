@@ -25,12 +25,6 @@ ygl::Entity ygl::EntityManager::createEntity() {
 	} else return entityCount++;
 }
 
-void ygl::EntityManager::createEntity(Entity e) {
-	if (entityCount > e) throw std::runtime_error("trying to create an already existing entity");
-	if (entityCount < e) throw std::runtime_error("create the smaller indexes first");
-	signatures.push_back(Signature());
-}
-
 /**
  * @brief Destroys an Entity that has been created with EntityManager::createEntity().
  *
@@ -69,7 +63,7 @@ void ygl::ISystem::printEntities() {
 	std::cerr << std::endl;
 }
 
-void ygl::Scene::serialize(std::ostream &out) {
+void ygl::Scene::write(std::ostream &out) {
 	// Components
 	this->componentManager.writeComponentTypes(out);
 	// Systems
@@ -106,7 +100,7 @@ void ygl::Scene::serialize(std::ostream &out) {
 	out << std::flush;
 }
 
-void ygl::Scene::deserialize(std::istream &in) {
+void ygl::Scene::read(std::istream &in) {
 	using size_type = std::unordered_map<const char *, ComponentType>::size_type;
 
 	auto nameToType = std::unordered_map<std::string, ygl::ComponentType>();
@@ -148,7 +142,7 @@ void ygl::Scene::deserialize(std::istream &in) {
 		ISystem *system = getSystem(name);
 		if (system == nullptr)
 			throw std::runtime_error("trying to load a system that has not been registered: " + name);
-		system->deserialize(in);
+		system->read(in);
 		std::cout << name << std::endl;
 	}
 

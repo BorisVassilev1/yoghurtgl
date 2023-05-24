@@ -69,8 +69,8 @@ class Translator : public ygl::ISystem {
 		}
 	}
 
-	void serialize(std::ostream &out) override { out.write((char *)&dummyData, sizeof(dummyData)); }
-	void deserialize(std::istream &in) override { in.read((char *)&dummyData, sizeof(dummyData)); }
+	void write(std::ostream &out) override { out.write((char *)&dummyData, sizeof(dummyData)); }
+	void read(std::istream &in) override { in.read((char *)&dummyData, sizeof(dummyData)); }
 };
 const char *Translator::name = "ygl::Translator";
 
@@ -135,13 +135,13 @@ TEST_CASE("Serialization") {
 		scene.addComponent(e, ygl::Transformation(glm::vec3(1.)));
 
 		std::stringstream ss;
-		scene.serialize(ss);
+		scene.write(ss);
 
 		ygl::Scene other;
 		other.registerComponent<ygl::RendererComponent>();
 		other.registerComponent<ygl::Transformation>();
 		other.registerSystem<Translator>();
-		other.deserialize(ss);
+		other.read(ss);
 
 		CHECK(other.getComponent<ygl::Transformation>((ygl::Entity)0) == ygl::Transformation());
 		CHECK(other.getComponent<ygl::RendererComponent>((ygl::Entity)0) == ygl::RendererComponent());

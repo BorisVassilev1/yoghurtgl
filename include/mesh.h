@@ -50,7 +50,6 @@ class IMesh : public ISerializable{
 	void setPolygonMode(GLenum polygonMode);
 
 	void			   serialize(std::ostream &out) override;
-	void			   deserialize(std::istream &in) override {};
 
 	class VBO {
 	   public:
@@ -104,7 +103,7 @@ class BoxMesh : public Mesh {
 	protected:
 	void init(const glm::vec3 &size, const glm::vec3 &detail);
    public:
-	BoxMesh(std::istream &in, const std::string &path);
+	BoxMesh(std::istream &in);
 	BoxMesh(const glm::vec3 &size, const glm::vec3 &detail);
 	BoxMesh(const glm::vec3 &dim);
 	BoxMesh(float size);
@@ -112,7 +111,6 @@ class BoxMesh : public Mesh {
 	
 	static const char *name;
 	void			   serialize(std::ostream &out) override;
-	void			   deserialize(std::istream &in) override;
 };
 
 class SphereMesh : public Mesh {
@@ -126,11 +124,10 @@ class SphereMesh : public Mesh {
 	SphereMesh(float radius, uint detailX, uint detailY);
 	SphereMesh(float radius);
 	SphereMesh();
-	SphereMesh(std::istream &in, const std::string&path);
+	SphereMesh(std::istream &in);
 
 	static const char *name;
 	void			   serialize(std::ostream &out) override;
-	void			   deserialize(std::istream &in) override;
 };
 
 Mesh *makeTriangle();

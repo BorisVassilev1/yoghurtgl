@@ -14,31 +14,54 @@ ygl::Shader::~Shader() {
 		glDeleteProgram(program);
 		program = 0;
 	}
+	for (uint i = 0; i < shadersCount; ++i) {
+		delete[] fileNames[i];
+	}
+	delete[] fileNames;
+	fileNames = nullptr;
 }
 
 void ygl::Shader::deleteShaders() {
-	for (int i = 0; i < shadersCount; ++i) {
+	for (uint i = 0; i < shadersCount; ++i) {
 		glDetachShader(program, shaders[i]);
 		glDeleteShader(shaders[i]);
 		shaders[i] = 0;
 	}
 	delete[] shaders;
 	shaders = nullptr;
-	delete[] fileNames;
-	fileNames = nullptr;
 }
 
-ygl::Shader::Shader(std::initializer_list<const char *> files) {
+void ygl::Shader::init(std::vector<std::string> files) {
 	shadersCount = files.size();
 	shaders		 = new GLuint[shadersCount];
 	fileNames	 = new const char *[shadersCount];
 
-	auto it = files.begin();
-	for (int i = 0; i < shadersCount; ++i && ++it) {
-		fileNames[i] = *it;
+	for (uint i = 0; i < shadersCount; ++i) {
+		fileNames[i] = new char[files[i].size() + 1];
+		std::strcpy((char *)fileNames[i], files[i].c_str());
 	}
 
 	program = glCreateProgram();
+}
+
+ygl::Shader::Shader(std::initializer_list<std::string> files) { init(files); }
+
+ygl::Shader::Shader(std::istream &in) {
+	in.read((char *)&shadersCount, sizeof(shadersCount));
+	std::vector<std::string> files;
+	for (std::size_t i = 0; i < shadersCount; ++i) {
+		std::string fileName;
+		std::getline(in, fileName, '\0');
+		files.push_back(fileName);
+	}
+	init(files);
+}
+
+void ygl::Shader::serialize(std::ostream &out) {
+	out.write((char *)&shadersCount, sizeof(shadersCount));
+	for (std::size_t i = 0; i < shadersCount; ++i) {
+		out.write(fileNames[i], std::strlen(fileNames[i]) + 1);
+	}
 }
 
 void ygl::Shader::createShader(GLenum type, GLuint target) {
@@ -61,7 +84,7 @@ void ygl::Shader::createShader(GLenum type, GLuint target) {
 }
 
 void ygl::Shader::attachShaders() {
-	for (int i = 0; i < shadersCount; ++i) {
+	for (uint i = 0; i < shadersCount; ++i) {
 		glAttachShader(program, shaders[i]);
 	}
 }
@@ -221,7 +244,6 @@ void ygl::Shader::detectUniforms() {
 
 		char *name = new char[values[2]];
 		glGetProgramResourceName(program, GL_UNIFORM, unif, (GLsizei)values[2], nullptr, name);
-		// std::cout << name << " " << values[1] << " "<< values[3] << std::endl;
 
 		createUniform(name);
 		delete[] name;
@@ -233,8 +255,6 @@ void ygl::Shader::detectBlockUniforms() {
 	glGetProgramInterfaceiv(program, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES, &numBlocks);
 
 	GLenum blockProperties[] = {GL_NUM_ACTIVE_VARIABLES, GL_BUFFER_BINDING, GL_NAME_LENGTH};
-	// GLenum activeUnifProp[]	 = {GL_ACTIVE_VARIABLES};
-	// GLenum unifProperties[]	 = {GL_TYPE, GL_LOCATION, GL_OFFSET};
 
 	for (int blockIx = 0; blockIx < numBlocks; ++blockIx) {
 		GLint result[3];
@@ -243,7 +263,6 @@ void ygl::Shader::detectBlockUniforms() {
 		GLchar *blockName = new GLchar[result[2]];
 		glGetProgramResourceName(program, GL_UNIFORM_BLOCK, blockIx, result[2], nullptr, blockName);
 		std::string blockNameString(blockName);
-		// std::cout << blockName << " " << blockIx << " " << result[1] << " " << result[0] << std::endl;
 
 		createUBO(blockNameString, result[1]);
 		delete[] blockName;
@@ -255,8 +274,6 @@ void ygl::Shader::detectStorageBlocks() {
 	glGetProgramInterfaceiv(program, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &numSSBOs);
 
 	GLenum blockProperties[] = {GL_NUM_ACTIVE_VARIABLES, GL_BUFFER_BINDING, GL_NAME_LENGTH};
-	// GLenum activeUnifProp[]  = {GL_ACTIVE_VARIABLES};
-	// GLenum unifProperties[]  = {GL_TYPE, GL_OFFSET};
 
 	for (int block = 0; block < numSSBOs; block++) {
 		int blockInfo[3];
@@ -265,7 +282,6 @@ void ygl::Shader::detectStorageBlocks() {
 		GLchar *blockName = new GLchar[blockInfo[2]];
 		glGetProgramResourceName(program, GL_SHADER_STORAGE_BLOCK, block, blockInfo[2], nullptr, blockName);
 		std::string blockNameString(blockName);
-		// System.out.println(blockName + " " + block + " " + blockInfo[0] + " " + blockInfo[1]);
 
 		createSSBO(blockNameString, blockInfo[1]);
 		delete[] blockName;
@@ -273,7 +289,7 @@ void ygl::Shader::detectStorageBlocks() {
 }
 
 GLuint ygl::Shader::getUniformLocation(const std::string &uniformName) {
-	if(!hasUniform(uniformName)) dbLog(ygl::LOG_ERROR, "Shader does not have uniform: ", uniformName);
+	if (!hasUniform(uniformName)) dbLog(ygl::LOG_ERROR, "Shader does not have uniform: ", uniformName);
 	assert(hasUniform(uniformName) && "the uniform does not exist in this shader.");
 
 	GLint location = (*(uniforms.find(uniformName))).second;
@@ -354,6 +370,8 @@ void ygl::Shader::setSSBO(GLuint bufferId, GLuint binding) {
 
 void ygl::Shader::setUBO(GLuint bufferId, GLuint binding) { glBindBufferBase(GL_UNIFORM_BUFFER, binding, bufferId); }
 
+const char *ygl::VFShader::name = "ygl::VFShader";
+
 ygl::VFShader::VFShader(const char *vertex, const char *fragment) : Shader({vertex, fragment}) {
 	createShader(GL_VERTEX_SHADER, 0);
 	createShader(GL_FRAGMENT_SHADER, 1);
@@ -361,9 +379,34 @@ ygl::VFShader::VFShader(const char *vertex, const char *fragment) : Shader({vert
 	finishProgramCreation();
 }
 
+ygl::VFShader::VFShader(std::istream &in) : Shader(in) {
+	createShader(GL_VERTEX_SHADER, 0);
+	createShader(GL_FRAGMENT_SHADER, 1);
+
+	finishProgramCreation();
+}
+
+void ygl::VFShader::serialize(std::ostream &out) {
+	out.write(name, std::strlen(name) + 1);
+	Shader::serialize(out);
+}
+
+const char *ygl::ComputeShader::name = "ygl::ComputeShader";
+
 ygl::ComputeShader::ComputeShader(const char *source) : Shader({source}) {
 	createShader(GL_COMPUTE_SHADER, 0);
 	finishProgramCreation();
 
 	glGetProgramiv(program, GL_COMPUTE_WORK_GROUP_SIZE, glm::value_ptr(groupSize));
+}
+
+ygl::ComputeShader::ComputeShader(std::istream &in) : Shader(in) {
+	createShader(GL_COMPUTE_SHADER, 0);
+	finishProgramCreation();
+
+	glGetProgramiv(program, GL_COMPUTE_WORK_GROUP_SIZE, glm::value_ptr(groupSize));
+}
+void ygl::ComputeShader::serialize(std::ostream &out) {
+	out.write(name, std::strlen(name) + 1);
+	Shader::serialize(out);
 }

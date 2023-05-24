@@ -357,6 +357,7 @@ void BVHTree::build(Node *node, int depth) {
 }
 
 void BVHTree::build(Purpose purpose) {
+	static_cast<void>(purpose);
 	// purpose is ignored. what works best for triangles seems to also work best for objects
 	printf("Building BVH tree with %d primitives... \n", int(allPrimitives.size()));
 	fflush(stdout);

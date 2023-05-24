@@ -80,7 +80,7 @@ void run() {
 	scene.addComponent<Transformation>(terrain, Transformation(glm::vec3(), glm::vec3(0, 0, 0), glm::vec3(10)));
 	RendererComponent terrainRenderer;
 	terrainRenderer.materialIndex = renderer->addMaterial(terrainMat);
-	terrainRenderer.shaderIndex	  = renderer->addShader(terrainShader);
+	terrainRenderer.shaderIndex	  = asman->addShader(terrainShader, "terrainShader");
 	terrainRenderer.meshIndex	  = asman->addMesh(terrainMesh, "terrain");
 	scene.addComponent(terrain, terrainRenderer);
 

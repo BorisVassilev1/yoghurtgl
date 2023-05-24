@@ -110,7 +110,6 @@ struct RendererComponent : ygl::Serializable {
 };
 
 class Renderer : public ygl::ISystem {
-	std::vector<Shader *> shaders;
 	std::vector<Material> materials;
 	std::vector<Light>	  lights;
 
@@ -148,7 +147,6 @@ class Renderer : public ygl::ISystem {
 	Mesh	 *getMesh(uint index);
 	Mesh	 *getScreenQuad();
 
-	unsigned int addShader(Shader *);
 	unsigned int addMaterial(const Material &);
 	Light		&addLight(const Light &);
 	Light		&getLight(uint index);
@@ -177,8 +175,8 @@ class Renderer : public ygl::ISystem {
 
 	Window *getWindow() { return window; }
 
-	void serialize(std::ostream &out) override;
-	void deserialize(std::istream &in) override;
+	void write(std::ostream &out) override;
+	void read(std::istream &in) override;
 };
 
 std::ostream &operator<<(std::ostream &out, const ygl::RendererComponent &rhs);

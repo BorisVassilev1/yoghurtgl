@@ -55,12 +55,12 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path) {
 	mesh->setCullFace(false);
 	mesh->setDepthFunc(GL_LEQUAL);
 	AssetManager *asman = scene.getSystem<AssetManager>();
-	uint		  meshIndex = asman->addMesh(mesh, "skybox");
+	uint		  meshIndex = asman->addMesh(mesh, "skycube");
 	ygl::Material mat;
 	mat.albedo_map	   = scene.getSystem<AssetManager>()->addTexture(new TextureCubemap(path, ".jpg"), path);
 	mat.use_albedo_map = 1.0;
 	uint materialIndex = renderer->addMaterial(mat);
-	uint shaderIndex   = renderer->addShader(new VFShader("./shaders/skybox.vs", "./shaders/skybox.fs"));
+	uint shaderIndex   = asman->addShader(new VFShader("./shaders/skybox.vs", "./shaders/skybox.fs"), "skyShader");
 
 	scene.addComponent(e, Transformation());
 	scene.addComponent(e, RendererComponent(shaderIndex, meshIndex, materialIndex));

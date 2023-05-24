@@ -16,8 +16,6 @@ using namespace ygl;
 void run() {
 	Window window = Window(1280, 1000, "Test Window", true, false);
 
-	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
-
 	Camera cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse		 mouse(window);
@@ -25,15 +23,11 @@ void run() {
 
 	Scene scene;
 	scene.registerComponentIfCan<ygl::Transformation>();
-
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
 
-	uint shaderInd = renderer->addShader(shader);
-	renderer->setDefaultShader(shaderInd);
-	renderer->addShader(new VFShader("./shaders/skybox.vs", "./shaders/skybox.fs"));
-
 	std::ifstream is = std::ifstream("pbrDragon.sc");
-	scene.deserialize(is);
+	scene.read(is);
+	is.close();
 
 	glClearColor(0, 0, 0, 1);
 	while (!window.shouldClose()) {

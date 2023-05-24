@@ -27,13 +27,15 @@ void run() {
 	scene.registerComponentIfCan<ygl::Transformation>();
 
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
+	AssetManager *asman = scene.getSystem<AssetManager>();
 
-	uint shaderInd = renderer->addShader(shader);
+	uint shaderInd = asman->addShader(shader, "defaultShader");
 	renderer->setDefaultShader(shaderInd);
 
 	addModels(scene, "./res/models/dragon-gltf/scene.gltf", [&scene, &renderer](Entity model) {
 		RendererComponent &rc									   = scene.getComponent<RendererComponent>(model);
 		renderer->getMaterial(rc.materialIndex).specular_roughness = 2.;
+		renderer->getMesh(rc)->setCullFace(false);
 	});
 
 	addModels(scene, "./res/models/helmet/DamagedHelmet.gltf", [&scene](Entity model) {
@@ -63,13 +65,10 @@ void run() {
 
 		window.swapBuffers();
 	}
-	std::ofstream of = std::ofstream("pbrDragon.sc");
-	scene.serialize(of);
-	of.close();
 
-	for(Entity i = 0; i < scene.entitiesCount(); ++ i) {
-	std::cout << scene.getComponent<RendererComponent>(i) << std::endl;
-	}
+	std::ofstream of = std::ofstream("pbrDragon.sc");
+	scene.write(of);
+	of.close();
 }
 
 int main() {

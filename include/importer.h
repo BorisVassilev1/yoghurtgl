@@ -1,6 +1,7 @@
 #pragma once
 
-#include "serializable.h"
+#include <serializable.h>
+#include <shader.h>
 #ifndef YGL_NO_ASSIMP
 	#include <assimp/Importer.hpp>
 	#include <assimp/scene.h>
@@ -30,20 +31,31 @@ void terminateLoader();
 class AssetManager : public ygl::ISystem {
 	std::unordered_map<std::string, uint> meshNames;
 	std::vector<Mesh *>					  meshes;
+
 	std::unordered_map<std::string, uint> textureNames;
 	std::vector<ITexture *>				  textures;
 
+	std::unordered_map<std::string, uint> shaderNames;
+	std::vector<Shader *>				  shaders;
+
    public:
 	static const char *name;
-	uint			   addMesh(Mesh *mesh, std::string name);
-	uint			   addTexture(ITexture *tex, std::string name);
+	uint			   addMesh(Mesh *mesh, const std::string &name);
+	uint			   addTexture(ITexture *tex, const std::string &name);
+	uint			   addShader(Shader *shader, const std::string &name);
 
-	uint getMeshIndex(std::string name);
-	uint getTextureIndex(std::string name);
+	uint getMeshIndex(const std::string &name);
+	uint getTextureIndex(const std::string &name);
+	uint getShaderIndex(const std::string &name);
+
+	std::size_t getMeshCount();
+	std::size_t getTexturesCount();
+	std::size_t getShadersCount();
 
 	Mesh	 *getMesh(uint i);
 	ITexture *getTexture(uint i);
-
+	Shader *getShader(uint i);
+	
 	template <typename T>
 		requires IsTexture<T>
 	T getTexture(uint i) {
@@ -56,23 +68,23 @@ class AssetManager : public ygl::ISystem {
 
 	void init() override {}
 	void doWork() override {}
-	void serialize(std::ostream &out) override;
-	void deserialize(std::istream &in) override;
+	void write(std::ostream &out) override;
+	void read(std::istream &in) override;
 };
 
 class MeshFromFile : public Mesh {
 	std::string path;
-	uint index;
-	void init(const std::string &path, uint index);
+	uint		index;
+	void		init(const std::string &path, uint index);
+
    public:
 	static const aiScene *loadedScene;
-	static std::string loadedFile;
-	static void loadSceneIfNeeded(const std::string &path);
-	static const char *name;
+	static std::string	  loadedFile;
+	static void			  loadSceneIfNeeded(const std::string &path);
+	static const char	 *name;
 	MeshFromFile(const std::string &path, uint index = 0);
-	MeshFromFile(std::istream &in, const std::string &path);
-	
+	MeshFromFile(std::istream &in);
+
 	void serialize(std::ostream &out) override;
-	void deserialize(std::istream &in) override;
 };
 }	  // namespace ygl

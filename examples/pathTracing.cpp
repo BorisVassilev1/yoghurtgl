@@ -136,12 +136,12 @@ void initScene() {
 		bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(1.f)));
 	ygl::RendererComponent bunnyRenderer;
 
-	unsigned int shaderIndex = renderer->addShader(shader);
+	unsigned int shaderIndex = asman->addShader(shader, "defaultShader");
 	renderer->setDefaultShader(shaderIndex);
 	scene->addComponent<ygl::RendererComponent>(
 		bunny, ygl::RendererComponent(-1, asman->addMesh(bunnyMesh, "bunny"), renderer->addMaterial(geometryMaterial)));
 
-	unlitShaderIndex = renderer->addShader(unlitShader);
+	unlitShaderIndex = asman->addShader(unlitShader, "unlitShader");
 
 	ygl::Shader::setSSBO(bunnyMesh->getVertices().bufferId, 2);
 	ygl::Shader::setSSBO(bunnyMesh->getNormals().bufferId, 3);
@@ -212,8 +212,8 @@ void initBoxes() {
 	for (int i = 0; i < boxesCount; ++i) {
 		glm::vec3 randomColor(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.);
 
-		glm::vec3 min = glm::vec3((i / 2) * 1.5 - 5, 0.5 + 1.5 * (i % 2), -1.5);
-		// glm::vec3 min		= glm::ballRand(3.0f) + glm::vec3(0, 3, 5);
+		glm::vec3 min = glm::vec3(int(i / 2) * 1.5 - 5, 0.5 + 1.5 * (i % 2), -1.5);
+
 		float roughness = glm::linearRand(0.f, 0.5f);
 
 		boxes[i] = Box(min, min + glm::vec3(1.0),

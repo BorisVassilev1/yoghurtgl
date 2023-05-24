@@ -65,6 +65,7 @@ class Texture2d : public ITexture {
 	uint8_t components = 4;
 	GLuint	id		   = -1;
 	Type type;
+	std::string fileName = "";
 
 	void init(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
 			  GLenum type, stbi_uc *data);
@@ -82,7 +83,7 @@ class Texture2d : public ITexture {
 	Texture2d(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components);
 	Texture2d(std::string fileName, Type type);
 	Texture2d(std::string fileName);
-	Texture2d(std::istream &in, const std::string &path);
+	Texture2d(std::istream &in);
 
 	void save(std::string filename) override;
 	void bind(int textureUnit) override;
@@ -95,7 +96,6 @@ class Texture2d : public ITexture {
 	virtual ~Texture2d();
 	
 	void serialize(std::ostream &out) override;
-	void deserialize(std::istream &out) override;
 };
 
 class TextureCubemap : public ITexture {
@@ -113,7 +113,7 @@ class TextureCubemap : public ITexture {
 	static const char *name;
 	TextureCubemap() {}
 	TextureCubemap(const std::string &path, const std::string &format);
-	TextureCubemap(std::istream &in, const std::string &path);
+	TextureCubemap(std::istream &in);
 
 	void save(std::string fileName) override;
 	void bind(int textureUnit) override;
@@ -127,7 +127,6 @@ class TextureCubemap : public ITexture {
 	virtual ~TextureCubemap(){};
 
 	void serialize(std::ostream &out) override;
-	void deserialize(std::istream &out) override;
 };
 
 }	  // namespace ygl

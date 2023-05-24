@@ -52,7 +52,7 @@ void run() {
 	bunnyMat.albedo_map		= asman->addTexture(tex, "res/images/uv_checker.png");
 	bunnyMat.use_albedo_map = 1.0;
 
-	unsigned int shaderIndex = renderer->addShader(shader);
+	unsigned int shaderIndex = asman->addShader(shader, "defaultShader");
 
 	bunnyRenderer.meshIndex = asman->addMesh(bunnyMesh, "bunny");
 

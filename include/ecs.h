@@ -16,6 +16,13 @@
 #include <serializable.h>
 #include <transformation.h>
 
+/*
+ * Idea for this implementation:
+ * https://austinmorlan.com/posts/entity_component_system/
+ *
+ * it is not direct copy-paste
+ */
+
 namespace ygl {
 
 const int MAX_COMPONENTS = 16;
@@ -28,8 +35,8 @@ class EntityManager;
 
 template <class T>
 concept IsNamed = requires(T) {
-	{ T::name } -> std::same_as<const char *&>;
-};
+					  { T::name } -> std::same_as<const char *&>;
+				  };
 
 template <class T>
 concept IsComponent = std::is_base_of<ygl::Serializable, T>::value && IsNamed<T>;
@@ -42,6 +49,7 @@ concept IsSystem = std::is_base_of<ygl::ISystem, T>::value && IsNamed<T>;
 template <class T>
 	requires IsComponent<T>
 class ComponentArray;
+
 class ComponentManager;
 class Scene;
 
@@ -57,7 +65,6 @@ class EntityManager {
 	EntityManager();
 
 	Entity	  createEntity();
-	void	  createEntity(Entity e);
 	void	  destroyEntity(Entity);
 	Signature getSignature(Entity);
 	void	  setSignature(Entity, Signature);
@@ -73,18 +80,35 @@ class IComponentArray {
 	/**
 	 * @brief Deletes an entity's data from the array
 	 *
-	 * @param e
+	 * @param e - an Entity
 	 */
-	virtual void		  deleteEntity(Entity e)					  = 0;
-	virtual void		  writeComponent(Entity e, std::ostream &out) = 0;
-	virtual Serializable &readComponent(Entity e, std::istream &in, Scene *scene)	  = 0;
+	virtual void deleteEntity(Entity e) = 0;
+
+	/**
+	 * @brief Writes an entity's component to the stream provided
+	 *
+	 * @param e - Entity
+	 * @param out - stream to werite to
+	 */
+	virtual void writeComponent(Entity e, std::ostream &out) = 0;
+
+	/**
+	 * @brief adds the array's component to the provided entity, constructing it from data in the stream.
+	 *
+	 * @param e - entity to assign the component to
+	 * @param in - stream to read the data from
+	 * @param scene - ALWAYS MUST BE THE SCENE THAT OWNS THIS IComponentArray
+	 * @return Serializable& - a reference to the constructed component
+	 */
+	virtual Serializable &readComponent(Entity e, std::istream &in, Scene *scene) = 0;
+
 	virtual ~IComponentArray() {}
 };
 
 /**
  * @brief An array of component data for entities
  *
- * @tparam T Type of the component data stored
+ * @tparam T - Type of the component data stored
  */
 template <class T>
 	requires IsComponent<T>
@@ -97,7 +121,7 @@ class ComponentArray : public IComponentArray {
 
    public:
 	/**
-	 * @brief Construct a new Component Array object.
+	 * @brief Construct a new ComponentArray.
 	 *
 	 */
 	ComponentArray() { type_name = T::name; }
@@ -111,10 +135,11 @@ class ComponentArray : public IComponentArray {
 
 	/**
 	 * @brief Adds component to a given entity.
+	 * @throws @ref{std::runtime_error} if the entity already has that component
 	 *
-	 * @param e the entity to add a component to
-	 * @param component the component
-	 * @return T& a reference to the inserted data
+	 * @param e - the entity to add a component to
+	 * @param component - the component
+	 * @return T& - a reference to the inserted data
 	 */
 	T &addComponent(Entity e, const T &component) {
 		if (entityToIndexMap.find(e) != entityToIndexMap.end()) {
@@ -131,15 +156,16 @@ class ComponentArray : public IComponentArray {
 	/**
 	 * @brief Checks if a given entity has this array's component assigned to it
 	 *
-	 * @param e the entity to check for the component
-	 * @return true if the entity has a component of the array's type , false otherwise
+	 * @param e - the entity to check for the component
+	 * @return true - if the entity has a component of the array's type , false otherwise
 	 */
 	bool hasComponent(Entity e) { return entityToIndexMap.find(e) != entityToIndexMap.end(); }
 
 	/**
-	 * @brief Removes a component from an entity.
+	 * @brief Removes a component from an Entity.
+	 * @throws @ref{std::runtime_error} if the Entity does not have that component.
 	 *
-	 * @param e The entity whose component is to be removed
+	 * @param e - The entity whose component is to be removed
 	 */
 	void removeComponent(Entity e) {
 		if (entityToIndexMap.find(e) == entityToIndexMap.end()) {
@@ -161,8 +187,9 @@ class ComponentArray : public IComponentArray {
 
 	/**
 	 * @brief Delete an entity's data from the array
+	 * @throws @ref{std::runtime_error} if the entity does not exist
 	 *
-	 * @param e an entity
+	 * @param e - an Entity
 	 */
 	void deleteEntity(Entity e) override {
 		if (entityToIndexMap.find(e) == entityToIndexMap.end())
@@ -173,8 +200,8 @@ class ComponentArray : public IComponentArray {
 	/**
 	 * @brief Get the Component object for an entity.
 	 *
-	 * @param e The entity whose component is accessed
-	 * @return A reference to the component data
+	 * @param e - The entity whose component is accessed
+	 * @return T& - A reference to the component data
 	 */
 	T &getComponent(ygl::Entity e) {
 		if (entityToIndexMap.find(e) == entityToIndexMap.end())
@@ -195,11 +222,17 @@ class ComponentManager {
 	ComponentManager() {}
 
 	~ComponentManager() {
+		// deletes all component arrays
 		for (auto const &pair : componentArrays) {
 			delete pair.second;
 		}
 	}
 
+	/**
+	 * @brief Registers a component type so it can be assigned to entities.
+	 *
+	 * @tparam T - a component type
+	 */
 	template <typename T>
 		requires IsComponent<T>
 	void registerComponent() {
@@ -212,14 +245,29 @@ class ComponentManager {
 		componentArrays[type]	 = new ygl::ComponentArray<T>();
 	}
 
+	/**
+	 * @brief Checks if a component has been registered.
+	 *
+	 * @tparam T - component type
+	 * @return true - if the registerComponent<T>() has been called
+	 * @return false - otherwise
+	 */
 	template <typename T>
 	bool isComponentRegistered() {
 		const char *typeName = T::name;
-		bool res = componentTypes.find(typeName) != componentTypes.end();
+		bool		res		 = componentTypes.find(typeName) != componentTypes.end();
 		return res;
 	}
 
+	/**
+	 * @brief Get the ComponentType that has been assigned to a component type \a T when it was registered.
+	 * @throws @ref{std::runtime_error} if \a T has not been registered.
+	 *
+	 * @tparam T - component type
+	 * @return ComponentType - the assigned ComponentType
+	 */
 	template <typename T>
+		requires IsComponent<T>
 	ComponentType getComponentType() {
 		const char *typeName = T::name;
 		if (!isComponentRegistered<T>())
@@ -227,48 +275,108 @@ class ComponentManager {
 		return componentTypes[typeName];
 	}
 
+	/**
+	 * @brief Get the ComponentArray that contains the components of type \a T.
+	 * @throws @ref{std::runtime_error} if \a T has not been registered.
+	 *
+	 * @tparam T - component type
+	 * @return ComponentArray<T>* - a pointer to the ComponentArray of the required type.
+	 */
 	template <typename T>
+		requires IsComponent<T>
 	ComponentArray<T> *getComponentArray() {
 		const char	 *typeName = T::name;
 		ComponentType type	   = componentTypes[typeName];
-		if(componentArrays.find(type) == componentArrays.end())
+		if (componentArrays.find(type) == componentArrays.end())
 			throw std::runtime_error("component has not been registered: " + std::string(typeName));
 		return static_cast<ComponentArray<T> *>(componentArrays[type]);
 	}
 
+	/**
+	 * @brief Get the ComponentArray that contains the components of type \a T that has a ComponentType \a t .
+	 * Same as getComponentArray<T>() , but does not require the type to be known compile-time.
+	 * @throws \ref{std::runtime_error} if no registered component has \a t as its ComponentType.
+	 *
+	 * @param t - ComponentType of the component type
+	 * @return IComponentArray* - pointer to ComponentArray<T>
+	 */
 	IComponentArray *getComponentArray(ComponentType t) {
-		if(componentArrays.find(t) == componentArrays.end())
+		if (componentArrays.find(t) == componentArrays.end())
 			throw std::runtime_error("no component has that id: " + std::to_string(t));
 		return componentArrays[t];
 	}
 
+	/**
+	 * @brief Get the component of type \a T from the Entity \a e.
+	 *
+	 * @throws exceptions if the component cannot be found by any means.
+	 * @see getComponentArray<T>() and ComponentArray<T>::getComponent(Entity e).
+	 *
+	 * @tparam T - component type
+	 * @param e - an Entity in the Scene
+	 * @return T& - a reference to the component
+	 */
 	template <typename T>
 		requires IsComponent<T>
 	T &getComponent(Entity e) {
 		return this->getComponentArray<T>()->getComponent(e);
 	}
 
+	/**
+	 * @brief Checks if an Entity \a e has a component of type \a T.
+	 * @see ComponentArray<T>::hasComponent(e) .
+	 *
+	 * @tparam T - component type
+	 * @param e - an Entity
+	 * @return true - if \a e has a component of type \a T.
+	 * @return false - otherwise
+	 */
 	template <typename T>
 	bool hasComponent(Entity e) {
 		return this->getComponentArray<T>()->hasComponent(e);
 	}
 
+	/**
+	 * @brief Add a component of type \a T to an Entity \a e.
+	 * @see getComponentArray<T>() and ComponentArray<T>::addComponent(Entity e, )
+	 *
+	 * @tparam T - component type
+	 * @param e - an Entity
+	 * @param component - a component of type \a T to be added.
+	 * @return T& - a reference to the copied contents of \a component
+	 */
 	template <typename T>
-	T &addComponent(Entity e, T component) {
+	T &addComponent(Entity e, const T &component) {
 		return getComponentArray<T>()->addComponent(e, component);
 	}
 
+	/**
+	 * @brief Removes a component of type \a T from the Entity \a e.
+	 *
+	 * @tparam T
+	 * @param e
+	 */
 	template <typename T>
 	void removeComponent(Entity e) {
 		getComponentArray<T>()->removeComponent(e);
 	}
 
+	/**
+	 * @brief Deletes an entity's data from all Component Arrays
+	 *
+	 * @param e - an Entity
+	 */
 	void deleteEntity(Entity e) {
 		for (auto const &pair : componentArrays) {
 			pair.second->deleteEntity(e);
 		}
 	}
 
+	/**
+	 * @brief Writes all component types to \a out in binary format. Used for serialization of the Scene.
+	 *
+	 * @param out - stream to write to
+	 */
 	void writeComponentTypes(std::ostream &out) {
 		auto size = this->componentTypes.size();
 		out.write((char *)&size, sizeof(size));
@@ -278,12 +386,27 @@ class ComponentManager {
 		}
 	}
 
+	/**
+	 * @brief Get how many components have been registered in this manager.
+	 *
+	 * @return uint - the count
+	 */
 	uint getComponentsCount() { return componentTypeCounter; }
 
+	/**
+	 * @brief Get all component types and their names. DO NOT USE THIS IF YOU DO NOT KNOW WHAT YOU ARE DOING!
+	 *
+	 * @return const std::unordered_map<const char *, ComponentType>& - a const reference to the map from component name
+	 * to ComponentType
+	 */
 	const auto &getComponentTypes() { return componentTypes; }
 };
 
-class ISystem : public ISerializable {
+/**
+ * @brief An Interface for a system in a scene
+ *
+ */
+class ISystem : public AppendableSerializable {
    public:
 	std::set<Entity> entities;
 	Scene			*scene = nullptr;
@@ -296,35 +419,60 @@ class ISystem : public ISerializable {
 	void		 printEntities();
 };
 
+/**
+ * @brief An object that manages objects of type ISystem.
+ *
+ */
 class SystemManager {
 	std::unordered_map<const char *, ISystem *> systems;
 	std::unordered_map<const char *, Signature> signatures;
 
    public:
+	/**
+	 * @brief registers a System of type \a T. Constructs it with a Scene and the other given arguments.
+	 * @throws @ref{std::runtime_error} if system already exists.
+	 *
+	 * @tparam T - a System type
+	 * @tparam Args
+	 * @param scene - scene to give to T's constructor
+	 * @param args - other arguments for T's constructor
+	 * @return T* - a pointer to the System created
+	 */
 	template <class T, typename... Args>
 		requires IsSystem<T>
 	T *registerSystem(Scene *scene, Args &&...args) {
 		const char *type = T::name;
 
-		if(systems.find(type) != systems.end())
-			throw std::runtime_error("system already registered");
+		if (systems.find(type) != systems.end()) throw std::runtime_error("system already registered");
 
 		T *sys = new T(scene, args...);
 		systems.insert({type, sys});
 		return sys;
 	}
 
+	/**
+	 * @brief Get the System object
+	 * @throws @ref{std::runtime_error} if \a T has not been registered.
+	 *
+	 * @tparam T - type of the System
+	 * @return T* - a pointer to the System object
+	 */
 	template <class T>
 		requires IsSystem<T>
 	T *getSystem() {
 		const char *type = T::name;
 
-		if(systems.find(type) == systems.end())
-			throw std::runtime_error("system type has not been registered");
+		if (systems.find(type) == systems.end()) throw std::runtime_error("system type has not been registered");
 
 		return (T *)(systems[type]);
 	}
 
+	/**
+	 * @brief Get the System object. Same as getSystem<T>() but without type safety.
+	 *
+	 * @param name - name of the System
+	 * @return ISystem* - a pointer to the System
+	 */
 	ISystem *getSystem(const std::string &name) {
 		for (const auto &pair : systems) {
 			if (pair.first == name) return pair.second;
@@ -332,12 +480,26 @@ class SystemManager {
 		return nullptr;
 	}
 
+	/**
+	 * @brief Checks if a System of type \a T has been registered.
+	 * 
+	 * @tparam T - a System type
+	 * @return true - if registerSystem<T>(...) has been called
+	 * @return false - otherwise
+	 */
 	template <class T>
-		requires IsSystem<T>
-	bool hasSystem() {
+		requires IsSystem<T> bool
+	hasSystem() {
 		return systems.find(T::name) != systems.end();
 	}
 
+	/**
+	 * @brief Set the Signature of the System of type \a T.
+	 * @throws @ref{std::runtime_error} if \a T has not been registered.
+	 * 
+	 * @tparam T - a System type.
+	 * @param signature - a Signature
+	 */
 	template <class T>
 		requires IsSystem<T>
 	void setSignature(Signature signature) {
@@ -347,6 +509,12 @@ class SystemManager {
 		signatures[type] = signature;
 	}
 
+	/**
+	 * @brief Updates an Entity's Signature when it's components change
+	 * 
+	 * @param e - an Entity
+	 * @param signature - a Signature
+	 */
 	void updateEntitySignature(Entity e, Signature signature) {
 		for (auto pair : systems) {
 			if ((signature & signatures[pair.first]) == signatures[pair.first]) {
@@ -357,24 +525,38 @@ class SystemManager {
 		}
 	}
 
+	/**
+	 * @brief Destroys an Entity.
+	 * 
+	 * @param e - an Entity
+	 */
 	void destroyEntity(Entity e) {
 		for (auto pair : systems) {
 			pair.second->entities.erase(e);
 		}
 	}
 
+	/**
+	 * @brief Destructor
+	 * 
+	 */
 	~SystemManager() {
 		for (auto pair : systems) {
 			delete pair.second;
 		}
 	}
 
+	/**
+	 * @brief Writes all Systems' binary data to \a out. 
+	 * 
+	 * @param out - stream to write to
+	 */
 	void writeSystems(std::ostream &out) {
 		auto size = this->systems.size();
 		out.write((char *)&size, sizeof(size));
 		for (auto &t : this->systems) {
 			out.write(t.first, strlen(t.first) + 1);
-			t.second->serialize(out);
+			t.second->write(out);
 		}
 	}
 };
@@ -387,27 +569,24 @@ class SystemManager {
  * This type of Scene is modeled after Unity3D's ECS model
  *
  */
-class Scene : public ygl::Serializable {
+class Scene : public ygl::AppendableSerializable {
 	ComponentManager componentManager;
 	EntityManager	 entityManager;
 	SystemManager	 systemManager;
 
    public:
-	std::set<Entity>  entities;
-
-	void createEntity(Entity e) { entityManager.createEntity(e); }
+	std::set<Entity> entities;
 
 	/**
 	 * @brief Construct an empty Scene
 	 *
-	 * @param window a window for the scene to be attached to
 	 */
 	Scene() {}
 
 	/**
 	 * @brief Create an Entity.
 	 *
-	 * @return The created Entity.
+	 * @return Entity - The created Entity.
 	 */
 	Entity createEntity() {
 		Entity res = entityManager.createEntity();
@@ -429,8 +608,9 @@ class Scene : public ygl::Serializable {
 
 	/**
 	 * @brief Register a component type for the scene.
-	 *
-	 * @tparam T Component data type
+	 * @see ComponentManager::registerComponent<T>() .
+	 * 
+	 * @tparam T - Component data type
 	 */
 	template <typename T>
 		requires IsComponent<T>
@@ -438,6 +618,12 @@ class Scene : public ygl::Serializable {
 		componentManager.registerComponent<T>();
 	}
 
+	/**
+	 * @brief Registers a component type only if it has not been registered before.
+	 * @see isComponentRegistered<T>(), registerComponent<T>() .
+	 * 
+	 * @tparam T - a Component type
+	 */
 	template <typename T>
 	void registerComponentIfCan() {
 		if (!isComponentRegistered<T>()) registerComponent<T>();
@@ -445,8 +631,9 @@ class Scene : public ygl::Serializable {
 
 	/**
 	 * @brief Checks if the given component is registered for the scene.
-	 *
-	 * @tparam T component data type
+	 * @see ComponentManager::isComponentRegistered<T>() .
+	 * 
+	 * @tparam T - component data type
 	 */
 	template <typename T>
 	bool isComponentRegistered() {
@@ -455,12 +642,12 @@ class Scene : public ygl::Serializable {
 
 	/**
 	 * @brief Adds a Component to an Entity. The component type must have been registered in the scene.
-	 * One component cannot be assigned twise to the same Entity.
-	 *
-	 * @tparam T Component to be added.
-	 * @param e an Entity
-	 * @param component an instance of the component
-	 * @return a reference to the component added
+	 * One component cannot be assigned twice to the same Entity.
+	 * 
+	 * @tparam T - Component to be added.
+	 * @param e - an Entity
+	 * @param component - an instance of the component
+	 * @return T& - a reference to the component added
 	 */
 	template <typename T>
 	T &addComponent(Entity e, const T &component) {
@@ -474,6 +661,15 @@ class Scene : public ygl::Serializable {
 		return res;
 	}
 
+	/**
+	 * @brief Checks of an Entity has a component of type \a T.
+	 * @see ComponentManager::hasComponent<T>(Entity e)
+	 * 
+	 * @tparam T - a component type
+	 * @param e - an Entity
+	 * @return true - if the component has been added to \e
+	 * @return false - otherwise
+	 */
 	template <typename T>
 	bool hasComponent(Entity e) {
 		return componentManager.hasComponent<T>(e);
@@ -482,8 +678,8 @@ class Scene : public ygl::Serializable {
 	/**
 	 * @brief Removes a component from an Entity.
 	 *
-	 * @tparam T Component type to be removed
-	 * @param e Entity
+	 * @tparam T - Component type to be removed
+	 * @param e - Entity
 	 */
 	template <typename T>
 	void removeComponent(Entity e) {
@@ -498,8 +694,8 @@ class Scene : public ygl::Serializable {
 	/**
 	 * @brief Get the Signature of an Entity.
 	 *
-	 * @param e Entity
-	 * @return e's Signature
+	 * @param e - Entity
+	 * @return Signature - e's Signature
 	 */
 	Signature getSignature(Entity e) { return entityManager.getSignature(e); }
 
@@ -507,8 +703,8 @@ class Scene : public ygl::Serializable {
 	 * @brief Set a System's Signature. The system will have access to all objects that have the required
 	 * components.
 	 *
-	 * @tparam System a system to set signature
-	 * @tparam ...T component types for the system to require
+	 * @tparam System - a system to set signature
+	 * @tparam ...T - component types for the system to require
 	 */
 	template <class System, class... T>
 	void setSystemSignature() {
@@ -520,8 +716,8 @@ class Scene : public ygl::Serializable {
 	/**
 	 * @brief Get a System object if a System of that type exists.
 	 *
-	 * @tparam T
-	 * @return a pointer to the system if it exists. If not, nullptr
+	 * @tparam T - a System type
+	 * @return T* - a pointer to the system if it exists. If not, nullptr
 	 */
 	template <class T>
 	T *getSystem() {
@@ -531,23 +727,23 @@ class Scene : public ygl::Serializable {
 	/**
 	 * @brief Get a System object if a System of that type exists.
 	 *
-	 * @param name - typeid().name() of the system type
+	 * @param name - name of the system type
 	 * @return ISystem* - the system or nullptr if it os not found
 	 */
 	ISystem *getSystem(const std::string &name) { return systemManager.getSystem(name); }
 
 	template <class T>
-		requires IsSystem<T>
-	bool hasSystem() {
+		requires IsSystem<T> bool
+	hasSystem() {
 		return systemManager.hasSystem<T>();
 	}
 
 	/**
 	 * @brief Get an Entity's Component by type.
 	 *
-	 * @tparam T the wanted component's type
-	 * @param e Entity
-	 * @return a reference to the component
+	 * @tparam T - the wanted component's type
+	 * @param e - Entity
+	 * @return a - reference to the component
 	 */
 	template <typename T>
 		requires IsComponent<T>
@@ -558,8 +754,8 @@ class Scene : public ygl::Serializable {
 	/**
 	 * @brief Get the ComponentType assigned to a Component Type, registered in the system.
 	 *
-	 * @tparam T the Component type.
-	 * @return ComponentType
+	 * @tparam T - the Component type.
+	 * @return ComponentType - T's ComponentType
 	 */
 	template <typename T>
 	ComponentType getComponentType() {
@@ -569,8 +765,8 @@ class Scene : public ygl::Serializable {
 	/**
 	 * @brief Registers a System in the Scene. Creates an instance of the System and returns a reference to it.
 	 *
-	 * @tparam T System Type
-	 * @return T* A reference to the created instance
+	 * @tparam T - System Type
+	 * @return T* - A reference to the created instance
 	 */
 	template <class T, class... Args>
 	T *registerSystem(Args &&...args) {
@@ -579,26 +775,37 @@ class Scene : public ygl::Serializable {
 		return sys;
 	}
 
+	/**
+	 * @brief Registers a System in the Scene if it has not been registered. Creates an instance of the System and returns a reference to it.
+	 * 
+	 * @tparam T - a System type
+	 * @tparam Args
+	 * @param args - args for T's construction
+	 * @return T* - a pointer to the created instance of T
+	 */
 	template <class T, class... Args>
 	T *registerSystemIfCan(Args &&...args) {
-		if(!systemManager.hasSystem<T>())
-			return registerSystem<T>(args...);
+		if (!systemManager.hasSystem<T>()) return registerSystem<T>(args...);
 		return nullptr;
 	}
 
-	void serialize(std::ostream &out);
-	void deserialize(std::istream &in);
+	void write(std::ostream &out) override;
+	void read(std::istream &in) override;
 
-	std::size_t entitiesCount() {
-		return entities.size();
-	}
+	/**
+	 * @brief How many entities does the Scene have
+	 * 
+	 * @return std::size_t 
+	 */
+	std::size_t entitiesCount() { return entities.size(); }
 };
 
-template<class T>
+// this definition is outside the class because it uses a method from Scene
+template <class T>
 	requires IsComponent<T>
-	Serializable &ygl::ComponentArray<T>::readComponent(Entity e, std::istream &in, Scene *scene) {
-		Serializable &res = scene->addComponent(e, T());
-		((T *)&res)->deserialize(in);
-		return res;
-	}
+Serializable &ygl::ComponentArray<T>::readComponent(Entity e, std::istream &in, Scene *scene) {
+	Serializable &res = scene->addComponent(e, T());
+	((T *)&res)->deserialize(in);
+	return res;
+}
 }	  // namespace ygl

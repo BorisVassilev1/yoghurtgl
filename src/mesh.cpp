@@ -261,10 +261,7 @@ void ygl::BoxMesh::serialize(std::ostream &out) {
 	out.write((char *)glm::value_ptr(resolution), sizeof(resolution));
 }
 
-void ygl::BoxMesh::deserialize(std::istream &in) {}
-
-ygl::BoxMesh::BoxMesh(std::istream &in, const std::string &path) : Mesh(in){
-	static_cast<void>(path);
+ygl::BoxMesh::BoxMesh(std::istream &in) : Mesh(in){
 	in.read((char *)glm::value_ptr(size), sizeof(size));
 	in.read((char *)glm::value_ptr(resolution), sizeof(resolution));
 	init(size, resolution);
@@ -348,10 +345,7 @@ void ygl::SphereMesh::serialize(std::ostream &out) {
 	out.write((char *)&detailY, sizeof(detailY));
 }
 
-void ygl::SphereMesh::deserialize(std::istream &in) {}
-
-ygl::SphereMesh::SphereMesh(std::istream &in, const std::string &path) : Mesh(in) {
-	static_cast<void>(path);
+ygl::SphereMesh::SphereMesh(std::istream &in) : Mesh(in) {
 	in.read((char *)&radius, sizeof(radius));
 	in.read((char *)&detailX, sizeof(detailX));
 	in.read((char *)&detailY, sizeof(detailY));

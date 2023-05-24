@@ -203,8 +203,7 @@ void ygl::Renderer::init() {
 ygl::Shader *ygl::Renderer::getShader(RendererComponent &comp) { return getShader(comp.shaderIndex); }
 
 ygl::Shader *ygl::Renderer::getShader(uint index) {
-	assert(index < shaders.size() && "invalid index");
-	return shaders[index];
+	return asman->getShader(index);
 }
 
 ygl::Material &ygl::Renderer::getMaterial(RendererComponent &comp) { return getMaterial(comp.materialIndex); }
@@ -221,11 +220,6 @@ ygl::Mesh *ygl::Renderer::getMesh(uint index) {
 }
 
 ygl::Mesh *ygl::Renderer::getScreenQuad() { return screenQuad; }
-
-unsigned int ygl::Renderer::addShader(Shader *shader) {
-	shaders.push_back(shader);
-	return shaders.size() - 1;
-}
 
 unsigned int ygl::Renderer::addMaterial(const Material &mat) {
 	materials.push_back(mat);
@@ -278,10 +272,10 @@ void ygl::Renderer::drawScene() {
 	// bind default shader
 	uint prevShaderIndex;
 	if (defaultShader != (uint)-1) {
-		shaders[defaultShader]->bind();
+		asman->getShader(defaultShader)->bind();
 		prevShaderIndex = defaultShader;
 	} else {
-		if (shaders.size()) shaders[0]->bind();		// there has to be at least one shader
+		if (asman->getShadersCount()) asman->getShader(0)->bind();		// there has to be at least one shader
 		prevShaderIndex = 0;
 	}
 
@@ -295,22 +289,22 @@ void ygl::Renderer::drawScene() {
 		// and binds it only if needed
 		if (ecr.shaderIndex != (uint)-1) {				  // if object has a shader
 			if (ecr.shaderIndex != prevShaderIndex) {	  // if its different from the previous one
-				shaders[prevShaderIndex]->unbind();
-				sh				= shaders[ecr.shaderIndex];
+				asman->getShader(prevShaderIndex)->unbind();
+				sh				= asman->getShader(ecr.shaderIndex);
 				prevShaderIndex = ecr.shaderIndex;	   // the next previous is the current
 				sh->bind();
 			} else {
-				sh = shaders[prevShaderIndex];	   // set sh so that its not null
+				sh = asman->getShader(prevShaderIndex);	   // set sh so that its not null
 			}
 		} else {
 			assert(defaultShader != (uint)-1 && "cannot use default shader when it is not defined");
 			if (prevShaderIndex != defaultShader) {		// if the previous shader was different
-				shaders[prevShaderIndex]->unbind();
-				sh				= shaders[defaultShader];
+				asman->getShader(prevShaderIndex)->unbind();
+				sh				= asman->getShader(defaultShader);
 				prevShaderIndex = defaultShader;
 				sh->bind();
 			} else {
-				sh = shaders[defaultShader];	 // set sh so its not null
+				sh = asman->getShader(defaultShader);	 // set sh so its not null
 			}
 		}
 		// sh is never null and the current bound shader
@@ -339,7 +333,7 @@ void ygl::Renderer::drawScene() {
 		// clean up
 		mesh->unbind();
 	}
-	if (shaders.size() > prevShaderIndex) shaders[prevShaderIndex]->unbind();	  // unbind the last used shader
+	if (asman->getShadersCount() > prevShaderIndex) asman->getShader(prevShaderIndex)->unbind();	  // unbind the last used shader
 }
 
 void ygl::Renderer::colorPass() {
@@ -393,9 +387,6 @@ void ygl::Renderer::doWork() {
 }
 
 ygl::Renderer::~Renderer() {
-	for (Shader *sh : shaders) {
-		delete sh;
-	}
 	for (IScreenEffect *effect : effects) {
 		delete effect;
 	}
@@ -459,7 +450,7 @@ GLuint ygl::Renderer::loadLights(int count, Light *lights) {
 	return lightsBuffer;
 }
 
-void ygl::Renderer::serialize(std::ostream &out) {
+void ygl::Renderer::write(std::ostream &out) {
 	std::size_t materialsCount = materials.size();
 	out.write((char*) &materialsCount, sizeof(materialsCount));
 	for(std::size_t i = 0; i < materialsCount; ++ i) {
@@ -473,7 +464,7 @@ void ygl::Renderer::serialize(std::ostream &out) {
 	}
 }
 
-void ygl::Renderer::deserialize(std::istream &in) {
+void ygl::Renderer::read(std::istream &in) {
 	std::size_t materialsCount;
 	in.read((char*) &materialsCount, sizeof(materialsCount));
 	materials.resize(materialsCount);

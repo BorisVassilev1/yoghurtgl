@@ -50,7 +50,7 @@ void run() {
 
 	RendererComponent modelRenderer;
 	modelRenderer.materialIndex = renderer->addMaterial(modelMat);
-	modelRenderer.shaderIndex	= renderer->addShader(shader);
+	modelRenderer.shaderIndex	= asman->addShader(shader, "defaultShader");
 	modelRenderer.meshIndex		= asman->addMesh(modelMesh, "canonicalCube");
 	scene.addComponent(model, modelRenderer);
 

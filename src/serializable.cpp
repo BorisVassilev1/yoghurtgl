@@ -6,18 +6,19 @@
 #include <typeinfo>
 #include "importer.h"
 #include "mesh.h"
+#include "shader.h"
 #include <texture.h>
 #include <ecs.h>
 
 auto ygl::ResourceFactory::fabricators = std::map<std::string, ygl::ResourceFactory::ResourceConstructor>();
 
-ygl::ISerializable *ygl::ResourceFactory::fabricate(std::istream &in, const std::string &path) {
+ygl::ISerializable *ygl::ResourceFactory::fabricate(std::istream &in) {
 	std::string name;
 	std::getline(in, name, '\0');
 
 	if (fabricators.find(name) == fabricators.end())
 		throw std::runtime_error("trying to read something that has not been registered: " + name);
-	return fabricators[name](in, path);
+	return fabricators[name](in);
 }
 
 void ygl::ResourceFactory::registerResource(const std::string								 &name,
@@ -29,7 +30,7 @@ template <class T>
 	requires ygl::IsResource<T>
 void registerSerializable() {
 	ygl::ResourceFactory::registerResource(
-		T::name, [](std::istream &in, const std::string &path) { return new T(in, path); });
+		T::name, [](std::istream &in) { return new T(in); });
 }
 void ygl::ResourceFactory::init() {
 	::registerSerializable<ygl::Texture2d>();
@@ -37,4 +38,6 @@ void ygl::ResourceFactory::init() {
 	::registerSerializable<ygl::BoxMesh>();
 	::registerSerializable<ygl::SphereMesh>();
 	::registerSerializable<ygl::MeshFromFile>();
+	::registerSerializable<ygl::VFShader>();
+	::registerSerializable<ygl::ComputeShader>();
 };

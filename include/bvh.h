@@ -1,7 +1,7 @@
 #pragma once
 
 // COPY PASTA FROM https://github.com/BorisVassilev1/urban-spork
-// with some edits, of course
+// with a lot of edits, of course
 
 #include <cstring>
 #include <glm/glm.hpp>
@@ -105,9 +105,6 @@ struct Primitive : Intersectable {
 
 	~Primitive() = default;
 };
-
-typedef std::unique_ptr<Primitive> PrimPtr;
-typedef std::shared_ptr<Primitive> SharedPrimPtr;
 
 enum PrimitiveType : uint {
 	TRIANGLE = 0,

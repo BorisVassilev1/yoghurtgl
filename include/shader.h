@@ -8,14 +8,15 @@
 #include <string>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <serializable.h>
 
 namespace ygl {
-class Shader {
+class Shader : public ISerializable {
 	Shader() {}
 
    protected:
 	GLuint		 program	  = 0;
-	int			 shadersCount = 0;
+	uint			 shadersCount = 0;
 	GLuint	   *shaders	  = nullptr;
 	const char **fileNames	  = nullptr;
 	bool		 bound		  = false;
@@ -29,7 +30,9 @@ class Shader {
 	void loadSourceRecursively(std::vector<std::string> &lines, const char *file, const char *includeDir,
 							   int includeDirLength);
 
-	Shader(std::initializer_list<const char *> files);
+	void init(std::vector<std::string> files);
+	Shader(std::initializer_list<std::string> files);
+	Shader(std::istream &in);
 
 	void createShader(GLenum type, GLuint target);
 	void attachShaders();
@@ -87,16 +90,26 @@ class Shader {
 
 	static void setSSBO(GLuint bufferId, GLuint binding);
 	static void setUBO(GLuint bufferId, GLuint binding);
+
+	void serialize(std::ostream &out) override;
 };
 
 class VFShader : public Shader {
    public:
+	static const char *name;
 	VFShader(const char *vertex, const char *fragment);
+	VFShader(std::istream &in);
+
+	void serialize(std::ostream &out) override;
 };
 
 class ComputeShader : public Shader {
    public:
+	static const char *name;
 	glm::ivec3 groupSize;
 	ComputeShader(const char *source);
+	ComputeShader(std::istream &in);
+
+	void serialize(std::ostream &out) override;
 };
 }	  // namespace ygl

@@ -43,11 +43,12 @@ void run() {
 	scene.registerComponent<Transformation>();
 
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
-	renderer->addShader(shader);
-	renderer->setDefaultShader(0);
-
 	GrassSystem *grassSystem = scene.registerSystem<GrassSystem>();
 	AssetManager *asman = scene.getSystem<AssetManager>();
+
+	uint shaderIndex = asman->addShader(shader, "defaultShader");
+	renderer->setDefaultShader(shaderIndex);
+
 
 	Mesh *planeMesh = makePlane(glm::vec2(40, 40), glm::vec2(1, 1));
 

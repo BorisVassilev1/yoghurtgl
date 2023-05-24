@@ -57,8 +57,8 @@ class GrassSystem : public ygl::ISystem {
 	void reload();
 	void doWork() override;
 
-	void serialize(std::ostream &out) override { static_cast<void>(out); }
-	void deserialize(std::istream &in) override { static_cast<void>(in); }
+	void write(std::ostream &out) override { static_cast<void>(out); }
+	void read(std::istream &in) override { static_cast<void>(in); }
 };
 
 std::ostream &operator<<(std::ostream &out, const ygl::GrassSystem::GrassHolder &rhs);

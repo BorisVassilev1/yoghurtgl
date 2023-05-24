@@ -136,11 +136,11 @@ ygl::Texture2d::Texture2d(GLsizei width, GLsizei height, Type type, stbi_uc *dat
 ygl::Texture2d::Texture2d(GLsizei width, GLsizei height) { init(width, height, Type::RGBA, nullptr); }
 
 ygl::Texture2d::Texture2d(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize,
-						  uint8_t components) {
+						  uint8_t components) : fileName(fileName) {
 	init(fileName, internalFormat, format, pixelSize, components);
 }
 
-ygl::Texture2d::Texture2d(std::string fileName, Type type) : type(type){
+ygl::Texture2d::Texture2d(std::string fileName, Type type) : type(type), fileName(fileName) {
 	GLint	internalFormat = 0;
 	GLenum	format		   = 0;
 	uint8_t pixelSize	   = 0;
@@ -154,8 +154,9 @@ ygl::Texture2d::Texture2d(std::string fileName, Type type) : type(type){
 
 ygl::Texture2d::Texture2d(std::string fileName) : Texture2d(fileName, Type::RGBA) {}
 
-ygl::Texture2d::Texture2d(std::istream &in, const std::string &path) {
+ygl::Texture2d::Texture2d(std::istream &in) {
 	in.read((char *) &type, sizeof(Type));
+	std::getline(in, fileName, '\0');
 
 	GLint	internalFormat = 0;
 	GLenum	format		   = 0;
@@ -165,16 +166,13 @@ ygl::Texture2d::Texture2d(std::istream &in, const std::string &path) {
 
 	ITexture::getTypeParameters(type, internalFormat, format, pixelSize, components, _type);
 
-	init(path, internalFormat, format, pixelSize, components);
+	init(fileName, internalFormat, format, pixelSize, components);
 }
 
 void ygl::Texture2d::serialize(std::ostream &out) {
 	out.write(name, std::strlen(name) + 1);
+	out.write(fileName.c_str(), fileName.size() + 1);
 	out.write((char*) &type, sizeof(Type));
-}
-
-void ygl::Texture2d::deserialize(std::istream &in) {
-	static_cast<void>(in);
 }
 
 void ygl::Texture2d::save(std::string fileName) {
@@ -247,17 +245,17 @@ ygl::TextureCubemap::TextureCubemap(const std::string &path, const std::string &
 	init();
 }
 
-ygl::TextureCubemap::TextureCubemap(std::istream &in, const std::string &path) : path(path) {
+ygl::TextureCubemap::TextureCubemap(std::istream &in) {
+	std::getline(in, path, '\0');
 	std::getline(in, format, '\0');
 	init();
 }
 
 void ygl::TextureCubemap::serialize(std::ostream &out) {
 	out.write(name, std::strlen(name) + 1);
+	out.write(path.c_str(), path.size() + 1);
 	out.write(format.c_str(), format.size() + 1);
 }
-
-void ygl::TextureCubemap::deserialize(std::istream &in) { static_cast<void>(in); }
 
 void ygl::TextureCubemap::save(std::string) {
 	// TODO: implement this
