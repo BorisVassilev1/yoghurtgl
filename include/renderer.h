@@ -12,7 +12,12 @@
 #include <material.h>
 #include <ostream>
 #include <imgui.h>
-#include <importer.h>
+#include <asset_manager.h>
+
+/**
+ * @file renderer.h
+ * @brief All definitions that make the Renderer system work
+ */
 
 namespace ygl {
 
@@ -21,6 +26,7 @@ struct Light;
 class FrameBuffer;
 class IScreenEffect;
 class ACESEffect;
+class BloomEffect;
 struct RendererComponent;
 class Renderer;
 
@@ -99,9 +105,9 @@ class BloomEffect : public IScreenEffect {
 
 struct RendererComponent : ygl::Serializable {
 	static const char *name;
-	uint						 shaderIndex;
-	uint						 meshIndex;
-	uint						 materialIndex;
+	uint			   shaderIndex;
+	uint			   meshIndex;
+	uint			   materialIndex;
 	RendererComponent() : shaderIndex(-1), meshIndex(-1), materialIndex(-1) {}
 	RendererComponent(uint shaderIndex, uint meshIndex, uint materialIndex);
 	void serialize(std::ostream &out);
@@ -121,19 +127,20 @@ class Renderer : public ygl::ISystem {
 
 	FrameBuffer *frontFrameBuffer;
 	FrameBuffer *backFrameBuffer;
-	Mesh		*screenQuad = makeScreenQuad();
+	Mesh		*screenQuad = new QuadMesh();
 	glm::vec4	 clearColor = glm::vec4(0, 0, 0, 1);
 
 	std::vector<std::function<void()> > drawFunctions;
 	Window							   *window = nullptr;
-	AssetManager *asman;
+	AssetManager					   *asman;
 
 	void drawScene();
 	void colorPass();
 	void effectsPass();
 
+	std::vector<IScreenEffect *> effects;
+
    public:
-	std::vector<IScreenEffect *>	   effects;
 	static const char *name;
 
 	Renderer(Scene *scene, Window *window) : ISystem(scene), window(window) {}
@@ -147,10 +154,11 @@ class Renderer : public ygl::ISystem {
 	Mesh	 *getMesh(uint index);
 	Mesh	 *getScreenQuad();
 
-	unsigned int addMaterial(const Material &);
-	Light		&addLight(const Light &);
-	Light		&getLight(uint index);
-	void		 addScreenEffect(IScreenEffect *);
+	unsigned int   addMaterial(const Material &);
+	Light		  &addLight(const Light &);
+	Light		  &getLight(uint index);
+	void		   addScreenEffect(IScreenEffect *);
+	IScreenEffect *getScreenEffect(uint index);
 
 	void setDefaultShader(int defaultShader);
 	uint getDefaultShader();

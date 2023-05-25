@@ -6,12 +6,22 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <string>
+#include <assimp/Importer.hpp>
+#include <material.h>
 #include <serializable.h>
 
 typedef unsigned int uint;
 
+/**
+ * @file mesh.h
+ * @brief Mesh definitions
+ */
+
 namespace ygl {
-class IMesh : public ISerializable{
+/**
+ * @brief Interface for Mesh classes
+ */
+class IMesh : public ISerializable {
    protected:
 	GLuint vao = -1;
 	GLuint ibo = -1;
@@ -29,6 +39,7 @@ class IMesh : public ISerializable{
 
 	IMesh(){};	   // protected constructor so that noone can instantiate this
 	IMesh(std::istream &in);
+
    public:
 	virtual ~IMesh();
 
@@ -49,8 +60,11 @@ class IMesh : public ISerializable{
 	void setDepthFunc(GLenum depthFunc);
 	void setPolygonMode(GLenum polygonMode);
 
-	void			   serialize(std::ostream &out) override;
+	void serialize(std::ostream &out) override;
 
+	/**
+	 * @brief Vertex Buffer Object. see the OpenGl wiki
+	 */
 	class VBO {
 	   public:
 		GLuint location;
@@ -61,6 +75,10 @@ class IMesh : public ISerializable{
 	};
 };
 
+/**
+ * @brief A Mesh that allocates separate buffers for the different vertex atttributes like position, colors, normals,
+ * etc. Each such buffer is a VBO that has to be added via addVBO. @see Mesh for possible implementation.
+ */
 class MultiBufferMesh : public IMesh {
    protected:
 	std::vector<VBO> vbos;
@@ -80,13 +98,17 @@ class MultiBufferMesh : public IMesh {
 	void disableVBOs();
 };
 
+/**
+ * @brief Default Mesh that has Vertices, Normals, Texture Coordinates, Colors and Tangents for its vertices
+ */
 class Mesh : public MultiBufferMesh {
-protected:
+   protected:
 	Mesh() {}
 	Mesh(std::istream &in) : MultiBufferMesh(in) {}
 
 	void init(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
-		 GLfloat *tangents, GLuint indicesCount, GLuint *indices);
+			  GLfloat *tangents, GLuint indicesCount, GLuint *indices);
+
    public:
 	Mesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
 		 GLfloat *tangents, GLuint indicesCount, GLuint *indices);
@@ -97,30 +119,38 @@ protected:
 	ygl::IMesh::VBO getTangents();
 };
 
+/**
+ * @brief A simple Box Mesh.
+ */
 class BoxMesh : public Mesh {
 	glm::vec3 size;
 	glm::vec3 resolution;
-	protected:
+
+   protected:
 	void init(const glm::vec3 &size, const glm::vec3 &detail);
+
    public:
 	BoxMesh(std::istream &in);
 	BoxMesh(const glm::vec3 &size, const glm::vec3 &detail);
 	BoxMesh(const glm::vec3 &dim);
 	BoxMesh(float size);
 	BoxMesh();
-	
+
 	static const char *name;
 	void			   serialize(std::ostream &out) override;
 };
 
+/**
+ * @brief A Simple Sphere Mesh
+ */
 class SphereMesh : public Mesh {
 	float radius;
-	uint detailX, detailY;
-	protected:
+	uint  detailX, detailY;
 
+   protected:
 	void init(float radius, uint detailX, uint detailY);
-	public:
-	
+
+   public:
 	SphereMesh(float radius, uint detailX, uint detailY);
 	SphereMesh(float radius);
 	SphereMesh();
@@ -130,10 +160,67 @@ class SphereMesh : public Mesh {
 	void			   serialize(std::ostream &out) override;
 };
 
-Mesh *makeTriangle();
+/**
+ * @brief The mesh of a Quad with 4 vertices
+ */
+class QuadMesh : public Mesh {
+	float size;
 
-Mesh *makeScreenQuad();
+   protected:
+	void init(float size);
 
-Mesh *makePlane(const glm::vec2 &size, const glm::vec2 &detail);
-Mesh *makePlane(const glm::vec2 &detail);
+   public:
+	QuadMesh(float size);
+	QuadMesh();
+	QuadMesh(std::istream &in);
+
+	static const char *name;
+	void			   serialize(std::ostream &out) override;
+};
+
+/**
+ * @brief a Plane Mesh.
+ */
+class PlaneMesh : public Mesh {
+	glm::vec2 size, detail;
+
+   protected:
+	void init(const glm::vec2 &size, const glm::vec2 &detail);
+
+   public:
+	PlaneMesh(const glm::vec2 &size, const glm::vec2 &detail);
+	PlaneMesh(const glm::vec2 &size);
+	PlaneMesh();
+	PlaneMesh(std::istream &in);
+
+	static const char *name;
+	void			   serialize(std::ostream &out) override;
+};
+
+#ifndef YGL_NO_ASSIMP
+
+class AssetManager;
+
+class MeshFromFile : public Mesh {
+	std::string path;
+	uint		index;
+	void		init(const std::string &path, uint index);
+
+	static const aiScene	*loadScene(const std::string &file, unsigned int flags);
+	static const aiScene	*loadScene(const std::string &file);
+	static Assimp::Importer *importer;
+
+   public:
+	static void			  terminateLoader();
+	static Material		  getMaterial(const aiScene *, AssetManager *asman, std::string filePath, uint i);
+	static const aiScene *loadedScene;
+	static std::string	  loadedFile;
+	static void			  loadSceneIfNeeded(const std::string &path);
+	static const char	 *name;
+	MeshFromFile(const std::string &path, uint index = 0);
+	MeshFromFile(std::istream &in);
+
+	void serialize(std::ostream &out) override;
+};
+#endif
 }	  // namespace ygl

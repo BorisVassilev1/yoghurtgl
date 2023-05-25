@@ -11,7 +11,7 @@
 #include <texture.h>
 #include <entities.h>
 #include <bvh.h>
-#include <importer.h>
+#include <asset_manager.h>
 
 #include <iostream>
 #include <random>
@@ -82,7 +82,7 @@ int	  maxSamples  = 100000;
 float PI		  = glm::pi<float>();
 Timer timer;
 
-BVHTree *bvh = new BVHTree();
+ygl::bvh::BVHTree *bvh = new ygl::bvh::BVHTree();
 
 void cleanup() {
 	delete tex;
@@ -126,7 +126,7 @@ void initScene() {
 
 	ygl::AssetManager *asman = scene->getSystem<ygl::AssetManager>();
 	ygl::Material	   geometryMaterial =
-		ygl::getMaterial(ygl::MeshFromFile::loadedScene, *asman, "./res/models/dragon-gltf/", 2);
+		ygl::MeshFromFile::getMaterial(ygl::MeshFromFile::loadedScene, asman, "./res/models/dragon-gltf/", 2);
 
 	tex = new ygl::Texture2d("./res/images/uv_checker.png");
 	tex->bind(GL_TEXTURE1);		// albedo texture
@@ -198,7 +198,7 @@ void initSpheres() {
 		scene->addComponent<ygl::Transformation>(
 			sphere, ygl::Transformation(spheres[i].position, glm::vec3(0), glm::vec3(spheres[i].radius)));
 		scene->addComponent<ygl::RendererComponent>(sphere, ygl::RendererComponent(-1, meshIndex, spheres[i].matIdx));
-		bvh->addPrimitive(new SpherePrimitive(spheres[i].position, spheres[i].radius, spheres[i].matIdx));
+		bvh->addPrimitive(new ygl::bvh::SpherePrimitive(spheres[i].position, spheres[i].radius, spheres[i].matIdx));
 	}
 
 	renderer->loadData();
@@ -227,14 +227,14 @@ void initBoxes() {
 		box = scene->createEntity();
 		scene->addComponent<ygl::Transformation>(box, ygl::Transformation(boxes[i].min + glm::vec3(0.5)));
 		scene->addComponent<ygl::RendererComponent>(box, ygl::RendererComponent(-1, meshIndex, boxes[i].matIdx));
-		bvh->addPrimitive(new BoxPrimitive(boxes[i].min, boxes[i].max, boxes[i].matIdx));
+		bvh->addPrimitive(new ygl::bvh::BoxPrimitive(boxes[i].min, boxes[i].max, boxes[i].matIdx));
 	}
 
 	renderer->loadData();
 }
 
 void initPathTracer() {
-	screenQuad = ygl::makeScreenQuad();
+	screenQuad = new ygl::QuadMesh();
 
 	pathTracer	  = new ygl::ComputeShader("./shaders/pathTracing/tracer.comp");
 	normalizer	  = new ygl::ComputeShader("./shaders/pathTracing/normalizer.comp");

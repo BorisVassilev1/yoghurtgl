@@ -1,7 +1,10 @@
 #pragma once
 
-// COPY PASTA FROM https://github.com/BorisVassilev1/urban-spork
-// with a lot of edits, of course
+/// @file bvh.h
+/// @brief Primitive intersection acceleration
+///
+/// COPY PASTA FROM https://github.com/BorisVassilev1/urban-spork
+/// with a lot of edits, of course
 
 #include <cstring>
 #include <glm/glm.hpp>
@@ -14,6 +17,9 @@
 #include <material.h>
 #include <mesh.h>
 
+namespace ygl {
+namespace bvh {
+///
 /// Data for an intersection between a ray and scene primitive
 struct Intersection {
 	float		   t = -1.f;			   ///< Position of the intersection along the ray
@@ -22,6 +28,7 @@ struct Intersection {
 	ygl::Material *material = nullptr;	   ///< Material of the intersected primitive
 };
 
+///
 /// Ray represented by origin and direction
 struct Ray {
 	glm::vec3 origin;
@@ -34,6 +41,9 @@ struct Ray {
 	glm::vec3 at(float t) const { return origin + dir * t; }
 };
 
+/**
+ * struct BBox - Axis Aligned Bouding Box
+ */
 struct BBox {
 	glm::vec3 min = glm::vec3(FLT_MAX, FLT_MAX, FLT_MAX);
 	glm::vec3 max = glm::vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
@@ -42,13 +52,17 @@ struct BBox {
 
 	BBox(const glm::vec3 &min, const glm::vec3 &max);
 
+	/// @brief Checks if the box is small enough to be ignored
+	/// @return true if it is small enough, false otherwise
 	bool isEmpty() const;
 
+	/// @brief Extends this BBox to include both itself and \a other
 	void add(const BBox &other);
 
 	/// @brief Expand the box with a single point
 	void add(const glm::vec3 &point);
 
+	/// @brief Checks if a point is in this Bounding Box
 	bool inside(const glm::vec3 &point) const;
 
 	/// @brief Split the box in 8 equal parts, children are not sorted in any way
@@ -59,14 +73,16 @@ struct BBox {
 	///	@return empty box if there is no intersection
 	BBox boxIntersection(const BBox &other) const;
 
-	/// @brief Check if a ray intersects the box
+	/// @brief Check if a ray intersects the box and find the distance
 	bool testIntersect(const Ray &ray, float &t) const;
 
+	/// @brief Check if a ray intersects the box
 	bool testIntersect(const Ray &ray) const;
 
-	// get the center of the box
+	/// @brief get the center of the box
 	glm::vec3 center() const;
 
+	/// @brief calculate the surface area of the BBox. Used for SAH
 	float surfaceArea() const;
 };
 
@@ -84,8 +100,19 @@ struct Intersectable {
 	/// @brief Get the center
 	virtual glm::vec3 getCenter() = 0;
 
+	/**
+	 * @brief Writes the Intersectable to \a buff at position \a offset
+	 *
+	 * @param buff - buffer to write to
+	 * @param offset - offset from the beginning of \a buff to write at
+	 */
 	virtual void writeTo(char *buff, std::size_t offset) = 0;
-	virtual void print(std::ostream &os)				 = 0;
+	/**
+	 * @brief Prints the Intersectable in human-readable text format to \a os
+	 *
+	 * @param os - stream to write to
+	 */
+	virtual void print(std::ostream &os) = 0;
 
 	virtual ~Intersectable() = default;
 };
@@ -112,16 +139,30 @@ enum PrimitiveType : uint {
 	BOX		 = 2,
 };
 
+/**
+ * struct Triangle - a Triangle Primitive
+ */
 struct Triangle : public Primitive {
-	uint indices[3];
-	uint matIdx;
+	uint indices[3];	 ///< indices in the mesh
+	uint matIdx;		 ///< material index for the Triangle
 	union {
 		glm::vec3 positions[3];
 		static struct {
-			glm::vec3 A, B, C;
+			glm::vec3 A, B, C;	   ///< the three points defining the Triangle
 		};
 	};
 
+	/**
+	 * @brief Constructs a Triangle from all data needed
+	 *
+	 * @param v1 - first index
+	 * @param v2 - second index
+	 * @param v3 - third index
+	 * @param A - first point
+	 * @param B - second point
+	 * @param C - third point
+	 * @param matIdx - index of the material to be used
+	 */
 	Triangle(uint v1, uint v2, uint v3, glm::vec3 A, glm::vec3 B, glm::vec3 C, uint matIdx)
 		: indices{v1, v2, v3}, matIdx(matIdx), A(A), B(B), C(C) {
 		box.add(A);
@@ -136,6 +177,9 @@ struct Triangle : public Primitive {
 	void	  print(std::ostream &os) override;
 };
 
+/**
+ * struct SpherePrimitive - A Sphere Primitive
+ */
 struct SpherePrimitive : Primitive {
 	glm::vec3 position;
 	float	  radius = 1;
@@ -152,6 +196,9 @@ struct SpherePrimitive : Primitive {
 	void	  print(std::ostream &os) override;
 };
 
+/**
+ * struct BoxPrimitive - A Box Primitive - same as the abstract class Primitive, but not abstract
+ */
 struct BoxPrimitive : Primitive {
 	uint matIdx;
 
@@ -186,6 +233,13 @@ struct IntersectionAccelerator {
 typedef std::unique_ptr<IntersectionAccelerator> AcceleratorPtr;
 AcceleratorPtr									 makeDefaultAccelerator();
 
+/**
+ * @brief A Binary Volume Hierarchy.
+ * build() builds a tree that can then be optimised for GPU usage and sent to the VRAM with buildGPUTree()
+ *
+ * @note some comments may be misleading since now this structure is used to do stuff on the GPU, the CPU intersection
+ * has been removed
+ */
 class BVHTree : public IntersectionAccelerator {
 	// Node structure
 	// does not need a parent pointer since the intersection implementation will be recursive
@@ -255,34 +309,43 @@ class BVHTree : public IntersectionAccelerator {
 	// I guess SAH is too good
 	static constexpr int PERFECT_SPLIT_THRESHOLD = 20;
 
-	int		 depth			 = 0;
-	int		 leafSize		 = 0;
-	long int leavesCount	 = 0;
-	long int nodeCount		 = 0;
-	long int primitivesCount = 0;
+	int		 depth			 = 0;	  ///< depth of the tree
+	int		 leafSize		 = 0;	  ///< size of the largest leaf
+	long int leavesCount	 = 0;	  ///< hOw MaNy LeAvEs
+	long int nodeCount		 = 0;	  ///< HoW mAnY nOdEs
+	long int primitivesCount = 0;	  ///< how many primitives are in the structure
 
-	void clear(Node *node);
-	void clearConstructionTree();
-	void build(Node *node, int depth);
-	
-	bool isBuilt() const override { return built; }
+	void clear(Node *node);				   ///< clears the entire CPU tree starting from \a node
+	void clearConstructionTree();		   ///< clears the entire CPU tree
+	void build(Node *node, int depth);	   ///< builds the CPU tree
 
-	// computes the SAH cost for a split on a given axis.
-	// ratio equals the size of the left child on the chosen axis over
-	// the size of the parent node size on that axis.
+	bool isBuilt() const override { return built; }		///< checks if the tree is built
+
+	/// @brief computes the SAH cost for a split on a given axis.
+	/// ratio equals the size of the left child on the chosen axis over
+	/// the size of the parent node size on that axis.
 	float costSAH(const Node *node, int axis, float ratio);
 
+	/**
+	 * helper function for constructing the GPU tree.
+	 */
 	void buildGPUTree_h(BVHTree::Node *node, unsigned long int parent, std::vector<BVHTree::GPUNode> &gpuNodes,
 						std::vector<Intersectable *> &primitives);
 
-	// builds a tree for fast traversal
-	void buildGPUTree();
-	
+	void buildGPUTree();	 ///< builds a tree for fast traversal on the GPU
+
    public:
-	
 	void addPrimitive(Intersectable *prim) override;
+	/**
+	 * @brief Adds all triangles in the given \a mesh and translates them with \a transform.
+	 *
+	 * @param mesh - the mesh to be added to the BVH
+	 * @param transform - a Transformation for the model
+	 */
 	void addPrimitive(ygl::Mesh *mesh, ygl::Transformation &transform);
 	void clear() override;
 	void build(Purpose purpose = Purpose::Generic) override;
 	~BVHTree();
 };
+}	  // namespace bvh
+}	  // namespace ygl

@@ -13,7 +13,7 @@
 #include <texture.h>
 #include <effects.h>
 #include <entities.h>
-#include <importer.h>
+#include <asset_manager.h>
 
 #include <iostream>
 #include <random>
@@ -50,7 +50,7 @@ void run() {
 	renderer->setDefaultShader(shaderIndex);
 
 
-	Mesh *planeMesh = makePlane(glm::vec2(40, 40), glm::vec2(1, 1));
+	Mesh *planeMesh = new PlaneMesh(glm::vec2(40, 40), glm::vec2(1, 1));
 
 	Entity plane = scene.createEntity();
 	scene.addComponent(plane, Transformation());
@@ -110,7 +110,7 @@ void run() {
 			groundTransform.updateWorldMatrix();
 		}
 
-		ImGui::Checkbox("Alpha Correction", &(renderer->effects[0]->enabled));
+		ImGui::Checkbox("Alpha Correction", &(renderer->getScreenEffect(0)->enabled));
 		ImGui::End();
 
 		window.swapBuffers();

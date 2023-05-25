@@ -155,8 +155,8 @@ ygl::Texture2d::Texture2d(std::string fileName, Type type) : type(type), fileNam
 ygl::Texture2d::Texture2d(std::string fileName) : Texture2d(fileName, Type::RGBA) {}
 
 ygl::Texture2d::Texture2d(std::istream &in) {
-	in.read((char *) &type, sizeof(Type));
 	std::getline(in, fileName, '\0');
+	in.read((char *) &type, sizeof(Type));
 
 	GLint	internalFormat = 0;
 	GLenum	format		   = 0;

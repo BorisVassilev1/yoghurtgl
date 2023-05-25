@@ -4,7 +4,8 @@
 #include <assert.h>
 #include <iterator>
 #include <ostream>
-#include <importer.h>
+#include <string>
+#include <asset_manager.h>
 #include <material.h>
 
 ygl::Light::Light(glm::mat4 transform, glm::vec3 color, float intensity, ygl::Light::Type type)
@@ -162,16 +163,16 @@ ygl::RendererComponent::RendererComponent(unsigned int shaderIndex, unsigned int
 	: shaderIndex(shaderIndex), meshIndex(meshIndex), materialIndex(materialIndex) {}
 
 void ygl::RendererComponent::serialize(std::ostream &out) {
-	out.write((char *) (&this->shaderIndex), sizeof(uint));
-	out.write((char *) (&this->materialIndex), sizeof(uint));
-	out.write((char *) (&this->meshIndex), sizeof(uint));
+	out.write((char *)(&this->shaderIndex), sizeof(uint));
+	out.write((char *)(&this->materialIndex), sizeof(uint));
+	out.write((char *)(&this->meshIndex), sizeof(uint));
 }
 
 void ygl::RendererComponent::deserialize(std::istream &in) {
-	in.read((char *) (&this->shaderIndex), sizeof(uint));
-	in.read((char *) (&this->materialIndex), sizeof(uint));
-	in.read((char *) (&this->meshIndex), sizeof(uint));
-} 
+	in.read((char *)(&this->shaderIndex), sizeof(uint));
+	in.read((char *)(&this->materialIndex), sizeof(uint));
+	in.read((char *)(&this->meshIndex), sizeof(uint));
+}
 
 bool ygl::RendererComponent::operator==(const RendererComponent &other) {
 	return this->shaderIndex == other.shaderIndex && this->materialIndex == other.materialIndex &&
@@ -202,9 +203,7 @@ void ygl::Renderer::init() {
 
 ygl::Shader *ygl::Renderer::getShader(RendererComponent &comp) { return getShader(comp.shaderIndex); }
 
-ygl::Shader *ygl::Renderer::getShader(uint index) {
-	return asman->getShader(index);
-}
+ygl::Shader *ygl::Renderer::getShader(uint index) { return asman->getShader(index); }
 
 ygl::Material &ygl::Renderer::getMaterial(RendererComponent &comp) { return getMaterial(comp.materialIndex); }
 
@@ -215,9 +214,7 @@ ygl::Material &ygl::Renderer::getMaterial(uint index) {
 
 ygl::Mesh *ygl::Renderer::getMesh(RendererComponent &comp) { return getMesh(comp.meshIndex); }
 
-ygl::Mesh *ygl::Renderer::getMesh(uint index) {
-	return asman->getMesh(index);
-}
+ygl::Mesh *ygl::Renderer::getMesh(uint index) { return asman->getMesh(index); }
 
 ygl::Mesh *ygl::Renderer::getScreenQuad() { return screenQuad; }
 
@@ -236,6 +233,11 @@ ygl::Light &ygl::Renderer::getLight(uint index) { return lights[index]; }
 void ygl::Renderer::addScreenEffect(IScreenEffect *effect) {
 	effect->setRenderer(this);
 	effects.push_back(effect);
+}
+
+ygl::IScreenEffect *ygl::Renderer::getScreenEffect(uint index) {
+	if(index >= effects.size()) throw std::runtime_error("out of bounds: " + std::to_string(index));
+	return effects[index];
 }
 
 void ygl::Renderer::loadData() {
@@ -275,7 +277,7 @@ void ygl::Renderer::drawScene() {
 		asman->getShader(defaultShader)->bind();
 		prevShaderIndex = defaultShader;
 	} else {
-		if (asman->getShadersCount()) asman->getShader(0)->bind();		// there has to be at least one shader
+		if (asman->getShadersCount()) asman->getShader(0)->bind();	   // there has to be at least one shader
 		prevShaderIndex = 0;
 	}
 
@@ -294,7 +296,7 @@ void ygl::Renderer::drawScene() {
 				prevShaderIndex = ecr.shaderIndex;	   // the next previous is the current
 				sh->bind();
 			} else {
-				sh = asman->getShader(prevShaderIndex);	   // set sh so that its not null
+				sh = asman->getShader(prevShaderIndex);		// set sh so that its not null
 			}
 		} else {
 			assert(defaultShader != (uint)-1 && "cannot use default shader when it is not defined");
@@ -304,7 +306,7 @@ void ygl::Renderer::drawScene() {
 				prevShaderIndex = defaultShader;
 				sh->bind();
 			} else {
-				sh = asman->getShader(defaultShader);	 // set sh so its not null
+				sh = asman->getShader(defaultShader);	  // set sh so its not null
 			}
 		}
 		// sh is never null and the current bound shader
@@ -333,7 +335,8 @@ void ygl::Renderer::drawScene() {
 		// clean up
 		mesh->unbind();
 	}
-	if (asman->getShadersCount() > prevShaderIndex) asman->getShader(prevShaderIndex)->unbind();	  // unbind the last used shader
+	if (asman->getShadersCount() > prevShaderIndex)
+		asman->getShader(prevShaderIndex)->unbind();	 // unbind the last used shader
 }
 
 void ygl::Renderer::colorPass() {
@@ -452,36 +455,36 @@ GLuint ygl::Renderer::loadLights(int count, Light *lights) {
 
 void ygl::Renderer::write(std::ostream &out) {
 	std::size_t materialsCount = materials.size();
-	out.write((char*) &materialsCount, sizeof(materialsCount));
-	for(std::size_t i = 0; i < materialsCount; ++ i) {
-		out.write((char*) &materials[i], sizeof(Material));
+	out.write((char *)&materialsCount, sizeof(materialsCount));
+	for (std::size_t i = 0; i < materialsCount; ++i) {
+		out.write((char *)&materials[i], sizeof(Material));
 	}
 
 	std::size_t lightsCount = lights.size();
-	out.write((char*) &lightsCount, sizeof(lightsCount));
-	for(std::size_t i = 0; i < lightsCount; ++ i) {
-		out.write((char*) &lights[i], sizeof(Light));
+	out.write((char *)&lightsCount, sizeof(lightsCount));
+	for (std::size_t i = 0; i < lightsCount; ++i) {
+		out.write((char *)&lights[i], sizeof(Light));
 	}
 }
 
 void ygl::Renderer::read(std::istream &in) {
 	std::size_t materialsCount;
-	in.read((char*) &materialsCount, sizeof(materialsCount));
+	in.read((char *)&materialsCount, sizeof(materialsCount));
 	materials.resize(materialsCount);
-	for(std::size_t i = 0; i < materialsCount; ++ i) {
-		in.read((char*) &materials[i], sizeof(Material));
+	for (std::size_t i = 0; i < materialsCount; ++i) {
+		in.read((char *)&materials[i], sizeof(Material));
 	}
-	
+
 	std::size_t lightsCount;
-	in.read((char*) &lightsCount, sizeof(lightsCount));
+	in.read((char *)&lightsCount, sizeof(lightsCount));
 	lights.resize(lightsCount);
-	for(std::size_t i = 0; i < lightsCount; ++ i) {
-		in.read((char*) &lights[i], sizeof(Light));
+	for (std::size_t i = 0; i < lightsCount; ++i) {
+		in.read((char *)&lights[i], sizeof(Light));
 	}
 	loadData();
 }
 
-const char *ygl::Renderer::name = "ygl::Renderer";
+const char *ygl::Renderer::name			 = "ygl::Renderer";
 const char *ygl::RendererComponent::name = "ygl::RendererComponent";
 
 std::ostream &ygl::operator<<(std::ostream &out, const ygl::RendererComponent &rhs) {

@@ -5,7 +5,15 @@
 #include <ostream>
 #include <serializable.h>
 
+/**
+* @file transformation.h
+* @brief Positon, rotation and scale data.
+*/
+
 namespace ygl {
+/**
+ * @brief Position, Rotation and Scale in 3d space
+ */
 class Transformation : public ygl::Serializable {
 	glm::mat4x4 worldMatrix;
 

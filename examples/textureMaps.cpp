@@ -6,7 +6,7 @@
 #include <camera.h>
 #include <ecs.h>
 #include <renderer.h>
-#include <importer.h>
+#include <asset_manager.h>
 #include <mesh.h>
 
 using namespace ygl;
@@ -38,7 +38,7 @@ void run() {
 
 	Material modelMat(glm::vec3(1.0, 0.5, 0.0), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.2,
 					  0.0, 0.);
-	AssetManager *asman = scene.registerSystem<AssetManager>();
+	AssetManager *asman = scene.getSystem<AssetManager>();
 	modelMat.albedo_map		   = asman->addTexture(color, "color");
 	modelMat.use_albedo_map	   = 1.0;
 	modelMat.normal_map		   = asman->addTexture(normal, "normal");

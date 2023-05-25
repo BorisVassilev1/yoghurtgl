@@ -1,14 +1,11 @@
 #include <yoghurtgl.h>
 
 #include <window.h>
-#include <shader.h>
 #include <input.h>
 #include <camera.h>
 #include <ecs.h>
 #include <renderer.h>
-#include <importer.h>
 #include <transformation.h>
-#include <entities.h>
 #include <fstream>
 
 using namespace ygl;

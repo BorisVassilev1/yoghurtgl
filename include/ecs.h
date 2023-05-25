@@ -23,26 +23,64 @@
  * it is not direct copy-paste
  */
 
+/**
+ * @file ecs.h
+ * @brief This whole file is an implementation of the Entity-Component-System model.
+ * A Scene holds information for a set of entities that all have components that are efficiently stored in typed arrays.
+ * Systems have access to and manage entities that have some required set of components. This way all logic is written
+ * in the systems and components are purely data holders.
+ * This is an example of the so-called Data-Oriented-Design, where some principles that enforce simplicity in OOP code
+ * are not used to achieve a better performing code through efficient use of the CPU cache and as little as possible
+ * virtual function usage.
+ */
+
 namespace ygl {
 
+/**
+ * @brief The maximum number of components a Scene is able to hold. Increase this if it is needed.
+ *
+ * @return [TODO:description]
+ */
 const int MAX_COMPONENTS = 16;
 
-typedef uint32_t					Entity;
+/**
+ * An Entity is an ID through which its components are accessed.
+ */
+typedef uint32_t Entity;
+
+/**
+ * A Signature is a bitmask where each bit corresponds to a ComponentType. The size of a Signature in bits is equal to
+ * MAX_COMPONENTS.
+ */
 typedef std::bitset<MAX_COMPONENTS> Signature;
-typedef uint8_t						ComponentType;
+
+/**
+ * A ComponentType is an ID that is unique for every component type. It is assigned to a component type when it is
+ * registered in a Scene.
+ */
+typedef uint8_t ComponentType;
 
 class EntityManager;
 
+/**
+ * @brief A concept for types that have a static member called 'name' of type 'const char*'.
+ */
 template <class T>
 concept IsNamed = requires(T) {
 					  { T::name } -> std::same_as<const char *&>;
 				  };
 
+/**
+ * @brief A concept for types that are allowed to be components in the ECS structure.
+ */
 template <class T>
 concept IsComponent = std::is_base_of<ygl::Serializable, T>::value && IsNamed<T>;
 
 class ISystem;
 
+/**
+ * @brief A concept for types that are allowed to be Systems in the ECS structure.
+ */
 template <class T>
 concept IsSystem = std::is_base_of<ygl::ISystem, T>::value && IsNamed<T>;
 
@@ -57,9 +95,9 @@ class Scene;
  * @brief A class that manages Entity ID-s in a scene
  */
 class EntityManager {
-	std::vector<Signature> signatures;
-	std::queue<Entity>	   freePositions;
-	Entity				   entityCount = 0;
+	std::vector<Signature> signatures;			///< signatures of all entities in the Scene
+	std::queue<Entity>	   freePositions;		///< entity IDs that have been freed after the deletion of an Entity
+	Entity				   entityCount = 0;		///< how many entities there are in the scene
 
    public:
 	EntityManager();
@@ -113,11 +151,11 @@ class IComponentArray {
 template <class T>
 	requires IsComponent<T>
 class ComponentArray : public IComponentArray {
-	std::vector<T> components;
-	const char	  *type_name;
+	std::vector<T> components;	   ///< the components of type T in the Scene
+	const char	  *type_name;	   ///< ponts to T::name
 
-	std::unordered_map<Entity, size_t> entityToIndexMap;
-	std::unordered_map<size_t, Entity> indexToEntityMap;
+	std::unordered_map<Entity, size_t> entityToIndexMap;	 ///< maps Entity to its component's index in the array
+	std::unordered_map<size_t, Entity> indexToEntityMap;	 ///< maps a component index to the Entity it belongs to
 
    public:
 	/**
@@ -213,10 +251,15 @@ class ComponentArray : public IComponentArray {
 	Serializable &readComponent(Entity e, std::istream &in, Scene *scene) override;
 };
 
+/**
+ * @brief An object that manages the components in a Scene.
+ */
 class ComponentManager {
-	std::unordered_map<const char *, ComponentType>		 componentTypes;
-	std::unordered_map<ComponentType, IComponentArray *> componentArrays;
-	ComponentType										 componentTypeCounter = 0;
+	std::unordered_map<const char *, ComponentType> componentTypes;		///< map from a type name to its ComponentType
+	std::unordered_map<ComponentType, IComponentArray *>
+				  componentArrays;	   ///< map from ComponentType to IComponentArray that holds components of that type
+	ComponentType componentTypeCounter =
+		0;	   ///< keeps track of component type count so IDs can be assigned correctly
 
    public:
 	ComponentManager() {}
@@ -408,15 +451,31 @@ class ComponentManager {
  */
 class ISystem : public AppendableSerializable {
    public:
-	std::set<Entity> entities;
-	Scene			*scene = nullptr;
+	std::set<Entity> entities;			  ///< entities that the System has access to
+	Scene			*scene = nullptr;	  ///< points to the Scene the System is assigned to
 
+	/**
+	 * @brief Constructs a System, assigned to \a scene.
+	 *
+	 * @param scene - the Scene that the System is in.
+	 */
 	ISystem(Scene *scene) : scene(scene) {}
 	virtual ~ISystem(){};
 
+	/**
+	 * @brief Here the System does all its Entity manipulation
+	 *
+	 */
 	virtual void doWork() = 0;
-	virtual void init()	  = 0;
-	void		 printEntities();
+	/**
+	 * @brief initializes the System after the scene has registered it and it can safely set its own signature, and
+	 * access the correct entities.
+	 */
+	virtual void init() = 0;
+	/**
+	 * @brief prints all the entities that the system has access to.
+	 */
+	void printEntities();
 };
 
 /**
@@ -424,8 +483,8 @@ class ISystem : public AppendableSerializable {
  *
  */
 class SystemManager {
-	std::unordered_map<const char *, ISystem *> systems;
-	std::unordered_map<const char *, Signature> signatures;
+	std::unordered_map<const char *, ISystem *> systems;		///< map system type name to a system
+	std::unordered_map<const char *, Signature> signatures;		///< map system type name to its Signature
 
    public:
 	/**
@@ -482,7 +541,7 @@ class SystemManager {
 
 	/**
 	 * @brief Checks if a System of type \a T has been registered.
-	 * 
+	 *
 	 * @tparam T - a System type
 	 * @return true - if registerSystem<T>(...) has been called
 	 * @return false - otherwise
@@ -496,7 +555,7 @@ class SystemManager {
 	/**
 	 * @brief Set the Signature of the System of type \a T.
 	 * @throws @ref{std::runtime_error} if \a T has not been registered.
-	 * 
+	 *
 	 * @tparam T - a System type.
 	 * @param signature - a Signature
 	 */
@@ -511,7 +570,7 @@ class SystemManager {
 
 	/**
 	 * @brief Updates an Entity's Signature when it's components change
-	 * 
+	 *
 	 * @param e - an Entity
 	 * @param signature - a Signature
 	 */
@@ -527,7 +586,7 @@ class SystemManager {
 
 	/**
 	 * @brief Destroys an Entity.
-	 * 
+	 *
 	 * @param e - an Entity
 	 */
 	void destroyEntity(Entity e) {
@@ -538,7 +597,7 @@ class SystemManager {
 
 	/**
 	 * @brief Destructor
-	 * 
+	 *
 	 */
 	~SystemManager() {
 		for (auto pair : systems) {
@@ -547,8 +606,8 @@ class SystemManager {
 	}
 
 	/**
-	 * @brief Writes all Systems' binary data to \a out. 
-	 * 
+	 * @brief Writes all Systems' binary data to \a out.
+	 *
 	 * @param out - stream to write to
 	 */
 	void writeSystems(std::ostream &out) {
@@ -609,7 +668,7 @@ class Scene : public ygl::AppendableSerializable {
 	/**
 	 * @brief Register a component type for the scene.
 	 * @see ComponentManager::registerComponent<T>() .
-	 * 
+	 *
 	 * @tparam T - Component data type
 	 */
 	template <typename T>
@@ -621,7 +680,7 @@ class Scene : public ygl::AppendableSerializable {
 	/**
 	 * @brief Registers a component type only if it has not been registered before.
 	 * @see isComponentRegistered<T>(), registerComponent<T>() .
-	 * 
+	 *
 	 * @tparam T - a Component type
 	 */
 	template <typename T>
@@ -632,7 +691,7 @@ class Scene : public ygl::AppendableSerializable {
 	/**
 	 * @brief Checks if the given component is registered for the scene.
 	 * @see ComponentManager::isComponentRegistered<T>() .
-	 * 
+	 *
 	 * @tparam T - component data type
 	 */
 	template <typename T>
@@ -643,7 +702,7 @@ class Scene : public ygl::AppendableSerializable {
 	/**
 	 * @brief Adds a Component to an Entity. The component type must have been registered in the scene.
 	 * One component cannot be assigned twice to the same Entity.
-	 * 
+	 *
 	 * @tparam T - Component to be added.
 	 * @param e - an Entity
 	 * @param component - an instance of the component
@@ -664,7 +723,7 @@ class Scene : public ygl::AppendableSerializable {
 	/**
 	 * @brief Checks of an Entity has a component of type \a T.
 	 * @see ComponentManager::hasComponent<T>(Entity e)
-	 * 
+	 *
 	 * @tparam T - a component type
 	 * @param e - an Entity
 	 * @return true - if the component has been added to \e
@@ -776,8 +835,9 @@ class Scene : public ygl::AppendableSerializable {
 	}
 
 	/**
-	 * @brief Registers a System in the Scene if it has not been registered. Creates an instance of the System and returns a reference to it.
-	 * 
+	 * @brief Registers a System in the Scene if it has not been registered. Creates an instance of the System and
+	 * returns a reference to it.
+	 *
 	 * @tparam T - a System type
 	 * @tparam Args
 	 * @param args - args for T's construction
@@ -794,8 +854,8 @@ class Scene : public ygl::AppendableSerializable {
 
 	/**
 	 * @brief How many entities does the Scene have
-	 * 
-	 * @return std::size_t 
+	 *
+	 * @return std::size_t
 	 */
 	std::size_t entitiesCount() { return entities.size(); }
 };

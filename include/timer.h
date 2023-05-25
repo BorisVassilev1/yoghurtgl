@@ -1,5 +1,13 @@
 #pragma once
 
+/// COPY PASTA FROM https://github.com/poseidon4o/urban-spork
+/// I have made no changes to this file, I own none of it.
+
+/**
+* @file timer.h
+* @brief Time Management Classes
+*/
+
 #include <stdint.h>
 #include <condition_variable>
 

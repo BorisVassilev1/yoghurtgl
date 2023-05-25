@@ -12,7 +12,7 @@
 
 #include <iostream>
 #include <random>
-#include "importer.h"
+#include <asset_manager.h>
 #include <time.h>
 
 using namespace ygl;
@@ -63,13 +63,13 @@ void run() {
 	height->bind(GL_TEXTURE3);
 	height->bind(GL_TEXTURE4);
 
-	Mesh *terrainMesh = makePlane(glm::vec2(1, 1), glm::vec2(20, 20));
+	Mesh *terrainMesh = new PlaneMesh(glm::vec2(1, 1), glm::vec2(20, 20));
 	terrainMesh->setDrawMode(GL_PATCHES);
 
 	Material terrainMat(glm::vec3(1., 1., 1.), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.4,
 						0., 0.);
 
-	AssetManager *asman = scene.registerSystem<AssetManager>();
+	AssetManager *asman = scene.getSystem<AssetManager>();
 	asman->addTexture(height, "bricks/height");
 	terrainMat.albedo_map	  = asman->addTexture(color, "bricks/albedo");
 	terrainMat.use_albedo_map = 1.0;

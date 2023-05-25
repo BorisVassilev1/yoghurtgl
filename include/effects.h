@@ -7,6 +7,9 @@
 #include <shader.h>
 #include <ecs.h>
 
+/// @file effects.h
+/// @brief Special effects and other specific graphics
+
 namespace ygl {
 class GrassSystem : public ygl::ISystem {
 	class GrassBladeMesh : public MultiBufferMesh {

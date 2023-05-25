@@ -1,5 +1,5 @@
 #include <entities.h>
-#include <importer.h>
+#include <asset_manager.h>
 #include <string>
 #include "mesh.h"
 
@@ -34,13 +34,13 @@ ygl::Entity ygl::addSphere(Scene &scene, glm::vec3 position, glm::vec3 scale, gl
 }
 
 ygl::Entity ygl::addModel(Scene &scene, Mesh *mesh, glm::vec3 position, glm::vec3 scale, glm::vec3 color) {
-	Entity	  e				= scene.createEntity();
-	Renderer *renderer		= scene.getSystem<Renderer>();
-	AssetManager *asman = scene.getSystem<AssetManager>();
-	uint	  meshIndex		= asman->addMesh(mesh, "some mesh??"); // TODO: this is bad!
-	uint	  materialIndex = renderer->addMaterial(Material());
-	Material &mat			= renderer->getMaterial(materialIndex);
-	mat.albedo				= color;
+	Entity		  e				= scene.createEntity();
+	Renderer	 *renderer		= scene.getSystem<Renderer>();
+	AssetManager *asman			= scene.getSystem<AssetManager>();
+	uint		  meshIndex		= asman->addMesh(mesh, "some mesh??");	   // TODO: this is bad!
+	uint		  materialIndex = renderer->addMaterial(Material());
+	Material	 &mat			= renderer->getMaterial(materialIndex);
+	mat.albedo					= color;
 	scene.addComponent<Transformation>(e, Transformation(position, glm::vec3(), scale));
 	scene.addComponent<RendererComponent>(e, RendererComponent(-1, meshIndex, materialIndex));
 
@@ -54,7 +54,7 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path) {
 	Mesh *mesh = new BoxMesh(1.);
 	mesh->setCullFace(false);
 	mesh->setDepthFunc(GL_LEQUAL);
-	AssetManager *asman = scene.getSystem<AssetManager>();
+	AssetManager *asman		= scene.getSystem<AssetManager>();
 	uint		  meshIndex = asman->addMesh(mesh, "skycube");
 	ygl::Material mat;
 	mat.albedo_map	   = scene.getSystem<AssetManager>()->addTexture(new TextureCubemap(path, ".jpg"), path);
@@ -69,27 +69,26 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path) {
 }
 
 ygl::Entity ygl::addModel(ygl::Scene &scene, std::string filePath, uint i) {
-	ygl::AssetManager &asman = *scene.getSystem<AssetManager>();
+	ygl::AssetManager *asman = scene.getSystem<AssetManager>();
 
 	Mesh *modelMesh = new MeshFromFile(filePath, i);
 
 	Entity model = scene.createEntity();
 	scene.addComponent<Transformation>(model, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(1.)));
 
-	Material mat = getMaterial(MeshFromFile::loadedScene, asman, filePath, i);
+	Material mat = ygl::MeshFromFile::getMaterial(MeshFromFile::loadedScene, asman, filePath, i);
 
 	Renderer *renderer = scene.getSystem<Renderer>();
 
 	RendererComponent modelRenderer;
 	modelRenderer.materialIndex = renderer->addMaterial(mat);
 	modelRenderer.shaderIndex	= renderer->getDefaultShader();
-	modelRenderer.meshIndex		= asman.addMesh(modelMesh, filePath + std::to_string(i));
+	modelRenderer.meshIndex		= asman->addMesh(modelMesh, filePath + std::to_string(i));
 	scene.addComponent(model, modelRenderer);
 	return model;
 }
 
-void ygl::addModels(ygl::Scene &scene, std::string filePath,
-					const std::function<void(Entity)> &edit) {
+void ygl::addModels(ygl::Scene &scene, std::string filePath, const std::function<void(Entity)> &edit) {
 	MeshFromFile::loadSceneIfNeeded(filePath);
 	for (uint i = 0; i < MeshFromFile::loadedScene->mNumMeshes; ++i) {
 		ygl::Entity model = addModel(scene, filePath, i);

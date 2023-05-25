@@ -10,14 +10,22 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <serializable.h>
 
+/**
+ * @file shader.h
+ * @brief Wrappers for OpenGL shaders.
+ */
+
 namespace ygl {
+/**
+ * @brief Base Shader class
+ */
 class Shader : public ISerializable {
 	Shader() {}
 
    protected:
 	GLuint		 program	  = 0;
-	uint			 shadersCount = 0;
-	GLuint	   *shaders	  = nullptr;
+	uint		 shadersCount = 0;
+	GLuint		*shaders	  = nullptr;
 	const char **fileNames	  = nullptr;
 	bool		 bound		  = false;
 
@@ -94,6 +102,9 @@ class Shader : public ISerializable {
 	void serialize(std::ostream &out) override;
 };
 
+/**
+ * @brief Vertex-Fragment Shader. Links a Vertex Shader and a Fragment Shader into a program. See OpenGL wiki.
+ */
 class VFShader : public Shader {
    public:
 	static const char *name;
@@ -103,10 +114,13 @@ class VFShader : public Shader {
 	void serialize(std::ostream &out) override;
 };
 
+/**
+ * @brief Compute Shader. See OpenGl wiki.
+ */
 class ComputeShader : public Shader {
    public:
 	static const char *name;
-	glm::ivec3 groupSize;
+	glm::ivec3		   groupSize;
 	ComputeShader(const char *source);
 	ComputeShader(std::istream &in);
 

@@ -11,6 +11,8 @@
 #include "transformation.h"
 #include <glm/gtc/type_ptr.hpp>
 
+using namespace ygl::bvh;
+
 BBox::BBox(const glm::vec3 &min, const glm::vec3 &max) : min(min), max(max) {}
 
 bool BBox::isEmpty() const {
@@ -252,7 +254,7 @@ void BVHTree::addPrimitive(ygl::Mesh *mesh, ygl::Transformation &transform) {
 
 void BVHTree::clear(Node *node) {
 	if (node == nullptr) return;
-	for(Intersectable *i : node->primitives) {
+	for (Intersectable *i : node->primitives) {
 		delete i;
 	}
 	for (int i = 0; i < 2; i++) {

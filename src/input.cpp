@@ -150,6 +150,7 @@ ygl::TransformGuizmo::TransformGuizmo(ygl::Window *window, ygl::Camera *camera, 
 		if (key == GLFW_KEY_C && action == GLFW_RELEASE) { this->operation = ImGuizmo::OPERATION::SCALE; }
 	});
 }
+
 void ygl::TransformGuizmo::update(Transformation *transform) {
 	bool  snap		= Keyboard::getKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
 	float snapValue = 1.0f;

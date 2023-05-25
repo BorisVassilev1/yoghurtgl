@@ -4,9 +4,9 @@
 #include <string>
 #include <type_traits>
 #include <typeinfo>
-#include "importer.h"
-#include "mesh.h"
-#include "shader.h"
+#include <asset_manager.h>
+#include <mesh.h>
+#include <shader.h>
 #include <texture.h>
 #include <ecs.h>
 
@@ -21,23 +21,18 @@ ygl::ISerializable *ygl::ResourceFactory::fabricate(std::istream &in) {
 	return fabricators[name](in);
 }
 
-void ygl::ResourceFactory::registerResource(const std::string								 &name,
-													ygl::ResourceFactory::ResourceConstructor f) {
+void ygl::ResourceFactory::registerResource(const std::string &name, ygl::ResourceFactory::ResourceConstructor f) {
 	fabricators[name] = f;
 }
 
-template <class T>
-	requires ygl::IsResource<T>
-void registerSerializable() {
-	ygl::ResourceFactory::registerResource(
-		T::name, [](std::istream &in) { return new T(in); });
-}
 void ygl::ResourceFactory::init() {
-	::registerSerializable<ygl::Texture2d>();
-	::registerSerializable<ygl::TextureCubemap>();
-	::registerSerializable<ygl::BoxMesh>();
-	::registerSerializable<ygl::SphereMesh>();
-	::registerSerializable<ygl::MeshFromFile>();
-	::registerSerializable<ygl::VFShader>();
-	::registerSerializable<ygl::ComputeShader>();
+	registerResource<ygl::Texture2d>();
+	registerResource<ygl::TextureCubemap>();
+	registerResource<ygl::BoxMesh>();
+	registerResource<ygl::SphereMesh>();
+	registerResource<ygl::MeshFromFile>();
+	registerResource<ygl::PlaneMesh>();
+	registerResource<ygl::QuadMesh>();
+	registerResource<ygl::VFShader>();
+	registerResource<ygl::ComputeShader>();
 };

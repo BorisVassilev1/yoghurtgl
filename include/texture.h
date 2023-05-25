@@ -8,7 +8,15 @@
 #include <serializable.h>
 #include <stb_image.h>
 
+/**
+ * @file texture.h
+ * @brief Wrappers for OpenGL textures.
+ */
+
 namespace ygl {
+/**
+ * @brief different types of textues must be bound to different targets. Enum makes them more readable
+ */
 enum TexIndex {
 	COLOR	  = GL_TEXTURE1,
 	NORMAL	  = GL_TEXTURE2,
@@ -19,8 +27,12 @@ enum TexIndex {
 	METALLIC  = GL_TEXTURE10
 };
 
+/**
+ * @brief Texture interface.
+ */
 class ITexture : public ISerializable {
    public:
+	/// human-readable texture types, alias for several separate properties
 	enum Type {
 		RGB,
 		RGBA,
@@ -37,6 +49,11 @@ class ITexture : public ISerializable {
 	};
 
 	ITexture(){};
+	/**
+	 * @brief save texture to file
+	 *
+	 * @param fileName - file to write to
+	 */
 	virtual void save(std::string fileName) = 0;
 
 	virtual void bind(int textureUnit) = 0;
@@ -56,15 +73,23 @@ class ITexture : public ISerializable {
 								  uint8_t &components, GLenum &_type);
 };
 
+/**
+ * @brief a Texture inherits ygl::ITexture
+ *
+ * @tparam T - type
+ */
 template <class T>
 concept IsTexture = std::is_base_of<ygl::ITexture, T>::value;
 
+/**
+ * @brief 2D Texture.
+ */
 class Texture2d : public ITexture {
-	GLsizei width = -1, height = -1;
-	uint8_t pixelSize  = 16;
-	uint8_t components = 4;
-	GLuint	id		   = -1;
-	Type type;
+	GLsizei		width = -1, height = -1;
+	uint8_t		pixelSize  = 16;
+	uint8_t		components = 4;
+	GLuint		id		   = -1;
+	Type		type;
 	std::string fileName = "";
 
 	void init(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
@@ -94,16 +119,19 @@ class Texture2d : public ITexture {
 	void unbindImage(int unit) override;
 	int	 getID() override;
 	virtual ~Texture2d();
-	
+
 	void serialize(std::ostream &out) override;
 };
 
+/**
+ * @brief CubeMap Texture - six textures that wrap arround a cube.
+ */
 class TextureCubemap : public ITexture {
 	static const constexpr char *faces[] = {"right", "left", "top", "bottom", "front", "back"};
 
-	GLsizei width = -1, height = -1;
-	GLuint	id		 = -1;
-	int		channels = 4;
+	GLsizei		width = -1, height = -1;
+	GLuint		id		 = -1;
+	int			channels = 4;
 	std::string path;
 	std::string format;
 

@@ -6,7 +6,7 @@
 #include <camera.h>
 #include <ecs.h>
 #include <renderer.h>
-#include <importer.h>
+#include <asset_manager.h>
 #include <transformation.h>
 #include <entities.h>
 #include <fstream>
