@@ -1,4 +1,5 @@
 #include <istream>
+#include "yoghurtgl.h"
 #include <assimp/scene.h>
 #define _USE_MATH_DEFINES
 #include <mesh.h>
@@ -606,13 +607,19 @@ void ygl::MeshFromFile::init(const std::string &path, uint index) {
 	loadSceneIfNeeded(path);
 	#define scene loadedScene
 
-	if (!scene->HasMeshes()) { throw std::runtime_error("no meshes in the scene!"); }
+	if (!scene->HasMeshes()) {
+		dbLog(ygl::LOG_ERROR, "Cannot load mesh from file with no meshes in it: ", path);
+		return;
+	}
 
 	aiMesh	   **meshes	   = scene->mMeshes;
 	unsigned int numMeshes = scene->mNumMeshes;
 
 	assert(numMeshes >= 1 && "no meshes in the scene?");
-	// assert(numMeshes < meshIndex && "no mesh with that index");
+	if (numMeshes <= index) {
+		dbLog(ygl::LOG_ERROR, "Error loading mesh from file: ", path, " mesh index out of bounds: ", index);
+		return;
+	}
 
 	aiMesh		*mesh		   = meshes[index];
 	unsigned int verticesCount = mesh->mNumVertices;

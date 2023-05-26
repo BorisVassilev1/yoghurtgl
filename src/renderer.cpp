@@ -5,6 +5,7 @@
 #include <iterator>
 #include <ostream>
 #include <string>
+#include "yoghurtgl.h"
 #include <asset_manager.h>
 #include <material.h>
 
@@ -236,7 +237,10 @@ void ygl::Renderer::addScreenEffect(IScreenEffect *effect) {
 }
 
 ygl::IScreenEffect *ygl::Renderer::getScreenEffect(uint index) {
-	if(index >= effects.size()) throw std::runtime_error("out of bounds: " + std::to_string(index));
+	if(index >= effects.size()) {
+		dbLog(ygl::LOG_WARNING, "Access out of bounds index: ", index);
+		return nullptr;
+	}
 	return effects[index];
 }
 

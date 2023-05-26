@@ -4,6 +4,7 @@
 #include <string>
 #include <type_traits>
 #include <typeinfo>
+#include "yoghurtgl.h"
 #include <asset_manager.h>
 #include <mesh.h>
 #include <shader.h>
@@ -16,8 +17,9 @@ ygl::ISerializable *ygl::ResourceFactory::fabricate(std::istream &in) {
 	std::string name;
 	std::getline(in, name, '\0');
 
-	if (fabricators.find(name) == fabricators.end())
-		throw std::runtime_error("trying to read something that has not been registered: " + name);
+	if (fabricators.find(name) == fabricators.end()) {
+		THROW_RUNTIME_ERR("trying to read something that has not been registered: " + name);
+	}
 	return fabricators[name](in);
 }
 

@@ -33,7 +33,9 @@ TEST_CASE("Test Scene creation") {
 		scene.addComponent(e, ygl::Transformation(glm::vec3(1.)));
 
 		CHECK(scene.hasComponent<ygl::Transformation>(e));
-		CHECK_THROWS(scene.addComponent(e, ygl::Transformation(glm::vec3(1.))));
+		// does nothing
+		scene.addComponent(e, ygl::Transformation(glm::vec3(1.)));
+		CHECK(scene.hasComponent<ygl::Transformation>(e));
 	}
 
 	SUBCASE("Delete Entity") {

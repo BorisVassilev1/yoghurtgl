@@ -12,6 +12,7 @@
 #include <typeinfo>
 #include <iostream>
 #include <set>
+#include "yoghurtgl.h"
 #include <window.h>
 #include <serializable.h>
 #include <transformation.h>
@@ -173,7 +174,6 @@ class ComponentArray : public IComponentArray {
 
 	/**
 	 * @brief Adds component to a given entity.
-	 * @throws @ref{std::runtime_error} if the entity already has that component
 	 *
 	 * @param e - the entity to add a component to
 	 * @param component - the component
@@ -181,7 +181,8 @@ class ComponentArray : public IComponentArray {
 	 */
 	T &addComponent(Entity e, const T &component) {
 		if (entityToIndexMap.find(e) != entityToIndexMap.end()) {
-			throw std::runtime_error("This entity already has that component");
+			dbLog(ygl::LOG_ERROR, "This entity already has that component: ", T::name);
+			return this->getComponent(e);
 		}
 
 		int index				= components.size();
@@ -201,13 +202,13 @@ class ComponentArray : public IComponentArray {
 
 	/**
 	 * @brief Removes a component from an Entity.
-	 * @throws @ref{std::runtime_error} if the Entity does not have that component.
 	 *
 	 * @param e - The entity whose component is to be removed
 	 */
 	void removeComponent(Entity e) {
 		if (entityToIndexMap.find(e) == entityToIndexMap.end()) {
-			throw std::runtime_error("cannot remove a non-existing component");
+			dbLog(ygl::LOG_ERROR, "cannot remove a non-existing component: ", T::name);
+			return;
 		}
 
 		size_t index	  = entityToIndexMap[e];
@@ -225,25 +226,29 @@ class ComponentArray : public IComponentArray {
 
 	/**
 	 * @brief Delete an entity's data from the array
-	 * @throws @ref{std::runtime_error} if the entity does not exist
 	 *
 	 * @param e - an Entity
 	 */
 	void deleteEntity(Entity e) override {
-		if (entityToIndexMap.find(e) == entityToIndexMap.end())
-			throw std::runtime_error("Cannot delete a non-existing entity");
+		if (entityToIndexMap.find(e) == entityToIndexMap.end()) {
+			dbLog(ygl::LOG_ERROR, "Cannot delete a non-existing entity: ", e);
+			return;
+		}
 		removeComponent(e);
 	}
 
 	/**
 	 * @brief Get the Component object for an entity.
+	 * @throws std::runtime_error if \a e does not have that component
 	 *
 	 * @param e - The entity whose component is accessed
 	 * @return T& - A reference to the component data
 	 */
 	T &getComponent(ygl::Entity e) {
-		if (entityToIndexMap.find(e) == entityToIndexMap.end())
-			throw std::runtime_error("component not found on that entity");
+		if (entityToIndexMap.find(e) == entityToIndexMap.end()) {
+			THROW_RUNTIME_ERR("component " + std::string(T::name) +
+							  " not found on that entity. Bad things will happen");
+		}
 		return components[entityToIndexMap[e]];
 	}
 
@@ -281,7 +286,8 @@ class ComponentManager {
 	void registerComponent() {
 		const char *typeName = T::name;
 		if (componentTypes.find(typeName) != componentTypes.end()) {
-			throw std::runtime_error("component already registered");
+			dbLog(ygl::LOG_ERROR, "Component already registered: ", typeName);
+			return;
 		}
 		ComponentType type		 = componentTypeCounter++;
 		componentTypes[typeName] = type;
@@ -304,56 +310,58 @@ class ComponentManager {
 
 	/**
 	 * @brief Get the ComponentType that has been assigned to a component type \a T when it was registered.
-	 * @throws @ref{std::runtime_error} if \a T has not been registered.
 	 *
 	 * @tparam T - component type
 	 * @return ComponentType - the assigned ComponentType
+	 * @return -1 - if T has not been registered
 	 */
 	template <typename T>
 		requires IsComponent<T>
 	ComponentType getComponentType() {
 		const char *typeName = T::name;
-		if (!isComponentRegistered<T>())
-			throw std::runtime_error("component has not been registered: " + std::string(typeName));
+		if (!isComponentRegistered<T>()) {
+			dbLog(ygl::LOG_ERROR, "component has not been registered: ", typeName);
+			return -1;
+		}
 		return componentTypes[typeName];
 	}
 
 	/**
 	 * @brief Get the ComponentArray that contains the components of type \a T.
-	 * @throws @ref{std::runtime_error} if \a T has not been registered.
 	 *
 	 * @tparam T - component type
 	 * @return ComponentArray<T>* - a pointer to the ComponentArray of the required type.
+	 * @return nullptr if T has not been registered
 	 */
 	template <typename T>
 		requires IsComponent<T>
 	ComponentArray<T> *getComponentArray() {
 		const char	 *typeName = T::name;
 		ComponentType type	   = componentTypes[typeName];
-		if (componentArrays.find(type) == componentArrays.end())
-			throw std::runtime_error("component has not been registered: " + std::string(typeName));
+		if (componentArrays.find(type) == componentArrays.end()) {
+			dbLog(ygl::LOG_ERROR, "component has not been registered: ", typeName);
+			return nullptr;
+		}
 		return static_cast<ComponentArray<T> *>(componentArrays[type]);
 	}
 
 	/**
 	 * @brief Get the ComponentArray that contains the components of type \a T that has a ComponentType \a t .
 	 * Same as getComponentArray<T>() , but does not require the type to be known compile-time.
-	 * @throws \ref{std::runtime_error} if no registered component has \a t as its ComponentType.
 	 *
 	 * @param t - ComponentType of the component type
 	 * @return IComponentArray* - pointer to ComponentArray<T>
 	 */
 	IComponentArray *getComponentArray(ComponentType t) {
-		if (componentArrays.find(t) == componentArrays.end())
-			throw std::runtime_error("no component has that id: " + std::to_string(t));
+		if (componentArrays.find(t) == componentArrays.end()) {
+			dbLog(ygl::LOG_ERROR, "no component has that id: ", t);
+			return 0;
+		}
 		return componentArrays[t];
 	}
 
 	/**
 	 * @brief Get the component of type \a T from the Entity \a e.
-	 *
-	 * @throws exceptions if the component cannot be found by any means.
-	 * @see getComponentArray<T>() and ComponentArray<T>::getComponent(Entity e).
 	 *
 	 * @tparam T - component type
 	 * @param e - an Entity in the Scene
@@ -489,7 +497,6 @@ class SystemManager {
    public:
 	/**
 	 * @brief registers a System of type \a T. Constructs it with a Scene and the other given arguments.
-	 * @throws @ref{std::runtime_error} if system already exists.
 	 *
 	 * @tparam T - a System type
 	 * @tparam Args
@@ -502,7 +509,10 @@ class SystemManager {
 	T *registerSystem(Scene *scene, Args &&...args) {
 		const char *type = T::name;
 
-		if (systems.find(type) != systems.end()) throw std::runtime_error("system already registered");
+		if (systems.find(type) != systems.end()) {
+			dbLog(ygl::LOG_ERROR, "system already registered: ", type);
+			return nullptr;
+		}
 
 		T *sys = new T(scene, args...);
 		systems.insert({type, sys});
@@ -511,7 +521,6 @@ class SystemManager {
 
 	/**
 	 * @brief Get the System object
-	 * @throws @ref{std::runtime_error} if \a T has not been registered.
 	 *
 	 * @tparam T - type of the System
 	 * @return T* - a pointer to the System object
@@ -521,13 +530,16 @@ class SystemManager {
 	T *getSystem() {
 		const char *type = T::name;
 
-		if (systems.find(type) == systems.end()) throw std::runtime_error("system type has not been registered");
+		if (systems.find(type) == systems.end()) {
+			dbLog(ygl::LOG_ERROR, "system type has not been registered: ", type);
+			return nullptr;
+		}
 
 		return (T *)(systems[type]);
 	}
 
 	/**
-	 * @brief Get the System object. Same as getSystem<T>() but without type safety.
+	 * @brief Get the System object. Same as getSystem<T>() but without type safety. IT IS SLOW!
 	 *
 	 * @param name - name of the System
 	 * @return ISystem* - a pointer to the System
@@ -554,7 +566,6 @@ class SystemManager {
 
 	/**
 	 * @brief Set the Signature of the System of type \a T.
-	 * @throws @ref{std::runtime_error} if \a T has not been registered.
 	 *
 	 * @tparam T - a System type.
 	 * @param signature - a Signature
@@ -563,8 +574,10 @@ class SystemManager {
 		requires IsSystem<T>
 	void setSignature(Signature signature) {
 		const char *type = T::name;
-		if (systems.find(type) == systems.end())
-			throw std::runtime_error("System not registered: " + std::string(type));
+		if (systems.find(type) == systems.end()) {
+			dbLog(ygl::LOG_ERROR, "System not registered: " + std::string(type));
+			return;
+		}
 		signatures[type] = signature;
 	}
 
@@ -634,7 +647,8 @@ class Scene : public ygl::AppendableSerializable {
 	SystemManager	 systemManager;
 
    public:
-	std::set<Entity> entities;
+	std::set<Entity>   entities;
+	static const char *name;
 
 	/**
 	 * @brief Construct an empty Scene
@@ -850,7 +864,7 @@ class Scene : public ygl::AppendableSerializable {
 	}
 
 	void write(std::ostream &out) override;
-	void read(std::istream &in) override;
+	void read(std::istream &in) noexcept(false) override;
 
 	/**
 	 * @brief How many entities does the Scene have

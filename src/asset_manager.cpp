@@ -1,6 +1,7 @@
 #include <asset_manager.h>
 #include <renderer.h>
 #include <stdexcept>
+#include "yoghurtgl.h"
 #include <assimp/types.h>
 #include <serializable.h>
 #include <texture.h>
@@ -128,7 +129,7 @@ void ygl::AssetManager::read(std::istream &in) {
 		uint		texIndex;
 		std::getline(in, texName, '\0');
 		in.read((char *)&texIndex, sizeof(uint));
-		std::cout << "tex: " << texName << std::endl;
+		dbLog(ygl::LOG_INFO, "Loading texture: ", texName);
 
 		ITexture *tex	   = dynamic_cast<ITexture *>(ResourceFactory::fabricate(in));
 		textures[texIndex] = tex;
@@ -140,7 +141,7 @@ void ygl::AssetManager::read(std::istream &in) {
 		uint		meshIndex;
 		std::getline(in, meshName, '\0');
 		in.read((char *)&meshIndex, sizeof(uint));
-		std::cout << "mesh: " << meshName << std::endl;
+		dbLog(ygl::LOG_INFO, "Loading mesh: ", meshName);
 
 		Mesh *mesh		  = dynamic_cast<Mesh *>(ResourceFactory::fabricate(in));
 		meshes[meshIndex] = mesh;
@@ -152,7 +153,7 @@ void ygl::AssetManager::read(std::istream &in) {
 		uint		shaderIndex;
 		std::getline(in, shaderName, '\0');
 		in.read((char *)&shaderIndex, sizeof(uint));
-		std::cout << "shader: " << shaderName << std::endl;
+		dbLog(ygl::LOG_INFO, "Loading shader: ", shaderName);
 
 		Shader *shader		 = dynamic_cast<Shader *>(ResourceFactory::fabricate(in));
 		shaders[shaderIndex] = shader;

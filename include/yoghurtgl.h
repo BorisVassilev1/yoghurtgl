@@ -65,6 +65,17 @@ enum {
 	LOG_INFO	= (0),
 };
 
+#define COLOR_RESET	 "\033[0m"
+#define COLOR_RED	 "\x1B[0;91m"
+#define COLOR_YELLOW "\x1B[0;93m"
+
+static const char *log_colors[]{
+	COLOR_RESET,
+	COLOR_RESET,
+	COLOR_YELLOW,
+	COLOR_RED
+};
+
 /**
  * @brief prints endline to std::cerr
  * @return 1
@@ -87,18 +98,25 @@ bool inline f_dbLog(T arg, Types... args) {
 }
 
 /**
-* @def dbLog(severity, ...)
-* If severity is greater than the definition YGL_LOG_LEVEL, prints all arguments to std::cerr
-*/
+ * @def dbLog(severity, ...)
+ * If severity is greater than the definition YGL_LOG_LEVEL, prints all arguments to std::cerr
+ */
 
 #ifndef NDEBUG
 	#define YGL_DEBUG
-	#define YGL_LOG_LEVEL		 -1
-	#define dbLog(severity, ...) severity >= YGL_LOG_LEVEL ? ygl::f_dbLog("[", #severity, "] ", __VA_ARGS__) : 0;
+	#define YGL_LOG_LEVEL -1
+	#define dbLog(severity, ...)                                                                                    \
+		severity >= YGL_LOG_LEVEL ? ygl::f_dbLog(ygl::log_colors[severity], "[", #severity, "] ", \
+												 __VA_ARGS__, COLOR_RESET)                                          \
+								  : 0;
 #else
 	#define YGL_LOG_LEVEL		 3
 	#define dbLog(severity, ...) ((void)0)
 #endif
+
+
+#define THROW_RUNTIME_ERR(message) \
+	throw std::runtime_error("At " + std::string(__PRETTY_FUNCTION__) + ":\n\t" + message + COLOR_RESET);
 
 }	  // namespace ygl
 

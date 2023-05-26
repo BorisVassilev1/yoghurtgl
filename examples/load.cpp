@@ -23,7 +23,9 @@ void run() {
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
 
 	std::ifstream is = std::ifstream("pbrDragon.sc");
-	scene.read(is);
+	try {
+		scene.read(is);
+	} catch (std::exception &e) { dbLog(ygl::LOG_ERROR, e.what()); }
 	is.close();
 
 	glClearColor(0, 0, 0, 1);

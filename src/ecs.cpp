@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <cstddef>
 #include "serializable.h"
+#include "yoghurtgl.h"
 
 ygl::EntityManager::EntityManager() {}
 
@@ -31,7 +32,10 @@ ygl::Entity ygl::EntityManager::createEntity() {
  * @param e The entity to be destroyed.
  */
 void ygl::EntityManager::destroyEntity(ygl::Entity e) {
-	if (e >= entityCount) throw std::runtime_error("Entity out of range");
+	if (e >= entityCount) {
+		dbLog(ygl::LOG_ERROR, "Deleting Entity that is out of range");
+		return;
+	}
 	signatures[e].reset();
 	freePositions.push(e);
 	--entityCount;
@@ -44,7 +48,10 @@ void ygl::EntityManager::destroyEntity(ygl::Entity e) {
  * @return e's signature
  */
 ygl::Signature ygl::EntityManager::getSignature(ygl::Entity e) {
-	if (e >= entityCount) throw std::runtime_error("Entity out of range");
+	if (e >= entityCount) {
+		dbLog(ygl::LOG_ERROR, "Accessing Signature of entity out of range");
+		return 0;	  // return a signature with no components
+	}
 	return signatures[e];
 }
 
@@ -63,7 +70,10 @@ void ygl::ISystem::printEntities() {
 	std::cerr << std::endl;
 }
 
+const char *ygl::Scene::name = "ygl::Scene";
+
 void ygl::Scene::write(std::ostream &out) {
+	out.write(name, std::strlen(name) + 1);
 	// Components
 	this->componentManager.writeComponentTypes(out);
 	// Systems
@@ -100,15 +110,21 @@ void ygl::Scene::write(std::ostream &out) {
 	out << std::flush;
 }
 
-void ygl::Scene::read(std::istream &in) {
+void ygl::Scene::read(std::istream &in) noexcept(false) {
+	std::string header;
+	std::getline(in, header, '\0');
+	if (header != name) THROW_RUNTIME_ERR("Input header not recognized");
+
 	using size_type = std::unordered_map<const char *, ComponentType>::size_type;
 
 	auto nameToType = std::unordered_map<std::string, ygl::ComponentType>();
 	auto typeToName = std::unordered_map<ygl::ComponentType, std::string>();
 
 	// Components
-	size_type componentsCount;
+	size_type componentsCount = 0;
 	in.read((char *)&componentsCount, sizeof(size_type));
+	if (in.bad()) THROW_RUNTIME_ERR("unexpected end of stream");
+	if (componentsCount <= 0) THROW_RUNTIME_ERR("invalid components count");
 	for (std::size_t i = 0; i < componentsCount; ++i) {
 		std::string	  name;
 		ComponentType type;
@@ -134,21 +150,22 @@ void ygl::Scene::read(std::istream &in) {
 	}
 
 	// Systems
-	size_type systemsCount;
+	size_type systemsCount = 0;
 	in.read((char *)&systemsCount, sizeof(size_type));
+	if (in.bad()) THROW_RUNTIME_ERR("unexpected end of stream");
 	for (std::size_t i = 0; i < systemsCount; ++i) {
 		std::string name;
 		std::getline(in, name, '\0');
 		ISystem *system = getSystem(name);
 		if (system == nullptr)
-			throw std::runtime_error("trying to load a system that has not been registered: " + name);
+			 THROW_RUNTIME_ERR("trying to load a system that has not been registered: " + name);
 		system->read(in);
-		std::cout << name << std::endl;
 	}
 
 	// Entities
-	size_type entitiesCount;
+	size_type entitiesCount = 0;
 	in.read((char *)&entitiesCount, sizeof(size_type));
+	if (in.bad()) THROW_RUNTIME_ERR("unexpected end of stream");
 
 	// we need to create all entities in the loaded scene;
 	// they will have new ids
@@ -174,7 +191,7 @@ void ygl::Scene::read(std::istream &in) {
 
 			auto typeSearch = newComponentTypes.find(type);
 			if (typeSearch == newComponentTypes.end())
-				throw std::runtime_error("component is not registered in the scene: " + typeToName[type]);
+				THROW_RUNTIME_ERR("component is not registered in the scene: " + typeToName[type]);
 
 			ComponentType	 newType = typeSearch->second;
 			IComponentArray *array	 = this->componentManager.getComponentArray(newType);

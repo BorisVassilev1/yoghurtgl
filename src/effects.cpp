@@ -38,7 +38,7 @@ void ygl::GrassSystem::GrassHolder::deserialize(std::istream &in) { static_cast<
 
 void ygl::GrassSystem::init() {
 	reload();
-	if (!scene->hasSystem<Renderer>()) throw std::runtime_error("Renderer system must be registered in the scene.");
+	if (!scene->hasSystem<Renderer>()) THROW_RUNTIME_ERR("Renderer system must be registered in the scene.");
 
 	bladeMesh = new GrassBladeMesh(bladeCount);
 
