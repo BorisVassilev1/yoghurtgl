@@ -3,11 +3,9 @@
 #include <window.h>
 #include <shader.h>
 #include <input.h>
-#include <camera.h>
 #include <ecs.h>
 #include <renderer.h>
 #include <asset_manager.h>
-#include <transformation.h>
 #include <entities.h>
 #include <fstream>
 
@@ -66,7 +64,7 @@ void run() {
 		window.swapBuffers();
 	}
 
-	std::ofstream of = std::ofstream("pbrDragon.sc");
+	std::ofstream of = std::ofstream("scene.sc");
 	scene.write(of);
 	of.close();
 }

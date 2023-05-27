@@ -3,8 +3,9 @@ cmake_minimum_required(VERSION 3.2.0)
 set(YGL_NO_ASSIMP OFF)
 set(CMAKE_CXX_STANDARD 20)
 set(YGL_STATIC OFF)
-
+set(YGL_NDEBUG OFF)
 project(YoghurtGL)
+
 
 add_subdirectory(libs/)
 
@@ -71,6 +72,11 @@ target_link_options(YoghurtGL PRIVATE ${LINK_ARGS})
 set_target_properties(YoghurtGL PROPERTIES PUBLIC_HEADER include/)
 set_target_properties(YoghurtGL PROPERTIES LIBRARY_OUTPUT_DIRECTORY ../)
 set_target_properties(YoghurtGL PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../)
+
+if (${YGL_NDEBUG})
+	add_definitions(-DYGL_NDEBUG)
+endif (${YGL_NDEBUG})
+
 
 file(GLOB_RECURSE TARGET_FILES examples/*.cpp)
 

@@ -631,6 +631,17 @@ class SystemManager {
 			t.second->write(out);
 		}
 	}
+
+
+	/**
+	 * @brief Makes all systems do their work
+	 */
+	void doWork() {
+		auto size = this->systems.size();
+		for (auto &t : this->systems) {
+			t.second->doWork();
+		}
+	}
 };
 
 /**
@@ -865,6 +876,11 @@ class Scene : public ygl::AppendableSerializable {
 
 	void write(std::ostream &out) override;
 	void read(std::istream &in) noexcept(false) override;
+
+	/**
+	 * @brief Makes all Systems do their work
+	 */
+	void doWork();
 
 	/**
 	 * @brief How many entities does the Scene have

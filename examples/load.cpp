@@ -2,10 +2,9 @@
 
 #include <window.h>
 #include <input.h>
-#include <camera.h>
 #include <ecs.h>
 #include <renderer.h>
-#include <transformation.h>
+#include <effects.h>
 #include <fstream>
 
 using namespace ygl;
@@ -21,8 +20,9 @@ void run() {
 	Scene scene;
 	scene.registerComponentIfCan<ygl::Transformation>();
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
+	scene.registerSystem<GrassSystem>();
 
-	std::ifstream is = std::ifstream("pbrDragon.sc");
+	std::ifstream is = std::ifstream("scene.sc");
 	try {
 		scene.read(is);
 	} catch (std::exception &e) { dbLog(ygl::LOG_ERROR, e.what()); }
@@ -36,7 +36,7 @@ void run() {
 		controller.update();
 		cam.update();
 
-		renderer->doWork();
+		scene.doWork();
 
 		window.swapBuffers();
 	}

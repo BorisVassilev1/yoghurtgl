@@ -458,6 +458,8 @@ GLuint ygl::Renderer::loadLights(int count, Light *lights) {
 }
 
 void ygl::Renderer::write(std::ostream &out) {
+	out.write((char *)&defaultShader, sizeof(defaultShader));
+
 	std::size_t materialsCount = materials.size();
 	out.write((char *)&materialsCount, sizeof(materialsCount));
 	for (std::size_t i = 0; i < materialsCount; ++i) {
@@ -472,6 +474,8 @@ void ygl::Renderer::write(std::ostream &out) {
 }
 
 void ygl::Renderer::read(std::istream &in) {
+	in.read((char *)&defaultShader, sizeof(defaultShader));
+
 	std::size_t materialsCount;
 	in.read((char *)&materialsCount, sizeof(materialsCount));
 	materials.resize(materialsCount);

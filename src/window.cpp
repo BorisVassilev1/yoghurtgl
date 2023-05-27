@@ -26,8 +26,9 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 	glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
 	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GL_TRUE);
+#ifndef YGL_NDEBUG
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-
+#endif
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, GL_CONTEXT_VERSION_MAJOR);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GL_CONTEXT_VERSION_MINOR);
 
@@ -48,7 +49,7 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
 		}
-#ifndef NDEBUG
+		#ifndef YGL_NDEBUG
 		else if (key == GLFW_KEY_R && action == GLFW_RELEASE) {
 			shade = !shade;
 			if (shade) {
@@ -64,7 +65,7 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 				glDisable(GL_CULL_FACE);
 			}
 		}
-#endif
+		#endif
 	});
 	glfwSetWindowSizeCallback(window, handleResize);
 	addResizeCallback([this](GLFWwindow *window, int width, int height) {
@@ -77,13 +78,13 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 	ygl::gl_init = true;
 
 	glfwSwapInterval(vsync);
-
 	if (glewInit() != GLEW_OK) {
 		std::cerr << "glewInit failed." << std::endl;
 		this->~Window();
+		THROW_RUNTIME_ERR("GLEW_INIT FAILED");
 	}
 
-#ifndef NDEBUG
+#ifndef YGL_NDEBUG
 	ygl::initDebug();
 #endif
 

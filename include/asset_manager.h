@@ -34,6 +34,7 @@ class AssetManager : public ygl::ISystem {
 	static const char *name;
 	/**
 	 * @brief Adds a Mesh to the list of assets.
+	 * @note Takes ownership of \a mesh
 	 *
 	 * @param mesh - mesh to be added
 	 * @param name - resource name
@@ -42,6 +43,7 @@ class AssetManager : public ygl::ISystem {
 	uint			   addMesh(Mesh *mesh, const std::string &name);
 	/**
 	 * @brief Adds a Texture to the list of assets.
+	 * @note Takes ownership of \a tex
 	 *
 	 * @param tex - Texture to be added
 	 * @param name - resource name
@@ -50,6 +52,7 @@ class AssetManager : public ygl::ISystem {
 	uint			   addTexture(ITexture *tex, const std::string &name);
 	/**
 	 * @brief Adds a Shader to the list of assets.
+	 * @note Takes ownership of \a shader
 	 *
 	 * @param shader - Shader to be added
 	 * @param name - resource name

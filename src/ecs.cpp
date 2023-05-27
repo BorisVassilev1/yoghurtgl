@@ -157,8 +157,7 @@ void ygl::Scene::read(std::istream &in) noexcept(false) {
 		std::string name;
 		std::getline(in, name, '\0');
 		ISystem *system = getSystem(name);
-		if (system == nullptr)
-			 THROW_RUNTIME_ERR("trying to load a system that has not been registered: " + name);
+		if (system == nullptr) THROW_RUNTIME_ERR("trying to load a system that has not been registered: " + name);
 		system->read(in);
 	}
 
@@ -198,4 +197,8 @@ void ygl::Scene::read(std::istream &in) noexcept(false) {
 			array->readComponent(result, in, this);
 		}
 	}
+}
+
+void ygl::Scene::doWork() {
+	systemManager.doWork();
 }

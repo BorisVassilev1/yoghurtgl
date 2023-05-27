@@ -3,18 +3,10 @@
 #include <window.h>
 #include <mesh.h>
 #include <shader.h>
-#include <transformation.h>
-#include <camera.h>
 #include <input.h>
 #include <ecs.h>
 #include <renderer.h>
-#include <texture.h>
-
-#include <iostream>
-#include <random>
-#include <asset_manager.h>
-#include <material.h>
-#include <time.h>
+#include <fstream>
 
 using namespace ygl;
 using namespace std;
@@ -36,8 +28,7 @@ void run() {
 
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
 
-	// Texture2d *tex = new Texture2d("./res/models/bunny_uv/bunny_uv.jpg");
-	Texture2d *tex = new Texture2d("./res/images/uv_checker.png");
+	Texture2d *tex = new Texture2d("./res/models/bunny_uv/bunny_uv.jpg");
 
 	Entity			bunny = scene.createEntity();
 	Transformation &transform =
@@ -49,7 +40,7 @@ void run() {
 	Material bunnyMat(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1,
 					  0.5);
 	AssetManager *asman = scene.getSystem<AssetManager>();
-	bunnyMat.albedo_map		= asman->addTexture(tex, "res/images/uv_checker.png");
+	bunnyMat.albedo_map		= asman->addTexture(tex, "./res/models/bunny_uv/bunny_uv.jpg");
 	bunnyMat.use_albedo_map = 1.0;
 
 	unsigned int shaderIndex = asman->addShader(shader, "defaultShader");
@@ -102,6 +93,10 @@ void run() {
 
 		window.swapBuffers();
 	}
+
+	ofstream out("scene.sc");
+	scene.write(out);
+	out.close();
 }
 
 int main(int argc, char *argv[]) {

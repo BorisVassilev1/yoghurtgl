@@ -1,12 +1,10 @@
 #include <yoghurtgl.h>
 #include <window.h>
 #include <mesh.h>
-#include <camera.h>
 #include <shader.h>
 #include <input.h>
 #include <renderer.h>
 #include <texture.h>
-#include <asset_manager.h>
 
 #include <iostream>
 

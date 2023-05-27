@@ -6,7 +6,12 @@ set(ENABLE_BOOST_WORKAROUND ON)
 
 add_subdirectory(glfw)
 add_subdirectory(glm)
+
+# glew gives errors when -O3
+# set(buildType ${CMAKE_BUILD_TYPE})
+# set(CMAKE_BUILD_TYPE Debug)
 add_subdirectory(glew-cmake)
+# set(CMAKE_BUILD_TYPE ${buildType})
 
 if (!${YGL_STATIC})
 	set(BUILD_SHARED_LIBS ON)

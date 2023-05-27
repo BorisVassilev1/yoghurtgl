@@ -5,16 +5,10 @@
  * @brief Global defines and debug macros.
  */
 
-// #define GLFW_INCLUDE_GLU
-#ifdef _WIN32
-// #define GLFW_DLL	 // -> windows
-#elif __linux__
-
-#endif
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+
 
 /**
  * @brief the Yoghurtgl namespace
@@ -102,7 +96,7 @@ bool inline f_dbLog(T arg, Types... args) {
  * If severity is greater than the definition YGL_LOG_LEVEL, prints all arguments to std::cerr
  */
 
-#ifndef NDEBUG
+#ifndef YGL_NDEBUG
 	#define YGL_DEBUG
 	#define YGL_LOG_LEVEL -1
 	#define dbLog(severity, ...)                                                                                    \
@@ -122,3 +116,4 @@ bool inline f_dbLog(T arg, Types... args) {
 
 using uint	= unsigned int;
 using uchar = unsigned char;
+

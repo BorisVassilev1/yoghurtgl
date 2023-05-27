@@ -18,6 +18,9 @@
 using namespace ygl;
 using namespace std;
 
+/**
+ * @brief Vertex-Tesselation-Fragment Shader
+ */
 class VTFShader : public Shader {
    public:
 	VTFShader(const char *vertex, const char *tessControl, const char *tessEval, const char *fragment)
@@ -51,17 +54,14 @@ void run() {
 
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
 
-	// Texture2d *height = new Texture2d("./res/images/heightmap.png");
-	// Texture2d *normal = new Texture2d("./res/images/NormalMap.png");
-
 	Texture2d *height = new Texture2d("./res/images/bricks/displ.jpg");
 	Texture2d *normal = new Texture2d("./res/images/bricks/normal.jpg");
 	Texture2d *color  = new Texture2d("./res/images/bricks/albedo.jpg", ygl::ITexture::Type::SRGB);
 
-	color->bind(GL_TEXTURE1);
-	normal->bind(GL_TEXTURE2);
-	height->bind(GL_TEXTURE3);
-	height->bind(GL_TEXTURE4);
+	color->bind(ygl::TexIndex::COLOR);
+	normal->bind(ygl::TexIndex::NORMAL);
+	height->bind(ygl::TexIndex::HEIGHT);
+	height->bind(ygl::TexIndex::ROUGHNESS);
 
 	Mesh *terrainMesh = new PlaneMesh(glm::vec2(1, 1), glm::vec2(20, 20));
 	terrainMesh->setDrawMode(GL_PATCHES);

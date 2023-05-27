@@ -18,6 +18,10 @@
 #include <mesh.h>
 
 namespace ygl {
+/**
+ * @brief Everything related to ray tracing acceleration structures
+ *
+ */
 namespace bvh {
 ///
 /// Data for an intersection between a ray and scene primitive
@@ -309,15 +313,15 @@ class BVHTree : public IntersectionAccelerator {
 	// I guess SAH is too good
 	static constexpr int PERFECT_SPLIT_THRESHOLD = 20;
 
-	int		 depth			 = 0;	  ///< depth of the tree
-	int		 leafSize		 = 0;	  ///< size of the largest leaf
-	long int leavesCount	 = 0;	  ///< hOw MaNy LeAvEs
-	long int nodeCount		 = 0;	  ///< HoW mAnY nOdEs
-	long int primitivesCount = 0;	  ///< how many primitives are in the structure
+	int		 depth			 = 0;						///< depth of the tree
+	int		 leafSize		 = 0;						///< size of the largest leaf
+	long int leavesCount	 = 0;						///< hOw MaNy LeAvEs
+	long int nodeCount		 = 0;						///< HoW mAnY nOdEs
+	long int primitivesCount = 0;						///< how many primitives are in the structure
 
-	void clear(Node *node);				   ///< clears the entire CPU tree starting from \a node
-	void clearConstructionTree();		   ///< clears the entire CPU tree
-	void build(Node *node, int depth);	   ///< builds the CPU tree
+	void clear(Node *node);								///< clears the entire CPU tree starting from \a node
+	void clearConstructionTree();						///< clears the entire CPU tree
+	void build(Node *node, int depth);					///< builds the CPU tree
 
 	bool isBuilt() const override { return built; }		///< checks if the tree is built
 

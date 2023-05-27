@@ -1,24 +1,15 @@
-#define _USE_MATH_DEFINES
-
 #include <yoghurtgl.h>
 
 #include <window.h>
 #include <mesh.h>
 #include <shader.h>
-#include <transformation.h>
-#include <camera.h>
 #include <input.h>
 #include <ecs.h>
 #include <renderer.h>
-#include <texture.h>
 #include <effects.h>
 #include <entities.h>
-#include <asset_manager.h>
 
 #include <iostream>
-#include <random>
-#include <time.h>
-#include <math.h>
 
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
@@ -49,7 +40,6 @@ void run() {
 	uint shaderIndex = asman->addShader(shader, "defaultShader");
 	renderer->setDefaultShader(shaderIndex);
 
-
 	Mesh *planeMesh = new PlaneMesh(glm::vec2(40, 40), glm::vec2(1, 1));
 
 	Entity plane = scene.createEntity();
@@ -60,18 +50,15 @@ void run() {
 																			   glm::vec3(1.), 0.0, 0.3, 0.0, 0.0))));
 	scene.addComponent(plane, GrassSystem::GrassHolder());
 
-	Entity model =
-		addModel(scene, new MeshFromFile("./res/models/dragon.obj"), {0, 3, 0}, {10, 10, 10}, {1, 1, 1});
-	Material &modelMat			= renderer->getMaterial(scene.getComponent<RendererComponent>(model));
-	modelMat.specular_roughness = 0.7;
+	Entity model = ygl::addModel(scene, "./res/models/gnome/scene.gltf", 0);
+	Transformation &t = scene.getComponent<Transformation>(model);
+	t.scale *= 0.01;
+	t.position.y = 2;
+	t.updateWorldMatrix();
+	RendererComponent &rc = scene.getComponent<RendererComponent>(model);
+	std::cout << renderer->getMaterial(rc)<< std::endl;
 
 	Entity skybox = addSkybox(scene, "./res/images/skybox/");
-
-	std::cerr << "renderer: ";
-	renderer->printEntities();
-
-	std::cerr << "grass: ";
-	grassSystem->printEntities();
 
 	// renderer->addLight(Light(Transformation(glm::vec3(0, 3, 0)), glm::vec3(0.2, 0.2, 1.0), 50, Light::Type::POINT));
 
@@ -115,6 +102,10 @@ void run() {
 
 		window.swapBuffers();
 	}
+
+	ofstream out("scene.sc");
+	scene.write(out);
+	out.close();
 }
 
 int main(int argc, char *argv[]) {
