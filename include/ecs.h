@@ -247,7 +247,7 @@ class ComponentArray : public IComponentArray {
 	T &getComponent(ygl::Entity e) {
 		if (entityToIndexMap.find(e) == entityToIndexMap.end()) {
 			THROW_RUNTIME_ERR("component " + std::string(T::name) +
-							  " not found on that entity. Bad things will happen");
+							  " not found on that entity.");
 		}
 		return components[entityToIndexMap[e]];
 	}

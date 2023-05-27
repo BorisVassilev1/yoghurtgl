@@ -50,10 +50,10 @@ void run() {
 																			   glm::vec3(1.), 0.0, 0.3, 0.0, 0.0))));
 	scene.addComponent(plane, GrassSystem::GrassHolder());
 
-	Entity model;
+	Entity model = -1;
 	try {
-		model			  = ygl::addModel(scene, "./res/models/gnome/scene.gltf", 0);
-		Transformation &t = scene.getComponent<Transformation>(model);
+		model = ygl::addModel(scene, "./res/models/gnome/scene.gltf", 0);
+		Transformation &t	  = scene.getComponent<Transformation>(model);
 		t.scale *= 0.01;
 		t.position.y = 2;
 		t.updateWorldMatrix();
@@ -84,18 +84,18 @@ void run() {
 		grassSystem->doWork();
 		renderer->doWork();
 
-		Transformation &groundTransform = scene.getComponent<Transformation>(model);
+		Transformation &transform = scene.getComponent<Transformation>(model == -1? 0 : model);
 
-		guizmo.update(&groundTransform);
+		guizmo.update(&transform);
 
 		ImGui::Begin("Grass controls");
 		if (ImGui::SliderFloat("density", &(grassSystem->density), 1., 10.)) { grassSystem->reload(); }
 
-		if (ImGui::SliderFloat3("ground rotation", (float *)&groundTransform.rotation, -M_PI, M_PI)) {
-			groundTransform.updateWorldMatrix();
+		if (ImGui::SliderFloat3("ground rotation", (float *)&transform.rotation, -M_PI, M_PI)) {
+			transform.updateWorldMatrix();
 		}
-		if (ImGui::SliderFloat3("ground position", (float *)&groundTransform.position, -20, 20)) {
-			groundTransform.updateWorldMatrix();
+		if (ImGui::SliderFloat3("ground position", (float *)&transform.position, -20, 20)) {
+			transform.updateWorldMatrix();
 		}
 
 		ImGui::Checkbox("Alpha Correction", &(renderer->getScreenEffect(0)->enabled));
