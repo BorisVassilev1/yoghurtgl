@@ -17,7 +17,7 @@ The library does not use resources other than those in github, but the examples 
 
 ### - Build process
 
-First, pull all submodules with `git submodule init && git submodule update`. Then, the simplest way to build the library **make** is to run:
+First, pull all submodules with `git submodule init && git submodule update`. Then, the simplest way to build the library is to run:
 ```
 ./configure.bat # for Windows or ./configure.sh for Unix-like systems
 cmake --build ./build --target=<target>
@@ -27,7 +27,7 @@ Target can be YoghurtGL or the name of any example in the **examples** directory
 Any CMake configuration should work. Here is a list of things that work/don't work
  - on Windows MinGW-gcc cannot compile assimp and thus cannot build the project
  - on Windows MinGW-clang works
- - on Linux gcc and clang work
+ - on Linux clang works
  - any Release build configuration does not work
 
 ## Images

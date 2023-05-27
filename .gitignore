@@ -17,6 +17,7 @@ imgui.ini
 compile_commands.json
 /.vscode/*
 /html/*
+/doc/*
 /latex/*
 doxygen_config.txt
 /cmake-build-debug/
