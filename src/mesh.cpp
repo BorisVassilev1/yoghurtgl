@@ -503,8 +503,7 @@ const aiScene *ygl::MeshFromFile::loadScene(const std::string &file, unsigned in
 	const aiScene *scene = importer->ReadFile(file, flags);
 
 	if (!scene) {
-		dbLog(ygl::LOG_ERROR, "[Assimp]", importer->GetErrorString());
-		return nullptr;
+		THROW_RUNTIME_ERR("[Assimp]" + importer->GetErrorString());
 	}
 	return scene;
 }
@@ -605,7 +604,6 @@ void ygl::MeshFromFile::loadSceneIfNeeded(const std::string &path) {
 
 void ygl::MeshFromFile::init(const std::string &path, uint index) {
 	loadSceneIfNeeded(path);
-	if(loadedScene == nullptr) return;
 	#define scene loadedScene
 
 	if (!scene->HasMeshes()) {

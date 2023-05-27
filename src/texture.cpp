@@ -119,7 +119,7 @@ void ygl::Texture2d::init(std::string fileName, GLint internalFormat, GLenum for
 		dbLog(ygl::LOG_ERROR, "Image file [" + fileName + "] failed to load: " + stbi_failure_reason());
 		exit(1);
 		data = new stbi_uc[16]{0, 0, 0, 255, 255, 0, 255, 255, 255, 0, 255, 255, 0, 0, 0, 255};
-		init(width, height, Type::RGBA, data);
+		init(2,2, Type::RGBA, data);
 		delete[] data;
 	}
 }

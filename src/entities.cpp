@@ -1,7 +1,9 @@
 #include <entities.h>
 #include <asset_manager.h>
 #include <string>
-#include "mesh.h"
+#include "yoghurtgl.h"
+#include <mesh.h>
+#include <transformation.h>
 
 ygl::Entity ygl::addBox(Scene &scene, glm::vec3 position, glm::vec3 scale, glm::vec3 color) {
 	Entity		  e		   = scene.createEntity();
@@ -71,8 +73,10 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path) {
 ygl::Entity ygl::addModel(ygl::Scene &scene, std::string filePath, uint i) {
 	ygl::AssetManager *asman = scene.getSystem<AssetManager>();
 
-	Mesh *modelMesh = new MeshFromFile(filePath, i);
-
+	Mesh *modelMesh;
+	try {
+		modelMesh = new MeshFromFile(filePath, i);
+	} catch (std::exception &e) { THROW_RUNTIME_ERR("Failed loading MeshFromFile: " + filePath); }
 	Entity model = scene.createEntity();
 	scene.addComponent<Transformation>(model, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(1.)));
 
@@ -89,7 +93,10 @@ ygl::Entity ygl::addModel(ygl::Scene &scene, std::string filePath, uint i) {
 }
 
 void ygl::addModels(ygl::Scene &scene, std::string filePath, const std::function<void(Entity)> &edit) {
-	MeshFromFile::loadSceneIfNeeded(filePath);
+	try {
+		// if this does not fail, the calls to addModel will not throw
+		MeshFromFile::loadSceneIfNeeded(filePath);
+	} catch (std::exception &e) { return; }
 	for (uint i = 0; i < MeshFromFile::loadedScene->mNumMeshes; ++i) {
 		ygl::Entity model = addModel(scene, filePath, i);
 		edit(model);

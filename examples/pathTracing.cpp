@@ -83,32 +83,38 @@ Timer timer;
 ygl::bvh::BVHTree *bvh = new ygl::bvh::BVHTree();
 
 void cleanup() {
-	delete tex;
-	delete scene;
-	delete camera;
-	delete controller;
-	delete pathTracer;
-	delete normalizer;
-	delete renderTexture;
-	delete rawTexture;
-	delete textureOnScreen;
-	delete screenQuad;
-	delete bvh;
+	if (tex != nullptr) delete tex;
+	if (scene != nullptr) delete scene;
+	if (camera != nullptr) delete camera;
+	if (controller != nullptr) delete controller;
+	if (pathTracer != nullptr) delete pathTracer;
+	if (normalizer != nullptr) delete normalizer;
+	if (renderTexture != nullptr) delete renderTexture;
+	if (rawTexture != nullptr) delete rawTexture;
+	if (textureOnScreen != nullptr) delete textureOnScreen;
+	if (screenQuad != nullptr) delete screenQuad;
+	if (bvh != nullptr) delete bvh;
 	if (spheres != nullptr) delete[] spheres;
 	if (spheres != nullptr) delete[] boxes;
-	delete skybox;
-	delete mouse;
-	delete window;
+	if (skybox != nullptr) delete skybox;
+	if (mouse != nullptr) delete mouse;
+	if (window != nullptr) delete window;
 }
 
 void initScene() {
-	bunnyMesh  = new ygl::MeshFromFile("./res/models/dragon-gltf/scene.gltf", 2);
+	try {
+		bunnyMesh = new ygl::MeshFromFile("./res/models/dragon-gltf/scene.gltf", 2);
+	} catch (std::exception &e) {
+		std::cerr << e.what() << std::endl;
+		cleanup();
+		exit(0);
+	}
 	sphereMesh = new ygl::SphereMesh();
 	cubeMesh   = new ygl::BoxMesh(glm::vec3(1, 1, 1), glm::vec3(1, 1, 1));
 
-	shader		= new ygl::VFShader("./shaders/simple.vs", "./shaders/simple.fs");
-	camera		= new ygl::Camera(glm::radians(70.f), *window, 0.01, 1000);
-	controller	= new ygl::FPController(window, mouse, camera->transform);
+	shader	   = new ygl::VFShader("./shaders/simple.vs", "./shaders/simple.fs");
+	camera	   = new ygl::Camera(glm::radians(70.f), *window, 0.01, 1000);
+	controller = new ygl::FPController(window, mouse, camera->transform);
 
 	scene = new ygl::Scene();
 	scene->registerComponent<ygl::Transformation>();
@@ -131,7 +137,6 @@ void initScene() {
 	renderer->setDefaultShader(shaderIndex);
 	scene->addComponent<ygl::RendererComponent>(
 		bunny, ygl::RendererComponent(-1, asman->addMesh(bunnyMesh, "bunny"), renderer->addMaterial(geometryMaterial)));
-
 
 	ygl::Shader::setSSBO(bunnyMesh->getVertices().bufferId, 2);
 	ygl::Shader::setSSBO(bunnyMesh->getNormals().bufferId, 3);
