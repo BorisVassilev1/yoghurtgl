@@ -49,8 +49,6 @@ ygl::Texture2d	  *tex;
 ygl::Scene		  *scene;
 ygl::Renderer	  *renderer;
 ygl::VFShader	  *shader;
-ygl::VFShader	  *unlitShader;
-uint			   unlitShaderIndex = -1;
 ygl::Camera		  *camera;
 ygl::FPController *controller;
 ygl::Mesh		  *sphereMesh;
@@ -109,7 +107,6 @@ void initScene() {
 	cubeMesh   = new ygl::BoxMesh(glm::vec3(1, 1, 1), glm::vec3(1, 1, 1));
 
 	shader		= new ygl::VFShader("./shaders/simple.vs", "./shaders/simple.fs");
-	unlitShader = new ygl::VFShader("./shaders/unlit.vs", "./shaders/unlit.fs");
 	camera		= new ygl::Camera(glm::radians(70.f), *window, 0.01, 1000);
 	controller	= new ygl::FPController(window, mouse, camera->transform);
 
@@ -121,15 +118,9 @@ void initScene() {
 	renderer->addMaterial(
 		ygl::Material(glm::vec3(1.f), 0.1, glm::vec3(0.f), 1.0, glm::vec3(0.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 0.0));
 
-	// ygl::Material geometryMaterial = ygl::Material(glm::vec3(0.5, 0., 0.), .02, glm::vec3(0.), 1, glm::vec3(0.0),
-	// 0.0, glm::vec3(1.), 0.0, 0.1, 1.);
-
 	ygl::AssetManager *asman = scene->getSystem<ygl::AssetManager>();
 	ygl::Material	   geometryMaterial =
 		ygl::MeshFromFile::getMaterial(ygl::MeshFromFile::loadedScene, asman, "./res/models/dragon-gltf/", 2);
-
-	tex = new ygl::Texture2d("./res/images/uv_checker.png");
-	tex->bind(GL_TEXTURE1);		// albedo texture
 
 	bunny = scene->createEntity();
 	scene->addComponent<ygl::Transformation>(
@@ -141,7 +132,6 @@ void initScene() {
 	scene->addComponent<ygl::RendererComponent>(
 		bunny, ygl::RendererComponent(-1, asman->addMesh(bunnyMesh, "bunny"), renderer->addMaterial(geometryMaterial)));
 
-	unlitShaderIndex = asman->addShader(unlitShader, "unlitShader");
 
 	ygl::Shader::setSSBO(bunnyMesh->getVertices().bufferId, 2);
 	ygl::Shader::setSSBO(bunnyMesh->getNormals().bufferId, 3);
@@ -183,7 +173,6 @@ void initSpheres() {
 
 	ygl::Entity sphere;
 	for (int i = 0; i < 7; ++i) {
-		// glm::vec3 randomColor(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.);
 		glm::vec3 randomColor(1, 0.5, 0);
 
 		spheres[i + 4] = Sphere(glm::vec3(i * 1.5 - 5, 0.5, 3), 0.5,

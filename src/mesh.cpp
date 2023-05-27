@@ -605,6 +605,7 @@ void ygl::MeshFromFile::loadSceneIfNeeded(const std::string &path) {
 
 void ygl::MeshFromFile::init(const std::string &path, uint index) {
 	loadSceneIfNeeded(path);
+	if(loadedScene == nullptr) return;
 	#define scene loadedScene
 
 	if (!scene->HasMeshes()) {

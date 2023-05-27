@@ -637,7 +637,6 @@ class SystemManager {
 	 * @brief Makes all systems do their work
 	 */
 	void doWork() {
-		auto size = this->systems.size();
 		for (auto &t : this->systems) {
 			t.second->doWork();
 		}

@@ -17,7 +17,7 @@ The library does not use resources other than those in github, but the examples 
 
 ### - Build process
 
-The simplest way to build the library **make** is to run:
+First, pull all submodules with `git submodule init && git submodule update`. Then, the simplest way to build the library **make** is to run:
 ```
 ./configure.bat # for Windows or ./configure.sh for Unix-like systems
 cmake --build ./build --target=<target>

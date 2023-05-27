@@ -55,8 +55,6 @@ void run() {
 	t.scale *= 0.01;
 	t.position.y = 2;
 	t.updateWorldMatrix();
-	RendererComponent &rc = scene.getComponent<RendererComponent>(model);
-	std::cout << renderer->getMaterial(rc)<< std::endl;
 
 	Entity skybox = addSkybox(scene, "./res/images/skybox/");
 
