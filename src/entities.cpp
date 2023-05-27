@@ -96,7 +96,10 @@ void ygl::addModels(ygl::Scene &scene, std::string filePath, const std::function
 	try {
 		// if this does not fail, the calls to addModel will not throw
 		MeshFromFile::loadSceneIfNeeded(filePath);
-	} catch (std::exception &e) { return; }
+	} catch (std::exception &e) {
+		std::cerr << e.what() << std::endl;
+		return;
+	}
 	for (uint i = 0; i < MeshFromFile::loadedScene->mNumMeshes; ++i) {
 		ygl::Entity model = addModel(scene, filePath, i);
 		edit(model);
