@@ -117,9 +117,8 @@ void ygl::Texture2d::init(std::string fileName, GLint internalFormat, GLenum for
 		stbi_image_free(data);
 	} else {
 		dbLog(ygl::LOG_ERROR, "Image file [" + fileName + "] failed to load: " + stbi_failure_reason());
-		exit(1);
 		data = new stbi_uc[16]{0, 0, 0, 255, 255, 0, 255, 255, 255, 0, 255, 255, 0, 0, 0, 255};
-		init(2,2, Type::RGBA, data);
+		init(2, 2, Type::RGBA, data);
 		delete[] data;
 	}
 }
@@ -129,14 +128,16 @@ ygl::Texture2d::Texture2d(GLsizei width, GLsizei height, GLint internalFormat, G
 	init(width, height, internalFormat, format, pixelSize, components, type, data);
 }
 
-ygl::Texture2d::Texture2d(GLsizei width, GLsizei height, Type type, stbi_uc *data) : width(width), height(height), type(type){
+ygl::Texture2d::Texture2d(GLsizei width, GLsizei height, Type type, stbi_uc *data)
+	: width(width), height(height), type(type) {
 	init(width, height, type, data);
 }
 
 ygl::Texture2d::Texture2d(GLsizei width, GLsizei height) { init(width, height, Type::RGBA, nullptr); }
 
 ygl::Texture2d::Texture2d(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize,
-						  uint8_t components) : fileName(fileName) {
+						  uint8_t components)
+	: fileName(fileName) {
 	init(fileName, internalFormat, format, pixelSize, components);
 }
 
@@ -156,7 +157,7 @@ ygl::Texture2d::Texture2d(std::string fileName) : Texture2d(fileName, Type::RGBA
 
 ygl::Texture2d::Texture2d(std::istream &in) {
 	std::getline(in, fileName, '\0');
-	in.read((char *) &type, sizeof(Type));
+	in.read((char *)&type, sizeof(Type));
 
 	GLint	internalFormat = 0;
 	GLenum	format		   = 0;
@@ -172,7 +173,7 @@ ygl::Texture2d::Texture2d(std::istream &in) {
 void ygl::Texture2d::serialize(std::ostream &out) {
 	out.write(name, std::strlen(name) + 1);
 	out.write(fileName.c_str(), fileName.size() + 1);
-	out.write((char*) &type, sizeof(Type));
+	out.write((char *)&type, sizeof(Type));
 }
 
 void ygl::Texture2d::save(std::string fileName) {

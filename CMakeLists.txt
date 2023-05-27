@@ -13,10 +13,10 @@ add_subdirectory(libs/)
 
 set(COMPILE_ARGS
 --pedantic-errors
-# -fsanitize=address
+ -fsanitize=address
 )
 set(LINK_ARGS
-# -fsanitize=address
+ -fsanitize=address
 )
 
 if (MSVC)

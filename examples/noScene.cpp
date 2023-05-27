@@ -13,7 +13,14 @@ using namespace ygl;
 void run() {
 	ygl::Window window = ygl::Window(1200, 800, "rayTracer", true);
 
-	Mesh		  *bunnyMesh = new MeshFromFile("./res/models/bunny.obj");
+	Mesh		  *bunnyMesh;
+		try{
+		bunnyMesh = new MeshFromFile("./res/models/bunny.obj");
+	} catch(std::exception &e) {
+		std::cerr << e.what() << std::endl;
+		ygl::terminate();
+		exit(1);
+	}
 	Transformation bunnyTransform;
 
 	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");

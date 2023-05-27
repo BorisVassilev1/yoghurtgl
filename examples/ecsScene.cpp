@@ -14,8 +14,13 @@ using namespace std;
 void run() {
 	Window window = Window(800, 600, "Test Window", true);
 
-	Mesh *bunnyMesh = new MeshFromFile("./res/models/bunny_uv/bunny_uv.obj");
-
+	Mesh *bunnyMesh;
+	try {
+		bunnyMesh = new MeshFromFile("./res/models/bunny_uv/bunny_uv.obj");
+	} catch (std::exception &e) {
+		std::cerr << e.what() << std::endl;
+		exit(1);
+	}
 	Mesh	 *cubeMesh = new BoxMesh();
 	VFShader *shader   = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 	Camera	  cam(glm::radians(70.f), window, 0.01, 1000);
@@ -37,9 +42,9 @@ void run() {
 	transform.updateWorldMatrix();
 	RendererComponent bunnyRenderer;
 
-	Material bunnyMat(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1,
-					  0.5);
-	AssetManager *asman = scene.getSystem<AssetManager>();
+	Material	  bunnyMat(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1,
+						   0.5);
+	AssetManager *asman		= scene.getSystem<AssetManager>();
 	bunnyMat.albedo_map		= asman->addTexture(tex, "./res/models/bunny_uv/bunny_uv.jpg");
 	bunnyMat.use_albedo_map = 1.0;
 

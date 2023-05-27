@@ -33,9 +33,9 @@ void run() {
 	Scene scene;
 	scene.registerComponent<Transformation>();
 
-	Renderer *renderer = scene.registerSystem<Renderer>(&window);
-	GrassSystem *grassSystem = scene.registerSystem<GrassSystem>();
-	AssetManager *asman = scene.getSystem<AssetManager>();
+	Renderer	 *renderer	  = scene.registerSystem<Renderer>(&window);
+	GrassSystem	 *grassSystem = scene.registerSystem<GrassSystem>();
+	AssetManager *asman		  = scene.getSystem<AssetManager>();
 
 	uint shaderIndex = asman->addShader(shader, "defaultShader");
 	renderer->setDefaultShader(shaderIndex);
@@ -50,11 +50,14 @@ void run() {
 																			   glm::vec3(1.), 0.0, 0.3, 0.0, 0.0))));
 	scene.addComponent(plane, GrassSystem::GrassHolder());
 
-	Entity model = ygl::addModel(scene, "./res/models/gnome/scene.gltf", 0);
-	Transformation &t = scene.getComponent<Transformation>(model);
-	t.scale *= 0.01;
-	t.position.y = 2;
-	t.updateWorldMatrix();
+	Entity model;
+	try {
+		model			  = ygl::addModel(scene, "./res/models/gnome/scene.gltf", 0);
+		Transformation &t = scene.getComponent<Transformation>(model);
+		t.scale *= 0.01;
+		t.position.y = 2;
+		t.updateWorldMatrix();
+	} catch (std::exception &e) { std::cerr << e.what() << std::endl; }
 
 	Entity skybox = addSkybox(scene, "./res/images/skybox/");
 
