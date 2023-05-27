@@ -28,6 +28,7 @@ Any CMake configuration should work. Here is a list of things that work/don't wo
  - on Windows MinGW-gcc cannot compile assimp and thus cannot build the project
  - on Windows MinGW-clang works
  - on Linux gcc and clang work
+ - any Release build configuration does not work
 
 ## Images
 Some renders to demonstrate the library's capabilities
