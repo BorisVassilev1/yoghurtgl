@@ -30,6 +30,9 @@ class AssetManager : public ygl::ISystem {
 	std::unordered_map<std::string, uint> shaderNames;	   ///< map name to index in @ref shaders array
 	std::vector<Shader *>				  shaders;		   ///< array of all shaders
 
+	AssetManager(const AssetManager &other)			   = delete;
+	AssetManager &operator=(const AssetManager &other) = delete;
+
    public:
 	static const char *name;
 	/**
@@ -40,7 +43,7 @@ class AssetManager : public ygl::ISystem {
 	 * @param name - resource name
 	 * @return index in the asset array
 	 */
-	uint			   addMesh(Mesh *mesh, const std::string &name);
+	uint addMesh(Mesh *mesh, const std::string &name);
 	/**
 	 * @brief Adds a Texture to the list of assets.
 	 * @note Takes ownership of \a tex
@@ -49,7 +52,7 @@ class AssetManager : public ygl::ISystem {
 	 * @param name - resource name
 	 * @return index in the asset array
 	 */
-	uint			   addTexture(ITexture *tex, const std::string &name);
+	uint addTexture(ITexture *tex, const std::string &name);
 	/**
 	 * @brief Adds a Shader to the list of assets.
 	 * @note Takes ownership of \a shader
@@ -58,7 +61,7 @@ class AssetManager : public ygl::ISystem {
 	 * @param name - resource name
 	 * @return index in the asset array
 	 */
-	uint			   addShader(Shader *shader, const std::string &name);
+	uint addShader(Shader *shader, const std::string &name);
 
 	uint getMeshIndex(const std::string &name);
 	uint getTextureIndex(const std::string &name);

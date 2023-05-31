@@ -49,6 +49,8 @@ class ITexture : public ISerializable {
 	};
 
 	ITexture(){};
+	ITexture(const ITexture &other)			   = delete;
+	ITexture &operator=(const ITexture &other) = delete;
 	/**
 	 * @brief save texture to file
 	 *

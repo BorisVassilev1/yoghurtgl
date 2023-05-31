@@ -34,6 +34,8 @@ class Camera {
 	Camera(float fov, float aspect, float zNear, float zFar, ygl::Transformation transform);
 	Camera(float fov, ygl::Window &from_window, float zNear, float zFar);
 	Camera(float fov, ygl::Window &from_window, float zNear, float zFar, ygl::Transformation transform);
+	Camera(const Camera &other)			   = delete;
+	Camera &operator=(const Camera &other) = delete;
 
 	void updateProjectionMatrix();
 	void updateViewMatrix();

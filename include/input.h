@@ -127,6 +127,9 @@ class FPController {
 	 */
 	FPController(ygl::Window *window, ygl::Mouse *mouse, ygl::Transformation &transform);
 
+	FPController(const FPController &other)			   = delete;
+	FPController &operator=(const FPController &other) = delete;
+
 	/**
 	 * @brief Updates the controller. Should be called every frame.
 	 */

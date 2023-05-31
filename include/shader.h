@@ -55,6 +55,9 @@ class Shader : public ISerializable {
 	void finishProgramCreation();
 	void deleteShaders();
 
+	Shader(const Shader &other)			   = delete;
+	Shader &operator=(const Shader &other) = delete;
+
    public:
 	~Shader();
 

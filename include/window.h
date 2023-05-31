@@ -29,16 +29,18 @@ class Window {
 
    public:
 	// TODO: this cannot override mesh settings, but should
-	bool   shade	  = true; ///< does not work
-	bool   cullFace	  = true; ///< does not work
-	double deltaTime  = 0; ///< length of last frame
-	double globalTime = 0; ///< time passed from opening the window until the beginning of the current frame
+	bool   shade	  = true;	  ///< does not work
+	bool   cullFace	  = true;	  ///< does not work
+	double deltaTime  = 0;		  ///< length of last frame
+	double globalTime = 0;		  ///< time passed from opening the window until the beginning of the current frame
 	Window(int width, int height, const char *name, bool vsync, bool resizable, GLFWmonitor *monitor);
 	Window(int width, int height, const char *name, bool vsync, bool resizable);
 	Window(int width, int height, const char *name, bool vsync);
 	Window(int width, int height, const char *name);
 
 	~Window();
+	Window(const Window &other)			   = delete;
+	Window &operator=(const Window &other) = delete;
 
 	int			getWidth();
 	int			getHeight();
@@ -51,23 +53,23 @@ class Window {
 	 *
 	 * @param callback - function to be called every frame
 	 */
-	void		setFrameCallback(void (*callback)(long, long));
+	void setFrameCallback(void (*callback)(long, long));
 	/**
 	 * @brief Destroys and permanently invalidates the window. The destructor calls this.
 	 */
-	void		destroy();
+	void destroy();
 	/**
 	 * @brief Checks if the window has focus from the user
 	 *
 	 * @return true - if it has focus
 	 * @return false - otherwise
 	 */
-	bool		isFocused();
+	bool isFocused();
 	/**
 	 * @brief Adds a callback that will be called every time the window is resized.
 	 *
-	 * @param callback - the function to be called. 
+	 * @param callback - the function to be called.
 	 */
-	void		addResizeCallback(const std::function<void(GLFWwindow *window, int width, int height)> &callback);
+	void addResizeCallback(const std::function<void(GLFWwindow *window, int width, int height)> &callback);
 };
 }	  // namespace ygl

@@ -102,6 +102,8 @@ class EntityManager {
 
    public:
 	EntityManager();
+	EntityManager(const EntityManager &other)			 = delete;
+	EntityManager &operator=(const EntityManager &other) = delete;
 
 	Entity	  createEntity();
 	void	  destroyEntity(Entity);
@@ -116,6 +118,9 @@ class EntityManager {
 class IComponentArray {
    public:
 	IComponentArray() {}
+	IComponentArray(const IComponentArray &other)			 = delete;
+	IComponentArray &operator=(const IComponentArray &other) = delete;
+
 	/**
 	 * @brief Deletes an entity's data from the array
 	 *
@@ -246,8 +251,7 @@ class ComponentArray : public IComponentArray {
 	 */
 	T &getComponent(ygl::Entity e) {
 		if (entityToIndexMap.find(e) == entityToIndexMap.end()) {
-			THROW_RUNTIME_ERR("component " + std::string(T::name) +
-							  " not found on that entity.");
+			THROW_RUNTIME_ERR("component " + std::string(T::name) + " not found on that entity.");
 		}
 		return components[entityToIndexMap[e]];
 	}
@@ -268,6 +272,8 @@ class ComponentManager {
 
    public:
 	ComponentManager() {}
+	ComponentManager(const ComponentManager &other)			   = delete;
+	ComponentManager &operator=(const ComponentManager &other) = delete;
 
 	~ComponentManager() {
 		// deletes all component arrays
@@ -468,6 +474,9 @@ class ISystem : public AppendableSerializable {
 	 * @param scene - the Scene that the System is in.
 	 */
 	ISystem(Scene *scene) : scene(scene) {}
+	ISystem(const ISystem &other)			 = delete;
+	ISystem &operator=(const ISystem &other) = delete;
+
 	virtual ~ISystem(){};
 
 	/**
@@ -495,6 +504,10 @@ class SystemManager {
 	std::unordered_map<const char *, Signature> signatures;		///< map system type name to its Signature
 
    public:
+	SystemManager() {}
+	SystemManager(const SystemManager &other)			 = delete;
+	SystemManager &operator=(const SystemManager &other) = delete;
+
 	/**
 	 * @brief registers a System of type \a T. Constructs it with a Scene and the other given arguments.
 	 *
@@ -632,7 +645,6 @@ class SystemManager {
 		}
 	}
 
-
 	/**
 	 * @brief Makes all systems do their work
 	 */
@@ -657,6 +669,9 @@ class Scene : public ygl::AppendableSerializable {
 	SystemManager	 systemManager;
 
    public:
+	Scene(const Scene &other)			 = delete;
+	Scene &operator=(const Scene &other) = delete;
+
 	std::set<Entity>   entities;
 	static const char *name;
 

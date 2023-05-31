@@ -40,6 +40,9 @@ class IMesh : public ISerializable {
 	IMesh(){};	   // protected constructor so that noone can instantiate this
 	IMesh(std::istream &in);
 
+	IMesh(const IMesh &other)			 = delete;
+	IMesh &operator=(const IMesh &other) = delete;
+
    public:
 	virtual ~IMesh();
 
