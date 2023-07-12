@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.2.0)
 set(YGL_NO_ASSIMP OFF)
 set(CMAKE_CXX_STANDARD 20)
 set(YGL_STATIC ON)
-set(YGL_NDEBUG OFF)
 project(YoghurtGL)
 
 
@@ -73,9 +72,11 @@ set_target_properties(YoghurtGL PROPERTIES PUBLIC_HEADER include/)
 set_target_properties(YoghurtGL PROPERTIES LIBRARY_OUTPUT_DIRECTORY ../)
 set_target_properties(YoghurtGL PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../)
 
-if (${YGL_NDEBUG})
+
+message("BUILD TYPE: " ${CMAKE_BUILD_TYPE})
+if (${CMAKE_BUILD_TYPE} MATCHES "Release")
 	add_definitions(-DYGL_NDEBUG)
-endif (${YGL_NDEBUG})
+endif (${CMAKE_BUILD_TYPE} MATCHES "Release")
 
 
 file(GLOB_RECURSE TARGET_FILES examples/*.cpp)
