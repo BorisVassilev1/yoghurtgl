@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.2.0)
 
 set(YGL_NO_ASSIMP OFF)
 set(CMAKE_CXX_STANDARD 20)
-set(YGL_STATIC OFF)
+set(YGL_STATIC ON)
 set(YGL_NDEBUG OFF)
 project(YoghurtGL)
 
@@ -13,14 +13,14 @@ add_subdirectory(libs/)
 
 set(COMPILE_ARGS
 --pedantic-errors
- -fsanitize=address
+# -fsanitize=address
 )
 set(LINK_ARGS
- -fsanitize=address
+# -fsanitize=address
 )
 
 if (MSVC)
-	set(COMPILE_ARGS ${COMPILE_ARGS} \Wall)
+	set(COMPILE_ARGS ${COMPILE_ARGS} /Wall)
 else ()
 	set(COMPILE_ARGS ${COMPILE_ARGS} -Wall -Wextra -Wpedantic -g --pedantic-errors -O3)
 endif ()

@@ -5,6 +5,9 @@
  * @brief Global defines and debug macros.
  */
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -108,6 +111,9 @@ bool inline f_dbLog(T arg, Types... args) {
 	#define dbLog(severity, ...) ((void)0)
 #endif
 
+#ifdef _MSC_VER 
+	#define __PRETTY_FUNCTION__ __FUNCSIG__ 
+#endif
 
 #define THROW_RUNTIME_ERR(message) \
 	throw std::runtime_error("At " + std::string(__PRETTY_FUNCTION__) + ":\n\t" + message + COLOR_RESET);

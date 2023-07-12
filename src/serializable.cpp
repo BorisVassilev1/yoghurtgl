@@ -11,7 +11,8 @@
 #include <texture.h>
 #include <ecs.h>
 
-auto ygl::ResourceFactory::fabricators = std::map<std::string, ygl::ResourceFactory::ResourceConstructor>();
+std::map<std::string, ygl::ResourceFactory::ResourceConstructor> ygl::ResourceFactory::fabricators =
+	std::map<std::string, ygl::ResourceFactory::ResourceConstructor>();
 
 ygl::ISerializable *ygl::ResourceFactory::fabricate(std::istream &in) {
 	std::string name;

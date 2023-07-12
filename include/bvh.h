@@ -254,7 +254,7 @@ class BVHTree : public IntersectionAccelerator {
 		union {
 			Node *children[2];
 			static struct {
-				Node *left = nullptr, *right = nullptr;
+				Node *left, *right;
 			};
 		};
 		std::vector<Intersectable *> primitives;
