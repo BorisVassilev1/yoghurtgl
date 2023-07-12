@@ -16,7 +16,7 @@ void run() {
 
 	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 
-	Camera cam(glm::radians(70.f), window, 0.01, 1000);
+	PerspectiveCamera cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);
@@ -38,7 +38,7 @@ void run() {
 
 	Material modelMat(glm::vec3(1.0, 0.5, 0.0), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.2,
 					  0.0, 0.);
-	AssetManager *asman = scene.getSystem<AssetManager>();
+	AssetManager *asman		   = scene.getSystem<AssetManager>();
 	modelMat.albedo_map		   = asman->addTexture(color, "color");
 	modelMat.use_albedo_map	   = 1.0;
 	modelMat.normal_map		   = asman->addTexture(normal, "normal");

@@ -16,7 +16,7 @@ void run() {
 
 	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 
-	Camera cam(glm::radians(70.f), window, 0.01, 1000);
+	PerspectiveCamera cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);
@@ -24,8 +24,8 @@ void run() {
 	Scene scene;
 	scene.registerComponentIfCan<ygl::Transformation>();
 
-	Renderer *renderer = scene.registerSystem<Renderer>(&window);
-	AssetManager *asman = scene.getSystem<AssetManager>();
+	Renderer	 *renderer = scene.registerSystem<Renderer>(&window);
+	AssetManager *asman	   = scene.getSystem<AssetManager>();
 
 	uint shaderInd = asman->addShader(shader, "defaultShader");
 	renderer->setDefaultShader(shaderInd);

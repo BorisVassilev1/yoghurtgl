@@ -12,7 +12,7 @@ using namespace ygl;
 void run() {
 	Window window = Window(1280, 1000, "Test Window", true, false);
 
-	Camera cam(glm::radians(70.f), window, 0.01, 1000);
+	PerspectiveCamera cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);

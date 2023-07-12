@@ -29,7 +29,7 @@ static uint64_t timer_nsec() {
 	return t.tv_sec * 1000000000UL + t.tv_nsec;
 }
 
-#elif _WIN64 != 0
+#elif _WIN64 != 0 || _WIN32 != 0
 #define NOMINMAX
 #include <Windows.h>
 

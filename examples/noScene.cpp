@@ -13,18 +13,18 @@ using namespace ygl;
 void run() {
 	ygl::Window window = ygl::Window(1200, 800, "rayTracer", true);
 
-	Mesh		  *bunnyMesh;
-		try{
+	Mesh *bunnyMesh;
+	try {
 		bunnyMesh = new MeshFromFile("./res/models/bunny.obj");
-	} catch(std::exception &e) {
+	} catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		ygl::terminate();
 		exit(1);
 	}
 	Transformation bunnyTransform;
 
-	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
-	Camera	  cam(glm::radians(70.f), window, 0.01, 1000);
+	VFShader		 *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
+	PerspectiveCamera cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);
@@ -71,7 +71,7 @@ int main() {
 	}
 
 	run();
-	
+
 	ygl::terminate();
 	return 0;
 }

@@ -45,15 +45,15 @@ struct alignas(16) Box {
 ygl::Window *window;
 ygl::Mouse	*mouse;
 
-ygl::Texture2d	  *tex;
-ygl::Scene		  *scene;
-ygl::Renderer	  *renderer;
-ygl::VFShader	  *shader;
-ygl::Camera		  *camera;
-ygl::FPController *controller;
-ygl::Mesh		  *sphereMesh;
-ygl::Mesh		  *bunnyMesh;
-ygl::Mesh		  *cubeMesh;
+ygl::Texture2d		   *tex;
+ygl::Scene			   *scene;
+ygl::Renderer		   *renderer;
+ygl::VFShader		   *shader;
+ygl::PerspectiveCamera *camera;
+ygl::FPController	   *controller;
+ygl::Mesh			   *sphereMesh;
+ygl::Mesh			   *bunnyMesh;
+ygl::Mesh			   *cubeMesh;
 
 ygl::Entity bunny;
 
@@ -113,7 +113,7 @@ void initScene() {
 	cubeMesh   = new ygl::BoxMesh(glm::vec3(1, 1, 1), glm::vec3(1, 1, 1));
 
 	shader	   = new ygl::VFShader("./shaders/simple.vs", "./shaders/simple.fs");
-	camera	   = new ygl::Camera(glm::radians(70.f), *window, 0.01, 1000);
+	camera	   = new ygl::PerspectiveCamera(glm::radians(70.f), *window, 0.01, 1000);
 	controller = new ygl::FPController(window, mouse, camera->transform);
 
 	scene = new ygl::Scene();

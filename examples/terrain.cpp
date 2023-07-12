@@ -44,7 +44,7 @@ void run() {
 	terrainShader->setUniform("displacementOffset", -0.4f);
 	terrainShader->unbind();
 
-	Camera cam(glm::radians(70.f), window, 0.01, 1000);
+	PerspectiveCamera cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);

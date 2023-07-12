@@ -7,8 +7,9 @@
 /// @param zNear Near plane z
 /// @param zFar Far plane z
 /// @param transform Transformation for the camera
-ygl::Camera::Camera(float fov, float aspect, float zNear, float zFar, ygl::Transformation transform)
-	: fov(fov), aspect(aspect), zNear(zNear), zFar(zFar), transform(transform) {
+ygl::PerspectiveCamera::PerspectiveCamera(float fov, float aspect, float zNear, float zFar,
+										  ygl::Transformation transform)
+	: Camera(transform), fov(fov), aspect(aspect), zNear(zNear), zFar(zFar) {
 	updateProjectionMatrix();
 	matrices.viewMatrix = glm::mat4x4(1.0);
 	createMatricesUBO();
@@ -19,8 +20,8 @@ ygl::Camera::Camera(float fov, float aspect, float zNear, float zFar, ygl::Trans
 /// @param aspect aspect ratio of the screen
 /// @param zNear near plane z
 /// @param zFar far plane z
-ygl::Camera::Camera(float fov, float aspect, float zNear, float zFar)
-	: Camera(fov, aspect, zNear, zFar, ygl::Transformation()) {}
+ygl::PerspectiveCamera::PerspectiveCamera(float fov, float aspect, float zNear, float zFar)
+	: PerspectiveCamera(fov, aspect, zNear, zFar, ygl::Transformation()) {}
 
 /// @brief Constructor for camera for a window. Adds a resize callback that updates the projection matrix
 /// whenever the window is resized
@@ -29,8 +30,9 @@ ygl::Camera::Camera(float fov, float aspect, float zNear, float zFar)
 /// @param zNear Near plane z
 /// @param zFar Far plane z
 /// @param transform Transformation for the camera
-ygl::Camera::Camera(float fov, ygl::Window &from_window, float zNear, float zFar, ygl::Transformation transform)
-	: Camera(fov, (float)from_window.getWidth() / from_window.getHeight(), zNear, zFar, transform) {
+ygl::PerspectiveCamera::PerspectiveCamera(float fov, ygl::Window &from_window, float zNear, float zFar,
+							   ygl::Transformation transform)
+	: PerspectiveCamera(fov, (float)from_window.getWidth() / from_window.getHeight(), zNear, zFar, transform) {
 	from_window.addResizeCallback([&, this](GLFWwindow *window, int width, int height) {
 		if (window != from_window.getHandle()) return;
 		this->aspect = (float)width / height;
@@ -44,11 +46,13 @@ ygl::Camera::Camera(float fov, ygl::Window &from_window, float zNear, float zFar
 /// @param from_window Window to attach the camera to
 /// @param zNear Near plane z
 /// @param zFar Far plane z
-ygl::Camera::Camera(float fov, ygl::Window &from_window, float zNear, float zFar)
-	: Camera(fov, from_window, zNear, zFar, ygl::Transformation()) {}
+ygl::PerspectiveCamera::PerspectiveCamera(float fov, ygl::Window &from_window, float zNear, float zFar)
+	: PerspectiveCamera(fov, from_window, zNear, zFar, ygl::Transformation()) {}
 
 /// @brief Updates the projection matrix using the current set values.
-void ygl::Camera::updateProjectionMatrix() { matrices.projectionMatrix = glm::perspective(fov, aspect, zNear, zFar); }
+void ygl::PerspectiveCamera::updateProjectionMatrix() {
+	matrices.projectionMatrix = glm::perspective(fov, aspect, zNear, zFar);
+}
 
 /// @brief Updates the view matrix using the current transformation.
 void ygl::Camera::updateViewMatrix() {
@@ -95,11 +99,42 @@ void ygl::Camera::update() {
 
 glm::mat4x4 ygl::Camera::getProjectionMatrix() { return matrices.projectionMatrix; }
 glm::mat4x4 ygl::Camera::getViewMatrix() { return matrices.viewMatrix; }
-float		ygl::Camera::getFov() { return fov; }
-void		ygl::Camera::setFov(float fov) { this->fov = fov; }
-float		ygl::Camera::getAspect() { return aspect; }
-void		ygl::Camera::setAspect(float aspect) { this->aspect = aspect; }
-float		ygl::Camera::getZNear() { return zNear; }
-void		ygl::Camera::setZNear(float zNear) { this->zNear = zNear; }
-float		ygl::Camera::getZFar() { return zFar; }
-void		ygl::Camera::setZFar(float zFar) { this->zFar = zFar; }
+float		ygl::PerspectiveCamera::getFov() { return fov; }
+void		ygl::PerspectiveCamera::setFov(float fov) { this->fov = fov; }
+float		ygl::PerspectiveCamera::getAspect() { return aspect; }
+void		ygl::PerspectiveCamera::setAspect(float aspect) { this->aspect = aspect; }
+float		ygl::PerspectiveCamera::getZNear() { return zNear; }
+void		ygl::PerspectiveCamera::setZNear(float zNear) { this->zNear = zNear; }
+float		ygl::PerspectiveCamera::getZFar() { return zFar; }
+void		ygl::PerspectiveCamera::setZFar(float zFar) { this->zFar = zFar; }
+
+
+ygl::OrthographicCamera::OrthographicCamera(float width, float aspect, float zNear, float zFar,
+										  ygl::Transformation transform)
+	: Camera(transform), width(width), aspect(aspect), zNear(zNear), zFar(zFar) {
+	updateProjectionMatrix();
+	matrices.viewMatrix = glm::mat4x4(1.0);
+	createMatricesUBO();
+}
+
+ygl::OrthographicCamera::OrthographicCamera(float width, float aspect, float zNear, float zFar)
+	: OrthographicCamera(width, aspect, zNear, zFar, ygl::Transformation()) {}
+
+ygl::OrthographicCamera::OrthographicCamera(float width, ygl::Window &from_window, float zNear, float zFar,
+										  ygl::Transformation transform)
+	: OrthographicCamera(width, (float)from_window.getWidth() / from_window.getHeight(), zNear, zFar, transform) {
+	from_window.addResizeCallback([&, this](GLFWwindow *window, int width, int height) {
+		if (window != from_window.getHandle()) return;
+		this->aspect = (float)width / height;
+		updateProjectionMatrix();
+	});
+}
+
+ygl::OrthographicCamera::OrthographicCamera(float width, ygl::Window &from_window, float zNear, float zFar)
+	: OrthographicCamera(width, from_window, zNear, zFar, ygl::Transformation()) {}
+
+void ygl::OrthographicCamera::updateProjectionMatrix() {
+	float height			  = width / this->aspect;
+	matrices.projectionMatrix = glm::ortho(-width / 2.f, width/ 2.f, -height / 2.f, height / 2.f, zNear, zFar);
+}
+

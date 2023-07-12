@@ -23,8 +23,8 @@ using namespace std;
 void run() {
 	Window window = Window(1200, 800, "Grass Test", true);
 
-	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
-	Camera	  cam(glm::radians(70.f), window, 0.01, 1000);
+	VFShader		 *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
+	PerspectiveCamera cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse			mouse(window);
 	FPController	controller(&window, &mouse, cam.transform);
@@ -52,8 +52,8 @@ void run() {
 
 	Entity model = -1;
 	try {
-		model = ygl::addModel(scene, "./res/models/gnome/scene.gltf", 0);
-		Transformation &t	  = scene.getComponent<Transformation>(model);
+		model			  = ygl::addModel(scene, "./res/models/gnome/scene.gltf", 0);
+		Transformation &t = scene.getComponent<Transformation>(model);
 		t.scale *= 0.01;
 		t.position.y = 2;
 		t.updateWorldMatrix();
@@ -84,7 +84,7 @@ void run() {
 		grassSystem->doWork();
 		renderer->doWork();
 
-		Transformation &transform = scene.getComponent<Transformation>(model == -1? 0 : model);
+		Transformation &transform = scene.getComponent<Transformation>(model == -1 ? 0 : model);
 
 		guizmo.update(&transform);
 

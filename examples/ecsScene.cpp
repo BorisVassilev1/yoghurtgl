@@ -21,9 +21,9 @@ void run() {
 		std::cerr << e.what() << std::endl;
 		exit(1);
 	}
-	Mesh	 *cubeMesh = new BoxMesh();
-	VFShader *shader   = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
-	Camera	  cam(glm::radians(70.f), window, 0.01, 1000);
+	Mesh			 *cubeMesh = new BoxMesh();
+	VFShader		 *shader   = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
+	PerspectiveCamera cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse		 mouse(window);
 	FPController controller(&window, &mouse, cam.transform);
