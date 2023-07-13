@@ -89,14 +89,5 @@ class OrthographicCamera : public Camera {
 	OrthographicCamera(float width, ygl::Window &from_window, float zNear, float zFar, ygl::Transformation transform);
 
 	void updateProjectionMatrix() override;
-
-	float getFov();
-	void  setFov(float);
-	float getAspect();
-	void  setAspect(float);
-	float getZNear();
-	void  setZNear(float);
-	float getZFar();
-	void  setZFar(float);
 };
 }	  // namespace ygl

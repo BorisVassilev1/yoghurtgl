@@ -127,14 +127,18 @@ ygl::OrthographicCamera::OrthographicCamera(float width, ygl::Window &from_windo
 		if (window != from_window.getHandle()) return;
 		this->aspect = (float)width / height;
 		updateProjectionMatrix();
+		updateMatricesUBO();
 	});
 }
 
 ygl::OrthographicCamera::OrthographicCamera(float width, ygl::Window &from_window, float zNear, float zFar)
 	: OrthographicCamera(width, from_window, zNear, zFar, ygl::Transformation()) {}
 
+
+#include <glm/gtx/string_cast.hpp>
+
 void ygl::OrthographicCamera::updateProjectionMatrix() {
 	float height			  = width / this->aspect;
-	matrices.projectionMatrix = glm::ortho(-width / 2.f, width/ 2.f, -height / 2.f, height / 2.f, zNear, zFar);
+	matrices.projectionMatrix = glm::ortho(-width / 2.f, width / 2.f, -height / 2.f, height / 2.f, zNear, zFar);
 }
 
