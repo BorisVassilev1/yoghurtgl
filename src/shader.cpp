@@ -197,7 +197,7 @@ void ygl::Shader::loadSourceRecursively(std::vector<std::string> &lines, const c
 
 void ygl::Shader::finishProgramCreation() {
 	attachShaders();
-	assert(checkLinkStatus() && checkValidateStatus());
+	if (!checkLinkStatus() || !checkValidateStatus()) THROW_RUNTIME_ERR("SHADER FAILED TO LINK");
 	deleteShaders();
 	detectUniforms();
 	detectBlockUniforms();
@@ -233,7 +233,10 @@ void ygl::Shader::registerUniform(const std::string &name, int location) {
  */
 void ygl::Shader::detectUniforms() {
 	GLint numUniforms;
-	glGetProgramInterfaceiv(program, GL_UNIFORM, GL_ACTIVE_RESOURCES, &numUniforms);
+	// glGetProgramInterfaceiv(program, GL_UNIFORM, GL_ACTIVE_RESOURCES, &numUniforms);
+	glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &numUniforms);
+
+	// dbLog(LOG_INFO, fileNames[0], " uniforms count: ", numUniforms);
 	GLenum properties[] = {GL_BLOCK_INDEX, GL_TYPE, GL_NAME_LENGTH, GL_LOCATION};
 
 	for (int unif = 0; unif < numUniforms; ++unif) {
@@ -245,6 +248,7 @@ void ygl::Shader::detectUniforms() {
 		char *name = new char[values[2]];
 		glGetProgramResourceName(program, GL_UNIFORM, unif, (GLsizei)values[2], nullptr, name);
 
+		// dbLog(LOG_INFO, fileNames[0], " ", name);
 		createUniform(name);
 		delete[] name;
 	}
@@ -252,8 +256,10 @@ void ygl::Shader::detectUniforms() {
 
 void ygl::Shader::detectBlockUniforms() {
 	GLint numBlocks;
-	glGetProgramInterfaceiv(program, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES, &numBlocks);
+	// glGetProgramInterfaceiv(program, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES, &numBlocks);
+	glGetProgramiv(program, GL_ACTIVE_UNIFORM_BLOCKS, &numBlocks);
 
+	// dbLog(LOG_INFO, fileNames[0], " Block Uniforms Count: ", numBlocks);
 	GLenum blockProperties[] = {GL_NUM_ACTIVE_VARIABLES, GL_BUFFER_BINDING, GL_NAME_LENGTH};
 
 	for (int blockIx = 0; blockIx < numBlocks; ++blockIx) {
@@ -263,6 +269,8 @@ void ygl::Shader::detectBlockUniforms() {
 		GLchar *blockName = new GLchar[result[2]];
 		glGetProgramResourceName(program, GL_UNIFORM_BLOCK, blockIx, result[2], nullptr, blockName);
 		std::string blockNameString(blockName);
+
+		// dbLog(LOG_INFO, fileNames[0], " ", blockNameString);
 
 		createUBO(blockNameString, result[1]);
 		delete[] blockName;

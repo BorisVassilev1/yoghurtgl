@@ -39,16 +39,24 @@ void ygl::GrassSystem::GrassHolder::deserialize(std::istream &in) { static_cast<
 void ygl::GrassSystem::init() {
 	reload();
 	if (!scene->hasSystem<Renderer>()) THROW_RUNTIME_ERR("Renderer system must be registered in the scene.");
+	if (!scene->hasSystem<AssetManager>()) THROW_RUNTIME_ERR("Asset Manager must be registered in the scene.")
+
+	AssetManager *asman = scene->getSystem<AssetManager>();
+
+	grassCompute = new ComputeShader("./shaders/grass/grassCompute.comp");
+	asman->addShader(grassCompute, "Grass Compute");
+	grassShader = new VFShader("./shaders/grass/grass.vs", "./shaders/grass/grass.fs");
+	asman->addShader(grassShader, "Grass Shader");
 
 	bladeMesh = new GrassBladeMesh(bladeCount);
 
 	materialIndex = scene->getSystem<Renderer>()->addMaterial(
 		Material(glm::vec3(0.1, 0.7, 0.1), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.3, 0.0));
 	Shader::setSSBO(bladeMesh->grassData, 1);
-	grassCompute.bind();
-	grassCompute.setUniform("time", 0.f);
-	grassCompute.setUniform("resolution", resolution);
-	grassCompute.setUniform("size", size);
+	grassCompute->bind();
+	grassCompute->setUniform("time", 0.f);
+	grassCompute->setUniform("resolution", resolution);
+	grassCompute->setUniform("size", size);
 
 	scene->registerComponent<GrassHolder>();
 	scene->setSystemSignature<GrassSystem, Transformation, GrassHolder>();
@@ -62,30 +70,30 @@ ygl::GrassSystem::~GrassSystem() { delete bladeMesh; }
 void ygl::GrassSystem::update(float time) {
 	auto worldMatrix = scene->getComponent<Transformation>(*entities.begin()).getWorldMatrix();
 
-	grassCompute.bind();
-	grassCompute.setUniform("time", time);
-	grassCompute.setUniform("resolution", resolution);
-	grassCompute.setUniform("size", size);
-	grassCompute.setUniform("anchorWorldMatrix", worldMatrix);
-	grassCompute.unbind();
-	Renderer::compute(&grassCompute, resolution.x, resolution.y, 1);
+	grassCompute->bind();
+	grassCompute->setUniform("time", time);
+	grassCompute->setUniform("resolution", resolution);
+	grassCompute->setUniform("size", size);
+	grassCompute->setUniform("anchorWorldMatrix", worldMatrix);
+	grassCompute->unbind();
+	Renderer::compute(grassCompute, resolution.x, resolution.y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 void ygl::GrassSystem::render(float time) {
-	grassShader.bind();
-	if (grassShader.hasUniform("time")) grassShader.setUniform("time", time);
+	grassShader->bind();
+	if (grassShader->hasUniform("time")) grassShader->setUniform("time", time);
 
 	bladeMesh->bind();
 	{
 		auto worldMatrix = scene->getComponent<Transformation>(*entities.begin()).getWorldMatrix();
-		grassShader.setUniform("worldMatrix", worldMatrix);
-		if (grassShader.hasUniform("material_index")) grassShader.setUniform("material_index", materialIndex);
+		grassShader->setUniform("worldMatrix", worldMatrix);
+		if (grassShader->hasUniform("material_index")) grassShader->setUniform("material_index", materialIndex);
 
 		glDrawElementsInstanced(bladeMesh->getDrawMode(), bladeMesh->getIndicesCount(), GL_UNSIGNED_INT, 0, bladeCount);
 	}
 	bladeMesh->unbind();
-	grassShader.unbind();
+	grassShader->unbind();
 }
 
 void ygl::GrassSystem::reload() {
@@ -101,5 +109,5 @@ std::ostream &ygl::operator<<(std::ostream &out, const ygl::GrassSystem::GrassHo
 	return out << "GrassHolder";
 }
 
-const char *ygl::GrassSystem::name			   = "ygl::GrassSystem";
+const char *ygl::GrassSystem::name				= "ygl::GrassSystem";
 const char *ygl::GrassSystem::GrassHolder::name = "ygl::GrassSystem::GrassHolder";

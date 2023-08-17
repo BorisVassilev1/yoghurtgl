@@ -80,7 +80,6 @@ if (${CMAKE_BUILD_TYPE} MATCHES "Release")
 	add_definitions(-DYGL_NDEBUG)
 endif (${CMAKE_BUILD_TYPE} MATCHES "Release")
 
-
 file(GLOB_RECURSE TARGET_FILES examples/*.cpp)
 
 foreach(CURR_FILE ${TARGET_FILES})

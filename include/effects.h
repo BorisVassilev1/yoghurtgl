@@ -34,9 +34,9 @@ class GrassSystem : public ygl::ISystem {
 	unsigned int bladeCount = 1;
 
 	GrassBladeMesh *bladeMesh	 = nullptr;
-	ComputeShader	grassCompute = ComputeShader("./shaders/grass/grassCompute.comp");
+	ComputeShader  *grassCompute = nullptr;
+	VFShader	   *grassShader	 = nullptr;
 
-	VFShader	 grassShader   = VFShader("./shaders/grass/grass.vs", "./shaders/grass/grass.fs");
 	unsigned int materialIndex = -1;
 
    public:
