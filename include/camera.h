@@ -23,12 +23,12 @@ class Camera {
 		glm::mat4x4 viewMatrix;			  ///< the view matrix, defined by the camera's transform
 	} matrices;
 
-	GLuint				uboMatrices;	 ///< a Uniform Bufffer Object that holds matrix data in VRAM
+	GLuint uboMatrices;		///< a Uniform Bufffer Object that holds matrix data in VRAM
 
    public:
-	ygl::Transformation transform;		 ///< transformation of the view point
-	
-	Camera(): transform(), uboMatrices(0) {}
+	ygl::Transformation transform;	   ///< transformation of the view point
+
+	Camera() : uboMatrices(0), transform() {}
 	Camera(const Transformation &transform) : transform(transform) {}
 	Camera(const Camera &other)			   = delete;
 	Camera &operator=(const Camera &other) = delete;
@@ -36,12 +36,12 @@ class Camera {
 	glm::mat4x4 getProjectionMatrix();
 	glm::mat4x4 getViewMatrix();
 
-	void createMatricesUBO();
-	void enable();
-	void disable();
-	void updateMatricesUBO();
-	void update();
-	void updateViewMatrix();
+	void		 createMatricesUBO();
+	void		 enable();
+	void		 disable();
+	void		 updateMatricesUBO();
+	void		 update();
+	void		 updateViewMatrix();
 	virtual void updateProjectionMatrix() = 0;
 };
 
@@ -72,15 +72,14 @@ class PerspectiveCamera : public Camera {
 	void  setZFar(float);
 };
 
-
 /**
  * @brief A perspective camera
  */
 class OrthographicCamera : public Camera {
 	float width;
 	float aspect;
-	float zNear;	  ///< near clip plane depth
-	float zFar;		  ///< far clip plane depth
+	float zNear;	 ///< near clip plane depth
+	float zFar;		 ///< far clip plane depth
 
    public:
 	OrthographicCamera(float width, float aspect, float zNear, float zFar);
