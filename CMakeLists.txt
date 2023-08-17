@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.2.0)
 
 set(YGL_NO_ASSIMP OFF)
 set(CMAKE_CXX_STANDARD 20)
-set(YGL_STATIC ON)
+set(YGL_STATIC ON CACHE BOOL "link as static library")
 project(YoghurtGL)
 
 
@@ -45,8 +45,10 @@ file(GLOB_RECURSE YGL_SOURCES
 	./src/*.cpp
 )
 if (${YGL_STATIC})
+	message("linking static")
 	add_library(YoghurtGL STATIC ${YGL_SOURCES})
 else (${YGL_STATIC})
+	message("linking dynamic")
 	add_library(YoghurtGL SHARED ${YGL_SOURCES})
 endif (${YGL_STATIC})
 
