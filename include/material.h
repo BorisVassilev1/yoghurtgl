@@ -69,6 +69,8 @@ struct alignas(16) Material {
 			 float refraction_chance, glm::vec3 specular_color, float refraction_roughness, float specular_roughness,
 			 float metallic, float texStrength);
 
+	void drawImGui();
+
 	friend std::ostream &operator<<(std::ostream &os, const Material &rhs);
 };
 }	  // namespace ygl
