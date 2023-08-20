@@ -34,12 +34,10 @@ endif (UNIX)
 
 if (${YGL_NO_ASSIMP})
 	set(COMPILE_ARGS ${COMPILE_ARGS} -DYGL_NO_ASSIMP)
-	message(NO ASSIMP!!)
+	message("NO ASSIMP!!")
 else (${YGL_NO_ASSIMP})
 	set(LIBS ${LIBS} assimp::assimp)
 endif (${YGL_NO_ASSIMP})
-
-
 
 file(GLOB_RECURSE YGL_SOURCES
 	./src/*.cpp
