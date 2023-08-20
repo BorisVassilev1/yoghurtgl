@@ -72,6 +72,7 @@ Entity addModel(Scene &scene, Mesh *mesh, glm::vec3 position = glm::vec3(), glm:
  */
 Entity addSkybox(Scene &scene, const std::string &path);
 
+#ifndef YGL_NO_ASSIMP
 /**
  * @brief Adds a mesh, loaded from \a filePath, index \a i in the file to a \a scene.
  *
@@ -92,4 +93,5 @@ Entity addModel(ygl::Scene &scene, std::string filePath, uint i);
 void addModels(
 	ygl::Scene &scene, std::string filePath,
 	const std::function<void(Entity)> &edit = [](Entity _) { static_cast<void>(_); });
+#endif
 }	  // namespace ygl
