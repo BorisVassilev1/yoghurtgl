@@ -1,8 +1,7 @@
 #include <asset_manager.h>
 #include <renderer.h>
 #include <stdexcept>
-#include "yoghurtgl.h"
-#include <assimp/types.h>
+#include <yoghurtgl.h>
 #include <serializable.h>
 #include <texture.h>
 

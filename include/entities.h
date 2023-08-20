@@ -6,8 +6,6 @@
 #include <glm/glm.hpp>
 #include <renderer.h>
 #include <mesh.h>
-#include <assimp/scene.h>
-
 
 /**
  * @file entities.h

@@ -6,7 +6,6 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <string>
-#include <assimp/Importer.hpp>
 #include <material.h>
 #include <serializable.h>
 
@@ -201,6 +200,7 @@ class PlaneMesh : public Mesh {
 };
 
 #ifndef YGL_NO_ASSIMP
+#include <assimp/Importer.hpp>
 
 class AssetManager;
 

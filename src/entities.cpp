@@ -70,6 +70,7 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path) {
 	return e;
 }
 
+#ifndef YGL_NO_ASSIMP
 ygl::Entity ygl::addModel(ygl::Scene &scene, std::string filePath, uint i) {
 	ygl::AssetManager *asman = scene.getSystem<AssetManager>();
 
@@ -105,3 +106,4 @@ void ygl::addModels(ygl::Scene &scene, std::string filePath, const std::function
 		edit(model);
 	}
 }
+#endif

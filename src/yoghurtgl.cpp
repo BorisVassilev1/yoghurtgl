@@ -87,7 +87,9 @@ void ygl::glfwErrorCallback(int code, const char *err_msg) {
 }
 
 void ygl::terminate() {
+#ifndef YGL_NO_ASSIMP
 	MeshFromFile::terminateLoader();
+#endif
 	glfwTerminate();
 	ygl::gl_debug_init = false;
 	ygl::gl_init	   = false;

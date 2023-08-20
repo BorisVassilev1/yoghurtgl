@@ -5,10 +5,9 @@
 #include <algorithm>
 #include <vector>
 #include <iomanip>
-#include "assimp/types.h"
-#include "glm/fwd.hpp"
-#include "shader.h"
-#include "transformation.h"
+#include <glm/fwd.hpp>
+#include <shader.h>
+#include <transformation.h>
 #include <glm/gtc/type_ptr.hpp>
 
 using namespace ygl::bvh;
