@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2.0)
 
-set(YGL_NO_ASSIMP OFF)
+set(YGL_NO_ASSIMP OFF CACHE BOOL "Link Assimp as a dependency")
 set(CMAKE_CXX_STANDARD 20)
 set(YGL_STATIC ON CACHE BOOL "link as static library")
 project(YoghurtGL)
