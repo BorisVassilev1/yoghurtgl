@@ -16,7 +16,10 @@ add_subdirectory(glew-cmake)
 if (!${YGL_STATIC})
 	set(BUILD_SHARED_LIBS ON)
 endif (!${YGL_STATIC})
-add_subdirectory(assimp)
+
+if (NOT ${YGL_NO_ASSIMP})
+	add_subdirectory(assimp/)
+endif ()
 set(BUILD_SHARED_LIBS OFF)
 
 # Set where the ImGui files are stored
@@ -62,6 +65,8 @@ set_target_properties("ImGuizmo" PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../)
 
 set(DOCTEST_INCLUDE_DIR ./libs/doctest/doctest/ CACHE INTERNAL "Path to include folder for doctest")
 
-set_target_properties(assimp PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../../../)
+if (!${YGL_NO_ASSIMP})
+	set_target_properties(assimp PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../../../)
+endif (!${YGL_NO_ASSIMP})
 set_target_properties(glfw PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../)
 set_target_properties(libglew_shared PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../../)

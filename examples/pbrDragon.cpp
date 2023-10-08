@@ -51,6 +51,8 @@ void run() {
 
 	renderer->loadData();
 
+	int editMaterialIndex = 0;
+
 	glClearColor(0, 0, 0, 1);
 	while (!window.shouldClose()) {
 		window.beginFrame();
@@ -61,6 +63,12 @@ void run() {
 
 		renderer->doWork();
 
+		ImGui::Begin("Material Properties");
+		ImGui::InputInt("Material ID", &editMaterialIndex);
+		ImGui::End();
+		renderer->getMaterial(editMaterialIndex).drawImGui();
+		renderer->loadData();
+		
 		window.swapBuffers();
 	}
 

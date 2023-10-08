@@ -184,7 +184,7 @@ vec3 calcAllLights(in vec3 position, in vec3 normal, in vec3 vertexNormal, in ve
 
 	if(renderMode == 0) {
 		for (int i = 0; i < lightsCount; i++) {
-			light += calcLight(lights[i], position, normal, texCoord, mat, calcAlbedo, calcRoughness,
+			light += calcLight(lights[i], position, normal, texCoord, mat, calcAlbedo, calcRoughness * calcRoughness,
 							calcMetallic);
 		}
 		light += calcEmission;

@@ -12,7 +12,7 @@ using namespace ygl;
 using namespace std;
 
 void run() {
-	Window window = Window(800, 600, "Test Window", true);
+	Window window = Window(1000, 800, "Test Window", true);
 
 	Mesh *bunnyMesh;
 	try {
@@ -21,7 +21,7 @@ void run() {
 		std::cerr << e.what() << std::endl;
 		exit(1);
 	}
-	Mesh			 *cubeMesh = new BoxMesh();
+	Mesh			 *cubeMesh = new SphereMesh();
 	VFShader		 *shader   = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 	PerspectiveCamera cam(glm::radians(70.f), window, 0.01, 1000);
 
@@ -63,7 +63,13 @@ void run() {
 	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
 
 	renderer->addLight(
-		Light(Transformation(glm::vec3(5, 4, 5), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 100, Light::Type::POINT));
+		Light(Transformation(glm::vec3(10, 10, 10), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 500, Light::Type::POINT));
+	renderer->addLight(
+		Light(Transformation(glm::vec3(-10, 10, 10), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 500, Light::Type::POINT));
+	renderer->addLight(
+		Light(Transformation(glm::vec3(10, 10, -10), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 500, Light::Type::POINT));
+	renderer->addLight(
+		Light(Transformation(glm::vec3(-10, 10, -10), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 500, Light::Type::POINT));
 
 	for (int i = 0; i < 20; ++i) {
 		for (int j = 0; j < 20; ++j) {
@@ -71,10 +77,12 @@ void run() {
 
 			scene.addComponent<Transformation>(
 				curr, Transformation(glm::vec3(i * 2 - 20, -1, j * 2 - 20), glm::vec3(), glm::vec3(1)));
+			Material mat = Material(
+									 glm::vec3(1,0,0), .2,
+									 glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, i / 20., j / 20.);
+
 			RendererComponent rc(shaderIndex, cubeMeshIndex,
-								 renderer->addMaterial(Material(
-									 glm::vec3(rand() % 100 / 100., rand() % 100 / 100., rand() % 100 / 100.), .2,
-									 glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.1, 0.0)));
+								 renderer->addMaterial(mat));
 
 			scene.addComponent<RendererComponent>(curr, rc);
 		}
@@ -83,6 +91,7 @@ void run() {
 	renderer->loadData();
 
 	glClearColor(0.07f, 0.13f, 0.17f, 1.0);
+	int editMaterialIndex = 0;
 	while (!window.shouldClose()) {
 		window.beginFrame();
 		mouse.update();
@@ -93,6 +102,12 @@ void run() {
 
 		controller.update();
 		cam.update();
+
+		//ImGui::Begin("Material Properties");
+		//ImGui::InputInt("Material ID", &editMaterialIndex);
+		//renderer->getMaterial(editMaterialIndex).drawImGui();
+		//ImGui::End();
+		//renderer->loadData();
 
 		renderer->doWork();
 

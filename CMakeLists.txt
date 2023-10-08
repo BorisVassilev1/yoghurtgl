@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2.0)
 
-set(YGL_NO_ASSIMP OFF)
+set(YGL_NO_ASSIMP OFF CACHE BOOL "Link Assimp as a dependency")
 set(CMAKE_CXX_STANDARD 20)
 set(YGL_STATIC ON CACHE BOOL "link as static library")
 project(YoghurtGL)
@@ -34,12 +34,10 @@ endif (UNIX)
 
 if (${YGL_NO_ASSIMP})
 	set(COMPILE_ARGS ${COMPILE_ARGS} -DYGL_NO_ASSIMP)
-	message(NO ASSIMP!!)
+	message("NO ASSIMP!!")
 else (${YGL_NO_ASSIMP})
 	set(LIBS ${LIBS} assimp::assimp)
 endif (${YGL_NO_ASSIMP})
-
-
 
 file(GLOB_RECURSE YGL_SOURCES
 	./src/*.cpp
@@ -56,7 +54,9 @@ target_include_directories(YoghurtGL PUBLIC include)
 target_include_directories(YoghurtGL PUBLIC libs/glfw/include)
 target_include_directories(YoghurtGL PUBLIC libs/glm/)
 target_include_directories(YoghurtGL PUBLIC libs/stb/)
+if (!${YGL_NO_ASSIMP})
 target_include_directories(YoghurtGL PUBLIC libs/assimp/include)
+endif (!${YGL_NO_ASSIMP})
 target_link_directories(YoghurtGL PUBLIC libs/glfw/src)
 target_link_libraries(YoghurtGL PUBLIC ImGui)
 target_link_libraries(YoghurtGL PUBLIC ${LIBS})
@@ -91,6 +91,7 @@ foreach(CURR_FILE ${TARGET_FILES})
 	)
 	target_link_libraries(${CURR_TARGET} PRIVATE YoghurtGL)
 
+	target_compile_options(${CURR_TARGET} PRIVATE ${COMPILE_ARGS})
 	target_link_options(${CURR_TARGET} PRIVATE ${COMPILE_ARGS})
 	target_link_options(${CURR_TARGET} PRIVATE ${LINK_ARGS})
 
@@ -100,6 +101,7 @@ add_executable(testExec tests/test.cpp)
 set_target_properties(testExec PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../)
 target_link_libraries(testExec PUBLIC YoghurtGL)
 target_include_directories(testExec PUBLIC ${DOCTEST_INCLUDE_DIR})
+target_compile_options(testExec PRIVATE ${COMPILE_ARGS})
 target_link_options(testExec PRIVATE ${COMPILE_ARGS})
 target_link_options(testExec PRIVATE ${LINK_ARGS})
 add_dependencies(testExec YoghurtGL)

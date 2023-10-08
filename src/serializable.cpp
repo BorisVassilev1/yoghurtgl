@@ -4,7 +4,7 @@
 #include <string>
 #include <type_traits>
 #include <typeinfo>
-#include "yoghurtgl.h"
+#include <yoghurtgl.h>
 #include <asset_manager.h>
 #include <mesh.h>
 #include <shader.h>
@@ -33,7 +33,9 @@ void ygl::ResourceFactory::init() {
 	registerResource<ygl::TextureCubemap>();
 	registerResource<ygl::BoxMesh>();
 	registerResource<ygl::SphereMesh>();
+#ifndef YGL_NO_ASSIMP
 	registerResource<ygl::MeshFromFile>();
+#endif
 	registerResource<ygl::PlaneMesh>();
 	registerResource<ygl::QuadMesh>();
 	registerResource<ygl::VFShader>();

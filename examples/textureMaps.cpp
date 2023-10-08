@@ -36,7 +36,7 @@ void run() {
 	Entity model = scene.createEntity();
 	scene.addComponent<Transformation>(model, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(1)));
 
-	Material modelMat(glm::vec3(1.0, 0.5, 0.0), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.2,
+	Material modelMat(glm::vec3(1.0, 0.5, 0.0), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.4,
 					  0.0, 0.);
 	AssetManager *asman		   = scene.getSystem<AssetManager>();
 	modelMat.albedo_map		   = asman->addTexture(color, "color");

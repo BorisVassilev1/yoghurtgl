@@ -1,6 +1,5 @@
 #include <istream>
-#include "yoghurtgl.h"
-#include <assimp/scene.h>
+#include <yoghurtgl.h>
 #define _USE_MATH_DEFINES
 #include <mesh.h>
 
