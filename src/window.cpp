@@ -13,7 +13,13 @@
 #include <ImGuizmo.h>
 
 #define GL_CONTEXT_VERSION_MAJOR 4
-#define GL_CONTEXT_VERSION_MINOR 6
+#define GL_CONTEXT_VERSION_MINOR 3
+
+#define _CONCAT(x, y, z) x##y##z
+#define CONCAT(x, y, z) _CONCAT(x, y, z)
+#define GL_CONTEXT_VERSION #version CONCAT(GL_CONTEXT_VERSION_MAJOR,GL_CONTEXT_VERSION_MINOR,0) core
+#define _STRING(string) #string
+#define STRING(string) _STRING(string)
 
 ygl::Window::Window(int width, int height, const char *name, bool vsync, bool resizable, GLFWmonitor *monitor)
 	: width(width), height(height) {
@@ -112,7 +118,7 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL(getHandle(), true);
-	ImGui_ImplOpenGL3_Init("#version 430 core");
+	ImGui_ImplOpenGL3_Init(STRING(GL_CONTEXT_VERSION));
 }
 
 ygl::Window::Window(int width, int height, const char *name, bool vsync, bool resizable)
