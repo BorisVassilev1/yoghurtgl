@@ -47,20 +47,25 @@ struct alignas(16) Light {
 std::ostream &operator<<(std::ostream &out, const Light &l);
 
 class FrameBuffer {
-	GLuint	   id;
-	Texture2d *color;
-	Texture2d *depth_stencil;
+	GLuint				   id;
+	FrameBufferAttachable *color;
+	FrameBufferAttachable *depth_stencil;
 
    public:
-	FrameBuffer(uint16_t width, uint16_t height, const char *name = nullptr);
+	FrameBuffer(FrameBufferAttachable *buff1, GLenum attachment1, FrameBufferAttachable *buff2, GLenum attachment2,
+				const char *name = nullptr);
 	~FrameBuffer();
 
-	void clear();
-	void bind();
-	void unbind();
+	DELETE_COPY_AND_ASSIGNMENT(FrameBuffer)
+
+	void clear() const;
+	void bind() const;
+	void unbind() const;
 
 	Texture2d *getColor();
 	Texture2d *getDepthStencil();
+
+	int getID() { return id; }
 
 	static void bindDefault();
 };
@@ -71,6 +76,8 @@ class IScreenEffect {
 	IScreenEffect() {}
 
    public:
+	DELETE_COPY_AND_ASSIGNMENT(IScreenEffect)
+
 	bool		 enabled = true;
 	void		 setRenderer(Renderer *renderer) { this->renderer = renderer; }
 	virtual void apply(FrameBuffer *front, FrameBuffer *back) = 0;
@@ -82,11 +89,11 @@ class ACESEffect : public IScreenEffect {
 	VFShader *colorGrader;
 
    public:
+	DELETE_COPY_AND_ASSIGNMENT(ACESEffect)
+
 	ACESEffect();
-
-	void apply(FrameBuffer *front, FrameBuffer *back);
-
 	~ACESEffect();
+	void apply(FrameBuffer *front, FrameBuffer *back);
 };
 
 class BloomEffect : public IScreenEffect {
@@ -96,11 +103,11 @@ class BloomEffect : public IScreenEffect {
 	Texture2d *tex1, *tex2;
 
    public:
+	DELETE_COPY_AND_ASSIGNMENT(BloomEffect)
+
 	BloomEffect(Renderer *renderer);
-
-	void apply(FrameBuffer *front, FrameBuffer *back);
-
 	~BloomEffect();
+	void apply(FrameBuffer *front, FrameBuffer *back);
 };
 
 struct RendererComponent : ygl::Serializable {
@@ -123,7 +130,7 @@ class Renderer : public ygl::ISystem {
 	GLuint lightsBuffer	   = 0;
 
 	uint	  defaultShader	 = -1;
-	Texture2d defaultTexture = Texture2d(1, 1, ITexture::Type::RGBA, nullptr);
+	Texture2d defaultTexture = Texture2d(1, 1, TextureType::RGBA, nullptr);
 
 	FrameBuffer *frontFrameBuffer;
 	FrameBuffer *backFrameBuffer;
@@ -142,6 +149,9 @@ class Renderer : public ygl::ISystem {
 
    public:
 	static const char *name;
+	uint			   skyboxTexture = 0;
+
+	DELETE_COPY_AND_ASSIGNMENT(Renderer)
 
 	Renderer(Scene *scene, Window *window) : ISystem(scene), window(window) {}
 	void init() override;

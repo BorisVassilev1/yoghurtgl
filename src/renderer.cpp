@@ -21,19 +21,22 @@ std::ostream &ygl::operator<<(std::ostream &out, const Light &l) {
 			   << " type: " << l.type;
 }
 
-ygl::FrameBuffer::FrameBuffer(uint16_t width, uint16_t height, const char *name) {
+ygl::FrameBuffer::FrameBuffer(FrameBufferAttachable *buff1, GLenum attachment1, FrameBufferAttachable *buff2, GLenum attachment2, const char *name) {
 	glGenFramebuffers(1, &id);
 	glBindFramebuffer(GL_FRAMEBUFFER, id);
 
-	color		  = new Texture2d(width, height, ITexture::Type::RGBA, nullptr);
-	depth_stencil = new Texture2d(width, height, ITexture::Type::DEPTH_STENCIL, nullptr);
+	color = buff1;
+	if(color != nullptr) {
+		color->BindToFrameBuffer(*this, attachment1, 0, 0);
+	}
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color->getID(), 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depth_stencil->getID(), 0);
+	depth_stencil = buff2;
+	if(depth_stencil != nullptr) {
+		depth_stencil->BindToFrameBuffer(*this, attachment2, 0, 0);
+	}
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
-		assert(false);
+		dbLog(LOG_WARNING, "Framebuffer is not complete upon creation!");
 	}
 
 	if (name) {
@@ -46,19 +49,21 @@ ygl::FrameBuffer::FrameBuffer(uint16_t width, uint16_t height, const char *name)
 
 ygl::FrameBuffer::~FrameBuffer() {
 	glDeleteFramebuffers(1, &id);
-	delete color;
-	delete depth_stencil;
+	if(color != nullptr)
+		delete color;
+	if(depth_stencil != nullptr)
+		delete depth_stencil;
 }
 
-void ygl::FrameBuffer::clear() { glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); }
+void ygl::FrameBuffer::clear() const { glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); }
 
-void ygl::FrameBuffer::bind() { glBindFramebuffer(GL_FRAMEBUFFER, id); }
+void ygl::FrameBuffer::bind() const { glBindFramebuffer(GL_FRAMEBUFFER, id); }
 
-void ygl::FrameBuffer::unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
+void ygl::FrameBuffer::unbind() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 
-ygl::Texture2d *ygl::FrameBuffer::getColor() { return color; }
+ygl::Texture2d *ygl::FrameBuffer::getColor() { return (Texture2d*)color; }
 
-ygl::Texture2d *ygl::FrameBuffer::getDepthStencil() { return depth_stencil; }
+ygl::Texture2d *ygl::FrameBuffer::getDepthStencil() { return (Texture2d*)depth_stencil; }
 
 void ygl::FrameBuffer::bindDefault() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 
@@ -188,8 +193,14 @@ void ygl::Renderer::init() {
 	}
 
 	uint16_t width = window->getWidth(), height = window->getHeight();
-	frontFrameBuffer = new FrameBuffer(width, height, "Front frameBuffer");
-	backFrameBuffer	 = new FrameBuffer(width, height, "Back frameBuffer");
+	frontFrameBuffer = new FrameBuffer(
+		new Texture2d(width, height, TextureType::RGBA, nullptr), GL_COLOR_ATTACHMENT0,
+		new Texture2d(width, height, TextureType::DEPTH_STENCIL, nullptr), GL_DEPTH_STENCIL_ATTACHMENT,
+		"Front frameBuffer");
+	backFrameBuffer	 = new FrameBuffer(
+		new Texture2d(width, height, TextureType::RGBA, nullptr), GL_COLOR_ATTACHMENT0,
+		new Texture2d(width, height, TextureType::DEPTH_STENCIL, nullptr), GL_DEPTH_STENCIL_ATTACHMENT,
+		"Back frameBuffer");
 
 	// addScreenEffect(new BloomEffect(this));
 	addScreenEffect(new ACESEffect());
@@ -237,7 +248,7 @@ void ygl::Renderer::addScreenEffect(IScreenEffect *effect) {
 }
 
 ygl::IScreenEffect *ygl::Renderer::getScreenEffect(uint index) {
-	if(index >= effects.size()) {
+	if (index >= effects.size()) {
 		dbLog(ygl::LOG_WARNING, "Access out of bounds index: ", index);
 		return nullptr;
 	}
@@ -328,6 +339,8 @@ void ygl::Renderer::drawScene() {
 			asman->getTexture(materials[ecr.materialIndex].emission_map)->bind(ygl::TexIndex::EMISSION);
 		if (materials[ecr.materialIndex].use_metallic_map)
 			asman->getTexture(materials[ecr.materialIndex].metallic_map)->bind(ygl::TexIndex::METALLIC);
+		if (skyboxTexture != 0)
+			asman->getTexture(skyboxTexture)->bind(ygl::TexIndex::SKYBOX);
 
 		Mesh *mesh = getMesh(ecr.meshIndex);
 		mesh->bind();

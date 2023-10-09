@@ -87,6 +87,7 @@ layout(binding = 4) uniform sampler2D roughnessMap;
 layout(binding = 5) uniform sampler2D aoMap;
 layout(binding = 6) uniform sampler2D emissionMap;
 layout(binding = 10) uniform sampler2D metallicMap;
+layout(binding = 11) uniform samplerCube skybox;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {	   // learnopengl
 	return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
@@ -125,13 +126,11 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
 }
 
 vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec2 texCoord, Material mat,
-			   in vec3 albedo, in float roughness, in float metallic) {
+			   in vec3 albedo, in float roughness, in float metallic, in vec3 camPos) {
 	vec3 lightPosition = (light.transform * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	vec3 lightForward  = (light.transform * vec4(0.0, 0.0, 1.0, 0.0)).xyz;
 
 	if (light.type == 0) return light.color * albedo * light.intensity;
-
-	vec3 camPos = (cameraWorldMatrix * vec4(0, 0, 0, 1)).xyz;
 
 	vec3 L = lightPosition - position;
 	if (light.type == 1) L = -lightForward;
@@ -176,6 +175,8 @@ vec3 calcAllLights(in vec3 position, in vec3 normal, in vec3 vertexNormal, in ve
 	float ao		= texture(aoMap, texCoord).x;
 
 	Material mat = materials[material_index];
+	vec3 camPos = (cameraWorldMatrix * vec4(0, 0, 0, 1)).xyz;
+	vec3 V = normalize(position - camPos);
 
 	vec3  calcAlbedo	= mix(1., ao, mat.use_ao_map) * mix(mat.albedo, diffuse, mat.use_albedo_map);
 	float calcMetallic	= mix(mat.metallic, metallic, mat.use_metallic_map);
@@ -185,9 +186,10 @@ vec3 calcAllLights(in vec3 position, in vec3 normal, in vec3 vertexNormal, in ve
 	if(renderMode == 0) {
 		for (int i = 0; i < lightsCount; i++) {
 			light += calcLight(lights[i], position, normal, texCoord, mat, calcAlbedo, calcRoughness * calcRoughness,
-							calcMetallic);
+							calcMetallic, camPos);
 		}
 		light += calcEmission;
+		//light.xyz += texture(skybox, reflect(V, normal)).xyz;
 	}
 	if(renderMode == 1) {
 		light += calcRoughness;

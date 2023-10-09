@@ -144,7 +144,7 @@ void initScene() {
 	ygl::Shader::setSSBO(bunnyMesh->getTangents().bufferId, 9);
 	ygl::Shader::setSSBO(bunnyMesh->getIBO(), 4);
 
-	addSkybox(*scene, "./res/images/skybox");
+	addSkybox(*scene, "./res/images/little_paris_eiffel_tower_4k", ".hdr");
 
 	renderer->addLight(ygl::Light(ygl::Transformation(glm::vec3(0), glm::vec3(-1, -2.9, 0), glm::vec3(1)),
 								  glm::vec3(1., 1., 1.), 3, ygl::Light::Type::DIRECTIONAL));
@@ -238,7 +238,8 @@ void initPathTracer() {
 	rawTexture = new ygl::Texture2d(window->getWidth(), window->getHeight());
 	rawTexture->bindImage(1);
 
-	skybox = new ygl::TextureCubemap("./res/images/skybox", ".jpg");
+	skybox = new ygl::TextureCubemap("./res/images/little_paris_eiffel_tower_4k", ".hdr");
+	// skybox = new ygl::TextureCubemap("./res/images/skybox", ".jpg");
 	skybox->bind(GL_TEXTURE11);
 
 	// initSpheres();

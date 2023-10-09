@@ -383,22 +383,16 @@ void ygl::QuadMesh::init(float size) {
 	Mesh::init((GLuint)4, vertices, (GLfloat *)nullptr, texCoords, colors, (GLfloat *)nullptr, (GLuint)6, indices);
 }
 
-ygl::QuadMesh::QuadMesh(float size) : size(size) {
-	init(size);
-}
+ygl::QuadMesh::QuadMesh(float size) : size(size) { init(size); }
 
-ygl::QuadMesh::QuadMesh() : size(2) {
-	init(size);
-}
+ygl::QuadMesh::QuadMesh() : size(2) { init(size); }
 
-ygl::QuadMesh::QuadMesh(std::istream &in) : Mesh(in) {
-	in.read((char*) &size, sizeof(size));
-}
+ygl::QuadMesh::QuadMesh(std::istream &in) : Mesh(in) { in.read((char *)&size, sizeof(size)); }
 
 void ygl::QuadMesh::serialize(std::ostream &out) {
 	out.write(name, std::strlen(name) + 1);
 	IMesh::serialize(out);
-	out.write((char*) &size, sizeof(size));
+	out.write((char *)&size, sizeof(size));
 }
 
 const char *ygl::PlaneMesh::name = "ygl::PlaneMesh";
@@ -492,18 +486,14 @@ ygl::PlaneMesh::PlaneMesh(std::istream &in) : Mesh(in) {
 
 Assimp::Importer *ygl::MeshFromFile::importer = nullptr;
 
-void ygl::MeshFromFile::terminateLoader() {
-	delete ygl::MeshFromFile::importer;
-}
+void ygl::MeshFromFile::terminateLoader() { delete ygl::MeshFromFile::importer; }
 
 const aiScene *ygl::MeshFromFile::loadScene(const std::string &file, unsigned int flags) {
 	if (importer == nullptr) { importer = new Assimp::Importer(); }
 
 	const aiScene *scene = importer->ReadFile(file, flags);
 
-	if (!scene) {
-		THROW_RUNTIME_ERR("[Assimp]" + importer->GetErrorString());
-	}
+	if (!scene) { THROW_RUNTIME_ERR("[Assimp]" + importer->GetErrorString()); }
 	return scene;
 }
 
@@ -530,7 +520,8 @@ bool getTexture(aiMaterial *mat, aiTextureType type, std::string &fileName) {
 	return false;
 }
 
-ygl::Material ygl::MeshFromFile::getMaterial(const aiScene *scene, ygl::AssetManager *asman, std::string filePath, uint m) {
+ygl::Material ygl::MeshFromFile::getMaterial(const aiScene *scene, ygl::AssetManager *asman, std::string filePath,
+											 uint m) {
 	if (!scene->HasMaterials()) { return Material(); }
 	aiMaterial *material = scene->mMaterials[m];	 // Get the current material
 	aiString	materialName;						 // The name of the material found in mesh file
@@ -566,13 +557,13 @@ ygl::Material ygl::MeshFromFile::getMaterial(const aiScene *scene, ygl::AssetMan
 	glm::vec3 glmSpecular(specular.r, specular.g, specular.b);
 	glm::vec3 glmTransparent(transparent.r, transparent.g, transparent.b);
 
-	float		   use_map[6]{0};
-	uint		   map[6]{0};
-	std::string	   map_file[6];
-	aiTextureType  mapType[6]{aiTextureType_NORMALS,   aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_LIGHTMAP,
-							  aiTextureType_METALNESS, aiTextureType_DIFFUSE,			aiTextureType_EMISSIVE};
-	ITexture::Type texType[6]{ITexture::Type::NORMAL,	ITexture::Type::ROUGHNESS, ITexture::Type::AO,
-							  ITexture::Type::METALLIC, ITexture::Type::DIFFUSE,   ITexture::Type::EMISSIVE};
+	float		  use_map[6]{0};
+	uint		  map[6]{0};
+	std::string	  map_file[6];
+	aiTextureType mapType[6]{aiTextureType_NORMALS,	  aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_LIGHTMAP,
+							 aiTextureType_METALNESS, aiTextureType_DIFFUSE,		   aiTextureType_EMISSIVE};
+	TextureType	  texType[6]{TextureType::NORMAL,	TextureType::ROUGHNESS, TextureType::AO,
+							 TextureType::METALLIC, TextureType::DIFFUSE,	TextureType::EMISSIVE};
 
 	for (int i = 0; i < 6; ++i) {
 		use_map[i]	= getTexture(material, mapType[i], map_file[i]);

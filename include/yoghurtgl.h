@@ -118,6 +118,10 @@ bool inline f_dbLog(T arg, Types... args) {
 #define THROW_RUNTIME_ERR(message) \
 	throw std::runtime_error("At " + std::string(__PRETTY_FUNCTION__) + ":\n\t" + message + COLOR_RESET);
 
+#define DELETE_COPY_AND_ASSIGNMENT(TYPE) \
+	TYPE(const TYPE &other)			   = delete; \
+	TYPE &operator=(const TYPE &other) = delete;
+
 }	  // namespace ygl
 
 using uint	= unsigned int;

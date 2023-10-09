@@ -1,32 +1,35 @@
 #include <texture.h>
+#include <mesh.h>
+#include <shader.h>
 #include <istream>
 #include <cstring>
+#include <renderer.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
-void ygl::ITexture::getTypeParameters(Type type, GLint &internalFormat, GLenum &format, uint8_t &pixelSize,
-									  uint8_t &components, GLenum &_type) {
+void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &format, uint8_t &pixelSize,
+							uint8_t &components, GLenum &_type) {
 	switch (type) {
-		case Type::RGBA: {
+		case TextureType::RGBA: {
 			internalFormat = GL_RGBA32F;
 			format		   = GL_RGBA;
 			pixelSize	   = 16;
 			components	   = 4;
-			_type		   = GL_UNSIGNED_BYTE;
+			_type		   = GL_FLOAT;
 			break;
 		}
-		case Type::RGB: {
+		case TextureType::RGB: {
 			internalFormat = GL_RGB32F;
 			format		   = GL_RGB;
 			pixelSize	   = 12;
 			components	   = 3;
-			_type		   = GL_UNSIGNED_BYTE;
+			_type		   = GL_FLOAT;
 			break;
 		}
-		case Type::SRGBA: {
+		case TextureType::SRGBA: {
 			internalFormat = GL_SRGB8_ALPHA8;
 			format		   = GL_RGBA;
 			pixelSize	   = 16;
@@ -34,7 +37,7 @@ void ygl::ITexture::getTypeParameters(Type type, GLint &internalFormat, GLenum &
 			_type		   = GL_UNSIGNED_BYTE;
 			break;
 		}
-		case Type::SRGB: {
+		case TextureType::SRGB: {
 			internalFormat = GL_SRGB8;
 			format		   = GL_RGB;
 			pixelSize	   = 12;
@@ -42,17 +45,25 @@ void ygl::ITexture::getTypeParameters(Type type, GLint &internalFormat, GLenum &
 			_type		   = GL_UNSIGNED_BYTE;
 			break;
 		}
-		case Type::GREY: {
+		case TextureType::GREY: {
 			internalFormat = GL_R32F;
 			format		   = GL_RED;
 			pixelSize	   = 4;
 			components	   = 1;
-			_type		   = GL_UNSIGNED_BYTE;
+			_type		   = GL_FLOAT;
 			break;
 		}
-		case Type::DEPTH_STENCIL: {
+		case TextureType::DEPTH_STENCIL: {
 			internalFormat = GL_DEPTH32F_STENCIL8;
 			format		   = GL_DEPTH_STENCIL;
+			pixelSize	   = 2;
+			components	   = 1;
+			_type		   = GL_UNSIGNED_INT_24_8;
+			break;
+		}
+		case TextureType::DEPTH: {	   // TODO: this may be broken for texture2d
+			internalFormat = GL_DEPTH_COMPONENT24;
+			format		   = GL_DEPTH;
 			pixelSize	   = 2;
 			components	   = 1;
 			_type		   = GL_UNSIGNED_INT_24_8;
@@ -64,14 +75,41 @@ void ygl::ITexture::getTypeParameters(Type type, GLint &internalFormat, GLenum &
 			format		   = GL_RGBA;
 			pixelSize	   = 16;
 			components	   = 4;
-			_type		   = GL_UNSIGNED_BYTE;
+			_type		   = GL_FLOAT;
 			break;
 		}
 	}
 }
 
+void ygl::RenderBuffer::init(GLsizei width, GLsizei height, GLint internalFormat) {
+	glGenRenderbuffers(1, &id);
+	glBindRenderbuffer(GL_RENDERBUFFER, id);
+	glRenderbufferStorage(GL_RENDERBUFFER, internalFormat, width, height);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+}
+
+ygl::RenderBuffer::RenderBuffer(GLsizei width, GLsizei height, TextureType type)
+	: width(width), height(height), type(type) {
+	GLint	internalFormat = 0;
+	GLenum	format		   = 0;
+	uint8_t pixelSize	   = 0;
+	uint8_t components	   = 0;
+	GLenum	_type		   = 0;
+
+	getTypeParameters(type, internalFormat, format, pixelSize, components, _type);
+	init(width, height, internalFormat);
+}
+
+ygl::RenderBuffer::~RenderBuffer() { glDeleteRenderbuffers(1, &id); }
+
+void ygl::RenderBuffer::BindToFrameBuffer(const ygl::FrameBuffer &fb, GLenum attachment, uint image, uint level) {
+	fb.bind();
+	glBindRenderbuffer(GL_RENDERBUFFER, id);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, id);
+}
+
 void ygl::Texture2d::init(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize,
-						  uint8_t components, GLenum type, stbi_uc *data) {
+						  uint8_t components, GLenum type, void *data) {
 	this->width		 = width;
 	this->height	 = height;
 	this->pixelSize	 = pixelSize;
@@ -93,71 +131,80 @@ void ygl::Texture2d::init(GLsizei width, GLsizei height, GLint internalFormat, G
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void ygl::Texture2d::init(GLsizei width, GLsizei height, Type type, stbi_uc *data) {
+void ygl::Texture2d::init(GLsizei width, GLsizei height, TextureType type, void *data) {
 	GLint	internalFormat = 0;
 	GLenum	format		   = 0;
 	uint8_t pixelSize	   = 0;
 	uint8_t components	   = 0;
 	GLenum	_type		   = 0;
 
-	ITexture::getTypeParameters(type, internalFormat, format, pixelSize, components, _type);
+	getTypeParameters(type, internalFormat, format, pixelSize, components, _type);
 
 	init(width, height, internalFormat, format, pixelSize, components, _type, data);
 }
 
 void ygl::Texture2d::init(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize,
-						  uint8_t components) {
+						  uint8_t components, GLenum type) {
 	stbi_set_flip_vertically_on_load(true);
-	GLsizei	 width, height, channelCount;
-	stbi_uc *data = stbi_load(fileName.c_str(), &width, &height, &channelCount, components);
+	GLsizei width, height, channelCount;
+	void   *data;
+	if (type == GL_UNSIGNED_BYTE) {
+		data = stbi_load(fileName.c_str(), &width, &height, &channelCount, components);
+	} else if (type == GL_FLOAT) {
+		data = stbi_loadf(fileName.c_str(), &width, &height, &channelCount, components);
+	} else {
+		dbLog(ygl::LOG_ERROR, "Image file [" + fileName + "] failed to load: ");
+		return;
+	}
 	stbi_set_flip_vertically_on_load(false);
 
 	if (data != nullptr) {
-		init(width, height, internalFormat, format, pixelSize, components, GL_UNSIGNED_BYTE, data);
+		init(width, height, internalFormat, format, pixelSize, components, type, data);
 		stbi_image_free(data);
 	} else {
 		dbLog(ygl::LOG_ERROR, "Image file [" + fileName + "] failed to load: " + stbi_failure_reason());
-		data = new stbi_uc[16]{0, 0, 0, 255, 255, 0, 255, 255, 255, 0, 255, 255, 0, 0, 0, 255};
-		init(2, 2, Type::RGBA, data);
-		delete[] data;
+		width = height = 2;
+		data		   = new stbi_uc[16]{0, 0, 0, 255, 255, 0, 255, 255, 255, 0, 255, 255, 0, 0, 0, 255};
+		init(2, 2, TextureType::RGBA, data);
+		delete[] (stbi_uc *)data;
 	}
 }
 
 ygl::Texture2d::Texture2d(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize,
-						  uint8_t components, GLenum type, stbi_uc *data) {
+						  uint8_t components, GLenum type, void *data) {
 	init(width, height, internalFormat, format, pixelSize, components, type, data);
 }
 
-ygl::Texture2d::Texture2d(GLsizei width, GLsizei height, Type type, stbi_uc *data)
+ygl::Texture2d::Texture2d(GLsizei width, GLsizei height, TextureType type, void *data)
 	: width(width), height(height), type(type) {
 	init(width, height, type, data);
 }
 
-ygl::Texture2d::Texture2d(GLsizei width, GLsizei height) { init(width, height, Type::RGBA, nullptr); }
+ygl::Texture2d::Texture2d(GLsizei width, GLsizei height) { init(width, height, TextureType::RGBA, nullptr); }
 
 ygl::Texture2d::Texture2d(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize,
-						  uint8_t components)
+						  uint8_t components, GLenum type)
 	: fileName(fileName) {
-	init(fileName, internalFormat, format, pixelSize, components);
+	init(fileName, internalFormat, format, pixelSize, components, type);
 }
 
-ygl::Texture2d::Texture2d(std::string fileName, Type type) : type(type), fileName(fileName) {
+ygl::Texture2d::Texture2d(std::string fileName, TextureType type) : type(type), fileName(fileName) {
 	GLint	internalFormat = 0;
 	GLenum	format		   = 0;
 	uint8_t pixelSize	   = 0;
 	uint8_t components	   = 0;
 	GLenum	_type		   = 0;
 
-	ITexture::getTypeParameters(type, internalFormat, format, pixelSize, components, _type);
+	getTypeParameters(type, internalFormat, format, pixelSize, components, _type);
 
-	init(fileName, internalFormat, format, pixelSize, components);
+	init(fileName, internalFormat, format, pixelSize, components, _type);
 }
 
-ygl::Texture2d::Texture2d(std::string fileName) : Texture2d(fileName, Type::RGBA) {}
+ygl::Texture2d::Texture2d(std::string fileName) : Texture2d(fileName, TextureType::RGBA) {}
 
 ygl::Texture2d::Texture2d(std::istream &in) {
 	std::getline(in, fileName, '\0');
-	in.read((char *)&type, sizeof(Type));
+	in.read((char *)&type, sizeof(TextureType));
 
 	GLint	internalFormat = 0;
 	GLenum	format		   = 0;
@@ -165,15 +212,19 @@ ygl::Texture2d::Texture2d(std::istream &in) {
 	uint8_t components	   = 0;
 	GLenum	_type		   = 0;
 
-	ITexture::getTypeParameters(type, internalFormat, format, pixelSize, components, _type);
+	getTypeParameters(type, internalFormat, format, pixelSize, components, _type);
 
-	init(fileName, internalFormat, format, pixelSize, components);
+	init(fileName, internalFormat, format, pixelSize, components, _type);
 }
 
 void ygl::Texture2d::serialize(std::ostream &out) {
 	out.write(name, std::strlen(name) + 1);
 	out.write(fileName.c_str(), fileName.size() + 1);
-	out.write((char *)&type, sizeof(Type));
+	out.write((char *)&type, sizeof(TextureType));
+}
+
+void ygl::Texture2d::BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) {
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, id, level);
 }
 
 void ygl::Texture2d::save(std::string fileName) {
@@ -209,7 +260,25 @@ void ygl::Texture2d::unbindImage(int unit) { glBindImageTexture(unit, 0, 0, fals
 int	 ygl::Texture2d::getID() { return id; }
 ygl::Texture2d::~Texture2d() { glDeleteTextures(1, &id); }
 
-void ygl::TextureCubemap::init() {
+ygl::TextureCubemap::TextureCubemap(uint32_t width, uint32_t height) {
+	glGenTextures(1, &id);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
+
+	glTexStorage2D(GL_TEXTURE_CUBE_MAP, 1, GL_RGB16F, width, height);
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+}
+
+void ygl::TextureCubemap::loadCubemap() {
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 
@@ -220,6 +289,7 @@ void ygl::TextureCubemap::init() {
 		if (buff == nullptr) {
 			dbLog(ygl::LOG_ERROR, "Image file [" + wholePath + "] failed to load: " + stbi_failure_reason());
 
+			width = height		= 2;
 			unsigned char tex[] = {0, 0, 0, 255, 255, 0, 255, 255, 255, 0, 255, 255, 0, 0, 0, 255};
 
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB_ALPHA, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex);
@@ -242,6 +312,10 @@ void ygl::TextureCubemap::init() {
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
+void ygl::TextureCubemap::init() {
+	loadCubemap();
+}
+
 ygl::TextureCubemap::TextureCubemap(const std::string &path, const std::string &format) : path(path), format(format) {
 	init();
 }
@@ -256,6 +330,10 @@ void ygl::TextureCubemap::serialize(std::ostream &out) {
 	out.write(name, std::strlen(name) + 1);
 	out.write(path.c_str(), path.size() + 1);
 	out.write(format.c_str(), format.size() + 1);
+}
+
+void ygl::TextureCubemap::BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) {
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_CUBE_MAP_POSITIVE_X + image, id, level);
 }
 
 void ygl::TextureCubemap::save(std::string) {
@@ -285,7 +363,58 @@ void ygl::TextureCubemap::unbindImage(int textureUnit) {
 }
 
 int ygl::TextureCubemap::getID() { return id; }
+ygl::TextureCubemap::~TextureCubemap() { glDeleteTextures(1, &id); }
 
 const char *ygl::Texture2d::name	  = "ygl::Texture2d";
 const char *ygl::TextureCubemap::name = "ygl::TextureCubemap";
-// ygl::TextureCubemap::~TextureCubemap() { glDeleteTextures(1, &id); }
+
+ygl::TextureCubemap *ygl::loadHDRCubemap(const std::string &path, const std::string &format) {
+	uint width = 1024, height = 1024;
+
+	ygl::Texture2d		*hdrTexture = new ygl::Texture2d(path + format, ygl::TextureType::HDR_CUBEMAP);
+	ygl::TextureCubemap *cubemap	= new TextureCubemap(width, height);
+
+	ygl::VFShader *parsingShader =
+		new ygl::VFShader("./shaders/equirectangularToCubemap.vs", "./shaders/equirectangularToCubemap.fs");
+	ygl::Mesh *cubeMesh = new ygl::BoxMesh();
+	cubeMesh->setCullFace(false);
+
+	ygl::RenderBuffer *depthBuffer = new ygl::RenderBuffer(width, height, TextureType::DEPTH);
+	ygl::FrameBuffer  *fb =
+		new FrameBuffer(nullptr, GL_COLOR_ATTACHMENT0, depthBuffer, GL_DEPTH_ATTACHMENT, "hdr_convert_fb");
+
+	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+	glm::mat4 captureViews[]	= {
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
+
+	hdrTexture->bind();
+	fb->bind();
+
+	parsingShader->bind();
+	parsingShader->setUniform("projection", captureProjection);
+	parsingShader->setUniform("equirectangularMap", 0);
+
+	glViewport(0, 0, width, height);
+
+	for (unsigned int i = 0; i < 6; ++i) {
+		parsingShader->bind();
+		parsingShader->setUniform("view", captureViews[i]);
+		cubemap->BindToFrameBuffer(*fb, GL_COLOR_ATTACHMENT0, i, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		Renderer::drawObject(parsingShader, cubeMesh);
+	}
+
+	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+	hdrTexture->unbind();
+	cubemap->unbind();
+	fb->unbind();
+
+	return cubemap;
+}

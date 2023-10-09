@@ -49,7 +49,7 @@ ygl::Entity ygl::addModel(Scene &scene, Mesh *mesh, glm::vec3 position, glm::vec
 	return e;
 }
 
-ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path) {
+ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path, const std::string& format) {
 	Entity	  e		   = scene.createEntity();
 	Renderer *renderer = scene.getSystem<Renderer>();
 
@@ -59,7 +59,12 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path) {
 	AssetManager *asman		= scene.getSystem<AssetManager>();
 	uint		  meshIndex = asman->addMesh(mesh, "skycube");
 	ygl::Material mat;
-	mat.albedo_map	   = scene.getSystem<AssetManager>()->addTexture(new TextureCubemap(path, ".jpg"), path);
+	if(format == ".hdr") {
+		mat.albedo_map	   = scene.getSystem<AssetManager>()->addTexture(loadHDRCubemap(path, format), path);
+	} else {
+		mat.albedo_map	   = scene.getSystem<AssetManager>()->addTexture(new TextureCubemap(path, format), path);
+	}
+	renderer->skyboxTexture = mat.albedo_map;
 	mat.use_albedo_map = 1.0;
 	uint materialIndex = renderer->addMaterial(mat);
 	uint shaderIndex   = asman->addShader(new VFShader("./shaders/skybox.vs", "./shaders/skybox.fs"), "skyShader");

@@ -124,7 +124,6 @@ layout(std430, binding = 4) readonly buffer Indices { int indices[]; };
 layout(std430, binding = 5) readonly buffer BVH { BVHNode nodes[]; };
 layout(std430, binding = 7) readonly buffer Primitives { uint primitives[]; };
 
-layout(binding = 11) uniform samplerCube skybox;
 layout(binding = 1) uniform sampler2D albedoMap;
 layout(binding = 2) uniform sampler2D normalMap;
 layout(binding = 3) uniform sampler2D heightMap;
@@ -132,6 +131,7 @@ layout(binding = 4) uniform sampler2D roughnessMap;
 layout(binding = 5) uniform sampler2D aoMap;
 layout(binding = 6) uniform sampler2D emissionMap;
 layout(binding = 10) uniform sampler2D metallicMap;
+layout(binding = 11) uniform samplerCube skybox;
 
 uniform mat4  cameraMatrix;
 uniform vec2  resolution;

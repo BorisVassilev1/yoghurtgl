@@ -15,11 +15,11 @@
 #define GL_CONTEXT_VERSION_MAJOR 4
 #define GL_CONTEXT_VERSION_MINOR 3
 
-#define _CONCAT(x, y, z) x##y##z
-#define CONCAT(x, y, z) _CONCAT(x, y, z)
-#define GL_CONTEXT_VERSION #version CONCAT(GL_CONTEXT_VERSION_MAJOR,GL_CONTEXT_VERSION_MINOR,0) core
-#define _STRING(string) #string
-#define STRING(string) _STRING(string)
+#define _CONCAT(x, y, z)   x##y##z
+#define CONCAT(x, y, z)	   _CONCAT(x, y, z)
+#define GL_CONTEXT_VERSION #version CONCAT(GL_CONTEXT_VERSION_MAJOR, GL_CONTEXT_VERSION_MINOR, 0) core
+#define _STRING(string)	   #string
+#define STRING(string)	   _STRING(string)
 
 ygl::Window::Window(int width, int height, const char *name, bool vsync, bool resizable, GLFWmonitor *monitor)
 	: width(width), height(height) {
@@ -55,7 +55,7 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
 		}
-		#ifndef YGL_NDEBUG
+#ifndef YGL_NDEBUG
 		else if (key == GLFW_KEY_R && action == GLFW_RELEASE) {
 			shade = !shade;
 			if (shade) {
@@ -71,7 +71,7 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 				glDisable(GL_CULL_FACE);
 			}
 		}
-		#endif
+#endif
 	});
 	glfwSetWindowSizeCallback(window, handleResize);
 	addResizeCallback([this](GLFWwindow *window, int width, int height) {
@@ -165,6 +165,7 @@ void ygl::Window::swapBuffers() {
 void ygl::Window::beginFrame() {
 	glfwPollEvents();
 
+	glViewport(0, 0, width, height);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	// Start the Dear ImGui frame

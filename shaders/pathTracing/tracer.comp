@@ -279,7 +279,7 @@ void computeHitInfo(out HitInfo info, in RayHit hit, in Ray ray) {
 
 uniform vec3 sun_direction = normalize(vec3(-1., 2., -1.));
 uniform float sun_size = 0.05; // in radians on the sky
-uniform float shadow_ray_chance = 0.5;
+uniform float shadow_ray_chance = 0.0;
 
 void main() {
 	vec4  pixel			 = vec4(0.0, 0.0, 0.0, 1.0);			// the pixel value

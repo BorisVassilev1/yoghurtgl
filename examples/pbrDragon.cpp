@@ -43,7 +43,8 @@ void run() {
 		tr.updateWorldMatrix();
 	});
 
-	Entity skybox = addSkybox(scene, "./res/images/skybox/");
+	// Entity skybox = addSkybox(scene, "./res/images/skybox/");
+	Entity skybox = addSkybox(scene, "./res/images/little_paris_eiffel_tower_4k", ".hdr");
 
 	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, .3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 5,
 							 Light::Type::DIRECTIONAL));

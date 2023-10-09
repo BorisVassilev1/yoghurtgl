@@ -17,40 +17,55 @@ namespace ygl {
 /**
  * @brief different types of textues must be bound to different targets. Enum makes them more readable
  */
-enum TexIndex {
-	COLOR	  = GL_TEXTURE1,
-	NORMAL	  = GL_TEXTURE2,
-	HEIGHT	  = GL_TEXTURE3,
-	ROUGHNESS = GL_TEXTURE4,
-	AO		  = GL_TEXTURE5,
-	EMISSION  = GL_TEXTURE6,
-	METALLIC  = GL_TEXTURE10
+class TexIndex {
+   public:
+	enum {
+		COLOR	  = GL_TEXTURE1,
+		NORMAL	  = GL_TEXTURE2,
+		HEIGHT	  = GL_TEXTURE3,
+		ROUGHNESS = GL_TEXTURE4,
+		AO		  = GL_TEXTURE5,
+		EMISSION  = GL_TEXTURE6,
+		METALLIC  = GL_TEXTURE10,
+		SKYBOX	  = GL_TEXTURE11
+	};
 };
+
+class FrameBuffer;
+class FrameBufferAttachable {
+   public:
+	virtual void BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) = 0;
+	virtual ~FrameBufferAttachable(){};
+};
+
+/// human-readable texture types, alias for several separate properties
+enum TextureType {
+	RGB,
+	RGBA,
+	SRGBA,
+	SRGB,
+	GREY,
+	DEPTH_STENCIL,
+	DEPTH,
+	DIFFUSE		= SRGB,
+	NORMAL		= RGB,
+	ROUGHNESS	= SRGB,
+	METALLIC	= SRGB,
+	AO			= SRGB,
+	EMISSIVE	= SRGB,
+	HDR_CUBEMAP = RGB
+};
+
+void getTypeParameters(TextureType type, GLint &internalFormat, GLenum &format, uint8_t &pixelSize, uint8_t &components,
+					   GLenum &_type);
 
 /**
  * @brief Texture interface.
  */
-class ITexture : public ISerializable {
+class ITexture : public ISerializable, public FrameBufferAttachable {
    public:
-	/// human-readable texture types, alias for several separate properties
-	enum Type {
-		RGB,
-		RGBA,
-		SRGBA,
-		SRGB,
-		GREY,
-		DEPTH_STENCIL,
-		DIFFUSE	  = SRGB,
-		NORMAL	  = RGB,
-		ROUGHNESS = SRGB,
-		METALLIC  = SRGB,
-		AO		  = SRGB,
-		EMISSIVE  = SRGB
-	};
-
 	ITexture(){};
-	ITexture(const ITexture &other)			   = delete;
-	ITexture &operator=(const ITexture &other) = delete;
+	DELETE_COPY_AND_ASSIGNMENT(ITexture)
 	/**
 	 * @brief save texture to file
 	 *
@@ -69,10 +84,22 @@ class ITexture : public ISerializable {
 
 	virtual int getID() = 0;
 	virtual ~ITexture(){};
+};
 
-   protected:
-	static void getTypeParameters(Type type, GLint &internalFormat, GLenum &format, uint8_t &pixelSize,
-								  uint8_t &components, GLenum &_type);
+class RenderBuffer : public FrameBufferAttachable {
+	GLuint		id	  = -1;
+	GLsizei		width = -1, height = -1;
+	TextureType type;
+
+	void init(GLsizei width, GLsizei height, GLint internalFormat);
+
+   public:
+	RenderBuffer(GLsizei width, GLsizei height, TextureType type);
+	~RenderBuffer();
+
+	int getID();
+
+	void BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) override;
 };
 
 /**
@@ -87,28 +114,30 @@ concept IsTexture = std::is_base_of<ygl::ITexture, T>::value;
  * @brief 2D Texture.
  */
 class Texture2d : public ITexture {
+	GLuint		id	  = -1;
 	GLsizei		width = -1, height = -1;
 	uint8_t		pixelSize  = 16;
 	uint8_t		components = 4;
-	GLuint		id		   = -1;
-	Type		type;
+	TextureType type;
 	std::string fileName = "";
 
 	void init(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
-			  GLenum type, stbi_uc *data);
-	void init(GLsizei width, GLsizei height, Type type, stbi_uc *data);
-	void init(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components);
+			  GLenum type, void *data);
+	void init(GLsizei width, GLsizei height, TextureType type, void *data);
+	void init(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
+			  GLenum type);
 
    public:
 	static const char *name;
 	Texture2d(){};
 
 	Texture2d(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
-			  GLenum type, stbi_uc *data);
-	Texture2d(GLsizei width, GLsizei height, Type type, stbi_uc *data);
+			  GLenum type, void *data);
+	Texture2d(GLsizei width, GLsizei height, TextureType type, void *data);
 	Texture2d(GLsizei width, GLsizei height);
-	Texture2d(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components);
-	Texture2d(std::string fileName, Type type);
+	Texture2d(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
+			  GLenum type);
+	Texture2d(std::string fileName, TextureType type);
 	Texture2d(std::string fileName);
 	Texture2d(std::istream &in);
 
@@ -123,6 +152,7 @@ class Texture2d : public ITexture {
 	virtual ~Texture2d();
 
 	void serialize(std::ostream &out) override;
+	void BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) override;
 };
 
 /**
@@ -131,17 +161,19 @@ class Texture2d : public ITexture {
 class TextureCubemap : public ITexture {
 	static const constexpr char *faces[] = {"right", "left", "top", "bottom", "front", "back"};
 
+	GLuint		id	  = -1;
 	GLsizei		width = -1, height = -1;
-	GLuint		id		 = -1;
 	int			channels = 4;
 	std::string path;
 	std::string format;
 
+	void loadCubemap();
 	void init();
 
    public:
 	static const char *name;
 	TextureCubemap() {}
+	TextureCubemap(uint32_t width, uint32_t height);
 	TextureCubemap(const std::string &path, const std::string &format);
 	TextureCubemap(std::istream &in);
 
@@ -154,9 +186,12 @@ class TextureCubemap : public ITexture {
 	void unbindImage(int textureUnit) override;
 	int	 getID() override;
 
-	virtual ~TextureCubemap(){};
+	virtual ~TextureCubemap();
 
 	void serialize(std::ostream &out) override;
+	void BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) override;
 };
+
+ygl::TextureCubemap *loadHDRCubemap(const std::string &path, const std::string &format);
 
 }	  // namespace ygl
