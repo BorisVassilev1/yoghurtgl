@@ -44,13 +44,14 @@ void run() {
 	});
 
 	// addSkybox(scene, "./res/images/skybox/");
-	addSkybox(scene, "./res/images/little_paris_eiffel_tower_4k", ".hdr");
+	addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
 
-	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, .3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 5,
-							 Light::Type::DIRECTIONAL));
-	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.11, Light::Type::AMBIENT));
+	//renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, .3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 5,
+	//						 Light::Type::DIRECTIONAL));
+	//renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.11, Light::Type::AMBIENT));
 
 	renderer->loadData();
+	renderer->getScreenEffect(0)->enabled = false;
 
 	int editMaterialIndex = 0;
 

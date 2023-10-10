@@ -20,14 +20,15 @@ namespace ygl {
 class TexIndex {
    public:
 	enum {
-		COLOR	  = GL_TEXTURE1,
-		NORMAL	  = GL_TEXTURE2,
-		HEIGHT	  = GL_TEXTURE3,
-		ROUGHNESS = GL_TEXTURE4,
-		AO		  = GL_TEXTURE5,
-		EMISSION  = GL_TEXTURE6,
-		METALLIC  = GL_TEXTURE10,
-		SKYBOX	  = GL_TEXTURE11
+		COLOR		   = GL_TEXTURE1,
+		NORMAL		   = GL_TEXTURE2,
+		HEIGHT		   = GL_TEXTURE3,
+		ROUGHNESS	   = GL_TEXTURE4,
+		AO			   = GL_TEXTURE5,
+		EMISSION	   = GL_TEXTURE6,
+		METALLIC	   = GL_TEXTURE10,
+		SKYBOX		   = GL_TEXTURE11,
+		IRRADIANCE_MAP = GL_TEXTURE12,
 	};
 };
 
@@ -50,13 +51,13 @@ enum TextureType {
 	GREY16F,
 	DEPTH_STENCIL_32F_8,
 	DEPTH_24,
-	DIFFUSE		= SRGB8,
-	NORMAL		= RGB16F,
-	ROUGHNESS	= SRGB8,
-	METALLIC	= SRGB8,
-	AO			= SRGB8,
-	EMISSIVE	= SRGB8,
-	HDR_CUBEMAP = RGB32F
+	HDR_CUBEMAP,
+	DIFFUSE	  = SRGB8,
+	NORMAL	  = RGB32F,
+	ROUGHNESS = SRGB8,
+	METALLIC  = SRGB8,
+	AO		  = SRGB8,
+	EMISSIVE  = SRGB8,
 };
 
 void getTypeParameters(TextureType type, GLint &internalFormat, GLenum &format, uint8_t &pixelSize, uint8_t &components,
@@ -147,7 +148,7 @@ class Texture2d : public ITexture {
 	void save(std::string filename) override;
 	void bind(int textureUnit) const override;
 	void bind() const override;
-	void unbind(int textureUnit)const override;
+	void unbind(int textureUnit) const override;
 	void unbind() const override;
 	void bindImage(int unit) override;
 	void unbindImage(int unit) override;

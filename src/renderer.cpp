@@ -341,6 +341,8 @@ void ygl::Renderer::drawScene() {
 			asman->getTexture(materials[ecr.materialIndex].metallic_map)->bind(ygl::TexIndex::METALLIC);
 		if (skyboxTexture != 0)
 			asman->getTexture(skyboxTexture)->bind(ygl::TexIndex::SKYBOX);
+		if (irradianceTexture != 0)
+			asman->getTexture(irradianceTexture)->bind(ygl::TexIndex::IRRADIANCE_MAP);
 
 		Mesh *mesh = getMesh(ecr.meshIndex);
 		mesh->bind();

@@ -18,7 +18,7 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			format		   = GL_RGBA;
 			pixelSize	   = 16;
 			components	   = 4;
-			_type		   = GL_FLOAT;
+			_type		   = GL_UNSIGNED_BYTE;
 			break;
 		}
 		case TextureType::RGBA16F: {
@@ -26,7 +26,7 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			format		   = GL_RGBA;
 			pixelSize	   = 16;
 			components	   = 4;
-			_type		   = GL_FLOAT;
+			_type		   = GL_UNSIGNED_BYTE;
 			break;
 		}
 		case TextureType::RGB32F: {
@@ -34,7 +34,7 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			format		   = GL_RGB;
 			pixelSize	   = 12;
 			components	   = 3;
-			_type		   = GL_FLOAT;
+			_type		   = GL_UNSIGNED_BYTE;
 			break;
 		}
 		case TextureType::RGB16F: {
@@ -42,7 +42,7 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			format		   = GL_RGB;
 			pixelSize	   = 12;
 			components	   = 3;
-			_type		   = GL_FLOAT;
+			_type		   = GL_UNSIGNED_BYTE;
 			break;
 		}
 		case TextureType::SRGBA8: {
@@ -66,7 +66,7 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			format		   = GL_RED;
 			pixelSize	   = 4;
 			components	   = 1;
-			_type		   = GL_FLOAT;
+			_type		   = GL_UNSIGNED_BYTE;
 			break;
 		}
 		case TextureType::GREY16F: {
@@ -93,13 +93,21 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			_type		   = GL_UNSIGNED_INT_24_8;
 			break;
 		}
+		case TextureType::HDR_CUBEMAP: {	   // TODO: this may be broken for texture2d
+			internalFormat = GL_RGB16F;
+			format		   = GL_RGB;
+			pixelSize	   = 12;
+			components	   = 3;
+			_type		   = GL_FLOAT;
+			break;
+		}
 		default: {
 			dbLog(ygl::LOG_WARNING, "unknown texture type ", type, ". default texture type will be RGBA32f");
 			internalFormat = GL_RGBA32F;
 			format		   = GL_RGBA;
 			pixelSize	   = 16;
 			components	   = 4;
-			_type		   = GL_FLOAT;
+			_type		   = GL_UNSIGNED_BYTE;
 			break;
 		}
 	}

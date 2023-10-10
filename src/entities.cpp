@@ -61,7 +61,10 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path, const std::str
 	uint		  meshIndex = asman->addMesh(mesh, "skycube");
 	ygl::Material mat;
 	if(format == ".hdr") {
-		mat.albedo_map	   = scene.getSystem<AssetManager>()->addTexture(createIrradianceCubemap(loadHDRCubemap(path, format)), path);
+		ygl::TextureCubemap *map = loadHDRCubemap(path, format);
+		mat.albedo_map	   = scene.getSystem<AssetManager>()->addTexture(map, path);
+		ygl::TextureCubemap *irradianceMap = createIrradianceCubemap(map);
+		renderer->irradianceTexture = scene.getSystem<AssetManager>()->addTexture(irradianceMap, path + "_irr");
 	} else {
 		mat.albedo_map	   = scene.getSystem<AssetManager>()->addTexture(new TextureCubemap(path, format), path);
 	}

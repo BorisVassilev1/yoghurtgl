@@ -149,7 +149,8 @@ class Renderer : public ygl::ISystem {
 
    public:
 	static const char *name;
-	uint			   skyboxTexture = 0;
+	uint			   skyboxTexture	 = 0;
+	uint			   irradianceTexture = 0;
 
 	DELETE_COPY_AND_ASSIGNMENT(Renderer)
 
