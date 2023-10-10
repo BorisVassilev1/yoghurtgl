@@ -26,10 +26,10 @@ void run() {
 
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
 
-	Texture2d *color	 = new Texture2d("./res/images/stones/albedo.png", TextureType::SRGB);
-	Texture2d *normal	 = new Texture2d("./res/images/stones/normal.png", TextureType::RGB);
-	Texture2d *roughness = new Texture2d("./res/images/stones/roughness.png", TextureType::GREY);
-	Texture2d *ao		 = new Texture2d("./res/images/stones/ao.png", TextureType::GREY);
+	Texture2d *color	 = new Texture2d("./res/images/stones/albedo.png", TextureType::SRGB8);
+	Texture2d *normal	 = new Texture2d("./res/images/stones/normal.png", TextureType::RGB16F);
+	Texture2d *roughness = new Texture2d("./res/images/stones/roughness.png", TextureType::GREY16F);
+	Texture2d *ao		 = new Texture2d("./res/images/stones/ao.png", TextureType::GREY16F);
 
 	Mesh *modelMesh = new BoxMesh(glm::vec3(1, 1, 1), glm::vec3(20, 20, 20));
 

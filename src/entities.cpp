@@ -1,6 +1,7 @@
 #include <entities.h>
 #include <asset_manager.h>
 #include <string>
+#include "texture.h"
 #include "yoghurtgl.h"
 #include <mesh.h>
 #include <transformation.h>
@@ -60,7 +61,7 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path, const std::str
 	uint		  meshIndex = asman->addMesh(mesh, "skycube");
 	ygl::Material mat;
 	if(format == ".hdr") {
-		mat.albedo_map	   = scene.getSystem<AssetManager>()->addTexture(loadHDRCubemap(path, format), path);
+		mat.albedo_map	   = scene.getSystem<AssetManager>()->addTexture(createIrradianceCubemap(loadHDRCubemap(path, format)), path);
 	} else {
 		mat.albedo_map	   = scene.getSystem<AssetManager>()->addTexture(new TextureCubemap(path, format), path);
 	}

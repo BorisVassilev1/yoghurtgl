@@ -130,7 +130,7 @@ class Renderer : public ygl::ISystem {
 	GLuint lightsBuffer	   = 0;
 
 	uint	  defaultShader	 = -1;
-	Texture2d defaultTexture = Texture2d(1, 1, TextureType::RGBA, nullptr);
+	Texture2d defaultTexture = Texture2d(1, 1, TextureType::RGBA16F, nullptr);
 
 	FrameBuffer *frontFrameBuffer;
 	FrameBuffer *backFrameBuffer;

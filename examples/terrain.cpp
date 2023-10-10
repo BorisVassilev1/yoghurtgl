@@ -56,7 +56,7 @@ void run() {
 
 	Texture2d *height = new Texture2d("./res/images/bricks/displ.jpg");
 	Texture2d *normal = new Texture2d("./res/images/bricks/normal.jpg");
-	Texture2d *color  = new Texture2d("./res/images/bricks/albedo.jpg", ygl::TextureType::SRGB);
+	Texture2d *color  = new Texture2d("./res/images/bricks/albedo.jpg", ygl::TextureType::SRGB8);
 
 	color->bind(ygl::TexIndex::COLOR);
 	normal->bind(ygl::TexIndex::NORMAL);

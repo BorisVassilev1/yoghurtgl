@@ -194,12 +194,12 @@ void ygl::Renderer::init() {
 
 	uint16_t width = window->getWidth(), height = window->getHeight();
 	frontFrameBuffer = new FrameBuffer(
-		new Texture2d(width, height, TextureType::RGBA, nullptr), GL_COLOR_ATTACHMENT0,
-		new Texture2d(width, height, TextureType::DEPTH_STENCIL, nullptr), GL_DEPTH_STENCIL_ATTACHMENT,
+		new Texture2d(width, height, TextureType::RGBA16F, nullptr), GL_COLOR_ATTACHMENT0,
+		new Texture2d(width, height, TextureType::DEPTH_STENCIL_32F_8, nullptr), GL_DEPTH_STENCIL_ATTACHMENT,
 		"Front frameBuffer");
 	backFrameBuffer	 = new FrameBuffer(
-		new Texture2d(width, height, TextureType::RGBA, nullptr), GL_COLOR_ATTACHMENT0,
-		new Texture2d(width, height, TextureType::DEPTH_STENCIL, nullptr), GL_DEPTH_STENCIL_ATTACHMENT,
+		new Texture2d(width, height, TextureType::RGBA16F, nullptr), GL_COLOR_ATTACHMENT0,
+		new Texture2d(width, height, TextureType::DEPTH_STENCIL_32F_8, nullptr), GL_DEPTH_STENCIL_ATTACHMENT,
 		"Back frameBuffer");
 
 	// addScreenEffect(new BloomEffect(this));

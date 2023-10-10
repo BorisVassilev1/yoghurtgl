@@ -40,20 +40,23 @@ class FrameBufferAttachable {
 
 /// human-readable texture types, alias for several separate properties
 enum TextureType {
-	RGB,
-	RGBA,
-	SRGBA,
-	SRGB,
-	GREY,
-	DEPTH_STENCIL,
-	DEPTH,
-	DIFFUSE		= SRGB,
-	NORMAL		= RGB,
-	ROUGHNESS	= SRGB,
-	METALLIC	= SRGB,
-	AO			= SRGB,
-	EMISSIVE	= SRGB,
-	HDR_CUBEMAP = RGB
+	RGB32F,
+	RGB16F,
+	RGBA32F,
+	RGBA16F,
+	SRGBA8,
+	SRGB8,
+	GREY32F,
+	GREY16F,
+	DEPTH_STENCIL_32F_8,
+	DEPTH_24,
+	DIFFUSE		= SRGB8,
+	NORMAL		= RGB16F,
+	ROUGHNESS	= SRGB8,
+	METALLIC	= SRGB8,
+	AO			= SRGB8,
+	EMISSIVE	= SRGB8,
+	HDR_CUBEMAP = RGB32F
 };
 
 void getTypeParameters(TextureType type, GLint &internalFormat, GLenum &format, uint8_t &pixelSize, uint8_t &components,
@@ -73,11 +76,11 @@ class ITexture : public ISerializable, public FrameBufferAttachable {
 	 */
 	virtual void save(std::string fileName) = 0;
 
-	virtual void bind(int textureUnit) = 0;
-	virtual void bind() { bind(GL_TEXTURE0); }
+	virtual void bind(int textureUnit) const = 0;
+	virtual void bind() const { bind(GL_TEXTURE0); }
 
-	virtual void unbind(int textureUnit) = 0;
-	virtual void unbind() { unbind(GL_TEXTURE0); }
+	virtual void unbind(int textureUnit) const = 0;
+	virtual void unbind() const { unbind(GL_TEXTURE0); }
 
 	virtual void bindImage(int unit)   = 0;
 	virtual void unbindImage(int unit) = 0;
@@ -142,10 +145,10 @@ class Texture2d : public ITexture {
 	Texture2d(std::istream &in);
 
 	void save(std::string filename) override;
-	void bind(int textureUnit) override;
-	void bind() override;
-	void unbind(int textureUnit) override;
-	void unbind() override;
+	void bind(int textureUnit) const override;
+	void bind() const override;
+	void unbind(int textureUnit)const override;
+	void unbind() const override;
 	void bindImage(int unit) override;
 	void unbindImage(int unit) override;
 	int	 getID() override;
@@ -178,10 +181,10 @@ class TextureCubemap : public ITexture {
 	TextureCubemap(std::istream &in);
 
 	void save(std::string fileName) override;
-	void bind(int textureUnit) override;
-	void bind() override;
-	void unbind(int textureUnit) override;
-	void unbind() override;
+	void bind(int textureUnit) const override;
+	void bind() const override;
+	void unbind(int textureUnit) const override;
+	void unbind() const override;
 	void bindImage(int textureUnit) override;
 	void unbindImage(int textureUnit) override;
 	int	 getID() override;
@@ -193,5 +196,7 @@ class TextureCubemap : public ITexture {
 };
 
 ygl::TextureCubemap *loadHDRCubemap(const std::string &path, const std::string &format);
+
+ygl::TextureCubemap *createIrradianceCubemap(const TextureCubemap *hdrCubemap);
 
 }	  // namespace ygl

@@ -13,7 +13,7 @@
 void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &format, uint8_t &pixelSize,
 							uint8_t &components, GLenum &_type) {
 	switch (type) {
-		case TextureType::RGBA: {
+		case TextureType::RGBA32F: {
 			internalFormat = GL_RGBA32F;
 			format		   = GL_RGBA;
 			pixelSize	   = 16;
@@ -21,7 +21,15 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			_type		   = GL_FLOAT;
 			break;
 		}
-		case TextureType::RGB: {
+		case TextureType::RGBA16F: {
+			internalFormat = GL_RGBA16F;
+			format		   = GL_RGBA;
+			pixelSize	   = 16;
+			components	   = 4;
+			_type		   = GL_FLOAT;
+			break;
+		}
+		case TextureType::RGB32F: {
 			internalFormat = GL_RGB32F;
 			format		   = GL_RGB;
 			pixelSize	   = 12;
@@ -29,7 +37,15 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			_type		   = GL_FLOAT;
 			break;
 		}
-		case TextureType::SRGBA: {
+		case TextureType::RGB16F: {
+			internalFormat = GL_RGB16F;
+			format		   = GL_RGB;
+			pixelSize	   = 12;
+			components	   = 3;
+			_type		   = GL_FLOAT;
+			break;
+		}
+		case TextureType::SRGBA8: {
 			internalFormat = GL_SRGB8_ALPHA8;
 			format		   = GL_RGBA;
 			pixelSize	   = 16;
@@ -37,7 +53,7 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			_type		   = GL_UNSIGNED_BYTE;
 			break;
 		}
-		case TextureType::SRGB: {
+		case TextureType::SRGB8: {
 			internalFormat = GL_SRGB8;
 			format		   = GL_RGB;
 			pixelSize	   = 12;
@@ -45,7 +61,7 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			_type		   = GL_UNSIGNED_BYTE;
 			break;
 		}
-		case TextureType::GREY: {
+		case TextureType::GREY32F: {
 			internalFormat = GL_R32F;
 			format		   = GL_RED;
 			pixelSize	   = 4;
@@ -53,7 +69,15 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			_type		   = GL_FLOAT;
 			break;
 		}
-		case TextureType::DEPTH_STENCIL: {
+		case TextureType::GREY16F: {
+			internalFormat = GL_R16F;
+			format		   = GL_RED;
+			pixelSize	   = 4;
+			components	   = 1;
+			_type		   = GL_FLOAT;
+			break;
+		}
+		case TextureType::DEPTH_STENCIL_32F_8: {
 			internalFormat = GL_DEPTH32F_STENCIL8;
 			format		   = GL_DEPTH_STENCIL;
 			pixelSize	   = 2;
@@ -61,7 +85,7 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			_type		   = GL_UNSIGNED_INT_24_8;
 			break;
 		}
-		case TextureType::DEPTH: {	   // TODO: this may be broken for texture2d
+		case TextureType::DEPTH_24: {	   // TODO: this may be broken for texture2d
 			internalFormat = GL_DEPTH_COMPONENT24;
 			format		   = GL_DEPTH;
 			pixelSize	   = 2;
@@ -103,6 +127,8 @@ ygl::RenderBuffer::RenderBuffer(GLsizei width, GLsizei height, TextureType type)
 ygl::RenderBuffer::~RenderBuffer() { glDeleteRenderbuffers(1, &id); }
 
 void ygl::RenderBuffer::BindToFrameBuffer(const ygl::FrameBuffer &fb, GLenum attachment, uint image, uint level) {
+	(void) image;
+	(void)level;
 	fb.bind();
 	glBindRenderbuffer(GL_RENDERBUFFER, id);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, id);
@@ -165,7 +191,7 @@ void ygl::Texture2d::init(std::string fileName, GLint internalFormat, GLenum for
 		dbLog(ygl::LOG_ERROR, "Image file [" + fileName + "] failed to load: " + stbi_failure_reason());
 		width = height = 2;
 		data		   = new stbi_uc[16]{0, 0, 0, 255, 255, 0, 255, 255, 255, 0, 255, 255, 0, 0, 0, 255};
-		init(2, 2, TextureType::RGBA, data);
+		init(2, 2, TextureType::RGBA16F, data);
 		delete[] (stbi_uc *)data;
 	}
 }
@@ -180,7 +206,7 @@ ygl::Texture2d::Texture2d(GLsizei width, GLsizei height, TextureType type, void 
 	init(width, height, type, data);
 }
 
-ygl::Texture2d::Texture2d(GLsizei width, GLsizei height) { init(width, height, TextureType::RGBA, nullptr); }
+ygl::Texture2d::Texture2d(GLsizei width, GLsizei height) { init(width, height, TextureType::RGBA16F, nullptr); }
 
 ygl::Texture2d::Texture2d(std::string fileName, GLint internalFormat, GLenum format, uint8_t pixelSize,
 						  uint8_t components, GLenum type)
@@ -200,7 +226,7 @@ ygl::Texture2d::Texture2d(std::string fileName, TextureType type) : type(type), 
 	init(fileName, internalFormat, format, pixelSize, components, _type);
 }
 
-ygl::Texture2d::Texture2d(std::string fileName) : Texture2d(fileName, TextureType::RGBA) {}
+ygl::Texture2d::Texture2d(std::string fileName) : Texture2d(fileName, TextureType::RGBA16F) {}
 
 ygl::Texture2d::Texture2d(std::istream &in) {
 	std::getline(in, fileName, '\0');
@@ -224,6 +250,8 @@ void ygl::Texture2d::serialize(std::ostream &out) {
 }
 
 void ygl::Texture2d::BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) {
+	(void)image;
+	fb.bind();
 	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, id, level);
 }
 
@@ -239,21 +267,21 @@ void ygl::Texture2d::save(std::string fileName) {
 	stbi_write_png(fileName.c_str(), width, height, 4, buff, 4 * width);
 }
 
-void ygl::Texture2d::bind(int textureUnit) {
+void ygl::Texture2d::bind(int textureUnit) const {
 	glActiveTexture(textureUnit);
 	glBindTexture(GL_TEXTURE_2D, id);
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void ygl::Texture2d::bind() { bind(GL_TEXTURE0); }
+void ygl::Texture2d::bind() const { bind(GL_TEXTURE0); }
 
-void ygl::Texture2d::unbind(int textureUnit) {
+void ygl::Texture2d::unbind(int textureUnit) const {
 	glActiveTexture(textureUnit);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void ygl::Texture2d::unbind() { unbind(GL_TEXTURE0); }
+void ygl::Texture2d::unbind() const { unbind(GL_TEXTURE0); }
 
 void ygl::Texture2d::bindImage(int unit) { glBindImageTexture(unit, id, 0, false, 0, GL_READ_WRITE, GL_RGBA32F); }
 void ygl::Texture2d::unbindImage(int unit) { glBindImageTexture(unit, 0, 0, false, 0, GL_READ_WRITE, GL_RGBA32F); }
@@ -333,6 +361,7 @@ void ygl::TextureCubemap::serialize(std::ostream &out) {
 }
 
 void ygl::TextureCubemap::BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) {
+	fb.bind();
 	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_CUBE_MAP_POSITIVE_X + image, id, level);
 }
 
@@ -340,19 +369,19 @@ void ygl::TextureCubemap::save(std::string) {
 	// TODO: implement this
 }
 
-void ygl::TextureCubemap::bind(int textureUnit) {
+void ygl::TextureCubemap::bind(int textureUnit) const {
 	glActiveTexture(textureUnit);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 }
 
-void ygl::TextureCubemap::bind() { bind(GL_TEXTURE0); }
+void ygl::TextureCubemap::bind() const { bind(GL_TEXTURE0); }
 
-void ygl::TextureCubemap::unbind(int textureUnit) {
+void ygl::TextureCubemap::unbind(int textureUnit) const {
 	glActiveTexture(textureUnit);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
-void ygl::TextureCubemap::unbind() { unbind(GL_TEXTURE0); }
+void ygl::TextureCubemap::unbind() const { unbind(GL_TEXTURE0); }
 
 void ygl::TextureCubemap::bindImage(int textureUnit) {
 	glBindImageTexture(textureUnit, id, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
@@ -379,7 +408,7 @@ ygl::TextureCubemap *ygl::loadHDRCubemap(const std::string &path, const std::str
 	ygl::Mesh *cubeMesh = new ygl::BoxMesh();
 	cubeMesh->setCullFace(false);
 
-	ygl::RenderBuffer *depthBuffer = new ygl::RenderBuffer(width, height, TextureType::DEPTH);
+	ygl::RenderBuffer *depthBuffer = new ygl::RenderBuffer(width, height, TextureType::DEPTH_24);
 	ygl::FrameBuffer  *fb =
 		new FrameBuffer(nullptr, GL_COLOR_ATTACHMENT0, depthBuffer, GL_DEPTH_ATTACHMENT, "hdr_convert_fb");
 
@@ -416,5 +445,62 @@ ygl::TextureCubemap *ygl::loadHDRCubemap(const std::string &path, const std::str
 	cubemap->unbind();
 	fb->unbind();
 
+	delete hdrTexture;
+	delete parsingShader;
+	delete cubeMesh;
+
 	return cubemap;
 }
+
+ygl::TextureCubemap *ygl::createIrradianceCubemap(const ygl::TextureCubemap *hdrCubemap) {
+	uint width = 32, height = 32;
+
+	ygl::TextureCubemap *cubemap	= new TextureCubemap(width, height);
+
+	ygl::VFShader *parsingShader =
+		new ygl::VFShader("./shaders/computeIrradiance.vs", "./shaders/computeIrradiance.fs");
+	ygl::Mesh *cubeMesh = new ygl::BoxMesh();
+	cubeMesh->setCullFace(false);
+
+	ygl::RenderBuffer *depthBuffer = new ygl::RenderBuffer(width, height, TextureType::DEPTH_24);
+	ygl::FrameBuffer  *fb =
+		new FrameBuffer(nullptr, GL_COLOR_ATTACHMENT0, depthBuffer, GL_DEPTH_ATTACHMENT, "hdr_irradiance_fb");
+
+	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+	glm::mat4 captureViews[]	= {
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
+
+	fb->bind();
+	hdrCubemap->bind();
+
+	parsingShader->bind();
+	parsingShader->setUniform("projection", captureProjection);
+	parsingShader->setUniform("environmentMap", 0);
+
+	glViewport(0, 0, width, height);
+
+	for (unsigned int i = 0; i < 6; ++i) {
+		parsingShader->bind();
+		parsingShader->setUniform("view", captureViews[i]);
+		cubemap->BindToFrameBuffer(*fb, GL_COLOR_ATTACHMENT0, i, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		Renderer::drawObject(parsingShader, cubeMesh);
+	}
+
+	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+	cubemap->unbind();
+	fb->unbind();
+
+	delete parsingShader;
+	delete cubeMesh;
+
+	return cubemap;
+}
+
