@@ -51,7 +51,6 @@ void run() {
 	//renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.11, Light::Type::AMBIENT));
 
 	renderer->loadData();
-	renderer->getScreenEffect(0)->enabled = false;
 
 	int editMaterialIndex = 0;
 

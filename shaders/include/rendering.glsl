@@ -179,7 +179,7 @@ vec3 calculateAmbientComponent(in vec3 position, in vec3 N, in vec2 texCoord, in
 
 	vec3 kS			= fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
 	vec3 kD			= 1.0 - kS;
-	vec3 irradiance = clamp(texture(irradianceMap, N).rgb, 0, 1);
+	vec3 irradiance = clamp(textureLod(irradianceMap, N, 0).rgb, 0, 1);
 	vec3 diffuse	= irradiance * albedo;
 	vec3 ambient	= (kD * diffuse) * ao;
 

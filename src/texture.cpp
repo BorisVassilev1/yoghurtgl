@@ -85,7 +85,7 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			_type		   = GL_UNSIGNED_INT_24_8;
 			break;
 		}
-		case TextureType::DEPTH_24: {	   // TODO: this may be broken for texture2d
+		case TextureType::DEPTH_24: {	  // TODO: this may be broken for texture2d
 			internalFormat = GL_DEPTH_COMPONENT24;
 			format		   = GL_DEPTH;
 			pixelSize	   = 2;
@@ -93,7 +93,7 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			_type		   = GL_UNSIGNED_INT_24_8;
 			break;
 		}
-		case TextureType::HDR_CUBEMAP: {	   // TODO: this may be broken for texture2d
+		case TextureType::HDR_CUBEMAP: {	 // TODO: this may be broken for texture2d
 			internalFormat = GL_RGB16F;
 			format		   = GL_RGB;
 			pixelSize	   = 12;
@@ -135,12 +135,27 @@ ygl::RenderBuffer::RenderBuffer(GLsizei width, GLsizei height, TextureType type)
 ygl::RenderBuffer::~RenderBuffer() { glDeleteRenderbuffers(1, &id); }
 
 void ygl::RenderBuffer::BindToFrameBuffer(const ygl::FrameBuffer &fb, GLenum attachment, uint image, uint level) {
-	(void) image;
+	(void)image;
 	(void)level;
 	fb.bind();
 	glBindRenderbuffer(GL_RENDERBUFFER, id);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, id);
 }
+
+void ygl::RenderBuffer::resize(GLsizei width, GLsizei height) {
+	bind();
+	GLint	internalFormat = 0;
+	GLenum	format		   = 0;
+	uint8_t pixelSize	   = 0;
+	uint8_t components	   = 0;
+	GLenum	_type		   = 0;
+
+	getTypeParameters(type, internalFormat, format, pixelSize, components, _type);
+	glRenderbufferStorage(GL_RENDERBUFFER, internalFormat, width, height);
+}
+
+void ygl::RenderBuffer::bind() { glBindRenderbuffer(GL_RENDERBUFFER, id); }
+void ygl::RenderBuffer::unbind() { glBindRenderbuffer(GL_RENDERBUFFER, 0); }
 
 void ygl::Texture2d::init(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize,
 						  uint8_t components, GLenum type, void *data) {
@@ -300,7 +315,9 @@ ygl::TextureCubemap::TextureCubemap(uint32_t width, uint32_t height) {
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 
-	glTexStorage2D(GL_TEXTURE_CUBE_MAP, 1, GL_RGB16F, width, height);
+	for (int i = 0; i < 6; i++) {
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+	}
 
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -348,9 +365,7 @@ void ygl::TextureCubemap::loadCubemap() {
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
-void ygl::TextureCubemap::init() {
-	loadCubemap();
-}
+void ygl::TextureCubemap::init() { loadCubemap(); }
 
 ygl::TextureCubemap::TextureCubemap(const std::string &path, const std::string &format) : path(path), format(format) {
 	init();
@@ -446,7 +461,7 @@ ygl::TextureCubemap *ygl::loadHDRCubemap(const std::string &path, const std::str
 
 		Renderer::drawObject(parsingShader, cubeMesh);
 	}
-
+	cubemap->bind();
 	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
 	hdrTexture->unbind();
@@ -463,7 +478,7 @@ ygl::TextureCubemap *ygl::loadHDRCubemap(const std::string &path, const std::str
 ygl::TextureCubemap *ygl::createIrradianceCubemap(const ygl::TextureCubemap *hdrCubemap) {
 	uint width = 32, height = 32;
 
-	ygl::TextureCubemap *cubemap	= new TextureCubemap(width, height);
+	ygl::TextureCubemap *cubemap = new TextureCubemap(width, height);
 
 	ygl::VFShader *parsingShader =
 		new ygl::VFShader("./shaders/computeIrradiance.vs", "./shaders/computeIrradiance.fs");
@@ -501,8 +516,6 @@ ygl::TextureCubemap *ygl::createIrradianceCubemap(const ygl::TextureCubemap *hdr
 		Renderer::drawObject(parsingShader, cubeMesh);
 	}
 
-	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-
 	cubemap->unbind();
 	fb->unbind();
 
@@ -512,3 +525,55 @@ ygl::TextureCubemap *ygl::createIrradianceCubemap(const ygl::TextureCubemap *hdr
 	return cubemap;
 }
 
+ygl::TextureCubemap *ygl::createPrefilterCubemap(const ygl::TextureCubemap *hdrCubemap) {
+	uint width = 512, height = 512;
+	uint mipCount = 5;
+
+	ygl::TextureCubemap *cubemap = new TextureCubemap(width, height);
+
+	ygl::VFShader *parsingShader = new ygl::VFShader("./shaders/prefilterCubemap.vs", "./shaders/prefilterCubemap.fs");
+	ygl::Mesh	  *cubeMesh		 = new ygl::BoxMesh();
+	cubeMesh->setCullFace(false);
+
+	ygl::RenderBuffer *depthBuffer = new ygl::RenderBuffer(width, height, TextureType::DEPTH_24);
+	ygl::FrameBuffer  *fb =
+		new ygl::FrameBuffer(nullptr, GL_COLOR_ATTACHMENT0, depthBuffer, GL_DEPTH_ATTACHMENT, "hdr_framebuffer_fb");
+
+	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+	glm::mat4 captureViews[]	= {
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
+
+	fb->bind();
+	hdrCubemap->bind();
+
+	parsingShader->bind();
+	parsingShader->setUniform("projection", captureProjection);
+	parsingShader->setUniform("environmentMap", 0);
+
+	for (std::size_t mip = 0; mip < mipCount; ++mip) {
+		uint w = width >> mip, h = height >> mip;
+		depthBuffer->resize(w, h);
+		depthBuffer->BindToFrameBuffer(*fb, GL_DEPTH_ATTACHMENT, 0, 0);
+		glViewport(0, 0, w, h);
+
+		float roughness = (float)mip / (float)(mipCount - 1);
+
+		parsingShader->bind();
+		parsingShader->setUniform("roughness", roughness);
+
+		for (std::size_t i = 0; i < 6; ++i) {
+			parsingShader->bind();
+			parsingShader->setUniform("view", captureViews[i]);
+			cubemap->BindToFrameBuffer(*fb, GL_COLOR_ATTACHMENT0, i, mip);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			Renderer::drawObject(parsingShader, cubeMesh);
+		}
+	}
+	return cubemap;
+}

@@ -5,6 +5,6 @@ in vec3 vTexCoord;
 out vec4 fragColor;
 
 void main() {
-    fragColor = texture(tex, vTexCoord);
+    fragColor = textureLod(tex, vTexCoord, 0);
     fragColor.w = 1.0;
 }

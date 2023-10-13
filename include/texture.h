@@ -53,7 +53,7 @@ enum TextureType {
 	DEPTH_24,
 	HDR_CUBEMAP,
 	DIFFUSE	  = SRGB8,
-	NORMAL	  = RGB32F,
+	NORMAL	  = RGB16F,
 	ROUGHNESS = SRGB8,
 	METALLIC  = SRGB8,
 	AO		  = SRGB8,
@@ -104,6 +104,10 @@ class RenderBuffer : public FrameBufferAttachable {
 	int getID();
 
 	void BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) override;
+	void resize(GLsizei width, GLsizei height);
+
+	void bind();
+	void unbind();
 };
 
 /**
@@ -199,5 +203,7 @@ class TextureCubemap : public ITexture {
 ygl::TextureCubemap *loadHDRCubemap(const std::string &path, const std::string &format);
 
 ygl::TextureCubemap *createIrradianceCubemap(const TextureCubemap *hdrCubemap);
+
+ygl::TextureCubemap *createPrefilterCubemap(const TextureCubemap *hdrCubemap);
 
 }	  // namespace ygl
