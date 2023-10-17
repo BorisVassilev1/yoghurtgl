@@ -12,7 +12,7 @@
 using namespace ygl;
 
 void run() {
-	Window window = Window(1280, 1000, "Test Window", true, false);
+	Window window = Window(1280, 1000, "Test Window", true, true);
 
 	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 
@@ -53,6 +53,7 @@ void run() {
 	renderer->loadData();
 
 	int editMaterialIndex = 0;
+	int textureViewIndex = 1;
 
 	glClearColor(0, 0, 0, 1);
 	while (!window.shouldClose()) {
@@ -69,7 +70,12 @@ void run() {
 		ImGui::End();
 		renderer->getMaterial(editMaterialIndex).drawImGui();
 		renderer->loadData();
-		
+
+		ImGui::Begin("Texture View");
+		ImGui::InputInt("Material ID", &textureViewIndex);
+		ImGui::Image((void*)textureViewIndex, ImVec2(512, 512));
+		ImGui::End();
+
 		window.swapBuffers();
 	}
 

@@ -89,6 +89,7 @@ layout(binding = 6) uniform sampler2D emissionMap;
 layout(binding = 10) uniform sampler2D metallicMap;
 layout(binding = 11) uniform samplerCube skybox;
 layout(binding = 12) uniform samplerCube irradianceMap;
+layout(binding = 13) uniform samplerCube prefilterMap;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {	   // learnopengl
 	return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
@@ -171,8 +172,8 @@ vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec2 texCoord, in ve
 	return (kD * albedo / PI + specular) * radiance * NdotL;
 }
 
-vec3 calculateAmbientComponent(in vec3 position, in vec3 N, in vec2 texCoord, in vec3 albedo,
-							   in float roughness, in float metallic, in float ao, in vec3 camPos) {
+vec3 calculateAmbientComponent(in vec3 position, in vec3 N, in vec2 texCoord, in vec3 albedo, in float roughness,
+							   in float metallic, in float ao, in vec3 camPos) {
 	vec3 V	= normalize(camPos - position);
 	vec3 F0 = vec3(0.04);
 	F0		= mix(F0, albedo, metallic);
@@ -197,20 +198,23 @@ vec3 calcAllLights(in vec3 position, in vec3 normal, in vec3 vertexNormal, in ve
 	Material mat	= materials[material_index];
 	vec3	 camPos = (cameraWorldMatrix * vec4(0, 0, 0, 1)).xyz;
 	vec3	 V		= normalize(position - camPos);
+	vec3	 R		= normalize(reflect(V, normal));
 
 	vec3  calcAlbedo	= mix(1., ao, mat.use_ao_map) * mix(mat.albedo, diffuse, mat.use_albedo_map);
 	float calcMetallic	= mix(mat.metallic, metallic, mat.use_metallic_map);
 	vec3  calcEmission	= mix(mat.emission, mat.emission * emission, mat.use_emission_map);
 	float calcRoughness = mix(mat.specular_roughness, mat.specular_roughness * roughness, mat.use_roughness_map) + 0.1;
+	calcRoughness *= calcRoughness;
 
 	if (renderMode == 0) {
 		for (int i = 0; i < lightsCount; i++) {
-			light += calcLight(lights[i], position, normal, texCoord, calcAlbedo, calcRoughness * calcRoughness,
+			light += calcLight(lights[i], position, normal, texCoord, calcAlbedo, calcRoughness,
 							   calcMetallic, ao, camPos);
 		}
 		light += calcEmission;
-		light += calculateAmbientComponent(position, normal, texCoord, calcAlbedo, calcRoughness * calcRoughness,
+		light += calculateAmbientComponent(position, normal, texCoord, calcAlbedo, calcRoughness,
 										   calcMetallic, ao, camPos);
+		//light = textureLod(prefilterMap, R, calcRoughness * 4.).xyz;
 	}
 	if (renderMode == 1) { light += calcRoughness; }
 	if (renderMode == 2) { light += calcMetallic; }

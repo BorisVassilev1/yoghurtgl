@@ -21,19 +21,16 @@ std::ostream &ygl::operator<<(std::ostream &out, const Light &l) {
 			   << " type: " << l.type;
 }
 
-ygl::FrameBuffer::FrameBuffer(FrameBufferAttachable *buff1, GLenum attachment1, FrameBufferAttachable *buff2, GLenum attachment2, const char *name) {
+ygl::FrameBuffer::FrameBuffer(FrameBufferAttachable *buff1, GLenum attachment1, FrameBufferAttachable *buff2,
+							  GLenum attachment2, const char *name) {
 	glGenFramebuffers(1, &id);
 	glBindFramebuffer(GL_FRAMEBUFFER, id);
 
 	color = buff1;
-	if(color != nullptr) {
-		color->BindToFrameBuffer(*this, attachment1, 0, 0);
-	}
+	if (color != nullptr) { color->BindToFrameBuffer(*this, attachment1, 0, 0); }
 
 	depth_stencil = buff2;
-	if(depth_stencil != nullptr) {
-		depth_stencil->BindToFrameBuffer(*this, attachment2, 0, 0);
-	}
+	if (depth_stencil != nullptr) { depth_stencil->BindToFrameBuffer(*this, attachment2, 0, 0); }
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		dbLog(LOG_WARNING, "Framebuffer is not complete upon creation!");
@@ -49,10 +46,8 @@ ygl::FrameBuffer::FrameBuffer(FrameBufferAttachable *buff1, GLenum attachment1, 
 
 ygl::FrameBuffer::~FrameBuffer() {
 	glDeleteFramebuffers(1, &id);
-	if(color != nullptr)
-		delete color;
-	if(depth_stencil != nullptr)
-		delete depth_stencil;
+	if (color != nullptr) delete color;
+	if (depth_stencil != nullptr) delete depth_stencil;
 }
 
 void ygl::FrameBuffer::clear() const { glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); }
@@ -61,9 +56,16 @@ void ygl::FrameBuffer::bind() const { glBindFramebuffer(GL_FRAMEBUFFER, id); }
 
 void ygl::FrameBuffer::unbind() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 
-ygl::Texture2d *ygl::FrameBuffer::getColor() { return (Texture2d*)color; }
+ygl::Texture2d *ygl::FrameBuffer::getColor() { return (Texture2d *)color; }
 
-ygl::Texture2d *ygl::FrameBuffer::getDepthStencil() { return (Texture2d*)depth_stencil; }
+ygl::Texture2d *ygl::FrameBuffer::getDepthStencil() { return (Texture2d *)depth_stencil; }
+
+void ygl::FrameBuffer::resize(uint width, uint height) {
+	color->resize(width, height);
+	depth_stencil->resize(width, height);
+	color->BindToFrameBuffer(*this, GL_COLOR_ATTACHMENT0, 0, 0);
+	depth_stencil->BindToFrameBuffer(*this, GL_DEPTH_STENCIL_ATTACHMENT, 0, 0);
+}
 
 void ygl::FrameBuffer::bindDefault() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 
@@ -193,17 +195,22 @@ void ygl::Renderer::init() {
 	}
 
 	uint16_t width = window->getWidth(), height = window->getHeight();
-	frontFrameBuffer = new FrameBuffer(
-		new Texture2d(width, height, TextureType::RGBA16F, nullptr), GL_COLOR_ATTACHMENT0,
-		new Texture2d(width, height, TextureType::DEPTH_STENCIL_32F_8, nullptr), GL_DEPTH_STENCIL_ATTACHMENT,
-		"Front frameBuffer");
-	backFrameBuffer	 = new FrameBuffer(
-		new Texture2d(width, height, TextureType::RGBA16F, nullptr), GL_COLOR_ATTACHMENT0,
-		new Texture2d(width, height, TextureType::DEPTH_STENCIL_32F_8, nullptr), GL_DEPTH_STENCIL_ATTACHMENT,
-		"Back frameBuffer");
+	frontFrameBuffer =
+		new FrameBuffer(new Texture2d(width, height, TextureType::RGBA16F, nullptr), GL_COLOR_ATTACHMENT0,
+						new Texture2d(width, height, TextureType::DEPTH_STENCIL_32F_8, nullptr),
+						GL_DEPTH_STENCIL_ATTACHMENT, "Front frameBuffer");
+	backFrameBuffer = new FrameBuffer(new Texture2d(width, height, TextureType::RGBA16F, nullptr), GL_COLOR_ATTACHMENT0,
+									  new Texture2d(width, height, TextureType::DEPTH_STENCIL_32F_8, nullptr),
+									  GL_DEPTH_STENCIL_ATTACHMENT, "Back frameBuffer");
 
 	// addScreenEffect(new BloomEffect(this));
 	addScreenEffect(new ACESEffect());
+
+	window->addResizeCallback([this](GLFWwindow *window, int width, int height) {
+		(void)window;
+		this->frontFrameBuffer->resize(width, height);
+		this->backFrameBuffer->resize(width, height);
+	});
 
 	scene->registerComponentIfCan<RendererComponent>();
 	scene->registerComponentIfCan<Transformation>();
@@ -339,10 +346,9 @@ void ygl::Renderer::drawScene() {
 			asman->getTexture(materials[ecr.materialIndex].emission_map)->bind(ygl::TexIndex::EMISSION);
 		if (materials[ecr.materialIndex].use_metallic_map)
 			asman->getTexture(materials[ecr.materialIndex].metallic_map)->bind(ygl::TexIndex::METALLIC);
-		if (skyboxTexture != 0)
-			asman->getTexture(skyboxTexture)->bind(ygl::TexIndex::SKYBOX);
-		if (irradianceTexture != 0)
-			asman->getTexture(irradianceTexture)->bind(ygl::TexIndex::IRRADIANCE_MAP);
+		if (skyboxTexture != 0) asman->getTexture(skyboxTexture)->bind(ygl::TexIndex::SKYBOX);
+		if (irradianceTexture != 0) asman->getTexture(irradianceTexture)->bind(ygl::TexIndex::IRRADIANCE_MAP);
+		if (prefilterTexture != 0) asman->getTexture(prefilterTexture)->bind(ygl::TexIndex::PREFILTER_MAP);
 
 		Mesh *mesh = getMesh(ecr.meshIndex);
 		mesh->bind();
@@ -369,6 +375,7 @@ void ygl::Renderer::colorPass() {
 	}
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glViewport(0, 0, window->getWidth(), window->getHeight());
 
 	// draw all entities
 	drawScene();

@@ -29,6 +29,7 @@ class TexIndex {
 		METALLIC	   = GL_TEXTURE10,
 		SKYBOX		   = GL_TEXTURE11,
 		IRRADIANCE_MAP = GL_TEXTURE12,
+		PREFILTER_MAP  = GL_TEXTURE13,
 	};
 };
 
@@ -37,6 +38,7 @@ class FrameBufferAttachable {
    public:
 	virtual void BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) = 0;
 	virtual ~FrameBufferAttachable(){};
+	virtual void resize(uint width, uint height) = 0;
 };
 
 /// human-readable texture types, alias for several separate properties
@@ -104,10 +106,11 @@ class RenderBuffer : public FrameBufferAttachable {
 	int getID();
 
 	void BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) override;
-	void resize(GLsizei width, GLsizei height);
 
 	void bind();
 	void unbind();
+
+	void resize(uint width, uint height) override;
 };
 
 /**
@@ -161,6 +164,8 @@ class Texture2d : public ITexture {
 
 	void serialize(std::ostream &out) override;
 	void BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) override;
+	
+	void resize(uint width, uint height) override;
 };
 
 /**
@@ -198,6 +203,8 @@ class TextureCubemap : public ITexture {
 
 	void serialize(std::ostream &out) override;
 	void BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) override;
+	
+	void resize(uint width, uint height) override;
 };
 
 ygl::TextureCubemap *loadHDRCubemap(const std::string &path, const std::string &format);

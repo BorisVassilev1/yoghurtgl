@@ -142,7 +142,9 @@ void ygl::RenderBuffer::BindToFrameBuffer(const ygl::FrameBuffer &fb, GLenum att
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, id);
 }
 
-void ygl::RenderBuffer::resize(GLsizei width, GLsizei height) {
+void ygl::RenderBuffer::resize(uint width, uint height) {
+	this->width = width;
+	this->height = height;
 	bind();
 	GLint	internalFormat = 0;
 	GLenum	format		   = 0;
@@ -278,6 +280,20 @@ void ygl::Texture2d::BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment,
 	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, id, level);
 }
 
+void ygl::Texture2d::resize(uint width, uint height) {
+	this->width = width;
+	this->height = height;
+	GLint	internalFormat = 0;
+	GLenum	format		   = 0;
+	uint8_t pixelSize	   = 0;
+	uint8_t components	   = 0;
+	GLenum	_type		   = 0;
+
+	getTypeParameters(type, internalFormat, format, pixelSize, components, _type);
+
+	init(width, height, internalFormat, format, pixelSize, components, _type, nullptr);
+}
+
 void ygl::Texture2d::save(std::string fileName) {
 	uint8_t *buff = new uint8_t[width * height * pixelSize];
 
@@ -386,6 +402,10 @@ void ygl::TextureCubemap::serialize(std::ostream &out) {
 void ygl::TextureCubemap::BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) {
 	fb.bind();
 	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_CUBE_MAP_POSITIVE_X + image, id, level);
+}
+
+void ygl::TextureCubemap::resize(uint width, uint height) {
+	dbLog(LOG_ERROR, "CANNOT RESIZE A CUBEMAP! GO IMPLEMENT IT");
 }
 
 void ygl::TextureCubemap::save(std::string) {
@@ -555,10 +575,11 @@ ygl::TextureCubemap *ygl::createPrefilterCubemap(const ygl::TextureCubemap *hdrC
 	parsingShader->setUniform("projection", captureProjection);
 	parsingShader->setUniform("environmentMap", 0);
 
+	depthBuffer->BindToFrameBuffer(*fb, GL_DEPTH_ATTACHMENT, 0, 0);
+	
 	for (std::size_t mip = 0; mip < mipCount; ++mip) {
 		uint w = width >> mip, h = height >> mip;
 		depthBuffer->resize(w, h);
-		depthBuffer->BindToFrameBuffer(*fb, GL_DEPTH_ATTACHMENT, 0, 0);
 		glViewport(0, 0, w, h);
 
 		float roughness = (float)mip / (float)(mipCount - 1);

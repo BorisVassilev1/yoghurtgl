@@ -66,6 +66,7 @@ class FrameBuffer {
 	Texture2d *getDepthStencil();
 
 	int getID() { return id; }
+	void resize(uint width, uint height);
 
 	static void bindDefault();
 };
@@ -151,6 +152,7 @@ class Renderer : public ygl::ISystem {
 	static const char *name;
 	uint			   skyboxTexture	 = 0;
 	uint			   irradianceTexture = 0;
+	uint			   prefilterTexture	 = 0;
 
 	DELETE_COPY_AND_ASSIGNMENT(Renderer)
 

@@ -66,8 +66,8 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path, const std::str
 		ygl::TextureCubemap *irradianceMap = createIrradianceCubemap(map);
 		renderer->irradianceTexture = scene.getSystem<AssetManager>()->addTexture(irradianceMap, path + "_irr");
 
-		//ygl::TextureCubemap *prefilterMap = createPrefilterCubemap(map);
-		//mat.albedo_map	   = scene.getSystem<AssetManager>()->addTexture(prefilterMap, path);
+		ygl::TextureCubemap *prefilterMap = createPrefilterCubemap(map);
+		renderer->prefilterTexture = scene.getSystem<AssetManager>()->addTexture(prefilterMap, path);
 	} else {
 		mat.albedo_map	   = scene.getSystem<AssetManager>()->addTexture(new TextureCubemap(path, format), path);
 	}
