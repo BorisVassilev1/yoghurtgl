@@ -279,6 +279,8 @@ void ygl::SphereMesh::init(float radius, uint detailX, uint detailY) {
 	GLfloat *normals  = new GLfloat[vertexCount * 3];
 	GLfloat *colors	  = new GLfloat[vertexCount * 4];
 	GLfloat *uvs	  = new GLfloat[vertexCount * 2];
+	GLfloat *tangents = new GLfloat[vertexCount * 3];
+
 	for (uint i = 0; i < detailX; ++i) {
 		float lon = i * M_PI / (detailX - 1);
 		for (uint j = 0; j < detailY * 2 + 1; ++j) {
@@ -294,13 +296,17 @@ void ygl::SphereMesh::init(float radius, uint detailX, uint detailY) {
 			normals[index * 3 + 1] = cos(lon);
 			normals[index * 3 + 2] = sin(lon) * sin(lat);
 
+			tangents[index * 3]		= sin(lon) * cos(lat + glm::pi<float>() / 2);
+			tangents[index * 3 + 1] = cos(lon);
+			tangents[index * 3 + 2] = sin(lon) * sin(lat + glm::pi<float>() / 2);
+
 			colors[index * 4]	  = i / (float)detailX;
 			colors[index * 4 + 1] = j / (float)detailY / 2.;
 			colors[index * 4 + 2] = 1.0;
 			colors[index * 4 + 3] = 1.0;
 
-			uvs[index * 2]	   = i / (float)detailX;
-			uvs[index * 2 + 1] = j / (float)(detailY * 2 + 1);
+			uvs[index * 2]	   = j / (float)(detailY * 2);
+			uvs[index * 2 + 1] = 1. - (i / (float)detailX);
 		}
 	}
 
@@ -322,13 +328,14 @@ void ygl::SphereMesh::init(float radius, uint detailX, uint detailY) {
 		}
 	}
 
-	Mesh::init(vertexCount, vertices, normals, uvs, colors, (GLfloat *)nullptr, faceCount * 6, indices);
+	Mesh::init(vertexCount, vertices, normals, uvs, colors, tangents, faceCount * 6, indices);
 
 	delete[] vertices;
 	delete[] normals;
 	delete[] colors;
 	delete[] indices;
 	delete[] uvs;
+	delete[] tangents;
 }
 
 ygl::SphereMesh::SphereMesh(float radius, uint detailX, uint detailY)

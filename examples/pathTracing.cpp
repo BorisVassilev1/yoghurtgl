@@ -80,6 +80,9 @@ int	  maxSamples  = 100000;
 float PI		  = glm::pi<float>();
 Timer timer;
 
+const GLuint RENDER_TEXTURE_BINDING = GL_TEXTURE15;
+const GLuint RAW_TEXTURE_BINDING	= GL_TEXTURE16;
+
 ygl::bvh::BVHTree *bvh = new ygl::bvh::BVHTree();
 
 void cleanup() {
@@ -103,7 +106,7 @@ void cleanup() {
 
 void initScene() {
 	try {
-		bunnyMesh = new ygl::MeshFromFile("./res/models/dragon-gltf/scene.gltf", 2);
+		bunnyMesh = new ygl::MeshFromFile("./res/models/Knight.obj", 0);
 	} catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		cleanup();
@@ -125,12 +128,13 @@ void initScene() {
 		ygl::Material(glm::vec3(1.f), 0.1, glm::vec3(0.f), 1.0, glm::vec3(0.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 0.0));
 
 	ygl::AssetManager *asman = scene->getSystem<ygl::AssetManager>();
-	ygl::Material	   geometryMaterial =
-		ygl::MeshFromFile::getMaterial(ygl::MeshFromFile::loadedScene, asman, "./res/models/dragon-gltf/", 2);
+	ygl::Material	   geometryMaterial = 
+		//ygl::MeshFromFile::getMaterial(ygl::MeshFromFile::loadedScene, asman, "./res/models/bunny_uv/", 0);
+		ygl::Material(glm::vec3(1.f), 0.1, glm::vec3(0.f), 1.0, glm::vec3(0.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 0.0);
 
 	bunny = scene->createEntity();
 	scene->addComponent<ygl::Transformation>(
-		bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(1.f)));
+		bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(0.01f)));
 	ygl::RendererComponent bunnyRenderer;
 
 	unsigned int shaderIndex = asman->addShader(shader, "defaultShader");
@@ -144,7 +148,7 @@ void initScene() {
 	ygl::Shader::setSSBO(bunnyMesh->getTangents().bufferId, 9);
 	ygl::Shader::setSSBO(bunnyMesh->getIBO(), 4);
 
-	addSkybox(*scene, "./res/images/little_paris_eiffel_tower_4k", ".hdr");
+	addSkybox(*scene, "res/images/blue_photo_studio_4k", ".hdr");
 
 	renderer->addLight(ygl::Light(ygl::Transformation(glm::vec3(0), glm::vec3(-1, -2.9, 0), glm::vec3(1)),
 								  glm::vec3(1., 1., 1.), 3, ygl::Light::Type::DIRECTIONAL));
@@ -232,15 +236,15 @@ void initPathTracer() {
 
 	pathTracer	  = new ygl::ComputeShader("./shaders/pathTracing/tracer.comp");
 	normalizer	  = new ygl::ComputeShader("./shaders/pathTracing/normalizer.comp");
-	renderTexture = new ygl::Texture2d(window->getWidth(), window->getHeight());
+	renderTexture = new ygl::Texture2d(window->getWidth(), window->getHeight(), ygl::TextureType::RGBA32F, nullptr);
 	renderTexture->bindImage(0);
 
-	rawTexture = new ygl::Texture2d(window->getWidth(), window->getHeight());
+	rawTexture = new ygl::Texture2d(window->getWidth(), window->getHeight(), ygl::TextureType::RGBA32F, nullptr);
 	rawTexture->bindImage(1);
 
-	skybox = new ygl::TextureCubemap("./res/images/little_paris_eiffel_tower_4k", ".hdr");
-	// skybox = new ygl::TextureCubemap("./res/images/skybox", ".jpg");
-	skybox->bind(GL_TEXTURE11);
+	skybox = ygl::loadHDRCubemap("res/images/blue_photo_studio_4k", ".hdr");
+	//skybox = new ygl::TextureCubemap("./res/images/skybox", ".jpg");
+	skybox->bind(ygl::TexIndex::SKYBOX);
 
 	// initSpheres();
 	initBoxes();
@@ -257,14 +261,14 @@ void initPathTracer() {
 	pathTracer->setUniform("bvh_matrix", scene->getComponent<ygl::Transformation>(bunny).getWorldMatrix());
 	pathTracer->unbind();
 
-	renderTexture->bind(GL_TEXTURE10);
-	rawTexture->bind(GL_TEXTURE11);
+	renderTexture->bind(RENDER_TEXTURE_BINDING);
+	rawTexture->bind(RAW_TEXTURE_BINDING);
 
 	textureOnScreen = new ygl::VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/ui/textureOnScreen.fs");
 	textureOnScreen->bind();
-	textureOnScreen->setUniform("sampler_color", 10);
-	textureOnScreen->setUniform("sampler_depth", 10);
-	textureOnScreen->setUniform("sampler_stencil", 10);
+	textureOnScreen->setUniform("sampler_color", 15);
+	textureOnScreen->setUniform("sampler_depth", 15);
+	textureOnScreen->setUniform("sampler_stencil", 15);
 	textureOnScreen->unbind();
 }
 
@@ -298,6 +302,14 @@ int main() {
 
 	// tex->bind();
 
+	int textureViewIndex = 6;
+	int editMaterialIndex = 0;
+
+	dbLog(ygl::LOG_INFO, rawTexture->getID());
+	dbLog(ygl::LOG_INFO, renderTexture->getID());
+
+	bool shouldReload = false;
+
 	renderer->setClearColor(glm::vec4(0, 0, 0, 1));
 	while (!window->shouldClose()) {
 		window->beginFrame();
@@ -306,22 +318,25 @@ int main() {
 		controller->update();
 		camera->update();
 
-		if (controller->hasChanged()) {
+		if (controller->hasChanged() || shouldReload) {
 			float clearColor[]{0., 0., 0., 0.};
 			glClearTexImage(rawTexture->getID(), 0, GL_RGBA, GL_FLOAT, &clearColor);
 			sampleCount = 0;
 			timer		= Timer();
+			shouldReload = false;
 		}
 
 		if (!pathTrace) {
 			renderer->doWork();
 		} else {
-			renderTexture->bind(GL_TEXTURE10);
-			rawTexture->bind(GL_TEXTURE11);
+			renderTexture->bind(RENDER_TEXTURE_BINDING);
+			rawTexture->bind(RAW_TEXTURE_BINDING);
 			renderTexture->bindImage(0);
 			rawTexture->bindImage(1);
+			
 
 			if (sampleCount < maxSamples) {
+
 				pathTracer->bind();
 				ygl::Transformation t = ygl::Transformation(camera->transform.position, -camera->transform.rotation,
 															camera->transform.scale);
@@ -342,6 +357,17 @@ int main() {
 
 			ygl::Renderer::drawObject(textureOnScreen, screenQuad);
 		}
+
+		ImGui::Begin("Texture View");
+		ImGui::InputInt("Texture ID", &textureViewIndex);
+		ImGui::Image((void*)textureViewIndex, ImVec2(256, 256));
+		ImGui::End();
+
+		ImGui::Begin("Material Properties");
+		ImGui::InputInt("Material ID", &editMaterialIndex);
+		ImGui::End();
+		shouldReload = shouldReload || renderer->getMaterial(editMaterialIndex).drawImGui();
+		renderer->loadData();
 
 		window->swapBuffers();
 	}

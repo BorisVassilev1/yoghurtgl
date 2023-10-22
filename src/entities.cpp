@@ -93,7 +93,9 @@ ygl::Entity ygl::addModel(ygl::Scene &scene, std::string filePath, uint i) {
 	Entity model = scene.createEntity();
 	scene.addComponent<Transformation>(model, Transformation(glm::vec3(), glm::vec3(0), glm::vec3(1.)));
 
-	Material mat = ygl::MeshFromFile::getMaterial(MeshFromFile::loadedScene, asman, filePath, i);
+	uint materialIndex = MeshFromFile::loadedScene->mMeshes[i]->mMaterialIndex;
+
+	Material mat = ygl::MeshFromFile::getMaterial(MeshFromFile::loadedScene, asman, filePath, materialIndex);
 
 	Renderer *renderer = scene.getSystem<Renderer>();
 

@@ -30,6 +30,14 @@ void run() {
 	uint shaderInd = asman->addShader(shader, "defaultShader");
 	renderer->setDefaultShader(shaderInd);
 
+	Entity sphere = addSphere(scene, glm::vec3(-3, 0, 0), glm::vec3(1));
+	Material &sphere_mat = renderer->getMaterial(scene.getComponent<RendererComponent>(sphere).materialIndex);
+	sphere_mat.albedo = glm::vec3(0);
+	sphere_mat.albedo_map = asman->addTexture(new Texture2d("./res/images/2k_earth_daymap.jpg"), "earth");
+	sphere_mat.use_albedo_map = 0.4;
+	sphere_mat.normal_map = asman->addTexture(new Texture2d("./res/images/earth_normals_lowres.jpg"), "earth_normal");
+	sphere_mat.use_normal_map = 1.0;
+
 	addModels(scene, "./res/models/dragon-gltf/scene.gltf", [&scene, &renderer](Entity model) {
 		RendererComponent &rc									   = scene.getComponent<RendererComponent>(model);
 		renderer->getMaterial(rc.materialIndex).specular_roughness = 2.;
@@ -43,8 +51,18 @@ void run() {
 		tr.updateWorldMatrix();
 	});
 
+	addModels(scene, "./res/models/lamborghini_aventador/scene.gltf", [&scene](Entity model) {
+		Transformation &tr = scene.getComponent<Transformation>(model);
+		tr.position.x += 4;
+		tr.rotation.y += glm::pi<float>();
+		tr.updateWorldMatrix();
+		scene.getSystem<AssetManager>()->getMesh(scene.getComponent<RendererComponent>(model).meshIndex)->setCullFace(false);
+	});
+
 	// addSkybox(scene, "./res/images/skybox/");
-	addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
+	//addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
+	//addSkybox(scene, "res/images/royal_esplanade_4k", ".hdr");
+	addSkybox(scene, "res/images/meadow_4k", ".hdr");
 
 	//renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, .3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 5,
 	//						 Light::Type::DIRECTIONAL));
@@ -53,7 +71,7 @@ void run() {
 	renderer->loadData();
 
 	int editMaterialIndex = 0;
-	int textureViewIndex = 1;
+	int textureViewIndex = 6;
 
 	glClearColor(0, 0, 0, 1);
 	while (!window.shouldClose()) {
@@ -73,7 +91,7 @@ void run() {
 
 		ImGui::Begin("Texture View");
 		ImGui::InputInt("Material ID", &textureViewIndex);
-		ImGui::Image((void*)textureViewIndex, ImVec2(512, 512));
+		ImGui::Image((void*)textureViewIndex, ImVec2(256, 256));
 		ImGui::End();
 
 		window.swapBuffers();

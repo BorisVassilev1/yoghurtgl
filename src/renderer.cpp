@@ -5,6 +5,7 @@
 #include <iterator>
 #include <ostream>
 #include <string>
+#include "texture.h"
 #include "yoghurtgl.h"
 #include <asset_manager.h>
 #include <material.h>
@@ -218,6 +219,9 @@ void ygl::Renderer::init() {
 
 	scene->registerSystemIfCan<ygl::AssetManager>();
 	asman = scene->getSystem<AssetManager>();
+
+	brdfTexture = asman->addTexture(createBRDFTexture(), "brdf_Texture");
+	dbLog(LOG_INFO, asman->getTexture(brdfTexture)->getID());
 }
 
 ygl::Shader *ygl::Renderer::getShader(RendererComponent &comp) { return getShader(comp.shaderIndex); }
@@ -349,6 +353,7 @@ void ygl::Renderer::drawScene() {
 		if (skyboxTexture != 0) asman->getTexture(skyboxTexture)->bind(ygl::TexIndex::SKYBOX);
 		if (irradianceTexture != 0) asman->getTexture(irradianceTexture)->bind(ygl::TexIndex::IRRADIANCE_MAP);
 		if (prefilterTexture != 0) asman->getTexture(prefilterTexture)->bind(ygl::TexIndex::PREFILTER_MAP);
+		asman->getTexture(brdfTexture)->bind(ygl::TexIndex::BDRF_MAP);
 
 		Mesh *mesh = getMesh(ecr.meshIndex);
 		mesh->bind();

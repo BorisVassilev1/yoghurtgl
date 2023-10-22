@@ -30,6 +30,7 @@ class TexIndex {
 		SKYBOX		   = GL_TEXTURE11,
 		IRRADIANCE_MAP = GL_TEXTURE12,
 		PREFILTER_MAP  = GL_TEXTURE13,
+		BDRF_MAP	   = GL_TEXTURE14,
 	};
 };
 
@@ -54,6 +55,7 @@ enum TextureType {
 	DEPTH_STENCIL_32F_8,
 	DEPTH_24,
 	HDR_CUBEMAP,
+	RG16F,
 	DIFFUSE	  = SRGB8,
 	NORMAL	  = RGB16F,
 	ROUGHNESS = SRGB8,
@@ -164,7 +166,7 @@ class Texture2d : public ITexture {
 
 	void serialize(std::ostream &out) override;
 	void BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) override;
-	
+
 	void resize(uint width, uint height) override;
 };
 
@@ -203,7 +205,7 @@ class TextureCubemap : public ITexture {
 
 	void serialize(std::ostream &out) override;
 	void BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) override;
-	
+
 	void resize(uint width, uint height) override;
 };
 
@@ -212,5 +214,7 @@ ygl::TextureCubemap *loadHDRCubemap(const std::string &path, const std::string &
 ygl::TextureCubemap *createIrradianceCubemap(const TextureCubemap *hdrCubemap);
 
 ygl::TextureCubemap *createPrefilterCubemap(const TextureCubemap *hdrCubemap);
+
+ygl::Texture2d *createBRDFTexture();
 
 }	  // namespace ygl

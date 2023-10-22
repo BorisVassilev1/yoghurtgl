@@ -101,6 +101,14 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			_type		   = GL_FLOAT;
 			break;
 		}
+		case TextureType::RG16F: {
+			internalFormat = GL_RG16F;
+			format		   = GL_RG;
+			pixelSize	   = 8;
+			components	   = 2;
+			_type		   = GL_FLOAT;
+			break;
+		}
 		default: {
 			dbLog(ygl::LOG_WARNING, "unknown texture type ", type, ". default texture type will be RGBA32f");
 			internalFormat = GL_RGBA32F;
@@ -143,7 +151,7 @@ void ygl::RenderBuffer::BindToFrameBuffer(const ygl::FrameBuffer &fb, GLenum att
 }
 
 void ygl::RenderBuffer::resize(uint width, uint height) {
-	this->width = width;
+	this->width	 = width;
 	this->height = height;
 	bind();
 	GLint	internalFormat = 0;
@@ -281,8 +289,8 @@ void ygl::Texture2d::BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment,
 }
 
 void ygl::Texture2d::resize(uint width, uint height) {
-	this->width = width;
-	this->height = height;
+	this->width			   = width;
+	this->height		   = height;
 	GLint	internalFormat = 0;
 	GLenum	format		   = 0;
 	uint8_t pixelSize	   = 0;
@@ -332,7 +340,8 @@ ygl::TextureCubemap::TextureCubemap(uint32_t width, uint32_t height) {
 	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 
 	for (int i = 0; i < 6; i++) {
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE,
+					 nullptr);
 	}
 
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -447,7 +456,7 @@ ygl::TextureCubemap *ygl::loadHDRCubemap(const std::string &path, const std::str
 	ygl::TextureCubemap *cubemap	= new TextureCubemap(width, height);
 
 	ygl::VFShader *parsingShader =
-		new ygl::VFShader("./shaders/equirectangularToCubemap.vs", "./shaders/equirectangularToCubemap.fs");
+		new ygl::VFShader("./shaders/trivialPosition.vs", "./shaders/equirectangularToCubemap.fs");
 	ygl::Mesh *cubeMesh = new ygl::BoxMesh();
 	cubeMesh->setCullFace(false);
 
@@ -501,7 +510,7 @@ ygl::TextureCubemap *ygl::createIrradianceCubemap(const ygl::TextureCubemap *hdr
 	ygl::TextureCubemap *cubemap = new TextureCubemap(width, height);
 
 	ygl::VFShader *parsingShader =
-		new ygl::VFShader("./shaders/computeIrradiance.vs", "./shaders/computeIrradiance.fs");
+		new ygl::VFShader("./shaders/trivialPosition.vs", "./shaders/computeIrradiance.fs");
 	ygl::Mesh *cubeMesh = new ygl::BoxMesh();
 	cubeMesh->setCullFace(false);
 
@@ -547,11 +556,11 @@ ygl::TextureCubemap *ygl::createIrradianceCubemap(const ygl::TextureCubemap *hdr
 
 ygl::TextureCubemap *ygl::createPrefilterCubemap(const ygl::TextureCubemap *hdrCubemap) {
 	uint width = 512, height = 512;
-	uint mipCount = 5;
+	uint mipCount = 6;
 
 	ygl::TextureCubemap *cubemap = new TextureCubemap(width, height);
 
-	ygl::VFShader *parsingShader = new ygl::VFShader("./shaders/prefilterCubemap.vs", "./shaders/prefilterCubemap.fs");
+	ygl::VFShader *parsingShader = new ygl::VFShader("./shaders/trivialPosition.vs", "./shaders/prefilterCubemap.fs");
 	ygl::Mesh	  *cubeMesh		 = new ygl::BoxMesh();
 	cubeMesh->setCullFace(false);
 
@@ -576,7 +585,7 @@ ygl::TextureCubemap *ygl::createPrefilterCubemap(const ygl::TextureCubemap *hdrC
 	parsingShader->setUniform("environmentMap", 0);
 
 	depthBuffer->BindToFrameBuffer(*fb, GL_DEPTH_ATTACHMENT, 0, 0);
-	
+
 	for (std::size_t mip = 0; mip < mipCount; ++mip) {
 		uint w = width >> mip, h = height >> mip;
 		depthBuffer->resize(w, h);
@@ -597,4 +606,35 @@ ygl::TextureCubemap *ygl::createPrefilterCubemap(const ygl::TextureCubemap *hdrC
 		}
 	}
 	return cubemap;
+}
+
+ygl::Texture2d *ygl::createBRDFTexture() {
+	uint width = 512, height = 512;
+
+	ygl::Texture2d *result = new Texture2d(width, height, TextureType::RG16F, nullptr);
+
+	ygl::FrameBuffer *fb = new FrameBuffer(
+		nullptr, GL_COLOR_ATTACHMENT0, 
+		new RenderBuffer(width, height, TextureType::DEPTH_24), GL_DEPTH_ATTACHMENT);
+	
+	ygl::Mesh *quad = new ygl::QuadMesh();
+	quad->setDepthFunc(GL_ALWAYS);
+	quad->setCullFace(false);
+	
+	ygl::VFShader *sh = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/BRDFPrecompute.fs");
+	
+	glViewport(0,0, width, height);
+	fb->bind();
+	result->BindToFrameBuffer(*fb, GL_COLOR_ATTACHMENT0, 0, 0);
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	Renderer::drawObject(sh, quad);
+
+	fb->unbind();
+
+	delete fb;
+	delete quad;
+	delete sh;
+
+	return result;
 }

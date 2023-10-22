@@ -89,33 +89,35 @@ ygl::Material::Material(glm::vec3 albedo, float specular_chance, glm::vec3 emiss
 	  emission_map(0),
 	  use_emission_map(texStrength) {}
 
-void ygl::Material::drawImGui() {
+bool ygl::Material::drawImGui() {
 	ImGui::Begin("Material Controls");
+	bool res = false;
 
-	ImGui::ColorEdit3("albedo", glm::value_ptr(albedo));
-	ImGui::SliderFloat("specular_chance", &specular_chance, 0., 1.);
-	ImGui::ColorEdit3("emission", glm::value_ptr(emission));
-	ImGui::SliderFloat("ior", &ior, 0., 1.);
-	ImGui::ColorEdit3("transparency_color", glm::value_ptr(transparency_color));
-	ImGui::SliderFloat("refraction_chance", &refraction_chance, 0., 1.);
-	ImGui::ColorEdit3("specular_color", glm::value_ptr(specular_color));
-	ImGui::SliderFloat("refraction_roughness", &refraction_roughness, 0., 1.);
-	ImGui::SliderFloat("specular_roughness", &specular_roughness, 0., 1.);
-	ImGui::SliderFloat("metallic", &metallic, 0., 1.);
-	ImGui::InputInt("normal_map", &normal_map);
-	ImGui::SliderFloat("use_normal_map", &use_normal_map, 0., 1.);
-	ImGui::InputInt("roughness_map", &roughness_map);
-	ImGui::SliderFloat("use_roughness_map", &use_roughness_map, 0., 1.);
-	ImGui::InputInt("ao_map", &ao_map);
-	ImGui::SliderFloat("use_ao_map", &use_ao_map, 0., 1.);
-	ImGui::InputInt("metallic_map", &metallic_map);
-	ImGui::SliderFloat("use_metallic_map", &use_metallic_map, 0., 1.);
-	ImGui::InputInt("albedo_map", &albedo_map);
-	ImGui::SliderFloat("use_albedo_map", &use_albedo_map, 0., 1.);
-	ImGui::InputInt("emission_map", &emission_map);
-	ImGui::SliderFloat("use_emission_map", &use_emission_map, 0., 1.);
+	res = res || ImGui::ColorEdit3("albedo", glm::value_ptr(albedo));
+	res = res || ImGui::SliderFloat("specular_chance", &specular_chance, 0., 1.);
+	res = res || ImGui::ColorEdit3("emission", glm::value_ptr(emission));
+	res = res || ImGui::SliderFloat("ior", &ior, 0., 1.);
+	res = res || ImGui::ColorEdit3("transparency_color", glm::value_ptr(transparency_color));
+	res = res || ImGui::SliderFloat("refraction_chance", &refraction_chance, 0., 1.);
+	res = res || ImGui::ColorEdit3("specular_color", glm::value_ptr(specular_color));
+	res = res || ImGui::SliderFloat("refraction_roughness", &refraction_roughness, 0., 1.);
+	res = res || ImGui::SliderFloat("specular_roughness", &specular_roughness, 0., 1.);
+	res = res || ImGui::SliderFloat("metallic", &metallic, 0., 1.);
+	res = res || ImGui::InputInt("normal_map", &normal_map);
+	res = res || ImGui::SliderFloat("use_normal_map", &use_normal_map, 0., 1.);
+	res = res || ImGui::InputInt("roughness_map", &roughness_map);
+	res = res || ImGui::SliderFloat("use_roughness_map", &use_roughness_map, 0., 1.);
+	res = res || ImGui::InputInt("ao_map", &ao_map);
+	res = res || ImGui::SliderFloat("use_ao_map", &use_ao_map, 0., 1.);
+	res = res || ImGui::InputInt("metallic_map", &metallic_map);
+	res = res || ImGui::SliderFloat("use_metallic_map", &use_metallic_map, 0., 1.);
+	res = res || ImGui::InputInt("albedo_map", &albedo_map);
+	res = res || ImGui::SliderFloat("use_albedo_map", &use_albedo_map, 0., 1.);
+	res = res || ImGui::InputInt("emission_map", &emission_map);
+	res = res || ImGui::SliderFloat("use_emission_map", &use_emission_map, 0., 1.);
 
 	ImGui::End();
+	return res;
 }
 
 namespace ygl {

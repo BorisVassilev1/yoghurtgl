@@ -7,6 +7,7 @@
 #include <ecs.h>
 #include <renderer.h>
 #include <fstream>
+#include <entities.h>
 
 using namespace ygl;
 using namespace std;
@@ -88,10 +89,13 @@ void run() {
 		}
 	}
 
+	addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
+
 	renderer->loadData();
 
 	glClearColor(0.07f, 0.13f, 0.17f, 1.0);
 	int editMaterialIndex = 0;
+	int textureViewIndex = 6;
 	while (!window.shouldClose()) {
 		window.beginFrame();
 		mouse.update();
@@ -103,13 +107,13 @@ void run() {
 		controller.update();
 		cam.update();
 
-		//ImGui::Begin("Material Properties");
-		//ImGui::InputInt("Material ID", &editMaterialIndex);
-		//renderer->getMaterial(editMaterialIndex).drawImGui();
-		//ImGui::End();
-		//renderer->loadData();
-
 		renderer->doWork();
+
+		ImGui::Begin("Material Properties");
+		ImGui::InputInt("Material ID", &editMaterialIndex);
+		renderer->getMaterial(editMaterialIndex).drawImGui();
+		ImGui::End();
+		renderer->loadData();
 
 		window.swapBuffers();
 	}

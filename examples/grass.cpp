@@ -59,13 +59,14 @@ void run() {
 		t.updateWorldMatrix();
 	} catch (std::exception &e) { std::cerr << e.what() << std::endl; }
 
-	Entity skybox = addSkybox(scene, "./res/images/skybox/");
+	addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
+	//Entity skybox = addSkybox(scene, "./res/images/skybox/");
 
 	// renderer->addLight(Light(Transformation(glm::vec3(0, 3, 0)), glm::vec3(0.2, 0.2, 1.0), 50, Light::Type::POINT));
 
-	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(0.5, -0.5, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
-							 3, Light::Type::DIRECTIONAL));
-	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
+	//renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(0.5, -0.5, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
+	//						 3, Light::Type::DIRECTIONAL));
+	//renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
 
 	renderer->loadData();
 	// scene is initialized
