@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2.0)
+cmake_minimum_required(VERSION 3.25.0)
 
 set(YGL_NO_ASSIMP OFF CACHE BOOL "Link Assimp as a dependency")
 set(CMAKE_CXX_STANDARD 20)
