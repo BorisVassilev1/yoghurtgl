@@ -13,9 +13,11 @@ add_subdirectory(libs/)
 set(COMPILE_ARGS
 --pedantic-errors
 # -fsanitize=address
+-stdlib=libc++
 )
 set(LINK_ARGS
 # -fsanitize=address
+-stdlib=libc++
 )
 
 if (MSVC)
