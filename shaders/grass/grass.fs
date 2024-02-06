@@ -9,16 +9,23 @@ in vec3 vVertexPos;
 
 out vec4 fragColor;
 
-uniform vec3 color0 = pow(vec3(0.1, 0.5, 0.1), vec3(2.2));
-uniform vec3 color1 = pow(vec3(0.9, 1, 0.7), vec3(2.2));
 
 void main() {
-	vec3 albedo = mix(color0, color1, vColor.x * vColor.x);
+	Material mat = materials[material_index];
+	vec3 albedo = mix(mat.transparency_color, mat.albedo, vColor.x * vColor.x);
 
 	vec3 normalizedVertexNormal = normalize(vVertexNormal);
 
 	// if(!gl_FrontFacing) normalizedVertexNormal = -normalizedVertexNormal;
-	vec3 color = calcAllLights(vVertexPos, normalizedVertexNormal, normalizedVertexNormal, vTexCoord);
+	
+	vec3 color = calcAllLightsCustom(
+		vVertexPos, 
+		normalizedVertexNormal, 
+		albedo, 
+		mat.specular_roughness,
+		mat.metallic,
+		clamp(vColor.x * vColor.x + 0.2, 0, 1),
+		vec3(0.0));
 
 	// color = vec3(materials[material_index].albedo);
 	// color = vVertexNormal;

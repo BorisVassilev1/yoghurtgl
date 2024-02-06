@@ -1,12 +1,13 @@
 #pragma once
 
-#include <serializable.h>
-#include <shader.h>
-
-#include <mesh.h>
-#include <texture.h>
 #include <vector>
 #include <unordered_map>
+#include <queue>
+
+#include <serializable.h>
+#include <shader.h>
+#include <mesh.h>
+#include <texture.h>
 #include <material.h>
 #include <ecs.h>
 
@@ -17,18 +18,101 @@
 
 namespace ygl {
 
+template <class A>
+class AssetArray : public AppendableSerializable {
+	std::unordered_map<std::string, uint> names;
+	std::vector<std::pair<A *, bool>>	  assets;
+	std::queue<uint>					  holes;
+
+   public:
+	inline uint add(A *asset, const std::string &name, bool persist = true) {
+		uint res;
+		if (!holes.empty()) {
+			res = holes.front();
+			holes.pop();
+			assets[res] = {asset, persist};
+		} else {
+			res = assets.size();
+			assets.push_back({asset, persist});
+		}
+		names.insert({name, res});
+		return res;
+	}
+	inline uint getIndex(const std::string &name) {
+		auto res = names.find(name);
+		if (res == names.end()) return -1;
+		return res->second;
+	}
+	inline A *get(uint index) {
+		if (index >= assets.size()) THROW_RUNTIME_ERR("Out of bounds access: " + std::to_string(index));
+		if(assets[index].first == nullptr) THROW_RUNTIME_ERR("Trying to access a non-existent texture: " + std::to_string(index)); 
+		return assets[index].first;
+	}
+	inline uint size() { return names.size(); }
+
+	void print() {
+		for (auto &it : names) {
+			std::cerr << it.first << ' ' << it.second << '\n';
+		}
+	}
+
+	~AssetArray() {
+		for (auto [asset, _] : this->assets) {
+			delete asset;
+		}
+	}
+
+	void write(std::ostream &out) override {
+		auto count = std::count_if(assets.begin(), assets.end(), [](auto &p) { return p.second; });
+		auto size = assets.size();
+		out.write((char *)&count, sizeof(count));
+		out.write((char *)&size, sizeof(size));
+		for (auto &[name, index] : names) {
+			if (assets[index].second) {
+				dbLog(ygl::LOG_INFO, "Saving: ", name);
+				out.write(name.c_str(), name.size() + 1);
+				out.write((char *)&index, sizeof(uint));
+				assets[index].first->serialize(out);
+			}
+		}
+	}
+
+	void read(std::istream &in) override {
+		auto count = assets.size();
+		auto size = assets.size();
+		in.read((char *)&count, sizeof(count));
+		in.read((char *)&size, sizeof(size));
+		assets.resize(size);
+		std::vector<bool> check;
+		check.resize(size, false);
+
+		for (std::size_t i = 0; i < count; ++i) {
+			std::string name;
+			uint		index;
+			std::getline(in, name, '\0');
+			in.read((char *)&index, sizeof(uint));
+			dbLog(ygl::LOG_INFO, "Loading: ", name);
+
+			A *asset	  = dynamic_cast<A *>(ResourceFactory::fabricate(in));
+			assets[index] = std::make_pair(asset, true);
+			names[name]	  = index;
+			check[index]  = true;
+		}
+
+		holes = std::queue<uint>();
+		for (std::size_t i = 0; i < size; ++i) {
+			if (!check[i]) holes.push(i);
+		}
+	}
+};
+
 /**
  * @brief A System that manages assets: meshes, textures, shaders
  */
 class AssetManager : public ygl::ISystem {
-	std::unordered_map<std::string, uint> meshNames;	 ///< map name to index in @ref meshes array
-	std::vector<Mesh *>					  meshes;		 ///< array of all meshes
-
-	std::unordered_map<std::string, uint> textureNames;		///< map name to index in @ref textures array
-	std::vector<ITexture *>				  textures;			///< array of all textures
-
-	std::unordered_map<std::string, uint> shaderNames;	   ///< map name to index in @ref shaders array
-	std::vector<Shader *>				  shaders;		   ///< array of all shaders
+	AssetArray<Mesh>	 meshes;
+	AssetArray<ITexture> textures;
+	AssetArray<Shader>	 shaders;
 
 	AssetManager(const AssetManager &other)			   = delete;
 	AssetManager &operator=(const AssetManager &other) = delete;
@@ -43,7 +127,7 @@ class AssetManager : public ygl::ISystem {
 	 * @param name - resource name
 	 * @return index in the asset array
 	 */
-	uint addMesh(Mesh *mesh, const std::string &name);
+	uint addMesh(Mesh *mesh, const std::string &name, bool persist = true);
 	/**
 	 * @brief Adds a Texture to the list of assets.
 	 * @note Takes ownership of \a tex
@@ -52,7 +136,7 @@ class AssetManager : public ygl::ISystem {
 	 * @param name - resource name
 	 * @return index in the asset array
 	 */
-	uint addTexture(ITexture *tex, const std::string &name);
+	uint addTexture(ITexture *tex, const std::string &name, bool persist = true);
 	/**
 	 * @brief Adds a Shader to the list of assets.
 	 * @note Takes ownership of \a shader
@@ -61,7 +145,7 @@ class AssetManager : public ygl::ISystem {
 	 * @param name - resource name
 	 * @return index in the asset array
 	 */
-	uint addShader(Shader *shader, const std::string &name);
+	uint addShader(Shader *shader, const std::string &name, bool persist = true);
 
 	uint getMeshIndex(const std::string &name);
 	uint getTextureIndex(const std::string &name);
@@ -90,4 +174,5 @@ class AssetManager : public ygl::ISystem {
 	void write(std::ostream &out) override;
 	void read(std::istream &in) override;
 };
+
 }	  // namespace ygl

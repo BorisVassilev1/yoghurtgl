@@ -40,15 +40,20 @@ void run() {
 	uint shaderIndex = asman->addShader(shader, "defaultShader");
 	renderer->setDefaultShader(shaderIndex);
 
-	Mesh *planeMesh = new PlaneMesh(glm::vec2(40, 40), glm::vec2(1, 1));
+	glm::vec2 size			 = glm::vec2(30);
+	Mesh	 *planeMesh		 = new PlaneMesh(size, glm::vec2(1, 1));
+	uint	  planeMeshIndex = asman->addMesh(planeMesh, "plane");
+	uint	  groundMaterial = renderer->addMaterial(
+		 Material(glm::vec3(0, 0.1, 0), 0.02, glm::vec3(), 1.4, glm::vec3(0), 0, glm::vec3(0), 0, 0.8, 0));
 
-	Entity plane = scene.createEntity();
-	scene.addComponent(plane, Transformation());
-	scene.addComponent(plane, RendererComponent(-1, asman->addMesh(planeMesh, "plane"),
-												renderer->addMaterial(Material(glm::vec3(0.1, 0.5, 0.1), .2,
-																			   glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0,
-																			   glm::vec3(1.), 0.0, 0.3, 0.0, 0.0))));
-	scene.addComponent(plane, GrassSystem::GrassHolder());
+	for (int i = 0; i < (int)7; ++i) {
+		for (int j = 0; j < (int)7; ++j) {
+			Entity plane = scene.createEntity();
+			scene.addComponent(plane, Transformation(glm::vec3((i - 3) * size.x, 0, (j - 3) * size.y)));
+			scene.addComponent(plane, RendererComponent(-1, planeMeshIndex, groundMaterial));
+			scene.addComponent(plane, GrassSystem::GrassHolder(size, 3., 1));
+		}
+	}
 
 	Entity model = -1;
 	try {
@@ -59,15 +64,9 @@ void run() {
 		t.updateWorldMatrix();
 	} catch (std::exception &e) { std::cerr << e.what() << std::endl; }
 
-	addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
-	//Entity skybox = addSkybox(scene, "./res/images/skybox/");
-
-	// renderer->addLight(Light(Transformation(glm::vec3(0, 3, 0)), glm::vec3(0.2, 0.2, 1.0), 50, Light::Type::POINT));
-
-	//renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(0.5, -0.5, 0), glm::vec3(1)), glm::vec3(1., 1., 1.),
-	//						 3, Light::Type::DIRECTIONAL));
-	//renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
-
+	addSkybox(scene, "res/images/meadow_4k", ".hdr");
+	// Entity skybox = addSkybox(scene, "./res/images/skybox/");
+	
 	renderer->loadData();
 	// scene is initialized
 
@@ -82,15 +81,28 @@ void run() {
 		controller.update();
 		cam.update();
 
+		for(Entity e : grassSystem->entities) {
+			Transformation &transform = scene.getComponent<Transformation>(e); 
+			GrassSystem::GrassHolder &holder = scene.getComponent<GrassSystem::GrassHolder>(e);
+			float distance = glm::length(transform.position - cam.transform.position);
+			holder.LOD = distance / 60;
+		}
+
 		grassSystem->doWork();
 		renderer->doWork();
 
-		Transformation &transform = scene.getComponent<Transformation>(model == -1 ? 0 : model);
+		Transformation &transform = scene.getComponent<Transformation>(model == (uint)-1 ? 0 : model);
 
 		guizmo.update(&transform);
 
+		if (grassSystem->getMaterial().drawImGui()) renderer->loadData();
+
 		ImGui::Begin("Grass controls");
 		if (ImGui::SliderFloat("density", &(grassSystem->density), 1., 10.)) { grassSystem->reload(); }
+		if (ImGui::SliderFloat("curvature", &grassSystem->curvature, 0, 1)) {}
+		if (ImGui::SliderFloat("facingOffset", &grassSystem->facingOffset, 0, 2)) {}
+		if (ImGui::SliderFloat("height", &grassSystem->height, 0, 2)) {}
+		if (ImGui::SliderFloat("width", &grassSystem->width, 0, 1)) {}
 
 		if (ImGui::SliderFloat3("ground rotation", (float *)&transform.rotation, -M_PI, M_PI)) {
 			transform.updateWorldMatrix();
@@ -98,6 +110,7 @@ void run() {
 		if (ImGui::SliderFloat3("ground position", (float *)&transform.position, -20, 20)) {
 			transform.updateWorldMatrix();
 		}
+		ImGui::InputInt("Render Mode", (int *)&renderer->renderMode);
 
 		ImGui::Checkbox("Alpha Correction", &(renderer->getScreenEffect(0)->enabled));
 		ImGui::End();
@@ -105,6 +118,7 @@ void run() {
 		window.swapBuffers();
 	}
 
+	asman->printTextures();
 	ofstream out("scene.sc");
 	scene.write(out);
 	out.close();

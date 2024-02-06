@@ -182,7 +182,9 @@ class TextureCubemap : public ITexture {
 	std::string path;
 	std::string format;
 
+	void loadHDRCubemap();
 	void loadCubemap();
+	void loadEmptyCubemap();
 	void init();
 
    public:
@@ -209,7 +211,6 @@ class TextureCubemap : public ITexture {
 	void resize(uint width, uint height) override;
 };
 
-ygl::TextureCubemap *loadHDRCubemap(const std::string &path, const std::string &format);
 
 ygl::TextureCubemap *createIrradianceCubemap(const TextureCubemap *hdrCubemap);
 

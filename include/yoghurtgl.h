@@ -56,19 +56,20 @@ void terminate();
  * @brief Log levels
  */
 enum {
-	LOG_ERROR	= (3),
-	LOG_WARNING = (2),
-	LOG_DEBUG	= (1),
 	LOG_INFO	= (0),
+	LOG_DEBUG	= (1),
+	LOG_WARNING = (2),
+	LOG_ERROR	= (3),
 };
 
 #define COLOR_RESET	 "\033[0m"
 #define COLOR_RED	 "\x1B[0;91m"
+#define COLOR_GREEN  "\x1B[0;92m"
 #define COLOR_YELLOW "\x1B[0;93m"
 
 static const char *log_colors[]{
 	COLOR_RESET,
-	COLOR_RESET,
+	COLOR_GREEN,
 	COLOR_YELLOW,
 	COLOR_RED
 };
@@ -123,6 +124,14 @@ bool inline f_dbLog(T arg, Types... args) {
 	TYPE &operator=(const TYPE &other) = delete;
 
 }	  // namespace ygl
+
+#define STRINGIFY__(X) #X
+#define STRINGIFY(X) STRINGIFY__(X)
+
+#ifdef __cplusplus
+extern "C"
+#endif
+const char* __asan_default_options();
 
 using uint	= unsigned int;
 using uchar = unsigned char;

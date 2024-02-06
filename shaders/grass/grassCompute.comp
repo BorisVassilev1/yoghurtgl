@@ -30,6 +30,7 @@ uniform float time;
 uniform vec2 windDirection = normalize(vec2(1, 1));
 
 uniform mat4 anchorWorldMatrix; 
+uniform uint LOD = 0;
 
 uint PCGHash(inout uint seed) {
 	seed	  = seed * 747796405u + 2891336453u;
@@ -55,20 +56,22 @@ void main() {
     vec3 bladePosition;
     bladePosition.xz = invID.xy / vec2(resolution) * size - size / 2.;
     bladePosition.y = 0;
-    bladePosition.xz += 0.4 * vec2(randomFloat(seed), randomFloat(seed));
+    bladePosition.xz += 0.4 * (LOD + 1) * vec2(randomFloat(seed), randomFloat(seed));
 
     vec3 worldBladePosition = (anchorWorldMatrix * vec4(bladePosition, 1.0)).xyz;
 
     float noiseValue = snoise(worldBladePosition * .1 + time * vec3(-windDirection, 0.)) * 0.5 + 0.5;
-    float noiseValue2 = snoise(worldBladePosition.xyz * .05) * TWO_PI;
-    // float noiseValue2 = 2.;
-    vec2 grassFacing = vec2(cos(noiseValue2), sin(noiseValue2));
-
+    vec2 windDir = vec2(
+        snoise(worldBladePosition * .1 + time * vec3(-windDirection, 0.) + 10.),
+        snoise(worldBladePosition * .1 + time * vec3(-windDirection, 0.) + 20.)
+    );
 
     float windStrength = noiseValue * 2 + 2;
 
     float angle = randomFloat(seed) * TWO_PI;
-    vec2 facing = grassFacing + windDirection * windStrength + 0.3 * vec2(cos(angle), sin(angle));
+    vec2 facing = vec2(0.);
+    facing += vec2(cos(angle), sin(angle));
+    facing += windDir;
     facing = normalize(facing);
 
     bladeData[id].position = bladePosition;

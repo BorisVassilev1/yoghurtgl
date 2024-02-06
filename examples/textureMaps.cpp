@@ -63,8 +63,8 @@ void run() {
 
 	addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
 
-	// renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 3,
-	// 						 Light::Type::DIRECTIONAL));
+	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(0, -glm::pi<float>(), 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 3,
+							 Light::Type::DIRECTIONAL));
 	// renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
 
 	renderer->loadData();
@@ -95,6 +95,10 @@ void run() {
 
 		window.swapBuffers();
 	}
+
+	std::ofstream out("scene.sc");
+	scene.write(out);
+	out.close();
 }
 
 int main() {

@@ -6,6 +6,9 @@
 #include <renderer.h>
 #include <effects.h>
 #include <fstream>
+#include "asset_manager.h"
+#include "entities.h"
+#include "transformation.h"
 
 using namespace ygl;
 
@@ -22,11 +25,25 @@ void run() {
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
 	scene.registerSystem<GrassSystem>();
 
+	scene.getSystem<AssetManager>()->printTextures();
+
 	std::ifstream is = std::ifstream("scene.sc");
 	try {
 		scene.read(is);
 	} catch (std::exception &e) { dbLog(ygl::LOG_ERROR, e.what()); }
 	is.close();
+
+	scene.getSystem<AssetManager>()->printTextures();
+
+	std::cout << "ENTITY COUNT: " << scene.entitiesCount() << std::endl;
+
+	for(Entity e : scene.entities) {
+		std::cout << scene.getComponent<Transformation>(e) << std::endl;
+		std::cout << scene.getComponent<RendererComponent>(e) << std::endl;
+	}
+
+	int editMaterialIndex = 0;
+	int textureViewIndex = 6;
 
 	glClearColor(0, 0, 0, 1);
 	while (!window.shouldClose()) {
@@ -37,6 +54,17 @@ void run() {
 		cam.update();
 
 		scene.doWork();
+		ImGui::Begin("Material Properties");
+		ImGui::InputInt("Material ID", &editMaterialIndex);
+		ImGui::End();
+		renderer->getMaterial(editMaterialIndex).drawImGui();
+		renderer->loadData();
+
+		ImGui::Begin("Texture View");
+		ImGui::InputInt("Material ID", &textureViewIndex);
+		ImGui::Image((void*)textureViewIndex, ImVec2(256, 256));
+		ImGui::End();
+
 
 		window.swapBuffers();
 	}

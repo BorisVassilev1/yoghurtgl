@@ -130,8 +130,9 @@ class Renderer : public ygl::ISystem {
 	GLuint materialsBuffer = 0;
 	GLuint lightsBuffer	   = 0;
 
-	uint	  defaultShader	 = -1;
-	Texture2d defaultTexture = Texture2d(1, 1, TextureType::RGBA16F, nullptr);
+	uint		   defaultShader  = -1;
+	Texture2d	   defaultTexture = Texture2d(1, 1, TextureType::RGBA16F, nullptr);
+	TextureCubemap defaultCubemap = TextureCubemap(1, 1);
 
 	FrameBuffer *frontFrameBuffer;
 	FrameBuffer *backFrameBuffer;
@@ -154,6 +155,7 @@ class Renderer : public ygl::ISystem {
 	uint			   irradianceTexture = 0;
 	uint			   prefilterTexture	 = 0;
 	uint			   brdfTexture		 = 0;
+	uint			   renderMode		 = 0;
 
 	DELETE_COPY_AND_ASSIGNMENT(Renderer)
 
@@ -196,6 +198,7 @@ class Renderer : public ygl::ISystem {
 	static GLuint loadLights(int count, Light *materials);
 
 	Window *getWindow() { return window; }
+	bool hasSkybox();
 
 	void write(std::ostream &out) override;
 	void read(std::istream &in) override;

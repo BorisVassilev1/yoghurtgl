@@ -220,7 +220,7 @@ void ygl::Renderer::init() {
 	scene->registerSystemIfCan<ygl::AssetManager>();
 	asman = scene->getSystem<AssetManager>();
 
-	brdfTexture = asman->addTexture(createBRDFTexture(), "brdf_Texture");
+	brdfTexture = asman->addTexture(createBRDFTexture(), "brdf_Texture", false);
 	dbLog(LOG_INFO, asman->getTexture(brdfTexture)->getID());
 }
 
@@ -351,8 +351,19 @@ void ygl::Renderer::drawScene() {
 		if (materials[ecr.materialIndex].use_metallic_map)
 			asman->getTexture(materials[ecr.materialIndex].metallic_map)->bind(ygl::TexIndex::METALLIC);
 		if (skyboxTexture != 0) asman->getTexture(skyboxTexture)->bind(ygl::TexIndex::SKYBOX);
+		
 		if (irradianceTexture != 0) asman->getTexture(irradianceTexture)->bind(ygl::TexIndex::IRRADIANCE_MAP);
+		else defaultCubemap.bind(ygl::TexIndex::IRRADIANCE_MAP);
 		if (prefilterTexture != 0) asman->getTexture(prefilterTexture)->bind(ygl::TexIndex::PREFILTER_MAP);
+		else defaultCubemap.bind(ygl::TexIndex::PREFILTER_MAP);
+
+		if(sh->hasUniform("use_skybox")) {
+			sh->setUniform("use_skybox", this->hasSkybox());
+		}
+		if(sh->hasUniform("renderMode")) {
+			sh->setUniform("renderMode", renderMode);
+		}
+
 		asman->getTexture(brdfTexture)->bind(ygl::TexIndex::BDRF_MAP);
 
 		Mesh *mesh = getMesh(ecr.meshIndex);
@@ -482,6 +493,10 @@ GLuint ygl::Renderer::loadLights(int count, Light *lights) {
 	Shader::setUBO(lightsBuffer, 2);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	return lightsBuffer;
+}
+
+bool ygl::Renderer::hasSkybox() {
+	return skyboxTexture && irradianceTexture && prefilterTexture;
 }
 
 void ygl::Renderer::write(std::ostream &out) {

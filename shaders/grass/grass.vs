@@ -16,6 +16,7 @@ out vec3 vVertexPos;
 uniform mat4 worldMatrix;
 uniform float time;
 
+
 layout(location = 0) in vec4 bladeData0;
 layout(location = 1) in vec4 bladeData1;
 layout(location = 2) in uint bladeData2;
@@ -39,6 +40,12 @@ vec3 bezierDerivative(float x, vec3 v0, vec3 v1, vec3 v2) {
 uniform float curvature = 0.6;
 uniform float facingOffset = 0.8;
 uniform float height = 1.0;
+uniform float width = 0.1;
+
+uniform float NORMAL_TERRAIN_BLEND_START = 60;
+uniform float NORMAL_TERRAIN_BLEND_END = 120;
+
+uniform uint blade_triangles;
 
 void main() {
 	uint seed = bladeData2;
@@ -48,7 +55,7 @@ void main() {
 	vec2 size = bladeData1.zw;
 	size.y *= height;
 
-	float distanceAlongBlade = (gl_VertexID / 2.) / 7.;
+	float distanceAlongBlade = (gl_VertexID / 2) / float(blade_triangles / 2);
 	float leftOrRight = (gl_VertexID % 2 - 0.5) * 2. + float(gl_VertexID == 14);
 
 	// float distanceAlongBlade = color.x;
@@ -60,8 +67,8 @@ void main() {
 	
 	// bobbing still in 2d
 	float bobbingOffset = TWO_PI * randomFloat(seed) - distanceAlongBlade * 3.14;
-	float bobbingFreq = 2.;
-	float bobbingStrength = 0.2;
+	float bobbingFreq = 4.;
+	float bobbingStrength = 0.15;
 	target.y += (bobbingStrength * sin(time * bobbingFreq + bobbingOffset) - windStrength) * 1;
 	target.z -= (bobbingStrength * sin(time * bobbingFreq + bobbingOffset) - windStrength ) * 0.5;
 
@@ -75,7 +82,7 @@ void main() {
 	vec3 derivative = bezierDerivative(distanceAlongBlade, vec3(0), mid, target);
 	vec3 curveNormal = vec3(0, derivative.z, -derivative.y);
 
-	curveNormal.x -= 0.2 * (leftOrRight);
+	curveNormal.x -= 0.5 * (leftOrRight);
 
 	// construct the rotation matrix
 	vec3 orthogonal = vec3(facing.y, 0, -facing.x);
@@ -91,12 +98,18 @@ void main() {
 	vPos.xyz += bladePosition;
 
 	// blade width
-	vPos.xyz += orthogonal * size.x * leftOrRight * pow((1 - distanceAlongBlade), 0.3);
+	vPos.xyz += orthogonal * width * leftOrRight * pow((1 - distanceAlongBlade), 0.7);
 
 	vPos = worldMatrix * vPos;
 
 	gl_Position = projectionMatrix * viewMatrix * vPos;
-	
+	vec3 camPos = (cameraWorldMatrix * vec4(0, 0, 0, 1)).xyz;
+	float viewDistance = length(vPos.xyz - camPos);
+
+	// blend normal with terrain normal
+	float normalBlendFactor = smoothstep(NORMAL_TERRAIN_BLEND_START, NORMAL_TERRAIN_BLEND_END, viewDistance);
+	curveNormal = mix(curveNormal, vec3(0, 1, 0), normalBlendFactor);
+
 	vColor.x = distanceAlongBlade;
 	vColor.y = leftOrRight;
 

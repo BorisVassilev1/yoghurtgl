@@ -8,6 +8,12 @@ bool ygl::gl_init		= false;
 bool ygl::glfw_init		= false;
 bool ygl::gl_debug_init = false;
 
+
+#ifdef __cplusplus
+extern "C"
+#endif
+const char* __asan_default_options() { return "detect_leaks=" STRINGIFY(ASAN_DETECT_LEAKS); }
+
 int ygl::init() {
 	if (ygl::glfw_init) return 0;
 	ygl::glfw_init = true;

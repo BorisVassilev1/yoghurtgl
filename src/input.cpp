@@ -89,6 +89,9 @@ void ygl::FPController::update() {
 
 	if (mouse->getDelta().x != 0.0 || mouse->getDelta().y != 0.0) { changed = true; }
 
+	int realSpeed = speed;
+	if(Keyboard::getKey(GLFW_KEY_LEFT_CONTROL)) realSpeed *= 5;
+
 	transform.rotation.x -= mouse->getDelta().y / 500.;
 	transform.rotation.y -= mouse->getDelta().x / 500.;
 
@@ -106,19 +109,20 @@ void ygl::FPController::update() {
 	glm::vec3 forward = glm::vec4(0., 0., -1., 0.0) * rotationMat;
 	forward.y		  = 0;
 	forward			  = glm::normalize(forward);
-	forward *= window->deltaTime * speed;
+	forward *= window->deltaTime * realSpeed;
 
 	glm::vec3 sideways = glm::vec4(1., 0., 0., 0.0) * rotationMat;
 	sideways.y		   = 0;
 	sideways		   = glm::normalize(sideways);
-	sideways *= window->deltaTime * speed;
+	sideways *= window->deltaTime * realSpeed;
+	
 
 	if (Keyboard::getKey(GLFW_KEY_SPACE) == GLFW_PRESS) {
-		transform.position.y += speed * window->deltaTime;
+		transform.position.y += realSpeed * window->deltaTime;
 		changed = true;
 	}
 	if (Keyboard::getKey(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-		transform.position.y -= speed * window->deltaTime;
+		transform.position.y -= realSpeed * window->deltaTime;
 		changed = true;
 	}
 	if (Keyboard::getKey(GLFW_KEY_A) == GLFW_PRESS) {

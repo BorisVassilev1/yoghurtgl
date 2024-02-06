@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.25.0)
 set(YGL_NO_ASSIMP OFF CACHE BOOL "Link Assimp as a dependency")
 set(CMAKE_CXX_STANDARD 20)
 set(YGL_STATIC ON CACHE BOOL "link as static library")
+set(ASAN_DETECT_LEAKS ON CACHE BOOL "turn the leak sanitizer on or off")
 project(YoghurtGL)
 
 
@@ -12,10 +13,10 @@ add_subdirectory(libs/)
 
 set(COMPILE_ARGS
 --pedantic-errors
-# -fsanitize=address
+	# -fsanitize=address
 )
 set(LINK_ARGS
-# -fsanitize=address
+	# -fsanitize=address
 )
 
 if (MSVC)
@@ -38,6 +39,12 @@ if (${YGL_NO_ASSIMP})
 else (${YGL_NO_ASSIMP})
 	set(LIBS ${LIBS} assimp::assimp)
 endif (${YGL_NO_ASSIMP})
+
+if (${ASAN_DETECT_LEAKS})
+	set(COMPILE_ARGS ${COMPILE_ARGS} -DASAN_DETECT_LEAKS=1)
+else (${ASAN_DETECT_LEAKS})
+	set(COMPILE_ARGS ${COMPILE_ARGS} -DASAN_DETECT_LEAKS=0)
+endif (${ASAN_DETECT_LEAKS})
 
 file(GLOB_RECURSE YGL_SOURCES
 	./src/*.cpp
