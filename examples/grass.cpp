@@ -57,11 +57,22 @@ void run() {
 
 	Entity model = -1;
 	try {
-		model			  = ygl::addModel(scene, "./res/models/gnome/scene.gltf", 0);
-		Transformation &t = scene.getComponent<Transformation>(model);
-		t.scale *= 0.01;
-		t.position.y = 2;
-		t.updateWorldMatrix();
+		ygl::addModels(scene, "./res/models/gnome/scene.gltf", [&](Entity e) {
+			Transformation &t = scene.getComponent<Transformation>(e);
+			t.scale *= 0.01;
+			t.position.y = 4;
+			t.updateWorldMatrix();
+		});
+	} catch (std::exception &e) { std::cerr << e.what() << std::endl; }
+
+	try {
+		ygl::addModels(scene, "./res/models/raptoid/scene.gltf", [&](Entity e) {
+			Transformation &t = scene.getComponent<Transformation>(e);
+			t.scale *= 0.05;
+			t.position.x = 5; 
+			t.updateWorldMatrix();
+			model = e;
+		});
 	} catch (std::exception &e) { std::cerr << e.what() << std::endl; }
 
 	addSkybox(scene, "res/images/meadow_4k", ".hdr");
@@ -110,7 +121,9 @@ void run() {
 		if (ImGui::SliderFloat3("ground position", (float *)&transform.position, -20, 20)) {
 			transform.updateWorldMatrix();
 		}
+
 		ImGui::InputInt("Render Mode", (int *)&renderer->renderMode);
+		ImGui::InputInt("Selection", (int *)&model);
 
 		ImGui::Checkbox("Alpha Correction", &(renderer->getScreenEffect(0)->enabled));
 		ImGui::End();
@@ -118,7 +131,6 @@ void run() {
 		window.swapBuffers();
 	}
 
-	asman->printTextures();
 	ofstream out("scene.sc");
 	scene.write(out);
 	out.close();

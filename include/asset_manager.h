@@ -69,7 +69,6 @@ class AssetArray : public AppendableSerializable {
 		out.write((char *)&size, sizeof(size));
 		for (auto &[name, index] : names) {
 			if (assets[index].second) {
-				dbLog(ygl::LOG_INFO, "Saving: ", name);
 				out.write(name.c_str(), name.size() + 1);
 				out.write((char *)&index, sizeof(uint));
 				assets[index].first->serialize(out);
@@ -91,7 +90,6 @@ class AssetArray : public AppendableSerializable {
 			uint		index;
 			std::getline(in, name, '\0');
 			in.read((char *)&index, sizeof(uint));
-			dbLog(ygl::LOG_INFO, "Loading: ", name);
 
 			A *asset	  = dynamic_cast<A *>(ResourceFactory::fabricate(in));
 			assets[index] = std::make_pair(asset, true);

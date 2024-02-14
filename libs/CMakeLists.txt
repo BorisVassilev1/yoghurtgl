@@ -4,7 +4,10 @@ set(ASSIMP_INSTALL OFF)
 set(ASSIMP_BUILD_ASSIMP_VIEW OFF)
 set(ENABLE_BOOST_WORKAROUND ON)
 
-add_subdirectory(glfw)
+set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
+set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF)
+set(ASSIMP_BUILD_GLTF_IMPORTER ON)
+
 add_subdirectory(glm)
 
 # glew gives errors when -O3
@@ -13,14 +16,18 @@ add_subdirectory(glm)
 add_subdirectory(glew-cmake)
 # set(CMAKE_BUILD_TYPE ${buildType})
 
-if (!${YGL_STATIC})
+if (NOT ${YGL_STATIC})
+	MESSAGE("SHARED LIBS BUILDING")
 	set(BUILD_SHARED_LIBS ON)
-endif (!${YGL_STATIC})
+else (NOT ${YGL_STATIC})
+	MESSAGE("STATIC LIBS BUILDING")
+	set(BUILD_SHARED_LIBS OFF)
+endif (NOT ${YGL_STATIC})
 
 if (NOT ${YGL_NO_ASSIMP})
 	add_subdirectory(assimp/)
 endif ()
-set(BUILD_SHARED_LIBS OFF)
+add_subdirectory(glfw)
 
 # Set where the ImGui files are stored
 set(IMGUI_PATH  "./imgui")
@@ -65,8 +72,8 @@ set_target_properties("ImGuizmo" PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../)
 
 set(DOCTEST_INCLUDE_DIR ./libs/doctest/doctest/ CACHE INTERNAL "Path to include folder for doctest")
 
-if (!${YGL_NO_ASSIMP})
+if (NOT ${YGL_NO_ASSIMP})
 	set_target_properties(assimp PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../../../)
-endif (!${YGL_NO_ASSIMP})
+endif (NOT ${YGL_NO_ASSIMP})
 set_target_properties(glfw PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../)
 set_target_properties(libglew_shared PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../../)

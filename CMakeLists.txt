@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(YGL_STATIC ON CACHE BOOL "link as static library")
 set(ASAN_DETECT_LEAKS ON CACHE BOOL "turn the leak sanitizer on or off")
 project(YoghurtGL)
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -fPIC)
+set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -fPIC)
 
 
 add_subdirectory(libs/)
@@ -12,7 +14,6 @@ add_subdirectory(libs/)
 # YoghurtGL compilation
 
 set(COMPILE_ARGS
---pedantic-errors
 	# -fsanitize=address
 )
 set(LINK_ARGS
@@ -22,7 +23,7 @@ set(LINK_ARGS
 if (MSVC)
 	set(COMPILE_ARGS ${COMPILE_ARGS} /Wall)
 else ()
-	set(COMPILE_ARGS ${COMPILE_ARGS} -Wall -Wextra -Wpedantic -g --pedantic-errors -O3)
+	set(COMPILE_ARGS ${COMPILE_ARGS} -Wall -Wextra -Wpedantic --pedantic-errors -g -O3)
 endif ()
 
 if (WIN32)
@@ -37,7 +38,8 @@ if (${YGL_NO_ASSIMP})
 	set(COMPILE_ARGS ${COMPILE_ARGS} -DYGL_NO_ASSIMP)
 	message("NO ASSIMP!!")
 else (${YGL_NO_ASSIMP})
-	set(LIBS ${LIBS} assimp::assimp)
+	MESSAGE("ASSIMP LIBRARIES: " ${ASSIMP_LIBRARIES})
+	set(LIBS ${LIBS} ${ASSIMP_LIBRARIES} assimp::assimp)
 endif (${YGL_NO_ASSIMP})
 
 if (${ASAN_DETECT_LEAKS})
@@ -61,10 +63,10 @@ target_include_directories(YoghurtGL PUBLIC include)
 target_include_directories(YoghurtGL PUBLIC libs/glfw/include)
 target_include_directories(YoghurtGL PUBLIC libs/glm/)
 target_include_directories(YoghurtGL PUBLIC libs/stb/)
-if (!${YGL_NO_ASSIMP})
-target_include_directories(YoghurtGL PUBLIC libs/assimp/include)
-endif (!${YGL_NO_ASSIMP})
-target_link_directories(YoghurtGL PUBLIC libs/glfw/src)
+if (NOT ${YGL_NO_ASSIMP})
+	target_include_directories(YoghurtGL PUBLIC libs/assimp/include)
+endif (NOT ${YGL_NO_ASSIMP})
+	target_link_directories(YoghurtGL PUBLIC libs/glfw/src)
 target_link_libraries(YoghurtGL PUBLIC ImGui)
 target_link_libraries(YoghurtGL PUBLIC ${LIBS})
 if (${YGL_STATIC})

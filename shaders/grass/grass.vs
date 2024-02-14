@@ -42,8 +42,8 @@ uniform float facingOffset = 0.8;
 uniform float height = 1.0;
 uniform float width = 0.1;
 
-uniform float NORMAL_TERRAIN_BLEND_START = 60;
-uniform float NORMAL_TERRAIN_BLEND_END = 120;
+uniform float NORMAL_TERRAIN_BLEND_START = 40;
+uniform float NORMAL_TERRAIN_BLEND_END = 80;
 
 uniform uint blade_triangles;
 

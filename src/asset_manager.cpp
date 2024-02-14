@@ -41,19 +41,13 @@ void ygl::AssetManager::printTextures() { textures.print(); }
 ygl::AssetManager::~AssetManager() {}
 
 void ygl::AssetManager::write(std::ostream &out) {
-	dbLog(ygl::LOG_INFO, "SAVING MESHES");
 	meshes.write(out);
-	dbLog(ygl::LOG_INFO, "SAVING TEXTURES");
 	textures.write(out);
-	dbLog(ygl::LOG_INFO, "SAVING SHADERS");
 	shaders.write(out);
 }
 
 void ygl::AssetManager::read(std::istream &in) {
-	dbLog(ygl::LOG_INFO, "READING MESHES");
 	meshes.read(in);
-	dbLog(ygl::LOG_INFO, "READING TEXTURES");
 	textures.read(in);
-	dbLog(ygl::LOG_INFO, "READING SHADERS");
 	shaders.read(in);
 }

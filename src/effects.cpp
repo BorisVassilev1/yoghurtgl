@@ -99,6 +99,7 @@ void ygl::GrassSystem::update(float time) {
 	for(Entity e : entities) {
 		auto worldMatrix = scene->getComponent<Transformation>(e).getWorldMatrix();
 		GrassHolder &holder = scene->getComponent<GrassHolder>(e);
+		if(holder.LOD > 1) continue;
 		reload(holder);
 		GrassBladeMesh *mesh = (GrassBladeMesh*)scene->getSystem<AssetManager>()->getMesh(holder.meshIndex);
 
@@ -124,8 +125,9 @@ void ygl::GrassSystem::render(float time) {
 	for(Entity e : entities) {
 		auto worldMatrix = scene->getComponent<Transformation>(e).getWorldMatrix();
 		GrassHolder &holder = scene->getComponent<GrassHolder>(e);
+		if(holder.LOD > 1) continue;
 		GrassBladeMesh *mesh = (GrassBladeMesh*)scene->getSystem<AssetManager>()->getMesh(holder.meshIndex);
-
+		
 		mesh->bind();
 		{
 			grassShader->setUniform("worldMatrix", worldMatrix);
@@ -160,7 +162,10 @@ void ygl::GrassSystem::reload(ygl::GrassSystem::GrassHolder &holder) {
 }
 
 void ygl::GrassSystem::reload() {
-	
+	for(Entity e : entities) {
+		GrassHolder &holder = scene->getComponent<GrassHolder>(e);
+		holder.density = this->density;
+	}
 }
 
 void ygl::GrassSystem::doWork() { this->update((float)window->globalTime); }

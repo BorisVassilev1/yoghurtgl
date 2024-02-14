@@ -152,10 +152,13 @@ ygl::TransformGuizmo::TransformGuizmo(ygl::Window *window, ygl::Camera *camera, 
 		if (key == GLFW_KEY_Z && action == GLFW_RELEASE) { this->operation = ImGuizmo::OPERATION::TRANSLATE; }
 		if (key == GLFW_KEY_X && action == GLFW_RELEASE) { this->operation = ImGuizmo::OPERATION::ROTATE; }
 		if (key == GLFW_KEY_C && action == GLFW_RELEASE) { this->operation = ImGuizmo::OPERATION::SCALE; }
+		if (key == GLFW_KEY_V && action == GLFW_RELEASE) { this->enabled = !this->enabled; }
 	});
 }
 
 void ygl::TransformGuizmo::update(Transformation *transform) {
+	if(!this->enabled) return;
+
 	bool  snap		= Keyboard::getKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
 	float snapValue = 1.0f;
 	if (operation == ImGuizmo::OPERATION::ROTATE) snapValue = 15.0f;

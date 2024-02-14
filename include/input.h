@@ -152,6 +152,7 @@ class TransformGuizmo {
 	ygl::Camera			*camera;
 	ImGuizmo::OPERATION	 operation = ImGuizmo::OPERATION::TRANSLATE;
 	ImGuizmo::MODE		 mode	   = ImGuizmo::MODE::WORLD;
+	bool enabled = true;
 
    public:
 	/**

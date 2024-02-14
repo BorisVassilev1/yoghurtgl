@@ -96,7 +96,6 @@ ygl::Entity ygl::addModel(ygl::Scene &scene, std::string filePath, uint i) {
 	uint materialIndex = MeshFromFile::loadedScene->mMeshes[i]->mMaterialIndex;
 
 	Material mat = ygl::MeshFromFile::getMaterial(MeshFromFile::loadedScene, asman, filePath, materialIndex);
-
 	Renderer *renderer = scene.getSystem<Renderer>();
 
 	RendererComponent modelRenderer;
@@ -115,6 +114,7 @@ void ygl::addModels(ygl::Scene &scene, std::string filePath, const std::function
 		std::cerr << e.what() << std::endl;
 		return;
 	}
+	ygl::MeshFromFile::getAnimations(MeshFromFile::loadedScene, nullptr, filePath);
 	for (uint i = 0; i < MeshFromFile::loadedScene->mNumMeshes; ++i) {
 		ygl::Entity model = addModel(scene, filePath, i);
 		edit(model);

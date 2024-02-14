@@ -219,6 +219,7 @@ class MeshFromFile : public Mesh {
    public:
 	static void			  terminateLoader();
 	static Material		  getMaterial(const aiScene *, AssetManager *asman, std::string filePath, uint i);
+	static void			  getAnimations(const aiScene *, AssetManager *asman, std::string filePath);
 	static const aiScene *loadedScene;
 	static std::string	  loadedFile;
 	static void			  loadSceneIfNeeded(const std::string &path);

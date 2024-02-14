@@ -1,4 +1,5 @@
 #include <istream>
+#include "assimp/anim.h"
 #include <yoghurtgl.h>
 #define _USE_MATH_DEFINES
 #include <mesh.h>
@@ -505,8 +506,13 @@ const aiScene *ygl::MeshFromFile::loadScene(const std::string &file, unsigned in
 }
 
 const aiScene *ygl::MeshFromFile::loadScene(const std::string &file) {
-	return loadScene(file, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
-							   aiProcess_GenNormals | aiProcess_PreTransformVertices);
+	return loadScene(file, 
+				  aiProcess_CalcTangentSpace | 
+				  //aiProcess_Triangulate | 
+				  aiProcess_JoinIdenticalVertices | 
+				  aiProcess_GenNormals
+				  //aiProcess_PreTransformVertices
+	);
 }
 
 bool getTexture(aiMaterial *mat, aiTextureType type, std::string &fileName) {
@@ -525,6 +531,19 @@ bool getTexture(aiMaterial *mat, aiTextureType type, std::string &fileName) {
 		return true;
 	}
 	return false;
+}
+
+void ygl::MeshFromFile::getAnimations(const aiScene *scene, ygl::AssetManager *asman, std::string filePath) {
+	dbLog(ygl::LOG_DEBUG, "LOADING ANIMATIONS");
+	uint animCount = scene->mNumAnimations;
+	if(!scene->HasAnimations()) return;
+	aiAnimation** animations = scene->mAnimations;
+	
+	for(uint i = 0; i < animCount; ++i) {
+		aiAnimation* animation = animations[i];
+		dbLog(ygl::LOG_DEBUG, animation->mDuration);
+		dbLog(ygl::LOG_DEBUG, animation->mTicksPerSecond);
+	}
 }
 
 ygl::Material ygl::MeshFromFile::getMaterial(const aiScene *scene, ygl::AssetManager *asman, std::string filePath,
@@ -641,7 +660,7 @@ void ygl::MeshFromFile::init(const std::string &path, uint index) {
 	assert(indexCounter == indicesCount && "something went very wrong");
 
 	if (!(mesh->HasTextureCoords(0))) { dbLog(ygl::LOG_WARNING, "tex coords cannot be loaded for model!"); }
-	if (!(mesh->HasVertexColors(0))) { dbLog(ygl::LOG_WARNING, "colors cannot be loaded for model!"); }
+	if (!(mesh->HasVertexColors(0))) { /*dbLog(ygl::LOG_WARNING, "colors cannot be loaded for model!");*/ }
 
 	Mesh::init(verticesCount, (GLfloat *)mesh->mVertices, (GLfloat *)mesh->mNormals, texCoords,
 			   (GLfloat *)mesh->mColors[0], (GLfloat *)mesh->mTangents, indicesCount, indices);
