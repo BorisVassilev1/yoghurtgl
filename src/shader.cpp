@@ -205,9 +205,6 @@ void ygl::Shader::finishProgramCreation() {
 }
 
 void ygl::Shader::bind() {
-#ifdef YGL_DEBUG
-	if (bound) { dbLog(ygl::LOG_WARNING, "shader object ", program, " is being bound repeatedly"); }
-#endif
 	bound = true;
 	glUseProgram(program);
 }

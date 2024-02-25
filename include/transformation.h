@@ -26,6 +26,7 @@ class Transformation : public ygl::Serializable {
 	Transformation();
 	Transformation(const glm::vec3 &position);
 	Transformation(const glm::vec3 &position, const glm::vec3 &rotation, const glm::vec3 &scale);
+	Transformation(glm::mat4 mat);
 
 	glm::mat4 &getWorldMatrix();
 	void	   updateWorldMatrix();

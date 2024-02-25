@@ -102,6 +102,15 @@ class AssetArray : public AppendableSerializable {
 			if (!check[i]) holes.push(i);
 		}
 	}
+
+	void clear() {
+		for (auto [asset, _] : this->assets) {
+			delete asset;
+		}
+		names.clear();
+		assets.clear();
+		holes = std::queue<uint>();
+	}
 };
 
 /**
@@ -171,6 +180,8 @@ class AssetManager : public ygl::ISystem {
 	void doWork() override {}
 	void write(std::ostream &out) override;
 	void read(std::istream &in) override;
+
+	void reloadShaders();
 };
 
 }	  // namespace ygl

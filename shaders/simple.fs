@@ -1,4 +1,5 @@
 #version 430
+#define FRAG
 
 #include <rendering.glsl>
 
@@ -33,6 +34,7 @@ void main() {
 	// light = vec3(materials[material_index].albedo);
 	// color = vVertexNormal;
 	// color = vVertexPos;
+	// color = vColor.xyz;
 
 	fragColor = vec4(color, 1.0);
 }

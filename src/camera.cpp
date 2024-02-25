@@ -31,7 +31,7 @@ ygl::PerspectiveCamera::PerspectiveCamera(float fov, float aspect, float zNear, 
 /// @param zFar Far plane z
 /// @param transform Transformation for the camera
 ygl::PerspectiveCamera::PerspectiveCamera(float fov, ygl::Window &from_window, float zNear, float zFar,
-							   ygl::Transformation transform)
+										  ygl::Transformation transform)
 	: PerspectiveCamera(fov, (float)from_window.getWidth() / from_window.getHeight(), zNear, zFar, transform) {
 	from_window.addResizeCallback([&, this](GLFWwindow *window, int width, int height) {
 		if (window != from_window.getHandle()) return;
@@ -64,6 +64,8 @@ void ygl::Camera::updateViewMatrix() {
 	matrices.viewMatrix = glm::inverse(matrices.viewMatrix);
 }
 
+void ygl::Camera::setViewMatrix(glm::mat4 &view) { this->matrices.viewMatrix = view; }
+
 /// @brief Creates a Uniform Buffer Object so that the matrices can be sent to the GPU
 void ygl::Camera::createMatricesUBO() {
 	glGenBuffers(1, &uboMatrices);
@@ -76,7 +78,7 @@ void ygl::Camera::createMatricesUBO() {
 }
 
 /// @brief Enables the camera to be used by shaders. (actually just binds the UBO to the shader binding point)
-void ygl::Camera::enable() { ygl::Shader::setUBO(uboMatrices, 0); }
+void ygl::Camera::enable(int binding) { ygl::Shader::setUBO(uboMatrices, binding); }
 
 /// @brief Disables the camera. (breaks the UBO binding)
 void ygl::Camera::disable() { ygl::Shader::setUBO(0, 0); }
@@ -86,7 +88,7 @@ void ygl::Camera::updateMatricesUBO() {
 	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
 
 	glBufferSubData(GL_UNIFORM_BUFFER, 0 * sizeof(glm::mat4), 2 * sizeof(glm::mat4), &matrices);
-	glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::mat4), &(transform.getWorldMatrix()[0]));
+	glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(transform.getWorldMatrix()));
 
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
@@ -108,9 +110,8 @@ void		ygl::PerspectiveCamera::setZNear(float zNear) { this->zNear = zNear; }
 float		ygl::PerspectiveCamera::getZFar() { return zFar; }
 void		ygl::PerspectiveCamera::setZFar(float zFar) { this->zFar = zFar; }
 
-
 ygl::OrthographicCamera::OrthographicCamera(float width, float aspect, float zNear, float zFar,
-										  ygl::Transformation transform)
+											ygl::Transformation transform)
 	: Camera(transform), width(width), aspect(aspect), zNear(zNear), zFar(zFar) {
 	updateProjectionMatrix();
 	matrices.viewMatrix = glm::mat4x4(1.0);
@@ -121,7 +122,7 @@ ygl::OrthographicCamera::OrthographicCamera(float width, float aspect, float zNe
 	: OrthographicCamera(width, aspect, zNear, zFar, ygl::Transformation()) {}
 
 ygl::OrthographicCamera::OrthographicCamera(float width, ygl::Window &from_window, float zNear, float zFar,
-										  ygl::Transformation transform)
+											ygl::Transformation transform)
 	: OrthographicCamera(width, (float)from_window.getWidth() / from_window.getHeight(), zNear, zFar, transform) {
 	from_window.addResizeCallback([&, this](GLFWwindow *window, int width, int height) {
 		if (window != from_window.getHandle()) return;
@@ -134,11 +135,9 @@ ygl::OrthographicCamera::OrthographicCamera(float width, ygl::Window &from_windo
 ygl::OrthographicCamera::OrthographicCamera(float width, ygl::Window &from_window, float zNear, float zFar)
 	: OrthographicCamera(width, from_window, zNear, zFar, ygl::Transformation()) {}
 
-
 #include <glm/gtx/string_cast.hpp>
 
 void ygl::OrthographicCamera::updateProjectionMatrix() {
 	float height			  = width / this->aspect;
 	matrices.projectionMatrix = glm::ortho(-width / 2.f, width / 2.f, -height / 2.f, height / 2.f, zNear, zFar);
 }
-

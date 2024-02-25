@@ -37,11 +37,12 @@ class Camera {
 	glm::mat4x4 getViewMatrix();
 
 	void		 createMatricesUBO();
-	void		 enable();
+	void		 enable(int binding = 0);
 	void		 disable();
 	void		 updateMatricesUBO();
 	void		 update();
 	void		 updateViewMatrix();
+	void		 setViewMatrix(glm::mat4 &view);
 	virtual void updateProjectionMatrix() = 0;
 };
 

@@ -6,6 +6,12 @@ layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 texCoord;
 layout(location = 3) in vec4 color;
 layout(location = 4) in vec3 tangent;
+#if defined(FRAG)
+layout(location = 5) in flat ivec4 boneIds;
+#elif defined(VERT)
+layout(location = 5) in ivec4 boneIds;
+#endif
+layout(location = 6) in vec4 weights;
 
 struct PointLight {
 	vec3  position;
@@ -76,8 +82,15 @@ layout(std140, binding = 2) uniform Lights {
 	uint  lightsCount;
 };
 
+layout(std140, binding = 4) uniform shadowMatrices {
+	mat4 shadowProjectionMatrix;
+	mat4 shadowViewMatrix;
+	mat4 shadowCameraWorldMatrix;
+};
+
 uniform uint  material_index = 0;
 uniform uint renderMode	 = 0;
+uniform float indirectStrength = 0.5;
 
 uniform bool use_texture;
 layout(binding = 1) uniform sampler2D albedoMap;
@@ -92,6 +105,7 @@ layout(binding = 11) uniform samplerCube skybox;
 layout(binding = 12) uniform samplerCube irradianceMap;
 layout(binding = 13) uniform samplerCube prefilterMap;
 layout(binding = 14) uniform sampler2D brdfMap;
+layout(binding = 15) uniform sampler2D shadowMap;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {	   // learnopengl
 	return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
@@ -141,7 +155,7 @@ vec3 calcLight(Light light, in vec3 position, in vec3 N, in vec3 albedo, in floa
 	if (light.type == 0) return light.color * albedo * light.intensity;
 
 	vec3 L = lightPosition - position;
-	if (light.type == 1) L = -lightForward;
+	if (light.type == 1) L = lightForward;
 
 	float dist = length(L);
 	L		   = normalize(L);
@@ -197,7 +211,56 @@ vec3 calculateIndirectComponent(in vec3 position, in vec3 N, in vec3 albedo, in 
 	vec3 specular = prefilteredColor * (kS * envBRDF.x + envBRDF.y);
 
 	vec3 ambient = (kD * diffuse + specular) * ao;
-	return ambient;
+	return ambient * indirectStrength;
+}
+
+vec3 calcAllLightsCustom(in vec3 position, in vec3 normal, in vec3 albedo, in float roughness, in float metallic, in float AO, in vec3 emission) {
+	vec3 light	= vec3(0.0, 0.0, 0.0);
+	vec3 camPos = (cameraWorldMatrix * vec4(0, 0, 0, 1)).xyz;
+
+	vec4 shadowPosition = shadowProjectionMatrix * shadowViewMatrix * vec4(position, 1);
+	float hasLight = 1.0;
+	if(
+			shadowPosition.x >= -1 && shadowPosition.x <=1 && 
+			shadowPosition.y >= -1 && shadowPosition.y <=1 &&
+			shadowPosition.z >= -1 && shadowPosition.z <=1) {
+		vec3 coords = (shadowPosition.xyz + 1.) / 2.;
+		float depth = texture(shadowMap, coords.xy).x;
+		if(coords.z > (depth + 0.01)) {
+			hasLight = 0.0;
+		}
+	}
+
+	if (renderMode == 0 || renderMode == 6) {
+		for (int i = 0; i < lightsCount; i++) {
+			light += hasLight * calcLight(lights[i], position, normal, albedo, roughness, metallic, AO, camPos);
+			hasLight = 1.0;
+		}
+		light += emission;
+		if (use_skybox == true) {
+			light += calculateIndirectComponent(position, normal, albedo, roughness, metallic, AO, camPos);
+		}
+	}
+	
+	if (renderMode == 1) { light += roughness; }
+	if (renderMode == 2) { light += metallic; }
+	if (renderMode == 3) { light += albedo; }
+	if (renderMode == 4) { light += AO; }
+	if (renderMode == 5) { light += (normal * 0.5 + 0.5); }
+	if (renderMode == 7) { light += emission; }
+	if (renderMode == 8) {
+		for (int i = 0; i < lightsCount; i++) {
+			light += hasLight * calcLight(lights[i], position, normal, albedo, roughness, metallic, AO, camPos);
+			hasLight = 1.0;
+		}
+	}
+	if (renderMode == 9) { 
+		if (use_skybox == true) {
+			light += calculateIndirectComponent(position, normal, albedo, roughness, metallic, AO, camPos);
+		}
+	}
+
+	return light;
 }
 
 vec3 calcAllLights(in vec3 position, in vec3 normal, in vec3 vertexNormal, in vec2 texCoord) {
@@ -218,45 +281,8 @@ vec3 calcAllLights(in vec3 position, in vec3 normal, in vec3 vertexNormal, in ve
 	float calcMetallic	= mix(mat.metallic, metallic, mat.use_metallic_map);
 	vec3  calcEmission	= mix(mat.emission, mat.emission * emission, mat.use_emission_map);
 	float calcRoughness = mix(mat.specular_roughness, mat.specular_roughness * roughness, mat.use_roughness_map) + 0.1;
-	calcRoughness *= calcRoughness;
+	//calcRoughness *= calcRoughness;
 
-	if (renderMode == 0) {
-		for (int i = 0; i < lightsCount; i++) {
-			light += calcLight(lights[i], position, normal, calcAlbedo, calcRoughness, calcMetallic, calcAO, camPos);
-		}
-		light += calcEmission;
-		if (use_skybox == true) {
-			light +=
-				calculateIndirectComponent(position, normal, calcAlbedo, calcRoughness, calcMetallic, calcAO, camPos);
-		}
-	}
-	if (renderMode == 1) { light += calcRoughness; }
-	if (renderMode == 2) { light += calcMetallic; }
-	if (renderMode == 3) { light += calcAlbedo; }
-	if (renderMode == 4) { light += ao; }
-	if (renderMode == 5) { light += (normal * 0.5 + 0.5); }
-
-	return light;
+	return calcAllLightsCustom(position, normal, calcAlbedo, calcRoughness, calcMetallic, calcAO, calcEmission);
 }
 
-vec3 calcAllLightsCustom(in vec3 position, in vec3 normal, in vec3 albedo, in float roughness, in float metallic, in float AO, in vec3 emission) {
-	vec3 light	= vec3(0.0, 0.0, 0.0);
-	vec3 camPos = (cameraWorldMatrix * vec4(0, 0, 0, 1)).xyz;
-
-	if (renderMode == 0) {
-		for (int i = 0; i < lightsCount; i++) {
-			light += calcLight(lights[i], position, normal, albedo, roughness, metallic, AO, camPos);
-		}
-		light += emission;
-		if (use_skybox == true) {
-			light += calculateIndirectComponent(position, normal, albedo, roughness, metallic, AO, camPos);
-		}
-	}
-	if (renderMode == 1) { light += roughness; }
-	if (renderMode == 2) { light += metallic; }
-	if (renderMode == 3) { light += albedo; }
-	if (renderMode == 4) { light += AO; }
-	if (renderMode == 5) { light += (normal * 0.5 + 0.5); }
-
-	return light;
-}

@@ -5,10 +5,11 @@
 #include <iterator>
 #include <ostream>
 #include <string>
-#include "texture.h"
-#include "yoghurtgl.h"
+#include <texture.h>
+#include <yoghurtgl.h>
 #include <asset_manager.h>
 #include <material.h>
+#include <entities.h>
 
 ygl::Light::Light(glm::mat4 transform, glm::vec3 color, float intensity, ygl::Light::Type type)
 	: transform(transform), color(color), intensity(intensity), type(type) {}
@@ -168,24 +169,32 @@ void ygl::BloomEffect::apply(FrameBuffer *front, FrameBuffer *back) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-ygl::RendererComponent::RendererComponent(unsigned int shaderIndex, unsigned int meshIndex, unsigned int materialIndex)
-	: shaderIndex(shaderIndex), meshIndex(meshIndex), materialIndex(materialIndex) {}
+ygl::RendererComponent::RendererComponent(unsigned int shaderIndex, unsigned int meshIndex, unsigned int materialIndex,
+										  unsigned int shadowShaderIndex)
+	: shaderIndex(shaderIndex),
+	  meshIndex(meshIndex),
+	  materialIndex(materialIndex),
+	  shadowShaderIndex(shadowShaderIndex) {}
 
 void ygl::RendererComponent::serialize(std::ostream &out) {
 	out.write((char *)(&this->shaderIndex), sizeof(uint));
 	out.write((char *)(&this->materialIndex), sizeof(uint));
 	out.write((char *)(&this->meshIndex), sizeof(uint));
+	out.write((char *)(&this->shadowShaderIndex), sizeof(uint));
+	out.write((char *)(&this->isAnimated), sizeof(bool));
 }
 
 void ygl::RendererComponent::deserialize(std::istream &in) {
 	in.read((char *)(&this->shaderIndex), sizeof(uint));
 	in.read((char *)(&this->materialIndex), sizeof(uint));
 	in.read((char *)(&this->meshIndex), sizeof(uint));
+	in.read((char *)(&this->shadowShaderIndex), sizeof(uint));
+	in.read((char *)(&this->isAnimated), sizeof(bool));
 }
 
 bool ygl::RendererComponent::operator==(const RendererComponent &other) {
 	return this->shaderIndex == other.shaderIndex && this->materialIndex == other.materialIndex &&
-		   this->meshIndex == other.meshIndex;
+		   this->meshIndex == other.meshIndex && this->shadowShaderIndex == other.shadowShaderIndex && this->isAnimated == other.isAnimated;
 }
 
 void ygl::Renderer::init() {
@@ -203,6 +212,10 @@ void ygl::Renderer::init() {
 	backFrameBuffer = new FrameBuffer(new Texture2d(width, height, TextureType::RGBA16F, nullptr), GL_COLOR_ATTACHMENT0,
 									  new Texture2d(width, height, TextureType::DEPTH_STENCIL_32F_8, nullptr),
 									  GL_DEPTH_STENCIL_ATTACHMENT, "Back frameBuffer");
+	shadowFrameBuffer = new FrameBuffer(new Texture2d(1024, 1024, TextureType::RGBA16F, nullptr), GL_COLOR_ATTACHMENT0,
+										new Texture2d(1024, 1024, TextureType::DEPTH_24, nullptr), GL_DEPTH_ATTACHMENT,
+										"Shadow Framebuffer");
+	dbLog(ygl::LOG_DEBUG, "shadow texture: ", shadowFrameBuffer->getDepthStencil()->getID());
 
 	// addScreenEffect(new BloomEffect(this));
 	addScreenEffect(new ACESEffect());
@@ -221,7 +234,6 @@ void ygl::Renderer::init() {
 	asman = scene->getSystem<AssetManager>();
 
 	brdfTexture = asman->addTexture(createBRDFTexture(), "brdf_Texture", false);
-	dbLog(LOG_INFO, asman->getTexture(brdfTexture)->getID());
 }
 
 ygl::Shader *ygl::Renderer::getShader(RendererComponent &comp) { return getShader(comp.shaderIndex); }
@@ -282,12 +294,22 @@ void ygl::Renderer::loadData() {
 	glBufferSubData(GL_UNIFORM_BUFFER, 100 * sizeof(Light), sizeof(uint), &lightsCount);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+	if (lightsCount >= 1 && lights[0].type == Light::Type::DIRECTIONAL) {
+		Transformation x(lights[0].transform);
+		shadowCamera.transform = x;
+		shadowCamera.update();
+	}
+
 	Shader::setUBO(lightsBuffer, 2);
 }
 
 void ygl::Renderer::setDefaultShader(int defaultShader) { this->defaultShader = defaultShader; }
 
 uint ygl::Renderer::getDefaultShader() { return defaultShader; }
+
+void ygl::Renderer::setDefaultShadowShader(int defaultShadowShader) { this->defaultShadowShader = defaultShadowShader; }
+
+uint ygl::Renderer::getDefaultShadowShader() { return defaultShadowShader; }
 
 void ygl::Renderer::setClearColor(glm::vec4 color) {
 	this->clearColor = color;
@@ -337,7 +359,6 @@ void ygl::Renderer::drawScene() {
 		}
 		// sh is never null and the current bound shader
 
-		AssetManager *asman = scene->getSystem<AssetManager>();
 		if (materials[ecr.materialIndex].use_albedo_map)
 			asman->getTexture(materials[ecr.materialIndex].albedo_map)->bind(ygl::TexIndex::COLOR);
 		if (materials[ecr.materialIndex].use_normal_map)
@@ -351,26 +372,28 @@ void ygl::Renderer::drawScene() {
 		if (materials[ecr.materialIndex].use_metallic_map)
 			asman->getTexture(materials[ecr.materialIndex].metallic_map)->bind(ygl::TexIndex::METALLIC);
 		if (skyboxTexture != 0) asman->getTexture(skyboxTexture)->bind(ygl::TexIndex::SKYBOX);
-		
+
 		if (irradianceTexture != 0) asman->getTexture(irradianceTexture)->bind(ygl::TexIndex::IRRADIANCE_MAP);
 		else defaultCubemap.bind(ygl::TexIndex::IRRADIANCE_MAP);
 		if (prefilterTexture != 0) asman->getTexture(prefilterTexture)->bind(ygl::TexIndex::PREFILTER_MAP);
 		else defaultCubemap.bind(ygl::TexIndex::PREFILTER_MAP);
 
-		if(sh->hasUniform("use_skybox")) {
-			sh->setUniform("use_skybox", this->hasSkybox());
-		}
-		if(sh->hasUniform("renderMode")) {
-			sh->setUniform("renderMode", renderMode);
-		}
+		if (sh->hasUniform("use_skybox")) { sh->setUniform("use_skybox", this->hasSkybox()); }
+		if (sh->hasUniform("renderMode")) { sh->setUniform("renderMode", renderMode); }
 
 		asman->getTexture(brdfTexture)->bind(ygl::TexIndex::BDRF_MAP);
+
+		shadowFrameBuffer->getDepthStencil()->bind(ygl::TexIndex::SHADOW_MAP);
 
 		Mesh *mesh = getMesh(ecr.meshIndex);
 		mesh->bind();
 		// set uniforms
 		if (sh->hasUniform("worldMatrix")) sh->setUniform("worldMatrix", transform.getWorldMatrix());
 		if (sh->hasUniform("material_index")) sh->setUniform("material_index", (GLuint)ecr.materialIndex);
+		if (sh->hasUniform("animate")) sh->setUniform("animate", ecr.isAnimated);
+
+		if (renderMode == 6) { glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); }
+
 		// draw
 		glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
 		// clean up
@@ -380,15 +403,78 @@ void ygl::Renderer::drawScene() {
 		asman->getShader(prevShaderIndex)->unbind();	 // unbind the last used shader
 }
 
+void ygl::Renderer::shadowPass() {
+	shadowCamera.enable();
+	shadowFrameBuffer->bind();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glViewport(0, 0, 1024, 1024);
+	drawScene();
+	/*
+	// bind default shader
+	uint prevShaderIndex;
+	if (defaultShadowShader != (uint)-1) {
+		asman->getShader(defaultShadowShader)->bind();
+		prevShaderIndex = defaultShadowShader;
+	} else {
+		if (asman->getShadersCount()) asman->getShader(0)->bind();	   // there has to be at least one shader
+		prevShaderIndex = 0;
+	}
+
+	for (Entity e : entities) {
+		ygl::Transformation	   &transform = scene->getComponent<Transformation>(e);
+		ygl::RendererComponent &ecr		  = scene->getComponent<RendererComponent>(e);
+
+		Shader *sh;
+		// binds the object's own shader if present.
+		// Oherwise checks if the default shader has been bound by the previous object
+		// and binds it only if needed
+		if (ecr.shadowShaderIndex != (uint)-1) {				// if object has a shader
+			if (ecr.shadowShaderIndex != prevShaderIndex) {		// if its different from the previous one
+				asman->getShader(prevShaderIndex)->unbind();
+				sh				= asman->getShader(ecr.shadowShaderIndex);
+				prevShaderIndex = ecr.shadowShaderIndex;	 // the next previous is the current
+				sh->bind();
+			} else {
+				sh = asman->getShader(prevShaderIndex);		// set sh so that its not null
+			}
+		} else {
+			assert(defaultShadowShader != (uint)-1 && "cannot use default shader when it is not defined");
+			if (prevShaderIndex != defaultShadowShader) {	  // if the previous shader was different
+				asman->getShader(prevShaderIndex)->unbind();
+				sh				= asman->getShader(defaultShadowShader);
+				prevShaderIndex = defaultShadowShader;
+				sh->bind();
+			} else {
+				sh = asman->getShader(defaultShadowShader);		// set sh so its not null
+			}
+		}
+		// sh is never null and the current bound shader
+
+		Mesh *mesh = getMesh(ecr.meshIndex);
+		mesh->bind();
+		// set uniforms
+		if (sh->hasUniform("worldMatrix")) sh->setUniform("worldMatrix", transform.getWorldMatrix());
+
+		// draw
+		glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
+		// clean up
+		mesh->unbind();
+	}
+	if (asman->getShadersCount() > prevShaderIndex)
+		asman->getShader(prevShaderIndex)->unbind();	 // unbind the last used shader
+	*/
+	shadowFrameBuffer->unbind();
+}
+
 void ygl::Renderer::colorPass() {
+	assert(mainCamera && "must have a main camera");
+	mainCamera->enable();
+	shadowCamera.enable(4);
 	backFrameBuffer->bind();
 	glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
 	backFrameBuffer->clear();
-	if (window->shade) {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	} else {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	}
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glViewport(0, 0, window->getWidth(), window->getHeight());
@@ -426,6 +512,7 @@ void ygl::Renderer::effectsPass() {
 }
 
 void ygl::Renderer::doWork() {
+	shadowPass();
 	colorPass();
 	effectsPass();
 	defaultTexture.bind(GL_TEXTURE0);	  // some things break when nothing is bound to texture0
@@ -437,6 +524,7 @@ ygl::Renderer::~Renderer() {
 	}
 	delete frontFrameBuffer;
 	delete backFrameBuffer;
+	delete shadowFrameBuffer;
 	delete screenQuad;
 }
 
@@ -495,9 +583,7 @@ GLuint ygl::Renderer::loadLights(int count, Light *lights) {
 	return lightsBuffer;
 }
 
-bool ygl::Renderer::hasSkybox() {
-	return skyboxTexture && irradianceTexture && prefilterTexture;
-}
+bool ygl::Renderer::hasSkybox() { return skyboxTexture && irradianceTexture && prefilterTexture; }
 
 void ygl::Renderer::write(std::ostream &out) {
 	out.write((char *)&defaultShader, sizeof(defaultShader));
@@ -538,5 +624,6 @@ const char *ygl::Renderer::name			 = "ygl::Renderer";
 const char *ygl::RendererComponent::name = "ygl::RendererComponent";
 
 std::ostream &ygl::operator<<(std::ostream &out, const ygl::RendererComponent &rhs) {
-	return out << "shader: " << rhs.shaderIndex << " material: " << rhs.materialIndex << " mesh: " << rhs.meshIndex;
+	return out << "shader: " << rhs.shaderIndex << " material: " << rhs.materialIndex << " mesh: " << rhs.meshIndex
+			   << "shadowShader: " << rhs.shadowShaderIndex;
 }

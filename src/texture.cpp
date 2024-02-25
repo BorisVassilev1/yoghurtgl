@@ -313,6 +313,7 @@ void ygl::Texture2d::save(std::string fileName) {
 	stbi_flip_vertically_on_write(true);
 
 	stbi_write_png(fileName.c_str(), width, height, 4, buff, 4 * width);
+	delete[] buff;
 }
 
 void ygl::Texture2d::bind(int textureUnit) const {
@@ -623,7 +624,7 @@ ygl::TextureCubemap *ygl::createPrefilterCubemap(const ygl::TextureCubemap *hdrC
 			Renderer::drawObject(parsingShader, cubeMesh);
 		}
 	}
-	
+
 	delete cubeMesh;
 	delete parsingShader;
 	delete fb;

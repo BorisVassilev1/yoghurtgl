@@ -32,9 +32,9 @@ ygl::GrassSystem::GrassBladeMesh::GrassBladeMesh(glm::ivec2 resolution, int LOD)
 	glGenBuffers(1, &grassData);
 	setResolution(resolution);
 
-	this->addVBO(0, 4, grassData, 1, sizeof(BladeData), 0);
-	this->addVBO(1, 4, grassData, 1, sizeof(BladeData), (const void *)(4 * sizeof(float)));
-	this->addVBO(2, 1, grassData, 1, sizeof(BladeData), (const void *)(8 * sizeof(float)));
+	this->addVBO(0, 4, grassData, GL_FLOAT, 1, sizeof(BladeData), 0);
+	this->addVBO(1, 4, grassData, GL_FLOAT, 1, sizeof(BladeData), (const void *)(4 * sizeof(float)));
+	this->addVBO(2, 1, grassData, GL_UNSIGNED_INT, 1, sizeof(BladeData), (const void *)(8 * sizeof(float)));
 	glBindVertexArray(0);
 
 	cullFace = false;

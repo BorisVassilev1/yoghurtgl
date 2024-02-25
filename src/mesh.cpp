@@ -1,15 +1,15 @@
 #include <istream>
-#include "assimp/anim.h"
-#include <yoghurtgl.h>
-#define _USE_MATH_DEFINES
-#include <mesh.h>
-
 #include <assert.h>
 #include <iostream>
 #include <math.h>
+#define _USE_MATH_DEFINES
+#include <mesh.h>
+
+#include <yoghurtgl.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <texture.h>
 #include <asset_manager.h>
+#include <assimp_glm_helpers.h>
 
 GLuint ygl::IMesh::createVAO() {
 	glGenVertexArrays(1, &vao);
@@ -81,35 +81,25 @@ void ygl::IMesh::serialize(std::ostream &out) {
 	out.write((char *)&cullFace, sizeof(cullFace));
 }
 
-void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint indexDivisor,
-								  GLsizei stride, const void *pointer) {
+void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLenum type,
+								  GLuint indexDivisor, GLsizei stride, const void *pointer) {
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glVertexAttribPointer(attrLocation, coordSize, GL_FLOAT, GL_FALSE, stride, pointer);
+	if (type == GL_BYTE || type == GL_UNSIGNED_BYTE || type == GL_SHORT || type == GL_UNSIGNED_SHORT ||
+		type == GL_INT || type == GL_UNSIGNED_INT)
+		glVertexAttribIPointer(attrLocation, coordSize, type, stride, pointer);
+	else glVertexAttribPointer(attrLocation, coordSize, type, GL_FALSE, stride, pointer);
 	glVertexAttribDivisor(attrLocation, indexDivisor);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	vbos.push_back(VBO(attrLocation, buffer, coordSize));
 }
 
-void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint indexDivisor) {
-	addVBO(attrLocation, coordSize, buffer, indexDivisor, 0, 0);
-}
-
-void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer) {
-	addVBO(attrLocation, coordSize, buffer, 0);
-}
-
-// note that 'count' is the vertex count, not the length or size of the VBO
-void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLfloat *data, GLuint count,
+void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLenum type,
 								  GLuint indexDivisor) {
-	GLuint buff;
-	glGenBuffers(1, &buff);
-	glBindBuffer(GL_ARRAY_BUFFER, buff);
-	glBufferData(GL_ARRAY_BUFFER, count * sizeof(GLfloat) * coordSize, data, GL_STATIC_DRAW);
-	addVBO(attrLocation, coordSize, buff, indexDivisor);
+	addVBO(attrLocation, coordSize, buffer, type, indexDivisor, 0, 0);
 }
 
-void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLfloat *data, GLuint count) {
-	addVBO(attrLocation, coordSize, data, count, 0);
+void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLenum type) {
+	addVBO(attrLocation, coordSize, buffer, type, 0);
 }
 
 ygl::MultiBufferMesh::~MultiBufferMesh() {
@@ -135,11 +125,11 @@ void ygl::Mesh::init(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GL
 	glBindVertexArray(this->getVAO());
 	this->verticesCount = vertexCount;
 	this->createIBO(indices, indicesCount);
-	this->addVBO(0, 3, vertices, vertexCount);
-	this->addVBO(1, 3, normals, vertexCount);
-	this->addVBO(2, 2, texCoords, vertexCount);
-	this->addVBO(3, 4, colors, vertexCount);
-	this->addVBO(4, 3, tangents, vertexCount);
+	this->addVBO(0, 3, vertices, GL_FLOAT, vertexCount);
+	this->addVBO(1, 3, normals, GL_FLOAT, vertexCount);
+	this->addVBO(2, 2, texCoords, GL_FLOAT, vertexCount);
+	this->addVBO(3, 4, colors, GL_FLOAT, vertexCount);
+	this->addVBO(4, 3, tangents, GL_FLOAT, vertexCount);
 	glBindVertexArray(0);
 }
 
@@ -158,6 +148,25 @@ ygl::IMesh::VBO ygl::Mesh::getTexCoords() { return vbos[2]; }
 ygl::IMesh::VBO ygl::Mesh::getColors() { return vbos[3]; }
 
 ygl::IMesh::VBO ygl::Mesh::getTangents() { return vbos[4]; }
+
+void ygl::AnimatedMesh::init(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords,
+							 GLfloat *colors, GLfloat *tangents, GLint *boneIDs, GLfloat *weights, GLuint indicesCount,
+							 GLuint *indices) {
+	Mesh::init(vertexCount, vertices, normals, texCoords, colors, tangents, indicesCount, indices);
+	glBindVertexArray(this->getVAO());
+	this->addVBO(5, MAX_BONE_INFLUENCE, boneIDs, GL_INT, vertexCount);
+	this->addVBO(6, MAX_BONE_INFLUENCE, weights, GL_FLOAT, vertexCount);
+	glBindVertexArray(0);
+}
+
+ygl::AnimatedMesh::AnimatedMesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords,
+								GLfloat *colors, GLfloat *tangents, GLint *boneIDs, GLfloat *weights,
+								GLuint indicesCount, GLuint *indices) {
+	init(vertexCount, vertices, normals, texCoords, colors, tangents, boneIDs, weights, indicesCount, indices);
+}
+
+ygl::IMesh::VBO ygl::AnimatedMesh::getBoneIds() { return vbos[5]; }
+ygl::IMesh::VBO ygl::AnimatedMesh::getWeights() { return vbos[6]; }
 
 const char *ygl::BoxMesh::name = "ygl::BoxMesh";
 
@@ -506,12 +515,9 @@ const aiScene *ygl::MeshFromFile::loadScene(const std::string &file, unsigned in
 }
 
 const aiScene *ygl::MeshFromFile::loadScene(const std::string &file) {
-	return loadScene(file, 
-				  aiProcess_CalcTangentSpace | 
-				  //aiProcess_Triangulate | 
-				  aiProcess_JoinIdenticalVertices | 
-				  aiProcess_GenNormals
-				  //aiProcess_PreTransformVertices
+	return loadScene(file, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
+							   aiProcess_GenNormals
+					 // aiProcess_PreTransformVertices
 	);
 }
 
@@ -534,15 +540,16 @@ bool getTexture(aiMaterial *mat, aiTextureType type, std::string &fileName) {
 }
 
 void ygl::MeshFromFile::getAnimations(const aiScene *scene, ygl::AssetManager *asman, std::string filePath) {
-	dbLog(ygl::LOG_DEBUG, "LOADING ANIMATIONS");
 	uint animCount = scene->mNumAnimations;
-	if(!scene->HasAnimations()) return;
-	aiAnimation** animations = scene->mAnimations;
-	
-	for(uint i = 0; i < animCount; ++i) {
-		aiAnimation* animation = animations[i];
-		dbLog(ygl::LOG_DEBUG, animation->mDuration);
-		dbLog(ygl::LOG_DEBUG, animation->mTicksPerSecond);
+	if (!scene->HasAnimations()) return;
+	aiAnimation **animations = scene->mAnimations;
+
+	for (uint i = 0; i < (animCount ? 1 : 0); ++i) {
+		aiAnimation *animation = animations[i];
+		aiNodeAnim **channels  = animation->mChannels;
+		for (uint j = 0; j < animation->mNumChannels; ++j) {
+			aiNodeAnim *channel = channels[i];
+		}
 	}
 }
 
@@ -660,12 +667,57 @@ void ygl::MeshFromFile::init(const std::string &path, uint index) {
 	assert(indexCounter == indicesCount && "something went very wrong");
 
 	if (!(mesh->HasTextureCoords(0))) { dbLog(ygl::LOG_WARNING, "tex coords cannot be loaded for model!"); }
-	if (!(mesh->HasVertexColors(0))) { /*dbLog(ygl::LOG_WARNING, "colors cannot be loaded for model!");*/ }
+	if (!(mesh->HasVertexColors(0))) { /*dbLog(ygl::LOG_WARNING, "colors cannot be loaded for model!");*/
+	}
 
-	Mesh::init(verticesCount, (GLfloat *)mesh->mVertices, (GLfloat *)mesh->mNormals, texCoords,
-			   (GLfloat *)mesh->mColors[0], (GLfloat *)mesh->mTangents, indicesCount, indices);
+	GLint *boneIDs = new GLint[MAX_BONE_INFLUENCE * verticesCount];
+	for (uint i = 0; i < MAX_BONE_INFLUENCE * verticesCount; ++i)
+		boneIDs[i] = -1;
+	GLfloat *boneWeights = new GLfloat[MAX_BONE_INFLUENCE * verticesCount];
+
+	if (mesh->HasBones()) {
+		int numBones = mesh->mNumBones;
+		for (int boneIndex = 0; boneIndex < numBones; ++boneIndex) {
+			int			boneId = -1;
+			std::string name   = mesh->mBones[boneIndex]->mName.C_Str();
+			if (boneInfoMap.find(name) == boneInfoMap.end()) {
+				BoneInfo newBoneInfo;
+				newBoneInfo.id	   = bonesCount;
+				newBoneInfo.offset = AssimpGLMHelpers::ConvertMatrixToGLMFormat(mesh->mBones[boneIndex]->mOffsetMatrix);
+				boneInfoMap[name]  = newBoneInfo;
+				boneId			   = bonesCount;
+				bonesCount++;
+			} else {
+				boneId = boneInfoMap[name].id;
+			}
+
+			assert(boneId != -1);
+			auto weights	= mesh->mBones[boneIndex]->mWeights;
+			int	 numWeights = mesh->mBones[boneIndex]->mNumWeights;
+
+			for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex) {
+				unsigned vertexId = weights[weightIndex].mVertexId;
+				float	 weight	  = weights[weightIndex].mWeight;
+				assert(vertexId < verticesCount);
+				int baseIndex = vertexId * MAX_BONE_INFLUENCE;
+				for (int i = 0; i < MAX_BONE_INFLUENCE; ++i) {
+					if (boneIDs[baseIndex + i] < 0) {
+						boneWeights[baseIndex + i] = weight;
+						boneIDs[baseIndex + i]	   = boneId;
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	AnimatedMesh::init(verticesCount, (GLfloat *)mesh->mVertices, (GLfloat *)mesh->mNormals, texCoords,
+					   (GLfloat *)mesh->mColors[0], (GLfloat *)mesh->mTangents, boneIDs, boneWeights, indicesCount,
+					   indices);
 
 	delete[] indices;
+	delete[] boneIDs;
+	delete[] boneWeights;
 	if (texCoords != nullptr) delete[] texCoords;
 
 	#undef scene
@@ -673,7 +725,7 @@ void ygl::MeshFromFile::init(const std::string &path, uint index) {
 
 ygl::MeshFromFile::MeshFromFile(const std::string &path, uint index) : path(path), index(index) { init(path, index); }
 
-ygl::MeshFromFile::MeshFromFile(std::istream &in) : Mesh(in) {
+ygl::MeshFromFile::MeshFromFile(std::istream &in) : AnimatedMesh(in) {
 	std::getline(in, this->path, '\0');
 	in.read((char *)&index, sizeof(index));
 	init(this->path, index);

@@ -99,7 +99,6 @@ void cleanup() {
 	if (bvh != nullptr) delete bvh;
 	if (spheres != nullptr) delete[] spheres;
 	if (spheres != nullptr) delete[] boxes;
-	if (skybox != nullptr) delete skybox;
 	if (mouse != nullptr) delete mouse;
 	if (window != nullptr) delete window;
 }
@@ -148,7 +147,7 @@ void initScene() {
 	ygl::Shader::setSSBO(bunnyMesh->getTangents().bufferId, 9);
 	ygl::Shader::setSSBO(bunnyMesh->getIBO(), 4);
 
-	addSkybox(*scene, "res/images/blue_photo_studio_4k", ".hdr");
+	ygl::addSkybox(*scene, "res/images/meadow_4k", ".hdr");
 
 	renderer->addLight(ygl::Light(ygl::Transformation(glm::vec3(0), glm::vec3(-1, -2.9, 0), glm::vec3(1)),
 								  glm::vec3(1., 1., 1.), 3, ygl::Light::Type::DIRECTIONAL));
@@ -242,7 +241,9 @@ void initPathTracer() {
 	rawTexture = new ygl::Texture2d(window->getWidth(), window->getHeight(), ygl::TextureType::RGBA32F, nullptr);
 	rawTexture->bindImage(1);
 
-	skybox = ygl::loadHDRCubemap("res/images/blue_photo_studio_4k", ".hdr");
+	//skybox = ygl::loadHDRCubemap("res/images/blue_photo_studio_4k", ".hdr");
+	//ygl::addSkybox(*scene, "res/images/blue_photo_studio_4k", ".hdr");
+	skybox = (ygl::TextureCubemap*) scene->getSystem<ygl::AssetManager>()->getTexture(renderer->skyboxTexture);
 	//skybox = new ygl::TextureCubemap("./res/images/skybox", ".jpg");
 	skybox->bind(ygl::TexIndex::SKYBOX);
 

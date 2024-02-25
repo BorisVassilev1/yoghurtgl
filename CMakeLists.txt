@@ -14,10 +14,10 @@ add_subdirectory(libs/)
 # YoghurtGL compilation
 
 set(COMPILE_ARGS
-	# -fsanitize=address
+	#-fsanitize=address
 )
 set(LINK_ARGS
-	# -fsanitize=address
+	#-fsanitize=address
 )
 
 if (MSVC)

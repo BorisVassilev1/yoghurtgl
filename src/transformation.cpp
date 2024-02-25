@@ -11,6 +11,9 @@ ygl::Transformation::Transformation(const glm::vec3 &position, const glm::vec3 &
 	: position(position), rotation(rotation), scale(scale) {
 	updateWorldMatrix();
 }
+ygl::Transformation::Transformation(glm::mat4 mat) : worldMatrix(mat) {
+	updateVectors();
+}
 
 glm::mat4 &ygl::Transformation::getWorldMatrix() { return worldMatrix; }
 

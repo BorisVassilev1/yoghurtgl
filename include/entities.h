@@ -4,7 +4,6 @@
 #include <yoghurtgl.h>
 #include <ecs.h>
 #include <glm/glm.hpp>
-#include <renderer.h>
 #include <mesh.h>
 
 /**

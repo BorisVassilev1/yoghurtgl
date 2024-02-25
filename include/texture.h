@@ -31,6 +31,7 @@ class TexIndex {
 		IRRADIANCE_MAP = GL_TEXTURE12,
 		PREFILTER_MAP  = GL_TEXTURE13,
 		BDRF_MAP	   = GL_TEXTURE14,
+		SHADOW_MAP	   = GL_TEXTURE15
 	};
 };
 
@@ -210,7 +211,6 @@ class TextureCubemap : public ITexture {
 
 	void resize(uint width, uint height) override;
 };
-
 
 ygl::TextureCubemap *createIrradianceCubemap(const TextureCubemap *hdrCubemap);
 

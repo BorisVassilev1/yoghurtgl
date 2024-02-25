@@ -55,6 +55,7 @@ int ygl::initDebug() {
 
 void GLAPIENTRY ygl::yglDebugMessageCallback(GLenum source, GLenum type, GLuint, GLenum severity, GLsizei,
 											 const GLchar *message, const void *) {
+	if(type == GL_DEBUG_TYPE_OTHER) return;
 	std::cerr << "----------<GL DEBUG MESSAGE>----------\n\tSource: ";
 	switch (source) {
 		case GL_DEBUG_SOURCE_API: std::cerr << "API"; break;

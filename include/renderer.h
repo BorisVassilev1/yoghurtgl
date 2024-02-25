@@ -11,6 +11,7 @@
 #include <texture.h>
 #include <material.h>
 #include <ostream>
+#include "camera.h"
 #include <imgui.h>
 #include <asset_manager.h>
 
@@ -116,8 +117,10 @@ struct RendererComponent : ygl::Serializable {
 	uint			   shaderIndex;
 	uint			   meshIndex;
 	uint			   materialIndex;
-	RendererComponent() : shaderIndex(-1), meshIndex(-1), materialIndex(-1) {}
-	RendererComponent(uint shaderIndex, uint meshIndex, uint materialIndex);
+	uint			   shadowShaderIndex;
+	bool			   isAnimated = false;
+	RendererComponent() : shaderIndex(-1), meshIndex(-1), materialIndex(-1), shadowShaderIndex(-1) {}
+	RendererComponent(uint shaderIndex, uint meshIndex, uint materialIndex, uint shadowShaderIndex = -1);
 	void serialize(std::ostream &out);
 	void deserialize(std::istream &in);
 	bool operator==(const RendererComponent &other);
@@ -130,9 +133,14 @@ class Renderer : public ygl::ISystem {
 	GLuint materialsBuffer = 0;
 	GLuint lightsBuffer	   = 0;
 
-	uint		   defaultShader  = -1;
-	Texture2d	   defaultTexture = Texture2d(1, 1, TextureType::RGBA16F, nullptr);
-	TextureCubemap defaultCubemap = TextureCubemap(1, 1);
+	uint		   defaultShader	   = -1;
+	uint		   defaultShadowShader = -1;
+	Texture2d	   defaultTexture	   = Texture2d(1, 1, TextureType::RGBA16F, nullptr);
+	TextureCubemap defaultCubemap	   = TextureCubemap(1, 1);
+
+	FrameBuffer		  *shadowFrameBuffer;
+	OrthographicCamera shadowCamera = OrthographicCamera(60, 1., 0.1, 100);
+	Camera			  *mainCamera	= nullptr;
 
 	FrameBuffer *frontFrameBuffer;
 	FrameBuffer *backFrameBuffer;
@@ -144,6 +152,7 @@ class Renderer : public ygl::ISystem {
 	AssetManager					   *asman;
 
 	void drawScene();
+	void shadowPass();
 	void colorPass();
 	void effectsPass();
 
@@ -178,7 +187,11 @@ class Renderer : public ygl::ISystem {
 
 	void setDefaultShader(int defaultShader);
 	uint getDefaultShader();
+	void setDefaultShadowShader(int defaultShader);
+	uint getDefaultShadowShader();
 	void setClearColor(glm::vec4 color);
+
+	void setMainCamera(Camera *cam) { this->mainCamera = cam; }
 
 	void loadData();
 
@@ -198,7 +211,7 @@ class Renderer : public ygl::ISystem {
 	static GLuint loadLights(int count, Light *materials);
 
 	Window *getWindow() { return window; }
-	bool hasSkybox();
+	bool	hasSkybox();
 
 	void write(std::ostream &out) override;
 	void read(std::istream &in) override;

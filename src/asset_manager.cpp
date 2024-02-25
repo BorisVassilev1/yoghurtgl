@@ -1,5 +1,6 @@
 #include <asset_manager.h>
 #include <renderer.h>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <yoghurtgl.h>
@@ -50,4 +51,11 @@ void ygl::AssetManager::read(std::istream &in) {
 	meshes.read(in);
 	textures.read(in);
 	shaders.read(in);
+}
+
+void ygl::AssetManager::reloadShaders() {
+	std::stringstream str(std::ios::binary);
+	shaders.write(str);
+	shaders.clear();
+	shaders.read(str);
 }

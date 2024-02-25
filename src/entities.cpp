@@ -1,10 +1,11 @@
 #include <entities.h>
 #include <asset_manager.h>
 #include <string>
-#include "texture.h"
-#include "yoghurtgl.h"
+#include <texture.h>
+#include <yoghurtgl.h>
 #include <mesh.h>
 #include <transformation.h>
+#include <renderer.h>
 
 ygl::Entity ygl::addBox(Scene &scene, glm::vec3 position, glm::vec3 scale, glm::vec3 color) {
 	Entity		  e		   = scene.createEntity();

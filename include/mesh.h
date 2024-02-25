@@ -93,17 +93,35 @@ class MultiBufferMesh : public IMesh {
 	MultiBufferMesh(std::istream &in) : IMesh(in) {}
 
    public:
-	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint indexDivisor, GLsizei stride,
+	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLenum type, GLuint indexDivisor, GLsizei stride,
 				const void *pointer);
-	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLuint indexDivisor);
-	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer);
-	void addVBO(GLuint location, GLuint coordSize, GLfloat *data, GLuint count, GLuint indexDivisor);
-	void addVBO(GLuint location, GLuint coordSize, GLfloat *data, GLuint count);
+	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLenum type, GLuint indexDivisor);
+	void addVBO(GLuint attrLocation, GLuint coordSize, GLuint buffer, GLenum type);
+	template <class T>
+	void addVBO(GLuint location, GLuint coordSize, T *data, GLenum type, GLuint count, GLuint indexDivisor);
+	template <class T>
+	void addVBO(GLuint location, GLuint coordSize, T *data, GLenum type, GLuint count);
 
 	virtual ~MultiBufferMesh();
 	void enableVBOs();
 	void disableVBOs();
 };
+
+// note that 'count' is the vertex count, not the length or size of the VBO
+template <class T>
+void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, T *data, GLenum type, GLuint count,
+								  GLuint indexDivisor) {
+	GLuint buff;
+	glGenBuffers(1, &buff);
+	glBindBuffer(GL_ARRAY_BUFFER, buff);
+	glBufferData(GL_ARRAY_BUFFER, count * sizeof(T) * coordSize, data, GL_STATIC_DRAW);
+	addVBO(attrLocation, coordSize, buff, type, indexDivisor);
+}
+
+template <class T>
+void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, T *data, GLenum type, GLuint count) {
+	addVBO(attrLocation, coordSize, data, type, count, 0);
+}
 
 /**
  * @brief Default Mesh that has Vertices, Normals, Texture Coordinates, Colors and Tangents for its vertices
@@ -124,6 +142,30 @@ class Mesh : public MultiBufferMesh {
 	ygl::IMesh::VBO getTexCoords();
 	ygl::IMesh::VBO getColors();
 	ygl::IMesh::VBO getTangents();
+};
+
+const int MAX_BONE_INFLUENCE = 4;
+struct BoneInfo {
+	uint	  id;
+	glm::mat4 offset;
+};
+
+class AnimatedMesh : public Mesh {
+   protected:
+	std::unordered_map<std::string, BoneInfo> boneInfoMap;
+	uint							bonesCount = 0;
+	void init(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
+			  GLfloat *tangents, GLint *boneIDs, GLfloat *weights, GLuint indicesCount, GLuint *indices);
+
+   public:
+	AnimatedMesh() {};
+	AnimatedMesh(std::istream &in) : Mesh(in) {}
+	AnimatedMesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
+				 GLfloat *tangents, GLint *boneIDs, GLfloat *weights, GLuint indicesCount, GLuint *indices);
+	ygl::IMesh::VBO getBoneIds();
+	ygl::IMesh::VBO getWeights();
+	std::unordered_map<std::string, BoneInfo> &getBoneInfoMap() {return boneInfoMap;}
+	uint& getBoneCount() { return bonesCount;}
 };
 
 /**
@@ -207,7 +249,7 @@ class PlaneMesh : public Mesh {
 #ifndef YGL_NO_ASSIMP
 class AssetManager;
 
-class MeshFromFile : public Mesh {
+class MeshFromFile : public AnimatedMesh {
 	std::string path;
 	uint		index;
 	void		init(const std::string &path, uint index);
