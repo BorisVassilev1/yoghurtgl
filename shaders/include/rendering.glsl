@@ -67,7 +67,9 @@ struct Material {
 
 	int	  emission_map;
 	float use_emission_map;
-};	   // 96 bytes all
+	int	  transparency_map;
+	float use_transparency_map;
+};	   // 128 bytes all
 
 layout(std140, binding = 0) uniform Matrices {
 	mat4 projectionMatrix;
@@ -90,7 +92,7 @@ layout(std140, binding = 4) uniform shadowMatrices {
 
 uniform uint  material_index = 0;
 uniform uint renderMode	 = 0;
-uniform float indirectStrength = 0.5;
+uniform float indirectStrength = 1.0;
 
 uniform bool use_texture;
 layout(binding = 1) uniform sampler2D albedoMap;
@@ -100,12 +102,14 @@ layout(binding = 4) uniform sampler2D roughnessMap;
 layout(binding = 5) uniform sampler2D aoMap;
 layout(binding = 6) uniform sampler2D emissionMap;
 layout(binding = 10) uniform sampler2D metallicMap;
+layout(binding = 11) uniform sampler2D opacityMap;
 uniform bool use_skybox = false;
-layout(binding = 11) uniform samplerCube skybox;
-layout(binding = 12) uniform samplerCube irradianceMap;
-layout(binding = 13) uniform samplerCube prefilterMap;
-layout(binding = 14) uniform sampler2D brdfMap;
-layout(binding = 15) uniform sampler2D shadowMap;
+layout(binding = 12) uniform samplerCube skybox;
+layout(binding = 13) uniform samplerCube irradianceMap;
+layout(binding = 14) uniform samplerCube prefilterMap;
+layout(binding = 15) uniform sampler2D brdfMap;
+layout(binding = 16) uniform sampler2D shadowMap;
+uniform bool use_shadow = false;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {	   // learnopengl
 	return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
@@ -214,20 +218,26 @@ vec3 calculateIndirectComponent(in vec3 position, in vec3 N, in vec3 albedo, in 
 	return ambient * indirectStrength;
 }
 
-vec3 calcAllLightsCustom(in vec3 position, in vec3 normal, in vec3 albedo, in float roughness, in float metallic, in float AO, in vec3 emission) {
+vec3 calcAllLightsCustom(in vec3 position, in vec3 normal, in vec3 albedo, in float roughness, in float metallic, in float AO, in vec3 emission, in float opacity) {
+#ifdef FRAG
+	if(opacity < 0.001) discard;
+#endif
 	vec3 light	= vec3(0.0, 0.0, 0.0);
 	vec3 camPos = (cameraWorldMatrix * vec4(0, 0, 0, 1)).xyz;
 
-	vec4 shadowPosition = shadowProjectionMatrix * shadowViewMatrix * vec4(position, 1);
+
 	float hasLight = 1.0;
-	if(
-			shadowPosition.x >= -1 && shadowPosition.x <=1 && 
-			shadowPosition.y >= -1 && shadowPosition.y <=1 &&
-			shadowPosition.z >= -1 && shadowPosition.z <=1) {
-		vec3 coords = (shadowPosition.xyz + 1.) / 2.;
-		float depth = texture(shadowMap, coords.xy).x;
-		if(coords.z > (depth + 0.01)) {
-			hasLight = 0.0;
+	if(use_shadow == false) {
+		vec4 shadowPosition = shadowProjectionMatrix * shadowViewMatrix * vec4(position, 1);
+		if(
+				shadowPosition.x >= -1 && shadowPosition.x <=1 && 
+				shadowPosition.y >= -1 && shadowPosition.y <=1 &&
+				shadowPosition.z >= -1 && shadowPosition.z <=1) {
+			vec3 coords = (shadowPosition.xyz + 1.) / 2.;
+			float depth = texture(shadowMap, coords.xy).x;
+			if(coords.z > (depth + 0.0001)) {
+				hasLight = 0.0;
+			}
 		}
 	}
 
@@ -259,17 +269,21 @@ vec3 calcAllLightsCustom(in vec3 position, in vec3 normal, in vec3 albedo, in fl
 			light += calculateIndirectComponent(position, normal, albedo, roughness, metallic, AO, camPos);
 		}
 	}
+	if(renderMode == 10) {
+		light += opacity;
+	}
 
 	return light;
 }
 
 vec3 calcAllLights(in vec3 position, in vec3 normal, in vec3 vertexNormal, in vec2 texCoord) {
 	vec3  light		= vec3(0.0, 0.0, 0.0);
-	vec3  diffuse	= texture(albedoMap, texCoord).xyz;
+	vec4  diffuse	= texture(albedoMap, texCoord).xyzw;
 	float roughness = texture(roughnessMap, texCoord).y;
 	vec3  emission	= texture(emissionMap, texCoord).xyz;
 	float metallic	= texture(metallicMap, texCoord).z;
 	float ao		= texture(aoMap, texCoord).x;
+	float opacity	= texture(opacityMap, texCoord).x;
 
 	Material mat	= materials[material_index];
 	vec3	 camPos = (cameraWorldMatrix * vec4(0, 0, 0, 1)).xyz;
@@ -277,12 +291,14 @@ vec3 calcAllLights(in vec3 position, in vec3 normal, in vec3 vertexNormal, in ve
 	vec3	 R		= normalize(reflect(V, normal));
 
 	float calcAO		= mix(1., ao, mat.use_ao_map);
-	vec3  calcAlbedo	= mix(mat.albedo, diffuse, mat.use_albedo_map);
+	vec3  calcAlbedo	= mix(mat.albedo, diffuse.xyz, mat.use_albedo_map);
 	float calcMetallic	= mix(mat.metallic, metallic, mat.use_metallic_map);
 	vec3  calcEmission	= mix(mat.emission, mat.emission * emission, mat.use_emission_map);
 	float calcRoughness = mix(mat.specular_roughness, mat.specular_roughness * roughness, mat.use_roughness_map) + 0.1;
+	float calcOpacity	= mix(1, opacity, mat.use_transparency_map);
+	diffuse.w = mix(1, diffuse.w, mat.use_albedo_map);
 	//calcRoughness *= calcRoughness;
 
-	return calcAllLightsCustom(position, normal, calcAlbedo, calcRoughness, calcMetallic, calcAO, calcEmission);
+	return calcAllLightsCustom(position, normal, calcAlbedo, calcRoughness, calcMetallic, calcAO, calcEmission, diffuse.w);
 }
 

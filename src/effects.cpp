@@ -16,17 +16,17 @@ ygl::GrassSystem::GrassBladeMesh::GrassBladeMesh(glm::ivec2 resolution, int LOD)
 	GLuint indices[]	= {2, 1, 0, 2, 3,  1, 4, 3,	 2,	 4, 5,	3,	6,	5,	4,	6,	7,	5,	8, 7,
 						   6, 8, 9, 7, 10, 9, 8, 10, 11, 9, 12, 11, 10, 12, 13, 11, 14, 13, 12};
 	this->createIBO(indices, 13 * 3);
-	
-	this->vCount1 = this->verticesCount;
-	this->ibo1 = this->ibo;
+
+	this->vCount1		= this->verticesCount;
+	this->ibo1			= this->ibo;
 	this->indicesCount1 = this->indicesCount;
 
 	this->verticesCount = 7;
 	GLuint indicesLow[] = {2, 1, 0, 2, 3, 1, 4, 3, 2, 4, 5, 3, 6, 5, 4};
 	this->createIBO(indicesLow, 5 * 3);
 
-	this->vCount2 = this->verticesCount;
-	this->ibo2 = this->ibo;
+	this->vCount2		= this->verticesCount;
+	this->ibo2			= this->ibo;
 	this->indicesCount2 = this->indicesCount;
 
 	glGenBuffers(1, &grassData);
@@ -53,14 +53,14 @@ void ygl::GrassSystem::GrassBladeMesh::setResolution(glm::ivec2 resolution) {
 ygl::GrassSystem::GrassBladeMesh::~GrassBladeMesh() { glDeleteBuffers(1, &grassData); }
 
 void ygl::GrassSystem::GrassBladeMesh::bind() {
-	if(LOD == 0) {
-		ibo = ibo1;
+	if (LOD == 0) {
+		ibo			  = ibo1;
 		verticesCount = vCount1;
-		indicesCount = indicesCount1;
+		indicesCount  = indicesCount1;
 	} else {
-		ibo = ibo2;
+		ibo			  = ibo2;
 		verticesCount = vCount2;
-		indicesCount = indicesCount2;
+		indicesCount  = indicesCount2;
 	}
 	MultiBufferMesh::bind();
 }
@@ -76,10 +76,10 @@ void ygl::GrassSystem::init() {
 
 	assetManager = scene->getSystem<AssetManager>();
 
-	grassCompute = new ComputeShader("./shaders/grass/grassCompute.comp");
-	assetManager->addShader(grassCompute, "Grass Compute");
-	grassShader = new VFShader("./shaders/grass/grass.vs", "./shaders/grass/grass.fs");
-	assetManager->addShader(grassShader, "Grass Shader");
+	auto grassCompute = new ComputeShader("./shaders/grass/grassCompute.comp");
+	grassComputeIndex = assetManager->addShader(grassCompute, "Grass Compute");
+	auto grassShader  = new VFShader("./shaders/grass/grass.vs", "./shaders/grass/grass.fs");
+	grassShaderIndex  = assetManager->addShader(grassShader, "Grass Shader");
 
 	materialIndex = scene->getSystem<Renderer>()->addMaterial(
 		Material(glm::vec3(0.1, 0.7, 0.1), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.8, 0.0));
@@ -88,20 +88,21 @@ void ygl::GrassSystem::init() {
 
 	scene->registerComponent<GrassHolder>();
 	scene->setSystemSignature<GrassSystem, Transformation, GrassHolder>();
-	renderer = scene->getSystem<Renderer>();
-	this->window	   = renderer->getWindow();
+	renderer	 = scene->getSystem<Renderer>();
+	this->window = renderer->getWindow();
 	renderer->addDrawFunction([this]() -> void { render(this->renderer->getWindow()->globalTime); });
 }
 
-ygl::GrassSystem::~GrassSystem() { }
+ygl::GrassSystem::~GrassSystem() {}
 
 void ygl::GrassSystem::update(float time) {
-	for(Entity e : entities) {
-		auto worldMatrix = scene->getComponent<Transformation>(e).getWorldMatrix();
-		GrassHolder &holder = scene->getComponent<GrassHolder>(e);
-		if(holder.LOD > 1) continue;
+	auto grassCompute = (ComputeShader *)assetManager->getShader(grassComputeIndex);
+	for (Entity e : entities) {
+		auto		 worldMatrix = scene->getComponent<Transformation>(e).getWorldMatrix();
+		GrassHolder &holder		 = scene->getComponent<GrassHolder>(e);
+		if (holder.LOD > 1) continue;
 		reload(holder);
-		GrassBladeMesh *mesh = (GrassBladeMesh*)scene->getSystem<AssetManager>()->getMesh(holder.meshIndex);
+		GrassBladeMesh *mesh = (GrassBladeMesh *)assetManager->getMesh(holder.meshIndex);
 
 		Shader::setSSBO(mesh->grassData, 1);
 		grassCompute->bind();
@@ -117,17 +118,18 @@ void ygl::GrassSystem::update(float time) {
 }
 
 void ygl::GrassSystem::render(float time) {
+	auto grassShader = (VFShader *) assetManager->getShader(grassShaderIndex);
 	grassShader->bind();
 	if (grassShader->hasUniform("time")) grassShader->setUniform("time", time);
 	Renderer *renderer = scene->getSystem<Renderer>();
 	if (grassShader->hasUniform("use_skybox")) grassShader->setUniform("use_skybox", renderer->hasSkybox());
 
-	for(Entity e : entities) {
-		auto worldMatrix = scene->getComponent<Transformation>(e).getWorldMatrix();
-		GrassHolder &holder = scene->getComponent<GrassHolder>(e);
-		if(holder.LOD > 1) continue;
-		GrassBladeMesh *mesh = (GrassBladeMesh*)scene->getSystem<AssetManager>()->getMesh(holder.meshIndex);
-		
+	for (Entity e : entities) {
+		auto		 worldMatrix = scene->getComponent<Transformation>(e).getWorldMatrix();
+		GrassHolder &holder		 = scene->getComponent<GrassHolder>(e);
+		if (holder.LOD > 1) continue;
+		GrassBladeMesh *mesh = (GrassBladeMesh *)scene->getSystem<AssetManager>()->getMesh(holder.meshIndex);
+
 		mesh->bind();
 		{
 			grassShader->setUniform("worldMatrix", worldMatrix);
@@ -149,34 +151,30 @@ void ygl::GrassSystem::render(float time) {
 
 void ygl::GrassSystem::reload(ygl::GrassSystem::GrassHolder &holder) {
 	glm::ivec2 resolution = glm::floor(holder.size * holder.density);
-	if(holder.meshIndex == (uint)-1) {
+	if (holder.meshIndex == (uint)-1) {
 		GrassBladeMesh *mesh = new GrassBladeMesh(resolution, holder.LOD);
-		holder.meshIndex = assetManager->addMesh((Mesh *)mesh, "grass_mesh_" + std::to_string(mesh->index), false);
+		holder.meshIndex	 = assetManager->addMesh((Mesh *)mesh, "grass_mesh_" + std::to_string(mesh->index), false);
 		return;
 	}
 	GrassBladeMesh *mesh = (GrassBladeMesh *)assetManager->getMesh(holder.meshIndex);
-	if(mesh->resolution != resolution || mesh->LOD != holder.LOD) {
+	if (mesh->resolution != resolution || mesh->LOD != holder.LOD) {
 		mesh->LOD = holder.LOD;
 		mesh->setResolution(resolution);
 	}
 }
 
 void ygl::GrassSystem::reload() {
-	for(Entity e : entities) {
+	for (Entity e : entities) {
 		GrassHolder &holder = scene->getComponent<GrassHolder>(e);
-		holder.density = this->density;
+		holder.density		= this->density;
 	}
 }
 
 void ygl::GrassSystem::doWork() { this->update((float)window->globalTime); }
 
-ygl::Material &ygl::GrassSystem::getMaterial() {
-	return scene->getSystem<ygl::Renderer>()->getMaterial(materialIndex);
-}
+ygl::Material &ygl::GrassSystem::getMaterial() { return scene->getSystem<ygl::Renderer>()->getMaterial(materialIndex); }
 
-uint ygl::GrassSystem::getMaterialIndex() {
-	return materialIndex;
-}
+uint ygl::GrassSystem::getMaterialIndex() { return materialIndex; }
 
 std::ostream &ygl::operator<<(std::ostream &out, const ygl::GrassSystem::GrassHolder &rhs) {
 	static_cast<void>(rhs);

@@ -270,6 +270,10 @@ class MeshFromFile : public AnimatedMesh {
 	MeshFromFile(std::istream &in);
 
 	void serialize(std::ostream &out) override;
+	
+	static int import_flags;
+
 };
+
 #endif
 }	  // namespace ygl

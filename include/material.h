@@ -43,6 +43,8 @@ struct alignas(16) Material {
 
 	int	  emission_map;
 	float use_emission_map;
+	int	  transparency_map;
+	float use_transparency_map;
 
    public:
 	Material();
@@ -53,7 +55,7 @@ struct alignas(16) Material {
 			 float refraction_chance, glm::vec3 specular_color, float refraction_roughness, float specular_roughness,
 			 float metallic, int normal_map, float use_normal_map, int roughness_map, float use_roughness_map,
 			 int ao_map, float use_ao_map, int metallic_map, float use_metallic_map, int albedo_map,
-			 float use_albedo_map, int emission_map, float use_emission_map);
+			 float use_albedo_map, int emission_map, float use_emission_map, int transparency_map, float use_transparency_map);
 
 	/**
 	 * @brief Constructor for untextured materials

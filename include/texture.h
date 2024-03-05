@@ -27,11 +27,12 @@ class TexIndex {
 		AO			   = GL_TEXTURE5,
 		EMISSION	   = GL_TEXTURE6,
 		METALLIC	   = GL_TEXTURE10,
-		SKYBOX		   = GL_TEXTURE11,
-		IRRADIANCE_MAP = GL_TEXTURE12,
-		PREFILTER_MAP  = GL_TEXTURE13,
-		BDRF_MAP	   = GL_TEXTURE14,
-		SHADOW_MAP	   = GL_TEXTURE15
+		OPACITY		   = GL_TEXTURE11,
+		SKYBOX		   = GL_TEXTURE12,
+		IRRADIANCE_MAP = GL_TEXTURE13,
+		PREFILTER_MAP  = GL_TEXTURE14,
+		BDRF_MAP	   = GL_TEXTURE15,
+		SHADOW_MAP	   = GL_TEXTURE16
 	};
 };
 
@@ -57,12 +58,14 @@ enum TextureType {
 	DEPTH_24,
 	HDR_CUBEMAP,
 	RG16F,
-	DIFFUSE	  = SRGB8,
+	R8,
+	DIFFUSE	  = SRGBA8,
 	NORMAL	  = RGB16F,
 	ROUGHNESS = SRGB8,
 	METALLIC  = SRGB8,
 	AO		  = SRGB8,
 	EMISSIVE  = SRGB8,
+	OPACITY	  = R8,
 };
 
 void getTypeParameters(TextureType type, GLint &internalFormat, GLenum &format, uint8_t &pixelSize, uint8_t &components,

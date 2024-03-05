@@ -1,6 +1,7 @@
 #include <istream>
 #include <assert.h>
 #include <iostream>
+#include "assimp/material.h"
 #include <math.h>
 #define _USE_MATH_DEFINES
 #include <mesh.h>
@@ -515,10 +516,7 @@ const aiScene *ygl::MeshFromFile::loadScene(const std::string &file, unsigned in
 }
 
 const aiScene *ygl::MeshFromFile::loadScene(const std::string &file) {
-	return loadScene(file, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
-							   aiProcess_GenNormals
-					 // aiProcess_PreTransformVertices
-	);
+	return loadScene(file, import_flags);
 }
 
 bool getTexture(aiMaterial *mat, aiTextureType type, std::string &fileName) {
@@ -590,15 +588,16 @@ ygl::Material ygl::MeshFromFile::getMaterial(const aiScene *scene, ygl::AssetMan
 	glm::vec3 glmSpecular(specular.r, specular.g, specular.b);
 	glm::vec3 glmTransparent(transparent.r, transparent.g, transparent.b);
 
-	float		  use_map[6]{0};
-	uint		  map[6]{0};
-	std::string	  map_file[6];
-	aiTextureType mapType[6]{aiTextureType_NORMALS,	  aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_LIGHTMAP,
-							 aiTextureType_METALNESS, aiTextureType_DIFFUSE,		   aiTextureType_EMISSIVE};
-	TextureType	  texType[6]{TextureType::NORMAL,	TextureType::ROUGHNESS, TextureType::AO,
-							 TextureType::METALLIC, TextureType::DIFFUSE,	TextureType::EMISSIVE};
+	const uint	  TEX_COUNT = 7;
+	float		  use_map[TEX_COUNT]{0};
+	uint		  map[TEX_COUNT]{0};
+	std::string	  map_file[TEX_COUNT];
+	aiTextureType mapType[TEX_COUNT]{aiTextureType_NORMALS,	  aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_LIGHTMAP,
+									 aiTextureType_METALNESS, aiTextureType_DIFFUSE,		   aiTextureType_EMISSIVE, aiTextureType_OPACITY};
+	TextureType	  texType[TEX_COUNT]{TextureType::NORMAL,	TextureType::ROUGHNESS, TextureType::AO,
+									 TextureType::METALLIC, TextureType::DIFFUSE,	TextureType::EMISSIVE, TextureType::OPACITY};
 
-	for (int i = 0; i < 6; ++i) {
+	for (uint i = 0; i < TEX_COUNT; ++i) {
 		use_map[i]	= getTexture(material, mapType[i], map_file[i]);
 		map_file[i] = dir + map_file[i];
 
@@ -610,7 +609,7 @@ ygl::Material ygl::MeshFromFile::getMaterial(const aiScene *scene, ygl::AssetMan
 
 	ygl::Material mat(glmAlbedo, 0.02, glmEmission, ior, glmTransparent, 0.0, glmSpecular, roughness_factor,
 					  roughness_factor, 0., map[0], use_map[0], map[1], use_map[1], map[2], use_map[2], map[3],
-					  use_map[3], map[4], use_map[4], map[5], use_map[5]);
+					  use_map[3], map[4], use_map[4], map[5], use_map[5], map[6], use_map[6]);
 	return mat;
 }
 
@@ -646,10 +645,11 @@ void ygl::MeshFromFile::init(const std::string &path, uint index) {
 	aiMesh		*mesh		   = meshes[index];
 	unsigned int verticesCount = mesh->mNumVertices;
 	unsigned int indicesCount  = mesh->mNumFaces * 3;
-	GLuint		*indices	   = new GLuint[indicesCount * sizeof(GLuint)];
+	GLuint		*indices	   = new GLuint[indicesCount];
 
 	unsigned int indexCounter = 0;
 	for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
+		assert(mesh->mFaces->mNumIndices == 3);
 		indices[indexCounter++] = mesh->mFaces[i].mIndices[0];
 		indices[indexCounter++] = mesh->mFaces[i].mIndices[1];
 		indices[indexCounter++] = mesh->mFaces[i].mIndices[2];
@@ -737,4 +737,7 @@ void ygl::MeshFromFile::serialize(std::ostream &out) {
 	out.write(path.c_str(), path.size() + 1);
 	out.write((char *)&index, sizeof(index));
 }
+
+int ygl::MeshFromFile::import_flags = aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_GenNormals;
+
 #endif

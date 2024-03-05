@@ -194,7 +194,8 @@ void ygl::RendererComponent::deserialize(std::istream &in) {
 
 bool ygl::RendererComponent::operator==(const RendererComponent &other) {
 	return this->shaderIndex == other.shaderIndex && this->materialIndex == other.materialIndex &&
-		   this->meshIndex == other.meshIndex && this->shadowShaderIndex == other.shadowShaderIndex && this->isAnimated == other.isAnimated;
+		   this->meshIndex == other.meshIndex && this->shadowShaderIndex == other.shadowShaderIndex &&
+		   this->isAnimated == other.isAnimated;
 }
 
 void ygl::Renderer::init() {
@@ -212,9 +213,9 @@ void ygl::Renderer::init() {
 	backFrameBuffer = new FrameBuffer(new Texture2d(width, height, TextureType::RGBA16F, nullptr), GL_COLOR_ATTACHMENT0,
 									  new Texture2d(width, height, TextureType::DEPTH_STENCIL_32F_8, nullptr),
 									  GL_DEPTH_STENCIL_ATTACHMENT, "Back frameBuffer");
-	shadowFrameBuffer = new FrameBuffer(new Texture2d(1024, 1024, TextureType::RGBA16F, nullptr), GL_COLOR_ATTACHMENT0,
-										new Texture2d(1024, 1024, TextureType::DEPTH_24, nullptr), GL_DEPTH_ATTACHMENT,
-										"Shadow Framebuffer");
+	shadowFrameBuffer = new FrameBuffer(nullptr, GL_COLOR_ATTACHMENT0,
+										new Texture2d(shadowMapSize, shadowMapSize, TextureType::DEPTH_24, nullptr),
+										GL_DEPTH_ATTACHMENT, "Shadow Framebuffer");
 	dbLog(ygl::LOG_DEBUG, "shadow texture: ", shadowFrameBuffer->getDepthStencil()->getID());
 
 	// addScreenEffect(new BloomEffect(this));
@@ -316,6 +317,8 @@ void ygl::Renderer::setClearColor(glm::vec4 color) {
 	glClearColor(color.x, color.y, color.z, color.w);
 }
 
+void ygl::Renderer::setShadow(bool shadow) { this->shadow = shadow; }
+
 void ygl::Renderer::swapFrameBuffers() { std::swap(frontFrameBuffer, backFrameBuffer); }
 
 void ygl::Renderer::drawScene() {
@@ -371,6 +374,8 @@ void ygl::Renderer::drawScene() {
 			asman->getTexture(materials[ecr.materialIndex].emission_map)->bind(ygl::TexIndex::EMISSION);
 		if (materials[ecr.materialIndex].use_metallic_map)
 			asman->getTexture(materials[ecr.materialIndex].metallic_map)->bind(ygl::TexIndex::METALLIC);
+		if (materials[ecr.materialIndex].use_transparency_map)
+			asman->getTexture(materials[ecr.materialIndex].transparency_map)->bind(ygl::TexIndex::OPACITY);
 		if (skyboxTexture != 0) asman->getTexture(skyboxTexture)->bind(ygl::TexIndex::SKYBOX);
 
 		if (irradianceTexture != 0) asman->getTexture(irradianceTexture)->bind(ygl::TexIndex::IRRADIANCE_MAP);
@@ -383,7 +388,8 @@ void ygl::Renderer::drawScene() {
 
 		asman->getTexture(brdfTexture)->bind(ygl::TexIndex::BDRF_MAP);
 
-		shadowFrameBuffer->getDepthStencil()->bind(ygl::TexIndex::SHADOW_MAP);
+		if (sh->hasUniform("use_shadow")) { sh->setUniform("use_shadow", shadow); }
+		if (shadow) shadowFrameBuffer->getDepthStencil()->bind(ygl::TexIndex::SHADOW_MAP);
 
 		Mesh *mesh = getMesh(ecr.meshIndex);
 		mesh->bind();
@@ -409,9 +415,9 @@ void ygl::Renderer::shadowPass() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glViewport(0, 0, 1024, 1024);
-	drawScene();
-	/*
+	glViewport(0, 0, shadowMapSize, shadowMapSize);
+	// drawScene();
+
 	// bind default shader
 	uint prevShaderIndex;
 	if (defaultShadowShader != (uint)-1) {
@@ -456,6 +462,7 @@ void ygl::Renderer::shadowPass() {
 		mesh->bind();
 		// set uniforms
 		if (sh->hasUniform("worldMatrix")) sh->setUniform("worldMatrix", transform.getWorldMatrix());
+		if (sh->hasUniform("animate")) sh->setUniform("animate", ecr.isAnimated);
 
 		// draw
 		glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
@@ -464,14 +471,14 @@ void ygl::Renderer::shadowPass() {
 	}
 	if (asman->getShadersCount() > prevShaderIndex)
 		asman->getShader(prevShaderIndex)->unbind();	 // unbind the last used shader
-	*/
+
 	shadowFrameBuffer->unbind();
 }
 
 void ygl::Renderer::colorPass() {
 	assert(mainCamera && "must have a main camera");
 	mainCamera->enable();
-	shadowCamera.enable(4);
+	if(shadow)shadowCamera.enable(4);
 	backFrameBuffer->bind();
 	glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
 	backFrameBuffer->clear();
@@ -512,7 +519,7 @@ void ygl::Renderer::effectsPass() {
 }
 
 void ygl::Renderer::doWork() {
-	shadowPass();
+	if (shadow) shadowPass();
 	colorPass();
 	effectsPass();
 	defaultTexture.bind(GL_TEXTURE0);	  // some things break when nothing is bound to texture0

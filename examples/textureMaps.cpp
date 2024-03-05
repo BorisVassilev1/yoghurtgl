@@ -26,7 +26,7 @@ void run() {
 	scene.registerComponent<Transformation>();
 
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
-
+	renderer->setMainCamera(&cam);
 	// Texture2d *color	 = new Texture2d("./res/images/stones/albedo.png", TextureType::DIFFUSE);
 	// Texture2d *normal	 = new Texture2d("./res/images/stones/normal.png", TextureType::NORMAL);
 	// Texture2d *roughness = new Texture2d("./res/images/stones/roughness.png", TextureType::ROUGHNESS);

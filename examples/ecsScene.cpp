@@ -33,6 +33,7 @@ void run() {
 	scene.registerComponent<Transformation>();
 
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
+	renderer->setMainCamera(&cam);
 
 	Texture2d *tex = new Texture2d("./res/models/bunny_uv/bunny_uv.jpg");
 

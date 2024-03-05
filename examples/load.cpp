@@ -27,6 +27,8 @@ void run() {
 
 	scene.getSystem<AssetManager>()->printTextures();
 
+	renderer->setMainCamera(&cam);
+
 	std::ifstream is = std::ifstream("scene.sc");
 	try {
 		scene.read(is);

@@ -110,6 +110,13 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			_type		   = GL_FLOAT;
 			break;
 		}
+		case TextureType::R8: {
+			internalFormat = GL_R8;
+			format		   = GL_R;
+			pixelSize	   = 1;
+			components	   = 1;
+			_type		   = GL_FLOAT;
+		}
 		default: {
 			dbLog(ygl::LOG_WARNING, "unknown texture type ", type, ". default texture type will be RGBA32f");
 			internalFormat = GL_RGBA32F;

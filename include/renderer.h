@@ -11,7 +11,7 @@
 #include <texture.h>
 #include <material.h>
 #include <ostream>
-#include "camera.h"
+#include <camera.h>
 #include <imgui.h>
 #include <asset_manager.h>
 
@@ -139,7 +139,10 @@ class Renderer : public ygl::ISystem {
 	TextureCubemap defaultCubemap	   = TextureCubemap(1, 1);
 
 	FrameBuffer		  *shadowFrameBuffer;
-	OrthographicCamera shadowCamera = OrthographicCamera(60, 1., 0.1, 100);
+	OrthographicCamera shadowCamera = OrthographicCamera(30, 1., 0.1, 100);
+	uint shadowMapSize = 1024;
+	bool shadow = false;
+
 	Camera			  *mainCamera	= nullptr;
 
 	FrameBuffer *frontFrameBuffer;
@@ -190,6 +193,7 @@ class Renderer : public ygl::ISystem {
 	void setDefaultShadowShader(int defaultShader);
 	uint getDefaultShadowShader();
 	void setClearColor(glm::vec4 color);
+	void setShadow(bool shadow);
 
 	void setMainCamera(Camera *cam) { this->mainCamera = cam; }
 

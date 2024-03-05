@@ -3,6 +3,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include "GLFW/glfw3.h"
 #include <yoghurtgl.h>
 #include <serializable.h>
 #include <texture.h>
@@ -54,8 +55,14 @@ void ygl::AssetManager::read(std::istream &in) {
 }
 
 void ygl::AssetManager::reloadShaders() {
-	std::stringstream str(std::ios::binary);
-	shaders.write(str);
-	shaders.clear();
-	shaders.read(str);
+	double start = glfwGetTime();
+	std::stringstream str(std::ios::in | std::ios::out | std::ios::binary);
+	for(auto &[sh, _] : shaders) {
+		sh->serialize(str);
+		delete sh;
+		sh = dynamic_cast<Shader*>(ResourceFactory::fabricate(str));
+		str.clear();
+	}
+	double end = glfwGetTime();
+	dbLog(ygl::LOG_INFO, "Reloaded shaders: ", (end - start) * 1000 , "ms");
 }

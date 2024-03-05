@@ -8,6 +8,8 @@
 #include <asset_manager.h>
 #include <entities.h>
 #include <fstream>
+#include "assimp/postprocess.h"
+#include "mesh.h"
 
 using namespace ygl;
 
@@ -29,6 +31,8 @@ void run() {
 
 	uint shaderInd = asman->addShader(shader, "defaultShader");
 	renderer->setDefaultShader(shaderInd);
+	renderer->setMainCamera(&cam);
+	MeshFromFile::import_flags |= aiProcess_PreTransformVertices;
 
 	Entity sphere = addSphere(scene, glm::vec3(-3, 0, 0), glm::vec3(1));
 	Material &sphere_mat = renderer->getMaterial(scene.getComponent<RendererComponent>(sphere).materialIndex);

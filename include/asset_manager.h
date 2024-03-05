@@ -3,6 +3,7 @@
 #include <vector>
 #include <unordered_map>
 #include <queue>
+#include "yoghurtgl.h"
 
 #include <serializable.h>
 #include <shader.h>
@@ -81,6 +82,8 @@ class AssetArray : public AppendableSerializable {
 		auto size = assets.size();
 		in.read((char *)&count, sizeof(count));
 		in.read((char *)&size, sizeof(size));
+		std::cout << "count " << count << std::endl;
+		std::cout << "size " << size << std::endl;
 		assets.resize(size);
 		std::vector<bool> check;
 		check.resize(size, false);
@@ -90,7 +93,7 @@ class AssetArray : public AppendableSerializable {
 			uint		index;
 			std::getline(in, name, '\0');
 			in.read((char *)&index, sizeof(uint));
-
+			dbLog(ygl::LOG_DEBUG, "loading: ", name, " ", index);
 			A *asset	  = dynamic_cast<A *>(ResourceFactory::fabricate(in));
 			assets[index] = std::make_pair(asset, true);
 			names[name]	  = index;
@@ -111,6 +114,9 @@ class AssetArray : public AppendableSerializable {
 		assets.clear();
 		holes = std::queue<uint>();
 	}
+
+	auto begin() { return assets.begin(); }
+	auto end() { return assets.end(); }
 };
 
 /**

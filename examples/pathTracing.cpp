@@ -122,6 +122,7 @@ void initScene() {
 	scene->registerComponent<ygl::Transformation>();
 
 	renderer = scene->registerSystem<ygl::Renderer>(window);
+	renderer->setMainCamera(camera);
 
 	renderer->addMaterial(
 		ygl::Material(glm::vec3(1.f), 0.1, glm::vec3(0.f), 1.0, glm::vec3(0.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 0.0));

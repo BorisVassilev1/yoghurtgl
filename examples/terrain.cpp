@@ -53,6 +53,7 @@ void run() {
 	scene.registerComponent<Transformation>();
 
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
+	renderer->setMainCamera(&cam);
 
 	Texture2d *height = new Texture2d("./res/images/bricks/displ.jpg");
 	Texture2d *normal = new Texture2d("./res/images/bricks/normal.jpg");

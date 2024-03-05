@@ -25,7 +25,8 @@ void main() {
 		mat.specular_roughness,
 		mat.metallic,
 		clamp(vColor.x * vColor.x + 0.2, 0, 1),
-		vec3(0.0));
+		vec3(0.0),
+		1.0);
 
 	// color = vec3(materials[material_index].albedo);
 	// color = vVertexNormal;

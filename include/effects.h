@@ -21,21 +21,21 @@ class GrassSystem : public ygl::ISystem {
 			glm::vec2 size;
 			uint	  hash;
 		};
-		
+
 		uint vCount1;
 		uint vCount2;
 		uint indicesCount1;
 		uint indicesCount2;
 
 	   public:
-		GLuint ibo1;
-		GLuint ibo2;
-		GLuint grassData  = -1;
-		GLuint bladeCount = -1;
+		GLuint	   ibo1;
+		GLuint	   ibo2;
+		GLuint	   grassData  = -1;
+		GLuint	   bladeCount = -1;
 		glm::ivec2 resolution;
-		int LOD;
+		int		   LOD;
 
-		uint index;
+		uint		index;
 		static uint count;
 
 		GrassBladeMesh(glm::ivec2 resolution, int LOD);
@@ -45,8 +45,8 @@ class GrassSystem : public ygl::ISystem {
 		void bind();
 	};
 
-	ComputeShader  *grassCompute = nullptr;
-	VFShader	   *grassShader	 = nullptr;
+	uint		   grassComputeIndex = -1;
+	uint		   grassShaderIndex	 = -1;
 
 	unsigned int materialIndex = -1;
 
@@ -55,10 +55,10 @@ class GrassSystem : public ygl::ISystem {
 	struct GrassHolder : public ygl::Serializable {
 		static const char *name;
 
-		uint meshIndex = -1;
+		uint	  meshIndex = -1;
 		glm::vec2 size;
-		float density;
-		int LOD;
+		float	  density;
+		int		  LOD;
 
 		GrassHolder() : size(0), density(0) {}
 		GrassHolder(const glm::vec2 size, float density, int LOD = 0) : size(size), density(density), LOD(LOD) {}
@@ -67,17 +67,17 @@ class GrassSystem : public ygl::ISystem {
 		void deserialize(std::istream &in);
 	};
 
-	glm::vec2 size	  = glm::vec2(20, 20);
-	float	  density = 3;
-	Window	 *window;
-	Renderer *renderer;
+	glm::vec2	  size	  = glm::vec2(20, 20);
+	float		  density = 3;
+	Window		 *window;
+	Renderer	 *renderer;
 	AssetManager *assetManager;
-	
-	float curvature = 0.6;
+
+	float curvature	   = 0.6;
 	float facingOffset = 0.4;
-	float height = 1.7;
-	float width = 0.15;
-	
+	float height	   = 1.7;
+	float width		   = 0.15;
+
 	using ISystem::ISystem;
 	void init() override;
 	~GrassSystem();
@@ -90,9 +90,9 @@ class GrassSystem : public ygl::ISystem {
 	void read(std::istream &in) override { static_cast<void>(in); }
 
 	Material &getMaterial();
-	uint getMaterialIndex();
+	uint	  getMaterialIndex();
 
-	private:
+   private:
 	void reload(GrassHolder &holder);
 };
 
