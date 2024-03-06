@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(YGL_STATIC ON CACHE BOOL "link as static library")
 set(ASAN_DETECT_LEAKS ON CACHE BOOL "turn the leak sanitizer on or off")
 project(YoghurtGL)
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-fPIC -stdlib=libc++")
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-fPIC -stdlib=libstdc++")
 set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-fPIC")
 
 
