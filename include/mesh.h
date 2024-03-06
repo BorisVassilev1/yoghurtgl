@@ -1,9 +1,12 @@
 #pragma once
 
 #include <yoghurtgl.h>
+
 #include <iostream>
 #include <ostream>
 #include <vector>
+#include <unordered_map>
+
 #include <glm/glm.hpp>
 #include <string>
 #include <material.h>
@@ -153,19 +156,19 @@ struct BoneInfo {
 class AnimatedMesh : public Mesh {
    protected:
 	std::unordered_map<std::string, BoneInfo> boneInfoMap;
-	uint							bonesCount = 0;
+	uint									  bonesCount = 0;
 	void init(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
 			  GLfloat *tangents, GLint *boneIDs, GLfloat *weights, GLuint indicesCount, GLuint *indices);
 
    public:
-	AnimatedMesh() {};
+	AnimatedMesh(){};
 	AnimatedMesh(std::istream &in) : Mesh(in) {}
 	AnimatedMesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
 				 GLfloat *tangents, GLint *boneIDs, GLfloat *weights, GLuint indicesCount, GLuint *indices);
-	ygl::IMesh::VBO getBoneIds();
-	ygl::IMesh::VBO getWeights();
-	std::unordered_map<std::string, BoneInfo> &getBoneInfoMap() {return boneInfoMap;}
-	uint& getBoneCount() { return bonesCount;}
+	ygl::IMesh::VBO							   getBoneIds();
+	ygl::IMesh::VBO							   getWeights();
+	std::unordered_map<std::string, BoneInfo> &getBoneInfoMap() { return boneInfoMap; }
+	uint									  &getBoneCount() { return bonesCount; }
 };
 
 /**
@@ -270,10 +273,11 @@ class MeshFromFile : public AnimatedMesh {
 	MeshFromFile(std::istream &in);
 
 	void serialize(std::ostream &out) override;
-	
-	static int import_flags;
 
+	static int import_flags;
 };
+
+void fixMixamoBoneName(std::string &name);
 
 #endif
 }	  // namespace ygl

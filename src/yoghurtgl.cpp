@@ -14,6 +14,17 @@ extern "C"
 #endif
 const char* __asan_default_options() { return "detect_leaks=" STRINGIFY(ASAN_DETECT_LEAKS); }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+uint64_t NvOptimusEnablement = 1;
+int AmdPowerXpressRequestHighPerformance = 1;
+
+#ifdef __cplusplus
+}
+#endif
+
 int ygl::init() {
 	if (ygl::glfw_init) return 0;
 	ygl::glfw_init = true;
@@ -37,6 +48,10 @@ int ygl::initDebug() {
 	ygl::gl_debug_init = true;
 
 	std::cout << "Init debug!" << std::endl;
+	
+	const GLubyte* vendor = glGetString(GL_VENDOR); // Returns the vendor
+	const GLubyte* renderer = glGetString(GL_RENDERER); // Returns a hint to the model
+	dbLog(ygl::LOG_INFO, "running on: ", vendor, " ", renderer);
 
 	int flags;
 	glGetIntegerv(GL_CONTEXT_FLAGS, &flags);

@@ -1,14 +1,16 @@
 #include <istream>
 #include <assert.h>
 #include <iostream>
-#include "assimp/material.h"
-#include <math.h>
 #define _USE_MATH_DEFINES
-#include <mesh.h>
+#include <math.h>
+
+#include <assimp/material.h>
+#include <assimp/version.h>
 
 #include <yoghurtgl.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <texture.h>
+#include <mesh.h>
 #include <asset_manager.h>
 #include <assimp_glm_helpers.h>
 
@@ -507,7 +509,17 @@ Assimp::Importer *ygl::MeshFromFile::importer = nullptr;
 void ygl::MeshFromFile::terminateLoader() { delete ygl::MeshFromFile::importer; }
 
 const aiScene *ygl::MeshFromFile::loadScene(const std::string &file, unsigned int flags) {
-	if (importer == nullptr) { importer = new Assimp::Importer(); }
+	if (importer == nullptr) {
+		importer = new Assimp::Importer();
+		importer->SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
+
+		uint version_major	  = aiGetVersionMajor();
+		uint version_minor	  = aiGetVersionMinor();
+		uint version_patch	  = aiGetVersionPatch();
+		uint version_revision = aiGetVersionRevision();
+		dbLog(ygl::LOG_INFO, "Assimp version:", version_major, ".", version_minor, ".", version_patch, " @ ", std::hex,
+			  version_revision);
+	}
 
 	const aiScene *scene = importer->ReadFile(file, flags);
 
@@ -515,9 +527,7 @@ const aiScene *ygl::MeshFromFile::loadScene(const std::string &file, unsigned in
 	return scene;
 }
 
-const aiScene *ygl::MeshFromFile::loadScene(const std::string &file) {
-	return loadScene(file, import_flags);
-}
+const aiScene *ygl::MeshFromFile::loadScene(const std::string &file) { return loadScene(file, import_flags); }
 
 bool getTexture(aiMaterial *mat, aiTextureType type, std::string &fileName) {
 	uint	 numTextures = mat->GetTextureCount(aiTextureType(type));	  // Amount of diffuse textures
@@ -562,8 +572,6 @@ ygl::Material ygl::MeshFromFile::getMaterial(const aiScene *scene, ygl::AssetMan
 	ret = material->Get(AI_MATKEY_NAME, materialName);	   // Get the material name (pass by reference)
 	if (ret != AI_SUCCESS) materialName = "";			   // Failed to find material name so makes var empty
 
-	// std::cerr << "Name : " << materialName.data << std::endl;
-
 	aiColor3D diff(0, 0, 0);
 	ret = material->Get(AI_MATKEY_COLOR_DIFFUSE, diff);
 	if (ret != AI_SUCCESS) diff = aiColor3D(1, 0, 1);
@@ -593,9 +601,11 @@ ygl::Material ygl::MeshFromFile::getMaterial(const aiScene *scene, ygl::AssetMan
 	uint		  map[TEX_COUNT]{0};
 	std::string	  map_file[TEX_COUNT];
 	aiTextureType mapType[TEX_COUNT]{aiTextureType_NORMALS,	  aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_LIGHTMAP,
-									 aiTextureType_METALNESS, aiTextureType_DIFFUSE,		   aiTextureType_EMISSIVE, aiTextureType_OPACITY};
+									 aiTextureType_METALNESS, aiTextureType_DIFFUSE,		   aiTextureType_EMISSIVE,
+									 aiTextureType_OPACITY};
 	TextureType	  texType[TEX_COUNT]{TextureType::NORMAL,	TextureType::ROUGHNESS, TextureType::AO,
-									 TextureType::METALLIC, TextureType::DIFFUSE,	TextureType::EMISSIVE, TextureType::OPACITY};
+									 TextureType::METALLIC, TextureType::DIFFUSE,	TextureType::EMISSIVE,
+									 TextureType::OPACITY};
 
 	for (uint i = 0; i < TEX_COUNT; ++i) {
 		use_map[i]	= getTexture(material, mapType[i], map_file[i]);
@@ -680,6 +690,9 @@ void ygl::MeshFromFile::init(const std::string &path, uint index) {
 		for (int boneIndex = 0; boneIndex < numBones; ++boneIndex) {
 			int			boneId = -1;
 			std::string name   = mesh->mBones[boneIndex]->mName.C_Str();
+
+			fixMixamoBoneName(name);
+
 			if (boneInfoMap.find(name) == boneInfoMap.end()) {
 				BoneInfo newBoneInfo;
 				newBoneInfo.id	   = bonesCount;
@@ -698,14 +711,22 @@ void ygl::MeshFromFile::init(const std::string &path, uint index) {
 			for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex) {
 				unsigned vertexId = weights[weightIndex].mVertexId;
 				float	 weight	  = weights[weightIndex].mWeight;
+				if (weight == 0) continue;
 				assert(vertexId < verticesCount);
-				int baseIndex = vertexId * MAX_BONE_INFLUENCE;
+				int	 baseIndex = vertexId * MAX_BONE_INFLUENCE;
+				bool success   = false;
 				for (int i = 0; i < MAX_BONE_INFLUENCE; ++i) {
 					if (boneIDs[baseIndex + i] < 0) {
 						boneWeights[baseIndex + i] = weight;
 						boneIDs[baseIndex + i]	   = boneId;
+						success					   = true;
 						break;
 					}
+				}
+				if (!success) {
+					dbLog(ygl::LOG_WARNING,
+						  "failed to add bone weight!\n\tcurrent weights: ", boneWeights[baseIndex + 0], " ",
+						  boneWeights[baseIndex + 1], " ", boneWeights[baseIndex + 2], " ", boneWeights[baseIndex + 3]);
 				}
 			}
 		}
@@ -741,3 +762,13 @@ void ygl::MeshFromFile::serialize(std::ostream &out) {
 int ygl::MeshFromFile::import_flags = aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_GenNormals;
 
 #endif
+
+void ygl::fixMixamoBoneName(std::string &name) {
+	if (!name.starts_with("mixamorig")) return;
+
+	auto underscore_pos = name.rfind('_');
+	if (underscore_pos != std::string::npos && std::isdigit(name[underscore_pos + 1])) {
+		name = name.substr(0, underscore_pos);
+	}
+	std::replace(name.begin(), name.end(), ':', '_');
+}

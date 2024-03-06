@@ -59,7 +59,7 @@ void run() {
 	uint	   groundMaterial = renderer->addMaterial(
 		  Material(glm::vec3(0, 0.1, 0), 0.02, glm::vec3(), 1.4, glm::vec3(0), 0, glm::vec3(0), 0, 0.8, 0));
 
-	int chunks = 10;
+	int chunks = 3;
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
 			Entity plane = scene.createEntity();
@@ -84,7 +84,7 @@ void run() {
 	try {
 		ygl::addModels(scene, "./res/models/medieval_knight/scene.gltf", [&](Entity e) {
 			Transformation &t = scene.getComponent<Transformation>(e);
-			//t.scale *= 0.05;
+			// t.scale *= 0.05;
 			t.scale *= 5;
 			t.position.x = -9;
 			t.updateWorldMatrix();
@@ -93,14 +93,24 @@ void run() {
 		});
 	} catch (std::exception &e) { std::cerr << e.what() << std::endl; }
 
-	Animation anim(MeshFromFile::loadedScene,
-				   (AnimatedMesh *)asman->getMesh(scene.getComponent<RendererComponent>(model).meshIndex), 0);
-	Animator  animator(&anim);
+	Animation idle(MeshFromFile::loadedScene, 0);
+
+	MeshFromFile::loadSceneIfNeeded("./res/models/medieval_knight/Falling Back Death.dae");
+	Animation die(MeshFromFile::loadedScene, 0);
+
+	MeshFromFile::loadSceneIfNeeded("./res/models/medieval_knight/Sword And Shield Run.dae");
+	Animation run(MeshFromFile::loadedScene, 0);
+
+	MeshFromFile::loadSceneIfNeeded("./res/models/medieval_knight/Sword And Shield Slash.dae");
+	Animation attack(MeshFromFile::loadedScene, 0);
+
+	auto	*meshToAnimate = (AnimatedMesh *)asman->getMesh(scene.getComponent<RendererComponent>(model).meshIndex);
+	Animator animator(meshToAnimate, &idle);
 	animator.UpdateAnimation(window.deltaTime);
 
-	//addSkybox(scene, "res/images/meadow_4k", ".hdr");
-	addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
-	// Entity skybox = addSkybox(scene, "./res/images/skybox/");
+	addSkybox(scene, "res/images/meadow_4k", ".hdr");
+	// addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
+	//  Entity skybox = addSkybox(scene, "./res/images/skybox/");
 
 	renderer->addLight(Light(Transformation(glm::vec3(0, 20, 0), glm::vec3(-0.7, 0.8, 0), glm::vec3(1.)), glm::vec3(1.),
 							 4, Light::DIRECTIONAL));
@@ -111,6 +121,14 @@ void run() {
 	glm::vec3 clearColor(0.07f, 0.13f, 0.17f);
 	clearColor *= 1.5;
 	clearColor = glm::pow(clearColor, glm::vec3(2.4));
+
+	Keyboard::addKeyCallback([&](GLFWwindow *window, int key, int, int action, int mods) {
+		if (key == GLFW_KEY_R && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL) { asman->reloadShaders(); }
+		if (key == GLFW_KEY_H && action == GLFW_RELEASE) { animator.PlayAnimation(&attack); }
+		if (key == GLFW_KEY_J && action == GLFW_RELEASE) { animator.PlayAnimation(&run); }
+		if (key == GLFW_KEY_K && action == GLFW_RELEASE) { animator.PlayAnimation(&die); }
+		if (key == GLFW_KEY_L && action == GLFW_RELEASE) { animator.PlayAnimation(&idle); }
+	});
 
 	uint buff;
 	glGenBuffers(1, &buff);

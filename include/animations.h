@@ -1,4 +1,5 @@
 #pragma once
+#include <cctype>
 #include <vector>
 
 #include <yoghurtgl.h>
@@ -6,9 +7,9 @@
 #include <glm/gtx/quaternion.hpp>
 #include <assimp/anim.h>
 #include <assimp/Importer.hpp>
-#include "window.h"
 #include <assimp_glm_helpers.h>
 
+#include <window.h>
 #include <mesh.h>
 
 namespace ygl {
@@ -39,8 +40,8 @@ class Bone {
 
 	size_t currentPositionIndex = 0;
 	size_t currentRotationIndex = 0;
-	size_t currentScaleIndex = 0;
-	float currentTime = 0;
+	size_t currentScaleIndex	= 0;
+	float  currentTime			= 0;
 
 	glm::mat4	m_LocalTransform;
 	std::string m_Name;
@@ -99,13 +100,13 @@ class Animation {
    public:
 	Animation() = default;
 
-	Animation(const aiScene* scene, AnimatedMesh* model, uint index) {
+	Animation(const aiScene* scene, uint index) {
 		assert(scene && scene->mRootNode);
 		auto animation	 = scene->mAnimations[index];
 		m_Duration		 = animation->mDuration;
 		m_TicksPerSecond = animation->mTicksPerSecond;
 		ReadHeirarchyData(m_RootNode, scene->mRootNode);
-		ReadMissingBones(animation, *model);
+		ReadMissingBones(animation);
 	}
 
 	Bone* FindBone(const std::string& name) {
@@ -126,31 +127,33 @@ class Animation {
 	inline uint GetBonesCount() { return m_Bones.size(); }
 
    private:
-	void ReadMissingBones(const aiAnimation* animation, AnimatedMesh& model) {
+	void ReadMissingBones(const aiAnimation* animation) {
 		int size = animation->mNumChannels;
 
-		auto& boneInfoMap = model.getBoneInfoMap();		// getting m_BoneInfoMap from Model class
-		uint& boneCount	  = model.getBoneCount();		// getting the m_BoneCounter from Model class
+		int boneCount = 0;
 
 		// reading channels(bones engaged in an animation and their keyframes)
 		for (int i = 0; i < size; i++) {
 			auto		channel	 = animation->mChannels[i];
 			std::string boneName = channel->mNodeName.data;
-
-			if (boneInfoMap.find(boneName) == boneInfoMap.end()) {
-				boneInfoMap[boneName].id = boneCount;
-				boneCount++;
+			fixMixamoBoneName(boneName);
+			if (!m_BoneInfoMap.contains(boneName)) {
+				BoneInfo newBoneInfo;
+				newBoneInfo.id			= boneCount;
+				m_BoneInfoMap[boneName] = newBoneInfo;
+				++boneCount;
 			}
-			m_Bones.push_back(Bone(channel->mNodeName.data, boneInfoMap[channel->mNodeName.data].id, channel));
+			auto id = m_BoneInfoMap.find(boneName)->second.id;
+			m_Bones.push_back(Bone(boneName, id, channel));
 		}
-
-		m_BoneInfoMap = boneInfoMap;
 	}
 
 	void ReadHeirarchyData(AssimpNodeData& dest, const aiNode* src) {
 		assert(src);
 
-		dest.name			= src->mName.data;
+		dest.name = src->mName.data;
+		fixMixamoBoneName(dest.name);
+
 		dest.transformation = AssimpGLMHelpers::ConvertMatrixToGLMFormat(src->mTransformation);
 		dest.childrenCount	= src->mNumChildren;
 
@@ -161,21 +164,21 @@ class Animation {
 		}
 	}
 
-	float							m_Duration;
-	int								m_TicksPerSecond;
-	std::vector<Bone>				m_Bones;
-	AssimpNodeData					m_RootNode;
+	float									  m_Duration;
+	int										  m_TicksPerSecond;
+	std::vector<Bone>						  m_Bones;
+	AssimpNodeData							  m_RootNode;
 	std::unordered_map<std::string, BoneInfo> m_BoneInfoMap;
 };
 
 class Animator {
    public:
-	Animator(Animation* currentAnimation) {
+	Animator(AnimatedMesh* mesh, Animation* currentAnimation) {
 		m_CurrentTime	   = 0.0;
 		m_CurrentAnimation = currentAnimation;
+		this->mesh		   = mesh;
 
 		m_FinalBoneMatrices.reserve(200);
-		std::cout << "bonesCount: " << currentAnimation->GetBonesCount() << std::endl;
 		for (uint i = 0; i < 200; i++)
 			m_FinalBoneMatrices.push_back(glm::mat4(1.0f));
 	}
@@ -207,8 +210,8 @@ class Animator {
 
 		glm::mat4 globalTransformation = parentTransform * nodeTransform;
 
-		auto &boneInfoMap = m_CurrentAnimation->GetBoneIDMap();
-		auto boneInfo = boneInfoMap.find(nodeName);
+		auto& boneInfoMap = mesh->getBoneInfoMap();
+		auto  boneInfo	  = boneInfoMap.find(nodeName);
 		if (boneInfo != boneInfoMap.end()) {
 			int		  index			   = boneInfo->second.id;
 			glm::mat4 offset		   = boneInfo->second.offset;
@@ -226,6 +229,7 @@ class Animator {
 	Animation*			   m_CurrentAnimation;
 	float				   m_CurrentTime;
 	float				   m_DeltaTime;
+	AnimatedMesh*		   mesh;
 };
 
 };	   // namespace ygl
