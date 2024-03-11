@@ -294,7 +294,7 @@ vec3 calcAllLights(in vec3 position, in vec3 normal, in vec3 vertexNormal, in ve
 	vec3  calcAlbedo	= mix(mat.albedo, diffuse.xyz, mat.use_albedo_map);
 	float calcMetallic	= mix(mat.metallic, metallic, mat.use_metallic_map);
 	vec3  calcEmission	= mix(mat.emission, mat.emission * emission, mat.use_emission_map);
-	float calcRoughness = mix(mat.specular_roughness, mat.specular_roughness * roughness, mat.use_roughness_map) + 0.1;
+	float calcRoughness = mix(mat.specular_roughness, mat.specular_roughness * roughness, mat.use_roughness_map) + 0.05;
 	float calcOpacity	= mix(1, opacity, mat.use_transparency_map);
 	diffuse.w = mix(1, diffuse.w, mat.use_albedo_map);
 	//calcRoughness *= calcRoughness;

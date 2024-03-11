@@ -31,7 +31,7 @@ if (WIN32)
 endif (WIN32)
 
 if (UNIX)
-	set(LIBS glfw GL X11)
+	set(LIBS glfw GL)
 endif (UNIX)
 
 if (${YGL_NO_ASSIMP})
