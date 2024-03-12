@@ -131,7 +131,13 @@ layout(binding = 4) uniform sampler2D roughnessMap;
 layout(binding = 5) uniform sampler2D aoMap;
 layout(binding = 6) uniform sampler2D emissionMap;
 layout(binding = 10) uniform sampler2D metallicMap;
-layout(binding = 11) uniform samplerCube skybox;
+layout(binding = 11) uniform sampler2D opacityMap;
+
+layout(binding = 12) uniform samplerCube skybox;
+layout(binding = 13) uniform samplerCube irradianceMap;
+layout(binding = 14) uniform samplerCube prefilterMap;
+layout(binding = 15) uniform sampler2D brdfMap;
+layout(binding = 16) uniform sampler2D shadowMap;
 
 uniform mat4  cameraMatrix;
 uniform vec2  resolution;

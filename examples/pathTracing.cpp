@@ -57,6 +57,9 @@ ygl::Mesh			   *cubeMesh;
 
 ygl::Entity bunny;
 
+uint pathTracerIndex;
+uint normalizerIndex;
+
 ygl::ComputeShader	*pathTracer;
 ygl::ComputeShader	*normalizer;
 ygl::Texture2d		*renderTexture;
@@ -64,6 +67,8 @@ ygl::Texture2d		*rawTexture;
 ygl::VFShader		*textureOnScreen;
 ygl::Mesh			*screenQuad;
 ygl::TextureCubemap *skybox;
+
+ygl::AssetManager *asman;
 
 Sphere *spheres = nullptr;
 int		sphereCount;
@@ -90,8 +95,6 @@ void cleanup() {
 	if (scene != nullptr) delete scene;
 	if (camera != nullptr) delete camera;
 	if (controller != nullptr) delete controller;
-	if (pathTracer != nullptr) delete pathTracer;
-	if (normalizer != nullptr) delete normalizer;
 	if (renderTexture != nullptr) delete renderTexture;
 	if (rawTexture != nullptr) delete rawTexture;
 	if (textureOnScreen != nullptr) delete textureOnScreen;
@@ -105,7 +108,7 @@ void cleanup() {
 
 void initScene() {
 	try {
-		bunnyMesh = new ygl::MeshFromFile("./res/models/Knight.obj", 0);
+		bunnyMesh = new ygl::MeshFromFile("./res/models/bunny.obj", 0);
 	} catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		cleanup();
@@ -127,14 +130,14 @@ void initScene() {
 	renderer->addMaterial(
 		ygl::Material(glm::vec3(1.f), 0.1, glm::vec3(0.f), 1.0, glm::vec3(0.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 0.0));
 
-	ygl::AssetManager *asman = scene->getSystem<ygl::AssetManager>();
-	ygl::Material	   geometryMaterial = 
-		//ygl::MeshFromFile::getMaterial(ygl::MeshFromFile::loadedScene, asman, "./res/models/bunny_uv/", 0);
+	asman = scene->getSystem<ygl::AssetManager>();
+	ygl::Material geometryMaterial =
+		// ygl::MeshFromFile::getMaterial(ygl::MeshFromFile::loadedScene, asman, "./res/models/bunny_uv/", 0);
 		ygl::Material(glm::vec3(1.f), 0.1, glm::vec3(0.f), 1.0, glm::vec3(0.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 0.0);
 
 	bunny = scene->createEntity();
 	scene->addComponent<ygl::Transformation>(
-		bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(0.01f)));
+		bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(1.00f)));
 	ygl::RendererComponent bunnyRenderer;
 
 	unsigned int shaderIndex = asman->addShader(shader, "defaultShader");
@@ -234,18 +237,20 @@ void initBoxes() {
 void initPathTracer() {
 	screenQuad = new ygl::QuadMesh();
 
-	pathTracer	  = new ygl::ComputeShader("./shaders/pathTracing/tracer.comp");
-	normalizer	  = new ygl::ComputeShader("./shaders/pathTracing/normalizer.comp");
-	renderTexture = new ygl::Texture2d(window->getWidth(), window->getHeight(), ygl::TextureType::RGBA32F, nullptr);
+	pathTracer		= new ygl::ComputeShader("./shaders/pathTracing/tracer.comp");
+	pathTracerIndex = asman->addShader(pathTracer, "tracer");
+	normalizer		= new ygl::ComputeShader("./shaders/pathTracing/normalizer.comp");
+	normalizerIndex = asman->addShader(normalizer, "normalizer");
+	renderTexture	= new ygl::Texture2d(window->getWidth(), window->getHeight(), ygl::TextureType::RGBA32F, nullptr);
 	renderTexture->bindImage(0);
 
 	rawTexture = new ygl::Texture2d(window->getWidth(), window->getHeight(), ygl::TextureType::RGBA32F, nullptr);
 	rawTexture->bindImage(1);
 
-	//skybox = ygl::loadHDRCubemap("res/images/blue_photo_studio_4k", ".hdr");
-	//ygl::addSkybox(*scene, "res/images/blue_photo_studio_4k", ".hdr");
-	skybox = (ygl::TextureCubemap*) scene->getSystem<ygl::AssetManager>()->getTexture(renderer->skyboxTexture);
-	//skybox = new ygl::TextureCubemap("./res/images/skybox", ".jpg");
+	// skybox = ygl::loadHDRCubemap("res/images/blue_photo_studio_4k", ".hdr");
+	// ygl::addSkybox(*scene, "res/images/blue_photo_studio_4k", ".hdr");
+	skybox = (ygl::TextureCubemap *)scene->getSystem<ygl::AssetManager>()->getTexture(renderer->skyboxTexture);
+	// skybox = new ygl::TextureCubemap("./res/images/skybox", ".jpg");
 	skybox->bind(ygl::TexIndex::SKYBOX);
 
 	// initSpheres();
@@ -285,7 +290,9 @@ int main() {
 	window = new ygl::Window(1280, 1000, "Test Window", true, false);
 	mouse  = new ygl::Mouse(*window);
 
-	ygl::Keyboard::addKeyCallback([&](GLFWwindow *windowHandle, int key, int, int action, int) {
+	bool shouldReload = false;
+
+	ygl::Keyboard::addKeyCallback([&](GLFWwindow *windowHandle, int key, int, int action, int mods) {
 		if (windowHandle != window->getHandle()) return;
 		if (key == GLFW_KEY_T && action == GLFW_RELEASE) {
 			pathTrace = !pathTrace;
@@ -296,6 +303,10 @@ int main() {
 					  << std::endl;
 			renderTexture->save("./res/images/result.png");
 		}
+		if (key == GLFW_KEY_R && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL) {
+			scene->getSystem<ygl::AssetManager>()->reloadShaders();
+			shouldReload = true;
+		}
 	});
 
 	initScene();
@@ -304,13 +315,12 @@ int main() {
 
 	// tex->bind();
 
-	int textureViewIndex = 6;
+	int textureViewIndex  = 6;
 	int editMaterialIndex = 0;
 
-	dbLog(ygl::LOG_INFO, rawTexture->getID());
-	dbLog(ygl::LOG_INFO, renderTexture->getID());
+	// dbLog(ygl::LOG_INFO, rawTexture->getID());
+	// dbLog(ygl::LOG_INFO, renderTexture->getID());
 
-	bool shouldReload = false;
 
 	renderer->setClearColor(glm::vec4(0, 0, 0, 1));
 	while (!window->shouldClose()) {
@@ -323,8 +333,8 @@ int main() {
 		if (controller->hasChanged() || shouldReload) {
 			float clearColor[]{0., 0., 0., 0.};
 			glClearTexImage(rawTexture->getID(), 0, GL_RGBA, GL_FLOAT, &clearColor);
-			sampleCount = 0;
-			timer		= Timer();
+			sampleCount	 = 0;
+			timer		 = Timer();
 			shouldReload = false;
 		}
 
@@ -335,13 +345,21 @@ int main() {
 			rawTexture->bind(RAW_TEXTURE_BINDING);
 			renderTexture->bindImage(0);
 			rawTexture->bindImage(1);
-			
 
 			if (sampleCount < maxSamples) {
+				pathTracer = (ygl::ComputeShader *)asman->getShader(pathTracerIndex);
+				normalizer = (ygl::ComputeShader *)asman->getShader(normalizerIndex);
 
 				pathTracer->bind();
 				ygl::Transformation t = ygl::Transformation(camera->transform.position, -camera->transform.rotation,
 															camera->transform.scale);
+				pathTracer->setUniform("resolution", glm::vec2(window->getWidth(), window->getHeight()));
+				pathTracer->setUniform("img_output", 1);
+				pathTracer->setUniform("fov", camera->getFov());
+				pathTracer->setUniform("max_bounces", 5);
+				pathTracer->setUniform("fov", glm::radians(70.f));
+				pathTracer->setUniform("bvh_matrix", scene->getComponent<ygl::Transformation>(bunny).getWorldMatrix());
+
 				pathTracer->setUniform("cameraMatrix", t.getWorldMatrix());
 				pathTracer->setUniform("random_seed", (GLuint)rand());
 
@@ -362,7 +380,7 @@ int main() {
 
 		ImGui::Begin("Texture View");
 		ImGui::InputInt("Texture ID", &textureViewIndex);
-		ImGui::Image((void*)textureViewIndex, ImVec2(256, 256));
+		ImGui::Image((void *)textureViewIndex, ImVec2(256, 256));
 		ImGui::End();
 
 		ImGui::Begin("Material Properties");

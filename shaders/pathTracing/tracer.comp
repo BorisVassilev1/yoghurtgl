@@ -278,7 +278,7 @@ void computeHitInfo(out HitInfo info, in RayHit hit, in Ray ray) {
 }
 
 uniform vec3 sun_direction = normalize(vec3(-1., 2., -1.));
-uniform float sun_size = 0.05; // in radians on the sky
+uniform float sun_size = 0.1; // in radians on the sky
 uniform float shadow_ray_chance = 0.0;
 
 void main() {
@@ -312,7 +312,7 @@ void main() {
 							edge, 
 							cos(sun_size * 0.5), 
 							dot(sun_direction, ray.direction))
-						) * attenuation * 10.,
+						) * attenuation * 5.,
 					1.0f);
 			break;
 		}
@@ -341,7 +341,8 @@ void main() {
 		// get the pre-fresnel chances
 		float specularChance   = mat.specular_chance;
 		float refractionChance = mat.refraction_chance;
-		float shadowChance = shadow_ray_chance; //max(shadow_ray_chance * step(dot(sun_direction, info.normal), 0), 0.);
+		//float shadowChance = shadow_ray_chance; 
+		float shadowChance = shadow_ray_chance * dot(sun_direction, info.normal);
 
 		// take fresnel into account for specularChance and adjust other chances.
 		// specular takes priority.

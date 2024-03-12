@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(YGL_STATIC ON CACHE BOOL "link as static library")
 set(ASAN_DETECT_LEAKS ON CACHE BOOL "turn the leak sanitizer on or off")
 project(YoghurtGL)
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-fPIC -stdlib=libc++")
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-fPIC -stdlib=libc++ -O3")
 set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-fPIC")
 
 
@@ -78,6 +78,7 @@ target_link_libraries(YoghurtGL PUBLIC ImGuizmo)
 
 target_compile_options(YoghurtGL PRIVATE ${COMPILE_ARGS})
 target_link_options(YoghurtGL PRIVATE ${LINK_ARGS})
+target_link_options(YoghurtGL PRIVATE ${COMPILE_ARGS})
 
 set_target_properties(YoghurtGL PROPERTIES PUBLIC_HEADER include/)
 set_target_properties(YoghurtGL PROPERTIES LIBRARY_OUTPUT_DIRECTORY ../)
