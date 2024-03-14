@@ -123,6 +123,7 @@ void ygl::GrassSystem::render(float time) {
 	if (grassShader->hasUniform("time")) grassShader->setUniform("time", time);
 	Renderer *renderer = scene->getSystem<Renderer>();
 	if (grassShader->hasUniform("use_skybox")) grassShader->setUniform("use_skybox", renderer->hasSkybox());
+	if (grassShader->hasUniform("use_shadow")) grassShader->setUniform("use_shadow", renderer->hasShadow());
 
 	for (Entity e : entities) {
 		auto		 worldMatrix = scene->getComponent<Transformation>(e).getWorldMatrix();

@@ -388,7 +388,7 @@ void ygl::Renderer::drawScene() {
 
 		asman->getTexture(brdfTexture)->bind(ygl::TexIndex::BDRF_MAP);
 
-		if (sh->hasUniform("use_shadow")) { sh->setUniform("use_shadow", shadow); }
+		if (sh->hasUniform("use_shadow")) { sh->setUniform<GLboolean>("use_shadow", shadow); }
 		if (shadow) shadowFrameBuffer->getDepthStencil()->bind(ygl::TexIndex::SHADOW_MAP);
 
 		Mesh *mesh = getMesh(ecr.meshIndex);
@@ -478,7 +478,7 @@ void ygl::Renderer::shadowPass() {
 void ygl::Renderer::colorPass() {
 	assert(mainCamera && "must have a main camera");
 	mainCamera->enable();
-	if(shadow)shadowCamera.enable(4);
+	if (shadow) shadowCamera.enable(4);
 	backFrameBuffer->bind();
 	glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
 	backFrameBuffer->clear();
@@ -591,6 +591,8 @@ GLuint ygl::Renderer::loadLights(int count, Light *lights) {
 }
 
 bool ygl::Renderer::hasSkybox() { return skyboxTexture && irradianceTexture && prefilterTexture; }
+
+bool ygl::Renderer::hasShadow() { return shadow; }
 
 void ygl::Renderer::write(std::ostream &out) {
 	out.write((char *)&defaultShader, sizeof(defaultShader));

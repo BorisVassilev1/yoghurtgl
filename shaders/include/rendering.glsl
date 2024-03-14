@@ -108,8 +108,8 @@ layout(binding = 12) uniform samplerCube skybox;
 layout(binding = 13) uniform samplerCube irradianceMap;
 layout(binding = 14) uniform samplerCube prefilterMap;
 layout(binding = 15) uniform sampler2D brdfMap;
-layout(binding = 16) uniform sampler2D shadowMap;
 uniform bool use_shadow = false;
+layout(binding = 16) uniform sampler2D shadowMap;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {	   // learnopengl
 	return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
@@ -226,8 +226,8 @@ vec3 calcAllLightsCustom(in vec3 position, in vec3 normal, in vec3 albedo, in fl
 	vec3 camPos = (cameraWorldMatrix * vec4(0, 0, 0, 1)).xyz;
 
 
-	float hasLight = 1.0;
-	if(use_shadow == false) {
+	float hasLight = 1.;
+	if(use_shadow) {
 		vec4 shadowPosition = shadowProjectionMatrix * shadowViewMatrix * vec4(position, 1);
 		if(
 				shadowPosition.x >= -1 && shadowPosition.x <=1 && 

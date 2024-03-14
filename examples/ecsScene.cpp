@@ -96,7 +96,6 @@ void run() {
 
 	glClearColor(0.07f, 0.13f, 0.17f, 1.0);
 	int editMaterialIndex = 0;
-	int textureViewIndex = 6;
 	while (!window.shouldClose()) {
 		window.beginFrame();
 		mouse.update();
@@ -124,7 +123,7 @@ void run() {
 	out.close();
 }
 
-int main(int argc, char *argv[]) {
+int main() {
 	if (init()) {
 		dbLog(ygl::LOG_ERROR, "ygl failed to init");
 		exit(1);

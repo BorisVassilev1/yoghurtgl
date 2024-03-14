@@ -49,10 +49,6 @@ void run() {
 	renderer->setMainCamera(&cam);
 	renderer->setShadow(true);
 
-	Keyboard::addKeyCallback([&](GLFWwindow *window, int key, int, int action, int mods) {
-		if (key == GLFW_KEY_R && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL) { asman->reloadShaders(); }
-	});
-
 	glm::ivec2 size			  = glm::ivec2(30);
 	Mesh	  *planeMesh	  = new PlaneMesh(size, glm::vec2(1, 1));
 	uint	   planeMeshIndex = asman->addMesh(planeMesh, "plane");
@@ -122,7 +118,7 @@ void run() {
 	clearColor *= 1.5;
 	clearColor = glm::pow(clearColor, glm::vec3(2.4));
 
-	Keyboard::addKeyCallback([&](GLFWwindow *window, int key, int, int action, int mods) {
+	Keyboard::addKeyCallback([&](GLFWwindow *, int key, int, int action, int mods) {
 		if (key == GLFW_KEY_R && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL) { asman->reloadShaders(); }
 		if (key == GLFW_KEY_H && action == GLFW_RELEASE) { animator.PlayAnimation(&attack); }
 		if (key == GLFW_KEY_J && action == GLFW_RELEASE) { animator.PlayAnimation(&run); }
@@ -149,15 +145,15 @@ void run() {
 		controller.update();
 		cam.update();
 
-		double start = glfwGetTime();
+		//double start = glfwGetTime();
 		animator.UpdateAnimation(window.deltaTime);
 		auto   matrices = animator.GetFinalBoneMatrices();
-		double end		= glfwGetTime();
+		//double end		= glfwGetTime();
 
 		glBindBuffer(GL_ARRAY_BUFFER, buff);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, matrices.size() * 64, matrices.data());
 		glBindBuffer(GL_ARRAY_BUFFER, buff);
-		// dbLog(ygl::LOG_WARNING, "skeleton update: ", (end - start) * 1000, "ms");
+		//dbLog(ygl::LOG_WARNING, "skeleton update: ", (end - start) * 1000, "ms");
 
 		for (Entity e : grassSystem->entities) {
 			Transformation			 &transform = scene.getComponent<Transformation>(e);
@@ -196,7 +192,7 @@ void run() {
 		ImGui::InputInt("Selection", (int *)&model);
 
 		ImGui::InputInt("Texture ID", &textureViewIndex);
-		ImGui::Image((void *)textureViewIndex, ImVec2(256, 256));
+		ImGui::Image((void *)(std::size_t)textureViewIndex, ImVec2(256, 256));
 
 		ImGui::End();
 
@@ -213,7 +209,7 @@ void run() {
 	out.close();
 }
 
-int main(int argc, char *argv[]) {
+int main() {
 	if (init()) {
 		dbLog(ygl::LOG_ERROR, "ygl failed to init");
 		exit(1);

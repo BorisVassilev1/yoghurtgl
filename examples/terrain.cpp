@@ -87,7 +87,7 @@ void run() {
 
 	glPatchParameteri(GL_PATCH_VERTICES, 3);
 
-	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -.3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 3,
+	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, -2.9, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 3,
 							 Light::Type::DIRECTIONAL));
 	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
 

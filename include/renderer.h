@@ -216,6 +216,7 @@ class Renderer : public ygl::ISystem {
 
 	Window *getWindow() { return window; }
 	bool	hasSkybox();
+	bool	hasShadow();
 
 	void write(std::ostream &out) override;
 	void read(std::istream &in) override;
