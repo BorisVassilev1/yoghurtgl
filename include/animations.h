@@ -1,5 +1,4 @@
 #pragma once
-#include <cctype>
 #include <vector>
 
 #include <yoghurtgl.h>
@@ -103,6 +102,12 @@ class Animation {
 	Animation(const aiScene* scene, uint index) {
 		assert(scene && scene->mRootNode);
 		auto animation	 = scene->mAnimations[index];
+		if(animation->mNumMeshChannels != 0) {
+			dbLog(ygl::LOG_WARNING, "loading an animation with mesh channels");
+		}
+		if(animation->mNumChannels == 0) {
+			dbLog(ygl::LOG_WARNING, "loading an animation with no node animation");
+		}
 		m_Duration		 = animation->mDuration;
 		m_TicksPerSecond = animation->mTicksPerSecond;
 		ReadHeirarchyData(m_RootNode, scene->mRootNode);

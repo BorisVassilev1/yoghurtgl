@@ -56,7 +56,7 @@ static int getIndex(float animationTime, std::vector<T> keys, float &currentAnim
 			return index;
 		}
 	}
-	assert(0);
+	return keys.size() - 1;
 }
 
 int ygl::Bone::GetPositionIndex(float animationTime) {
@@ -84,6 +84,7 @@ glm::mat4 ygl::Bone::InterpolatePosition(float animationTime) {
 
 	int	  p0Index	  = GetPositionIndex(animationTime);
 	int	  p1Index	  = p0Index + 1;
+	if(p1Index >= m_Positions.size()) --p1Index;
 	float scaleFactor = GetScaleFactor(m_Positions[p0Index].timeStamp, m_Positions[p1Index].timeStamp, animationTime);
 	glm::vec3 finalPosition = glm::mix(m_Positions[p0Index].position, m_Positions[p1Index].position, scaleFactor);
 	return glm::translate(glm::mat4(1.0f), finalPosition);
@@ -97,6 +98,7 @@ glm::mat4 ygl::Bone::InterpolateRotation(float animationTime) {
 
 	int	  p0Index	  = GetRotationIndex(animationTime);
 	int	  p1Index	  = p0Index + 1;
+	if(p1Index >= m_Rotations.size()) --p1Index;
 	float scaleFactor = GetScaleFactor(m_Rotations[p0Index].timeStamp, m_Rotations[p1Index].timeStamp, animationTime);
 	glm::quat finalRotation =
 		glm::slerp(m_Rotations[p0Index].orientation, m_Rotations[p1Index].orientation, scaleFactor);
@@ -109,6 +111,7 @@ glm::mat4 ygl::Bone::InterpolateScaling(float animationTime) {
 
 	int		  p0Index	  = GetScaleIndex(animationTime);
 	int		  p1Index	  = p0Index + 1;
+	if(p1Index >= m_Scales.size()) --p1Index;
 	float	  scaleFactor = GetScaleFactor(m_Scales[p0Index].timeStamp, m_Scales[p1Index].timeStamp, animationTime);
 	glm::vec3 finalScale  = glm::mix(m_Scales[p0Index].scale, m_Scales[p1Index].scale, scaleFactor);
 	return glm::scale(glm::mat4(1.0f), finalScale);
