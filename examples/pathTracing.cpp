@@ -108,7 +108,7 @@ void cleanup() {
 
 void initScene() {
 	try {
-		bunnyMesh = new ygl::MeshFromFile("./res/models/bunny.obj", 0);
+		bunnyMesh = new ygl::MeshFromFile("./res/models/dragon.obj", 0);
 	} catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		cleanup();
@@ -137,7 +137,7 @@ void initScene() {
 
 	bunny = scene->createEntity();
 	scene->addComponent<ygl::Transformation>(
-		bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(1.00f)));
+		bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(8.00f)));
 	ygl::RendererComponent bunnyRenderer;
 
 	unsigned int shaderIndex = asman->addShader(shader, "defaultShader");
@@ -152,6 +152,7 @@ void initScene() {
 	ygl::Shader::setSSBO(bunnyMesh->getIBO(), 4);
 
 	ygl::addSkybox(*scene, "res/images/meadow_4k", ".hdr");
+	//ygl::addSkybox(*scene, "./res/images/skybox", ".jpg");
 
 	renderer->addLight(ygl::Light(ygl::Transformation(glm::vec3(0), glm::vec3(-1, -2.9, 0), glm::vec3(1)),
 								  glm::vec3(1., 1., 1.), 3, ygl::Light::Type::DIRECTIONAL));
@@ -215,7 +216,7 @@ void initBoxes() {
 
 		glm::vec3 min = glm::vec3(int(i / 2) * 1.5 - 5, 0.5 + 1.5 * (i % 2), -1.5);
 
-		float roughness = glm::linearRand(0.f, 0.5f);
+		float roughness = glm::linearRand(0.f, 0.3f);
 
 		boxes[i] = Box(min, min + glm::vec3(1.0),
 					   renderer->addMaterial(ygl::Material(randomColor, 0.01, glm::vec3(0.0, 0.0, 0.0), 1.45,
@@ -263,7 +264,7 @@ void initPathTracer() {
 	pathTracer->setUniform("resolution", glm::vec2(window->getWidth(), window->getHeight()));
 	pathTracer->setUniform("img_output", 1);
 	pathTracer->setUniform("fov", camera->getFov());
-	pathTracer->setUniform("max_bounces", 5);
+	pathTracer->setUniform("max_bounces", 10);
 	pathTracer->setUniform("fov", glm::radians(70.f));
 	pathTracer->setUniform("bvh_matrix", scene->getComponent<ygl::Transformation>(bunny).getWorldMatrix());
 	pathTracer->unbind();

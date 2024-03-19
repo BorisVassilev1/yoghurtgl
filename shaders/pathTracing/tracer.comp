@@ -146,6 +146,7 @@ void trace_bvh(in Ray ray, inout RayHit hit) {
 	uint state = FROM_PARENT;
 	// possibly needed objects
 	bool shouldBreak = false;
+	int iterations = 0;
 
 	while(!shouldBreak) {
 		switch(state) {
@@ -188,7 +189,8 @@ void trace_bvh(in Ray ray, inout RayHit hit) {
 				}
 				break;
 		}
-		shouldBreak = (current == 0);
+		++iterations;
+		shouldBreak = (current == 0 || iterations > 1000);
 	}
 }
 
@@ -390,7 +392,7 @@ void main() {
 		// Rough (glossy) specular lerps from the smooth specular to the rough diffuse by the material roughness squared
 		// Squaring the roughness is just a convention to make roughness feel more linear perceptually.
 		vec3 diffuseRayDir = cosWeightedHemissphereDir(info.normal, random_seed_full);
-		rayProbability *= dot(diffuseRayDir, vec3(0, 1, 0)) * 2. * PI;
+		float rayProbabilityIfDiffuse = rayProbability * dot(diffuseRayDir, vec3(0, 1, 0)) * 2. * PI;
 
 		vec3 specularRayDir = reflect(ray.direction, info.normal);
 
@@ -414,6 +416,8 @@ void main() {
 		ray.direction = mix(diffuseRayDir, specularRayDir, doSpecular);
 		ray.direction = mix(ray.direction, refractionRayDir, doRefraction);
 		ray.direction = mix(ray.direction, shadowRayDir, doShadow);
+
+		rayProbability = mix(rayProbability, rayProbabilityIfDiffuse, 1. - doSpecular - doRefraction - doShadow);
 
 		// emission
 		pixel += vec4(emission * attenuation, 0);
