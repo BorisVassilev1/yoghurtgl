@@ -217,6 +217,19 @@ vec3 calculateIndirectComponent(in vec3 position, in vec3 N, in vec3 albedo, in 
 	vec3 ambient = (kD * diffuse + specular) * ao;
 	return ambient * indirectStrength;
 }
+float sampleShadow(in vec4 shadowPosition) {
+		if(
+				shadowPosition.x >= -1 && shadowPosition.x <=1 && 
+				shadowPosition.y >= -1 && shadowPosition.y <=1 &&
+				shadowPosition.z >= -1 && shadowPosition.z <=1) {
+			vec3 coords = (shadowPosition.xyz + 1.) / 2.;
+			float depth = texture(shadowMap, coords.xy).x;
+			if(coords.z <= (depth + 0.0001)) {
+				return 1.0;
+			}
+		}
+		return 0.0;
+}
 
 vec3 calcAllLightsCustom(in vec3 position, in vec3 normal, in vec3 albedo, in float roughness, in float metallic, in float AO, in vec3 emission, in float opacity) {
 #ifdef FRAG
@@ -233,11 +246,11 @@ vec3 calcAllLightsCustom(in vec3 position, in vec3 normal, in vec3 albedo, in fl
 				shadowPosition.x >= -1 && shadowPosition.x <=1 && 
 				shadowPosition.y >= -1 && shadowPosition.y <=1 &&
 				shadowPosition.z >= -1 && shadowPosition.z <=1) {
-			vec3 coords = (shadowPosition.xyz + 1.) / 2.;
-			float depth = texture(shadowMap, coords.xy).x;
-			if(coords.z > (depth + 0.0001)) {
-				hasLight = 0.0;
-			}
+			hasLight = 0.0;
+			for(int i = -1; i <= 1; ++i)
+				for(int j = -1; j <= 1; ++j)
+					hasLight += sampleShadow(vec4(shadowPosition.xy + vec2(i, j) * 0.002, shadowPosition.zw));
+			hasLight /= 9;
 		}
 	}
 

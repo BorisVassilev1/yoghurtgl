@@ -43,19 +43,26 @@ class Bone {
 	float  currentTime			= 0;
 
 	glm::mat4	m_LocalTransform;
+	glm::vec3	m_LocalTranslation;
+	glm::quat	m_LocalRotation;
+	glm::vec3	m_LocalScale;
 	std::string m_Name;
 	int			m_ID;
+	float		m_Duration;
 
    public:
 	/*reads keyframes from aiNodeAnim*/
-	Bone(const std::string& name, int ID, const aiNodeAnim* channel);
+	Bone(const std::string& name, int ID, const aiNodeAnim* channel, float duration);
 
 	/*interpolates  b/w positions,rotations & scaling keys based on the curren time of
 	the animation and prepares the local transformation matrix by combining all keys
 	tranformations*/
 	void Update(float animationTime);
 
-	glm::mat4	GetLocalTransform() { return m_LocalTransform; }
+	glm::mat4&	GetLocalTransform() { return m_LocalTransform; }
+	glm::vec3&	GetLocalTranslation() { return m_LocalTranslation; }
+	glm::quat&	GetLocalRotation() { return m_LocalRotation; }
+	glm::vec3&	GetLocalScale() { return m_LocalScale; }
 	std::string GetBoneName() const { return m_Name; }
 	int			GetBoneID() { return m_ID; }
 
@@ -77,15 +84,15 @@ class Bone {
 
 	/*figures out which position keys to interpolate b/w and performs the interpolation
 	and returns the translation matrix*/
-	glm::mat4 InterpolatePosition(float animationTime);
+	glm::vec3 InterpolatePosition(float animationTime);
 
 	/*figures out which rotations keys to interpolate b/w and performs the interpolation
 	and returns the rotation matrix*/
-	glm::mat4 InterpolateRotation(float animationTime);
+	glm::quat InterpolateRotation(float animationTime);
 
 	/*figures out which scaling keys to interpolate b/w and performs the interpolation
 	and returns the scale matrix*/
-	glm::mat4 InterpolateScaling(float animationTime);
+	glm::vec3 InterpolateScaling(float animationTime);
 };
 
 struct AssimpNodeData {
@@ -101,13 +108,9 @@ class Animation {
 
 	Animation(const aiScene* scene, uint index) {
 		assert(scene && scene->mRootNode);
-		auto animation	 = scene->mAnimations[index];
-		if(animation->mNumMeshChannels != 0) {
-			dbLog(ygl::LOG_WARNING, "loading an animation with mesh channels");
-		}
-		if(animation->mNumChannels == 0) {
-			dbLog(ygl::LOG_WARNING, "loading an animation with no node animation");
-		}
+		auto animation = scene->mAnimations[index];
+		if (animation->mNumMeshChannels != 0) { dbLog(ygl::LOG_WARNING, "loading an animation with mesh channels"); }
+		if (animation->mNumChannels == 0) { dbLog(ygl::LOG_WARNING, "loading an animation with no node animation"); }
 		m_Duration		 = animation->mDuration;
 		m_TicksPerSecond = animation->mTicksPerSecond;
 		ReadHeirarchyData(m_RootNode, scene->mRootNode);
@@ -115,10 +118,9 @@ class Animation {
 	}
 
 	Bone* FindBone(const std::string& name) {
-		auto iter =
-			std::find_if(m_Bones.begin(), m_Bones.end(), [&](const Bone& Bone) { return Bone.GetBoneName() == name; });
-		if (iter == m_Bones.end()) return nullptr;
-		else return &(*iter);
+		auto iter = m_BoneInfoMap.find(name);
+		if (iter != m_BoneInfoMap.end()) { return &m_Bones[iter->second.id]; }
+		return nullptr;
 	}
 
 	inline float GetTicksPerSecond() { return m_TicksPerSecond; }
@@ -149,7 +151,7 @@ class Animation {
 				++boneCount;
 			}
 			auto id = m_BoneInfoMap.find(boneName)->second.id;
-			m_Bones.push_back(Bone(boneName, id, channel));
+			m_Bones.push_back(Bone(boneName, id, channel, m_Duration));
 		}
 	}
 
@@ -192,8 +194,16 @@ class Animator {
 		m_DeltaTime = dt;
 		if (m_CurrentAnimation) {
 			m_CurrentTime += m_CurrentAnimation->GetTicksPerSecond() * dt;
-			m_CurrentTime = fmod(m_CurrentTime, m_CurrentAnimation->GetDuration());
 			CalculateBoneTransform(&m_CurrentAnimation->GetRootNode(), glm::mat4(1.0f));
+		}
+	}
+
+	void UpdateAnimationBlended(float dt, float factor) {
+		m_DeltaTime = dt;
+		if (m_CurrentAnimation) {
+			m_CurrentTime += m_CurrentAnimation->GetTicksPerSecond() * dt;
+			m_CurrentTime = fmod(m_CurrentTime, m_CurrentAnimation->GetDuration());
+			CalculateBoneTransformBlended(&m_CurrentAnimation->GetRootNode(), glm::mat4(1.0f), factor);
 		}
 	}
 
@@ -202,15 +212,19 @@ class Animator {
 		m_CurrentTime	   = 0.0f;
 	}
 
+	void setBlendAnimation(Animation* animation) { m_BlendedAnimation = animation; }
+
 	void CalculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform) {
-		std::string nodeName	  = node->name;
-		glm::mat4	nodeTransform = node->transformation;
+		const std::string& nodeName = node->name;
+		glm::mat4		   nodeTransform;
 
 		Bone* Bone = m_CurrentAnimation->FindBone(nodeName);
 
 		if (Bone) {
 			Bone->Update(m_CurrentTime);
 			nodeTransform = Bone->GetLocalTransform();
+		} else {
+			nodeTransform = node->transformation;
 		}
 
 		glm::mat4 globalTransformation = parentTransform * nodeTransform;
@@ -227,11 +241,50 @@ class Animator {
 			CalculateBoneTransform(&node->children[i], globalTransformation);
 	}
 
+	void CalculateBoneTransformBlended(const AssimpNodeData* node, glm::mat4 parentTransform, float factor) {
+		assert(m_BlendedAnimation != nullptr);
+		const std::string& nodeName = node->name;
+		glm::mat4		   nodeTransform;
+
+		Bone* Bone1 = m_CurrentAnimation->FindBone(nodeName);
+		Bone* Bone2 = m_BlendedAnimation->FindBone(nodeName);
+
+		if (Bone1 && Bone2) {
+			Bone1->Update(m_CurrentTime);
+			Bone2->Update(m_CurrentTime);
+			glm::vec3 translation = glm::mix(Bone1->GetLocalTranslation(), Bone2->GetLocalTranslation(), factor);
+			glm::quat rotation	  = glm::slerp(Bone1->GetLocalRotation(), Bone2->GetLocalRotation(), factor);
+			rotation			  = glm::normalize(rotation);
+			glm::vec3 scale		  = glm::mix(Bone1->GetLocalScale(), Bone2->GetLocalScale(), factor);
+
+			glm::mat4 t	  = glm::translate(glm::mat4(1), translation);
+			glm::mat4 r	  = glm::toMat4(rotation);
+			glm::mat4 s	  = glm::scale(glm::mat4(1), scale);
+			nodeTransform = t * r * s;
+		} else {
+			nodeTransform = node->transformation;
+		}
+
+		glm::mat4 globalTransformation = parentTransform * nodeTransform;
+
+		auto& boneInfoMap = mesh->getBoneInfoMap();
+		auto  boneInfo	  = boneInfoMap.find(nodeName);
+		if (boneInfo != boneInfoMap.end()) {
+			int		  index			   = boneInfo->second.id;
+			glm::mat4 offset		   = boneInfo->second.offset;
+			m_FinalBoneMatrices[index] = globalTransformation * offset;
+		}
+
+		for (int i = 0; i < node->childrenCount; i++)
+			CalculateBoneTransformBlended(&node->children[i], globalTransformation, factor);
+	}
+
 	std::vector<glm::mat4> GetFinalBoneMatrices() { return m_FinalBoneMatrices; }
 
    private:
 	std::vector<glm::mat4> m_FinalBoneMatrices;
 	Animation*			   m_CurrentAnimation;
+	Animation*			   m_BlendedAnimation;
 	float				   m_CurrentTime;
 	float				   m_DeltaTime;
 	AnimatedMesh*		   mesh;

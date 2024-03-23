@@ -523,7 +523,10 @@ const aiScene *ygl::MeshFromFile::loadScene(const std::string &file, unsigned in
 
 	const aiScene *scene = importer->ReadFile(file, flags);
 
-	if (!scene) { THROW_RUNTIME_ERR("[Assimp]" + importer->GetErrorString()); }
+	if (!scene) { 
+		dbLog(ygl::LOG_ERROR, "[Assimp] ", importer->GetErrorString());
+		THROW_RUNTIME_ERR("[Assimp]" + importer->GetErrorString());
+	}
 	return scene;
 }
 

@@ -5,13 +5,13 @@
  * @brief Global defines and debug macros.
  */
 
+#include <sstream>
 #define _USE_MATH_DEFINES
 #include <math.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-
 
 /**
  * @brief the Yoghurtgl namespace
@@ -64,22 +64,17 @@ enum {
 
 #define COLOR_RESET	 "\033[0m"
 #define COLOR_RED	 "\x1B[0;91m"
-#define COLOR_GREEN  "\x1B[0;92m"
+#define COLOR_GREEN	 "\x1B[0;92m"
 #define COLOR_YELLOW "\x1B[0;93m"
 
-static const char *log_colors[]{
-	COLOR_RESET,
-	COLOR_GREEN,
-	COLOR_YELLOW,
-	COLOR_RED
-};
+static const char *log_colors[]{COLOR_RESET, COLOR_GREEN, COLOR_YELLOW, COLOR_RED};
 
 /**
  * @brief prints endline to std::cerr
  * @return 1
  */
-bool inline f_dbLog() {
-	std::cerr << std::endl;
+bool inline f_dbLog(std::ostream &out) {
+	out << std::endl;
 	return 1;
 }
 
@@ -89,9 +84,9 @@ bool inline f_dbLog() {
  * @return 1
  */
 template <class T, class... Types>
-bool inline f_dbLog(T arg, Types... args) {
-	std::cerr << arg;
-	f_dbLog(args...);
+bool inline f_dbLog(std::ostream &out, T arg, Types... args) {
+	out << arg;
+	f_dbLog(out, args...);
 	return 1;
 }
 
@@ -103,36 +98,51 @@ bool inline f_dbLog(T arg, Types... args) {
 #ifndef YGL_NDEBUG
 	#define YGL_DEBUG
 	#define YGL_LOG_LEVEL -1
-	#define dbLog(severity, ...)                                                                                    \
-		severity >= YGL_LOG_LEVEL ? ygl::f_dbLog(ygl::log_colors[severity], "[", #severity, "] ", \
-												 __VA_ARGS__, COLOR_RESET)                                          \
-								  : 0;
+	#ifdef __linux__
+		#define dbLog(severity, ...)                                                                      \
+			{                                                                                             \
+				if (severity == ygl::LOG_ERROR) {                                                         \
+					std::stringstream s;                                                                  \
+					ygl::f_dbLog(s, __VA_ARGS__);                                                         \
+					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", s.str());    \
+					std::string cmd = "LC_ALL=C xmessage -default ok \"" + s.str() + "\"";                                     \
+					system(cmd.c_str());                                                                  \
+				} else if (severity >= YGL_LOG_LEVEL)                                                     \
+					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", __VA_ARGS__, \
+								 COLOR_RESET);                                                            \
+			};
+	#else
+		#define dbLog(severity, ...)                                                                                   \
+			severity >= YGL_LOG_LEVEL                                                                                  \
+				? (ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", __VA_ARGS__, COLOR_RESET)) \
+				: 0;
+	#endif
 #else
 	#define YGL_LOG_LEVEL		 3
 	#define dbLog(severity, ...) ((void)0)
 #endif
 
-#ifdef _MSC_VER 
-	#define __PRETTY_FUNCTION__ __FUNCSIG__ 
+#ifdef _MSC_VER
+	#define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
 
 #define THROW_RUNTIME_ERR(message) \
 	throw std::runtime_error("At " + std::string(__PRETTY_FUNCTION__) + ":\n\t" + message + COLOR_RESET);
 
-#define DELETE_COPY_AND_ASSIGNMENT(TYPE) \
+#define DELETE_COPY_AND_ASSIGNMENT(TYPE)         \
 	TYPE(const TYPE &other)			   = delete; \
 	TYPE &operator=(const TYPE &other) = delete;
 
 }	  // namespace ygl
 
 #define STRINGIFY__(X) #X
-#define STRINGIFY(X) STRINGIFY__(X)
+#define STRINGIFY(X)   STRINGIFY__(X)
 
 #ifdef __cplusplus
 extern "C"
 #endif
-const char* __asan_default_options();
+	const char *
+	__asan_default_options();
 
 using uint	= unsigned int;
 using uchar = unsigned char;
-

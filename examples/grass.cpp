@@ -19,7 +19,6 @@
 
 #include <ImGuizmo.h>
 #include <glm/gtx/string_cast.hpp>
-#include <thread>
 
 using namespace ygl;
 using namespace std;
@@ -102,6 +101,7 @@ void run() {
 
 	auto	*meshToAnimate = (AnimatedMesh *)asman->getMesh(scene.getComponent<RendererComponent>(model).meshIndex);
 	Animator animator(meshToAnimate, &idle);
+	animator.setBlendAnimation(&run);
 	animator.UpdateAnimation(window.deltaTime);
 
 	addSkybox(scene, "res/images/meadow_4k", ".hdr");
@@ -138,6 +138,8 @@ void run() {
 	ImGuiWindowFlags window_flags	  = 0;
 	window_flags |= ImGuiWindowFlags_NoBackground;
 
+	float animationBlendFactor = 0.0;
+
 	renderer->setClearColor(glm::vec4(clearColor, 1.));
 	while (!window.shouldClose()) {
 		window.beginFrame();
@@ -146,7 +148,7 @@ void run() {
 		cam.update();
 
 		//double start = glfwGetTime();
-		animator.UpdateAnimation(window.deltaTime);
+		animator.UpdateAnimationBlended(window.deltaTime, animationBlendFactor);
 		auto   matrices = animator.GetFinalBoneMatrices();
 		//double end		= glfwGetTime();
 
@@ -193,6 +195,8 @@ void run() {
 
 		ImGui::InputInt("Texture ID", &textureViewIndex);
 		ImGui::Image((void *)(std::size_t)textureViewIndex, ImVec2(256, 256));
+
+		ImGui::SliderFloat("animation blend", &animationBlendFactor, 0, 1);
 
 		ImGui::End();
 
