@@ -550,20 +550,6 @@ bool getTexture(aiMaterial *mat, aiTextureType type, std::string &fileName) {
 	return false;
 }
 
-void ygl::MeshFromFile::getAnimations(const aiScene *scene, ygl::AssetManager *asman, std::string filePath) {
-	uint animCount = scene->mNumAnimations;
-	if (!scene->HasAnimations()) return;
-	aiAnimation **animations = scene->mAnimations;
-
-	for (uint i = 0; i < (animCount ? 1 : 0); ++i) {
-		aiAnimation *animation = animations[i];
-		aiNodeAnim **channels  = animation->mChannels;
-		for (uint j = 0; j < animation->mNumChannels; ++j) {
-			aiNodeAnim *channel = channels[i];
-		}
-	}
-}
-
 ygl::Material ygl::MeshFromFile::getMaterial(const aiScene *scene, ygl::AssetManager *asman, std::string filePath,
 											 uint m) {
 	if (!scene->HasMaterials()) { return Material(); }

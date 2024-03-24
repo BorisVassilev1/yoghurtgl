@@ -1,11 +1,8 @@
 #include <shader.h>
 
 #include <assert.h>
-#include <iterator>
-#include <sstream>
 #include <string>
 #include <string.h>
-#include <string_view>
 #include <yoghurtgl.h>
 
 ygl::Shader::~Shader() {
@@ -22,13 +19,17 @@ ygl::Shader::~Shader() {
 }
 
 void ygl::Shader::deleteShaders() {
+	detachShaders();
+	delete[] shaders;
+	shaders = nullptr;
+}
+
+void ygl::Shader::detachShaders() {
 	for (uint i = 0; i < shadersCount; ++i) {
 		glDetachShader(program, shaders[i]);
 		glDeleteShader(shaders[i]);
 		shaders[i] = 0;
 	}
-	delete[] shaders;
-	shaders = nullptr;
 }
 
 void ygl::Shader::init(std::vector<std::string> files) {
@@ -64,8 +65,8 @@ void ygl::Shader::serialize(std::ostream &out) {
 	}
 }
 
-void ygl::Shader::createShader(GLenum type, GLuint target) {
-	const char	 *file = fileNames[target];
+void ygl::Shader::createShader(GLenum type, GLuint target, const char *file = nullptr) {
+	if(file == nullptr) file = fileNames[target];
 	std::ifstream in(file);
 	if (in.fail()) { std::cerr << "Error: failed opening file: " << file << std::endl; }
 
@@ -79,8 +80,6 @@ void ygl::Shader::createShader(GLenum type, GLuint target) {
 	delete[] source;
 	glCompileShader(sh);
 	shaders[target] = sh;
-
-	assert(checkCompileStatus(target));
 }
 
 void ygl::Shader::attachShaders() {
@@ -197,7 +196,21 @@ void ygl::Shader::loadSourceRecursively(std::vector<std::string> &lines, const c
 
 void ygl::Shader::finishProgramCreation() {
 	attachShaders();
-	if (!checkLinkStatus() || !checkValidateStatus()) THROW_RUNTIME_ERR("SHADER FAILED TO LINK");
+
+	bool success = true;
+	for(uint target = 0; target < shadersCount; ++target) success &= checkCompileStatus(target);
+	if(success) {
+		success &= checkLinkStatus();
+		success &= checkValidateStatus();
+	}
+	if (!success) {
+		dbLog(ygl::LOG_ERROR, "Shader failed to link");
+		detachShaders();
+		createShader(GL_VERTEX_SHADER, 0, "./shaders/error/error.vs");
+		createShader(GL_FRAGMENT_SHADER, 1, "./shaders/error/error.fs");
+		finishProgramCreation();
+		return;
+	}
 	deleteShaders();
 	detectUniforms();
 	detectBlockUniforms();

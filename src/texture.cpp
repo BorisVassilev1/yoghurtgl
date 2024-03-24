@@ -440,6 +440,8 @@ void ygl::TextureCubemap::BindToFrameBuffer(const FrameBuffer &fb, GLenum attach
 }
 
 void ygl::TextureCubemap::resize(uint width, uint height) {
+	static_cast<void>(width);
+	static_cast<void>(height);
 	dbLog(LOG_ERROR, "CANNOT RESIZE A CUBEMAP! GO IMPLEMENT IT");
 }
 

@@ -115,7 +115,6 @@ void ygl::addModels(ygl::Scene &scene, std::string filePath, const std::function
 		std::cerr << e.what() << std::endl;
 		return;
 	}
-	ygl::MeshFromFile::getAnimations(MeshFromFile::loadedScene, nullptr, filePath);
 	for (uint i = 0; i < MeshFromFile::loadedScene->mNumMeshes; ++i) {
 		ygl::Entity model = addModel(scene, filePath, i);
 		edit(model);

@@ -2,7 +2,6 @@
 
 #include <yoghurtgl.h>
 #include <iostream>
-#include <fstream>
 #include <unordered_map>
 #include <vector>
 #include <string>
@@ -42,7 +41,7 @@ class Shader : public ISerializable {
 	Shader(std::initializer_list<std::string> files);
 	Shader(std::istream &in);
 
-	void createShader(GLenum type, GLuint target);
+	void createShader(GLenum type, GLuint target, const char *file);
 	void attachShaders();
 
 	bool checkLinkStatus();
@@ -54,6 +53,7 @@ class Shader : public ISerializable {
 
 	void finishProgramCreation();
 	void deleteShaders();
+	void detachShaders();
 
 	Shader(const Shader &other)			   = delete;
 	Shader &operator=(const Shader &other) = delete;

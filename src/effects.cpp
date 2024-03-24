@@ -133,14 +133,14 @@ void ygl::GrassSystem::render(float time) {
 
 		mesh->bind();
 		{
-			grassShader->setUniform("worldMatrix", worldMatrix);
-			grassShader->setUniform("renderMode", renderer->renderMode);
-			grassShader->setUniform("material_index", materialIndex);
-			grassShader->setUniform("curvature", curvature);
-			grassShader->setUniform("facingOffset", facingOffset);
-			grassShader->setUniform("height", height);
-			grassShader->setUniform("width", width);
-			grassShader->setUniform("blade_triangles", (uint)mesh->getVerticesCount());
+			if(grassShader->hasUniform("worldMatrix")) grassShader->setUniform("worldMatrix", worldMatrix);
+			if(grassShader->hasUniform("renderMode")) grassShader->setUniform("renderMode", renderer->renderMode);
+			if(grassShader->hasUniform("material_index")) grassShader->setUniform("material_index", materialIndex);
+			if(grassShader->hasUniform("curvature")) grassShader->setUniform("curvature", curvature);
+			if(grassShader->hasUniform("facingOffset")) grassShader->setUniform("facingOffset", facingOffset);
+			if(grassShader->hasUniform("height")) grassShader->setUniform("height", height);
+			if(grassShader->hasUniform("width")) grassShader->setUniform("width", width);
+			if(grassShader->hasUniform("blade_triangles")) grassShader->setUniform("blade_triangles", (uint)mesh->getVerticesCount());
 
 			glDrawElementsInstanced(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0, mesh->bladeCount);
 		}

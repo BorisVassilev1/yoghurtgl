@@ -541,8 +541,10 @@ void ygl::Renderer::drawObject(Transformation &transform, Shader *sh, Mesh *mesh
 	sh->bind();
 
 	mesh->bind();
-	sh->setUniform("worldMatrix", transform.getWorldMatrix());
-	sh->setUniform("material_index", materialIndex);
+	if(sh->hasUniform("worldMatrix"))
+		sh->setUniform("worldMatrix", transform.getWorldMatrix());
+	if(sh->hasUniform("material_index"))
+		sh->setUniform("material_index", materialIndex);
 
 	glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
 	mesh->unbind();

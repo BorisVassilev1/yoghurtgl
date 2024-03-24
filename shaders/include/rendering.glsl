@@ -1,5 +1,6 @@
 const float PI	   = 3.14159265359;
 const float TWO_PI = 2. * PI;
+float eps = 0.002;
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
@@ -217,6 +218,7 @@ vec3 calculateIndirectComponent(in vec3 position, in vec3 N, in vec3 albedo, in 
 	vec3 ambient = (kD * diffuse + specular) * ao;
 	return ambient * indirectStrength;
 }
+
 float sampleShadow(in vec4 shadowPosition) {
 		if(
 				shadowPosition.x >= -1 && shadowPosition.x <=1 && 
@@ -224,7 +226,7 @@ float sampleShadow(in vec4 shadowPosition) {
 				shadowPosition.z >= -1 && shadowPosition.z <=1) {
 			vec3 coords = (shadowPosition.xyz + 1.) / 2.;
 			float depth = texture(shadowMap, coords.xy).x;
-			if(coords.z <= (depth + 0.0001)) {
+			if(coords.z <= (depth + 0.001)) {
 				return 1.0;
 			}
 		}
@@ -243,9 +245,9 @@ vec3 calcAllLightsCustom(in vec3 position, in vec3 normal, in vec3 albedo, in fl
 	if(use_shadow) {
 		vec4 shadowPosition = shadowProjectionMatrix * shadowViewMatrix * vec4(position, 1);
 		if(
-				shadowPosition.x >= -1 && shadowPosition.x <=1 && 
-				shadowPosition.y >= -1 && shadowPosition.y <=1 &&
-				shadowPosition.z >= -1 && shadowPosition.z <=1) {
+				shadowPosition.x >= -1 + eps && shadowPosition.x <=1 - eps && 
+				shadowPosition.y >= -1 + eps && shadowPosition.y <=1 - eps &&
+				shadowPosition.z >= -1 + eps && shadowPosition.z <=1 - eps) {
 			hasLight = 0.0;
 			for(int i = -1; i <= 1; ++i)
 				for(int j = -1; j <= 1; ++j)
@@ -311,7 +313,7 @@ vec3 calcAllLights(in vec3 position, in vec3 normal, in vec3 vertexNormal, in ve
 	float calcOpacity	= mix(1, opacity, mat.use_transparency_map);
 	diffuse.w = mix(1, diffuse.w, mat.use_albedo_map);
 	//calcRoughness *= calcRoughness;
-
+	
 	return calcAllLightsCustom(position, normal, calcAlbedo, calcRoughness, calcMetallic, calcAO, calcEmission, diffuse.w);
 }
 
