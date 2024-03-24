@@ -13,6 +13,10 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
+#ifdef _WIN32
+	#include <Windows.h>
+#endif
+
 /**
  * @brief the Yoghurtgl namespace
  */
@@ -105,8 +109,20 @@ bool inline f_dbLog(std::ostream &out, T arg, Types... args) {
 					std::stringstream s;                                                                  \
 					ygl::f_dbLog(s, __VA_ARGS__);                                                         \
 					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", s.str());    \
-					std::string cmd = "LC_ALL=C xmessage -default ok \"" + s.str() + "\"";                                     \
+					std::string cmd = "LC_ALL=C xmessage -default ok \"" + s.str() + "\"";                \
 					system(cmd.c_str());                                                                  \
+				} else if (severity >= YGL_LOG_LEVEL)                                                     \
+					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", __VA_ARGS__, \
+								 COLOR_RESET);                                                            \
+			};
+	#elif defined(_WIN32)
+		#define dbLog(severity, ...)                                                                      \
+			{                                                                                             \
+				if (severity == ygl::LOG_ERROR) {                                                         \
+					std::stringstream s;                                                                  \
+					ygl::f_dbLog(s, __VA_ARGS__);                                                         \
+					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", s.str());    \
+					MessageBox(NULL, s.str().c_str(), "Title!", MB_ICONERROR | MB_OK);           \
 				} else if (severity >= YGL_LOG_LEVEL)                                                     \
 					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", __VA_ARGS__, \
 								 COLOR_RESET);                                                            \

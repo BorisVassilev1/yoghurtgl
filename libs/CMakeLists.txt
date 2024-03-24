@@ -78,5 +78,5 @@ set(DOCTEST_INCLUDE_DIR ./libs/doctest/doctest/ CACHE INTERNAL "Path to include 
 if (NOT ${YGL_NO_ASSIMP})
 	set_target_properties(assimp PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../../../)
 endif (NOT ${YGL_NO_ASSIMP})
-set_target_properties(glfw PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../)
+set_target_properties(glfw PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../../../)
 set_target_properties(libglew_shared PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../../)
