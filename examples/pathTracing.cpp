@@ -108,7 +108,8 @@ void cleanup() {
 
 void initScene() {
 	try {
-		bunnyMesh = new ygl::MeshFromFile("./res/models/dragon.obj", 0);
+		// bunnyMesh = new ygl::MeshFromFile("./res/models/dragon-gltf/scene.gltf", 2);
+		bunnyMesh = new ygl::MeshFromFile("./res/models/bunny.obj", 0);
 	} catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		cleanup();
@@ -132,12 +133,13 @@ void initScene() {
 
 	asman = scene->getSystem<ygl::AssetManager>();
 	ygl::Material geometryMaterial =
-		// ygl::MeshFromFile::getMaterial(ygl::MeshFromFile::loadedScene, asman, "./res/models/bunny_uv/", 0);
+		// ygl::MeshFromFile::getMaterial(ygl::MeshFromFile::loadedScene, asman, "./res/models/dragon-gltf/", 2);
 		ygl::Material(glm::vec3(1.f), 0.1, glm::vec3(0.f), 1.0, glm::vec3(0.0), 0.0, glm::vec3(1.0), 0.0, 0.0, 0.0);
 
 	bunny = scene->createEntity();
 	scene->addComponent<ygl::Transformation>(
-		bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(8.00f)));
+		bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(1.00f)));
+	// bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(-PI /2, 0, 0), glm::vec3(1.00f)));
 	ygl::RendererComponent bunnyRenderer;
 
 	unsigned int shaderIndex = asman->addShader(shader, "defaultShader");
@@ -152,7 +154,7 @@ void initScene() {
 	ygl::Shader::setSSBO(bunnyMesh->getIBO(), 4);
 
 	ygl::addSkybox(*scene, "res/images/meadow_4k", ".hdr");
-	//ygl::addSkybox(*scene, "./res/images/skybox", ".jpg");
+	// ygl::addSkybox(*scene, "./res/images/skybox", ".jpg");
 
 	renderer->addLight(ygl::Light(ygl::Transformation(glm::vec3(0), glm::vec3(-1, -2.9, 0), glm::vec3(1)),
 								  glm::vec3(1., 1., 1.), 3, ygl::Light::Type::DIRECTIONAL));
@@ -321,7 +323,6 @@ int main() {
 
 	// dbLog(ygl::LOG_INFO, rawTexture->getID());
 	// dbLog(ygl::LOG_INFO, renderTexture->getID());
-
 
 	renderer->setClearColor(glm::vec4(0, 0, 0, 1));
 	while (!window->shouldClose()) {

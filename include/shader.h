@@ -41,7 +41,7 @@ class Shader : public ISerializable {
 	Shader(std::initializer_list<std::string> files);
 	Shader(std::istream &in);
 
-	void createShader(GLenum type, GLuint target, const char *file);
+	void createShader(GLenum type, GLuint target, const char *file = nullptr);
 	void attachShaders();
 
 	bool checkLinkStatus();

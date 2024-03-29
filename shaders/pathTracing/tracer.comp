@@ -2,7 +2,7 @@
 
 #include <pathTracing.glsl>
 
-layout(local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 layout(rgba32f, binding = 1) uniform image2D img_output;
 
@@ -379,13 +379,6 @@ void main() {
 		// avoid numerical issues causing a divide by zero, or nearly so (more important later, when we add refraction)
 		rayProbability = max(rayProbability, 0.001f);
 
-		// update the ray position
-		if (doRefraction == 1.0f) {
-			ray.origin = info.pos - info.normal * phi;
-		} else {
-			ray.origin = info.pos + info.normal * phi;
-		}
-
 		// Calculate a new ray direction.
 		// Diffuse uses a normal oriented cosine weighted hemisphere sample.
 		// Perfectly smooth specular uses the reflection ray.
@@ -410,7 +403,6 @@ void main() {
 		refractionRayDir =
 			normalize(mix(refractionRayDir, -diffuseRayDir, mat.refraction_roughness * mat.refraction_roughness));
 
-
 		vec3 shadowRayDir = normalize(sun_direction + sin(sun_size) * random_in_unit_sphere(random_seed_full));
 
 		ray.direction = mix(diffuseRayDir, specularRayDir, doSpecular);
@@ -425,6 +417,9 @@ void main() {
 		// update the colorMultiplier. refraction doesn't alter the color until we hit the next thing, so we can do
 		// light absorption over distance.
 		if (doRefraction == 0.0f) attenuation *= mix(albedo, specular_color, doSpecular);
+
+		// update the ray position
+		ray.origin = info.pos + ray.direction * phi;
 
 		attenuation /= rayProbability;
 

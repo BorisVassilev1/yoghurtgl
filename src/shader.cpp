@@ -1,9 +1,7 @@
 #include <shader.h>
 
-#include <assert.h>
-#include <string>
-#include <string.h>
 #include <yoghurtgl.h>
+#include <assert.h>
 
 ygl::Shader::~Shader() {
 	if (shaders != nullptr) { deleteShaders(); }
@@ -65,8 +63,8 @@ void ygl::Shader::serialize(std::ostream &out) {
 	}
 }
 
-void ygl::Shader::createShader(GLenum type, GLuint target, const char *file = nullptr) {
-	if(file == nullptr) file = fileNames[target];
+void ygl::Shader::createShader(GLenum type, GLuint target, const char *file) {
+	if (file == nullptr) file = fileNames[target];
 	std::ifstream in(file);
 	if (in.fail()) { std::cerr << "Error: failed opening file: " << file << std::endl; }
 
@@ -198,8 +196,9 @@ void ygl::Shader::finishProgramCreation() {
 	attachShaders();
 
 	bool success = true;
-	for(uint target = 0; target < shadersCount; ++target) success &= checkCompileStatus(target);
-	if(success) {
+	for (uint target = 0; target < shadersCount; ++target)
+		success &= checkCompileStatus(target);
+	if (success) {
 		success &= checkLinkStatus();
 		success &= checkValidateStatus();
 	}
