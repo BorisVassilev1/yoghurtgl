@@ -1,8 +1,8 @@
 #include <animations.h>
 #include <algorithm>
 
-ygl::Bone::Bone(const std::string &name, int ID, const aiNodeAnim *channel, float duration)
-	: m_LocalTransform(1.0f), m_Name(name), m_ID(ID), m_Duration(duration){
+ygl::Bone::Bone(const std::string &name, int ID, const aiNodeAnim *channel, float duration, AnimationBehaviour behaviour)
+	: behaviour(behaviour), m_LocalTransform(1.0f), m_Name(name), m_ID(ID), m_Duration(duration) {
 	m_NumPositions = channel->mNumPositionKeys;
 
 	for (int positionIndex = 0; positionIndex < m_NumPositions; ++positionIndex) {
@@ -36,17 +36,21 @@ ygl::Bone::Bone(const std::string &name, int ID, const aiNodeAnim *channel, floa
 }
 
 void ygl::Bone::Update(float animationTime) {
-	animationTime = fmod(animationTime, m_Duration);
+	switch (behaviour) {
+		case Loop: animationTime = fmod(animationTime, m_Duration); break;
+		case Stop: animationTime = glm::min<float>(animationTime, m_Duration - 0.01); break;
+		default: assert(false && "invalid animation behaviour");
+	}
 	glm::vec3 translation = InterpolatePosition(animationTime);
 	glm::quat rotation	  = InterpolateRotation(animationTime);
 	glm::vec3 scale		  = InterpolateScaling(animationTime);
-	glm::mat4 t = glm::translate(glm::mat4(1), translation);
-	glm::mat4 r = glm::toMat4(rotation);
-	glm::mat4 s = glm::scale(glm::mat4(1), scale);
+	glm::mat4 t			  = glm::translate(glm::mat4(1), translation);
+	glm::mat4 r			  = glm::toMat4(rotation);
+	glm::mat4 s			  = glm::scale(glm::mat4(1), scale);
 	m_LocalTransform	  = t * r * s;
-	m_LocalTranslation = translation;
-	m_LocalRotation = rotation;
-	m_LocalScale = scale;
+	m_LocalTranslation	  = translation;
+	m_LocalRotation		  = rotation;
+	m_LocalScale		  = scale;
 	currentTime			  = animationTime;
 }
 

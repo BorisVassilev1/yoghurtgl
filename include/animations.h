@@ -9,6 +9,7 @@
 #include <assimp_glm_helpers.h>
 
 #include <window.h>
+#include <shader.h>
 #include <mesh.h>
 
 namespace ygl {
@@ -28,6 +29,11 @@ struct KeyScale {
 	float	  timeStamp;
 };
 
+enum AnimationBehaviour {
+	Loop,
+	Stop
+};
+
 class Bone {
    private:
 	std::vector<KeyPosition> m_Positions;
@@ -41,6 +47,7 @@ class Bone {
 	size_t currentRotationIndex = 0;
 	size_t currentScaleIndex	= 0;
 	float  currentTime			= 0;
+	AnimationBehaviour behaviour;
 
 	glm::mat4	m_LocalTransform;
 	glm::vec3	m_LocalTranslation;
@@ -52,7 +59,7 @@ class Bone {
 
    public:
 	/*reads keyframes from aiNodeAnim*/
-	Bone(const std::string& name, int ID, const aiNodeAnim* channel, float duration);
+	Bone(const std::string& name, int ID, const aiNodeAnim* channel, float duration, AnimationBehaviour behaviour = Loop);
 
 	/*interpolates  b/w positions,rotations & scaling keys based on the curren time of
 	the animation and prepares the local transformation matrix by combining all keys
@@ -106,7 +113,7 @@ class Animation {
    public:
 	Animation() = default;
 
-	Animation(const aiScene* scene, uint index) {
+	Animation(const aiScene* scene, uint index, AnimationBehaviour behaviour = Loop) {
 		assert(scene && scene->mRootNode);
 		auto animation = scene->mAnimations[index];
 		if (animation->mNumMeshChannels != 0) { dbLog(ygl::LOG_WARNING, "loading an animation with mesh channels"); }
@@ -114,7 +121,7 @@ class Animation {
 		m_Duration		 = animation->mDuration;
 		m_TicksPerSecond = animation->mTicksPerSecond;
 		ReadHeirarchyData(m_RootNode, scene->mRootNode);
-		ReadMissingBones(animation);
+		ReadMissingBones(animation, behaviour);
 	}
 
 	Bone* FindBone(const std::string& name) {
@@ -134,7 +141,7 @@ class Animation {
 	inline uint GetBonesCount() { return m_Bones.size(); }
 
    private:
-	void ReadMissingBones(const aiAnimation* animation) {
+	void ReadMissingBones(const aiAnimation* animation, AnimationBehaviour behaviour) {
 		int size = animation->mNumChannels;
 
 		int boneCount = 0;
@@ -151,7 +158,7 @@ class Animation {
 				++boneCount;
 			}
 			auto id = m_BoneInfoMap.find(boneName)->second.id;
-			m_Bones.push_back(Bone(boneName, id, channel, m_Duration));
+			m_Bones.push_back(Bone(boneName, id, channel, m_Duration, behaviour));
 		}
 	}
 
@@ -181,38 +188,55 @@ class Animation {
 class Animator {
    public:
 	Animator(AnimatedMesh* mesh, Animation* currentAnimation) {
-		m_CurrentTime	   = 0.0;
-		m_CurrentAnimation = currentAnimation;
-		this->mesh		   = mesh;
+		m_CurrentTimeCurrent = 0.0;
+		m_CurrentTimeBlended = 0.0;
+		m_CurrentAnimation	 = currentAnimation;
+		this->mesh			 = mesh;
 
 		m_FinalBoneMatrices.reserve(200);
 		for (uint i = 0; i < 200; i++)
 			m_FinalBoneMatrices.push_back(glm::mat4(1.0f));
+
+		glGenBuffers(1, &matricesBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, matricesBuffer);
+		glBufferData(GL_ARRAY_BUFFER, GetFinalBoneMatrices().size() * 4 * 16, nullptr, GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
 	void UpdateAnimation(float dt) {
 		m_DeltaTime = dt;
 		if (m_CurrentAnimation) {
-			m_CurrentTime += m_CurrentAnimation->GetTicksPerSecond() * dt;
+			m_CurrentTimeCurrent += m_CurrentAnimation->GetTicksPerSecond() * dt;
 			CalculateBoneTransform(&m_CurrentAnimation->GetRootNode(), glm::mat4(1.0f));
 		}
+		UpdateBoneBuffer();
 	}
 
 	void UpdateAnimationBlended(float dt, float factor) {
 		m_DeltaTime = dt;
 		if (m_CurrentAnimation) {
-			m_CurrentTime += m_CurrentAnimation->GetTicksPerSecond() * dt;
-			m_CurrentTime = fmod(m_CurrentTime, m_CurrentAnimation->GetDuration());
+			m_CurrentTimeCurrent += m_CurrentAnimation->GetTicksPerSecond() * dt;
+			m_CurrentTimeBlended += m_BlendedAnimation->GetTicksPerSecond() * dt;
 			CalculateBoneTransformBlended(&m_CurrentAnimation->GetRootNode(), glm::mat4(1.0f), factor);
 		}
+		UpdateBoneBuffer();
+	}
+
+	void UpdateBoneBuffer() {
+		glBindBuffer(GL_ARRAY_BUFFER, matricesBuffer);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, m_FinalBoneMatrices.size() * 64, m_FinalBoneMatrices.data());
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		Shader::setUBO(matricesBuffer, 3);
 	}
 
 	void PlayAnimation(Animation* pAnimation) {
 		m_CurrentAnimation = pAnimation;
-		m_CurrentTime	   = 0.0f;
+		m_CurrentTimeCurrent	   = 0.0f;
 	}
 
-	void setBlendAnimation(Animation* animation) { m_BlendedAnimation = animation; }
+	void setBlendAnimation(Animation* animation) {
+		m_BlendedAnimation	 = animation;
+	}
 
 	void CalculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform) {
 		const std::string& nodeName = node->name;
@@ -221,7 +245,7 @@ class Animator {
 		Bone* Bone = m_CurrentAnimation->FindBone(nodeName);
 
 		if (Bone) {
-			Bone->Update(m_CurrentTime);
+			Bone->Update(m_CurrentTimeCurrent);
 			nodeTransform = Bone->GetLocalTransform();
 		} else {
 			nodeTransform = node->transformation;
@@ -250,8 +274,8 @@ class Animator {
 		Bone* Bone2 = m_BlendedAnimation->FindBone(nodeName);
 
 		if (Bone1 && Bone2) {
-			Bone1->Update(m_CurrentTime);
-			Bone2->Update(m_CurrentTime);
+			Bone1->Update(m_CurrentTimeCurrent);
+			Bone2->Update(m_CurrentTimeBlended);
 			glm::vec3 translation = glm::mix(Bone1->GetLocalTranslation(), Bone2->GetLocalTranslation(), factor);
 			glm::quat rotation	  = glm::slerp(Bone1->GetLocalRotation(), Bone2->GetLocalRotation(), factor);
 			rotation			  = glm::normalize(rotation);
@@ -285,9 +309,43 @@ class Animator {
 	std::vector<glm::mat4> m_FinalBoneMatrices;
 	Animation*			   m_CurrentAnimation;
 	Animation*			   m_BlendedAnimation;
-	float				   m_CurrentTime;
+	float				   m_CurrentTimeCurrent;
+	float				   m_CurrentTimeBlended;
 	float				   m_DeltaTime;
 	AnimatedMesh*		   mesh;
+	uint				   matricesBuffer;
+};
+
+class AnimationFSM {
+	Animator*				animator;
+	std::vector<Animation*> animations;
+	float					blendFactor		= 0.;
+	uint					currAnimation	= 0;
+	uint					nextAnimation	= 0;
+	float					transitionSpeed = 0.03;
+
+   public:
+	AnimationFSM(Animator* animator, Animation* animation) : animator(animator) {
+		addAnimation(animation);
+		animator->PlayAnimation(animations[currAnimation]);
+		animator->setBlendAnimation(animations[currAnimation]);
+	}
+
+	void addAnimation(Animation* animation) { animations.push_back(animation); }
+
+	void transition(uint newAnimation) {
+		currAnimation = nextAnimation;
+		nextAnimation = newAnimation;
+		animator->PlayAnimation(animations[nextAnimation]);
+		animator->setBlendAnimation(animations[currAnimation]);
+		blendFactor = 1.0;
+	}
+
+	void update(float dt) {
+		blendFactor = glm::clamp<float>(blendFactor - transitionSpeed, 0, 1);
+
+		animator->UpdateAnimationBlended(dt, blendFactor);
+	}
 };
 
 };	   // namespace ygl

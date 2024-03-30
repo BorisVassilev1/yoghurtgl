@@ -471,6 +471,10 @@ void ygl::Renderer::shadowPass() {
 	}
 	if (asman->getShadersCount() > prevShaderIndex)
 		asman->getShader(prevShaderIndex)->unbind();	 // unbind the last used shader
+	
+	for (auto f : drawFunctions) {
+		f();
+	}
 
 	shadowFrameBuffer->unbind();
 }

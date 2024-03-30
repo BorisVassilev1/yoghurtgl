@@ -77,7 +77,7 @@ void run() {
 	} catch (std::exception &e) { std::cerr << e.what() << std::endl; }
 
 	try {
-		ygl::addModels(scene, "./res/models/medieval_knight/scene.gltf", [&](Entity e) {
+		ygl::addModels(scene, "./res/models/medieval_knight_fixed/scene.gltf", [&](Entity e) {
 			Transformation &t = scene.getComponent<Transformation>(e);
 			// t.scale *= 0.05;
 			t.scale *= 5;
@@ -91,18 +91,21 @@ void run() {
 	Animation idle(MeshFromFile::loadedScene, 0);
 
 	MeshFromFile::loadSceneIfNeeded("./res/models/medieval_knight/Falling Back Death.dae");
-	Animation die(MeshFromFile::loadedScene, 0);
+	Animation die(MeshFromFile::loadedScene, 0, Stop);
 
 	MeshFromFile::loadSceneIfNeeded("./res/models/medieval_knight/Sword And Shield Run.dae");
 	Animation run(MeshFromFile::loadedScene, 0);
 
 	MeshFromFile::loadSceneIfNeeded("./res/models/medieval_knight/Sword And Shield Slash.dae");
-	Animation attack(MeshFromFile::loadedScene, 0);
+	Animation attack(MeshFromFile::loadedScene, 0, Stop);
 
 	auto	*meshToAnimate = (AnimatedMesh *)asman->getMesh(scene.getComponent<RendererComponent>(model).meshIndex);
 	Animator animator(meshToAnimate, &idle);
-	animator.setBlendAnimation(&run);
-	animator.UpdateAnimation(window.deltaTime);
+	
+	AnimationFSM fsm(&animator, &idle);
+	fsm.addAnimation(&die);
+	fsm.addAnimation(&run);
+	fsm.addAnimation(&attack);
 
 	addSkybox(scene, "res/images/meadow_4k", ".hdr");
 	// addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
@@ -120,20 +123,13 @@ void run() {
 
 	Keyboard::addKeyCallback([&](GLFWwindow *, int key, int, int action, int mods) {
 		if (key == GLFW_KEY_R && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL) { asman->reloadShaders(); }
-		if (key == GLFW_KEY_H && action == GLFW_RELEASE) { animator.PlayAnimation(&attack); }
-		if (key == GLFW_KEY_J && action == GLFW_RELEASE) { animator.PlayAnimation(&run); }
-		if (key == GLFW_KEY_K && action == GLFW_RELEASE) { animator.PlayAnimation(&die); }
-		if (key == GLFW_KEY_L && action == GLFW_RELEASE) { animator.PlayAnimation(&idle); }
+		if (key == GLFW_KEY_H && action == GLFW_RELEASE) { fsm.transition(0); }
+		if (key == GLFW_KEY_J && action == GLFW_RELEASE) { fsm.transition(1); }
+		if (key == GLFW_KEY_K && action == GLFW_RELEASE) { fsm.transition(2); }
+		if (key == GLFW_KEY_L && action == GLFW_RELEASE) { fsm.transition(3); }
 	});
 
-	uint buff;
-	glGenBuffers(1, &buff);
-	glBindBuffer(GL_ARRAY_BUFFER, buff);
-	glBufferData(GL_ARRAY_BUFFER, animator.GetFinalBoneMatrices().size() * 4 * 16, nullptr, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	Shader *sh = asman->getShader(renderer->getDefaultShader());
-	sh->setUBO(buff, 3);
 	int				 textureViewIndex = 8;
 	ImGuiWindowFlags window_flags	  = 0;
 	window_flags |= ImGuiWindowFlags_NoBackground;
@@ -147,15 +143,8 @@ void run() {
 		controller.update();
 		cam.update();
 
-		//double start = glfwGetTime();
-		animator.UpdateAnimationBlended(window.deltaTime, animationBlendFactor);
-		auto   matrices = animator.GetFinalBoneMatrices();
-		//double end		= glfwGetTime();
-
-		glBindBuffer(GL_ARRAY_BUFFER, buff);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, matrices.size() * 64, matrices.data());
-		glBindBuffer(GL_ARRAY_BUFFER, buff);
-		//dbLog(ygl::LOG_WARNING, "skeleton update: ", (end - start) * 1000, "ms");
+		//animator.UpdateAnimationBlended(window.deltaTime, animationBlendFactor);
+		fsm.update(window.deltaTime);
 
 		for (Entity e : grassSystem->entities) {
 			Transformation			 &transform = scene.getComponent<Transformation>(e);
