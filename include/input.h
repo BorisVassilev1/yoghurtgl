@@ -1,6 +1,6 @@
 #pragma once
+#include <yoghurtgl.h>
 
-#include <glm/vec2.hpp>
 #include <window.h>
 #include <transformation.h>
 #include <vector>

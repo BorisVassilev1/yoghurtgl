@@ -1,9 +1,7 @@
 #define _USE_MATH_DEFINES
 
-#include <input.h>
 #include <yoghurtgl.h>
-#include <iostream>
-#include <math.h>
+#include <input.h>
 #include <glm/gtc/type_ptr.hpp>
 
 ygl::Mouse::Mouse(ygl::Window &window, bool lock) : delta(0), window(window), lock(lock) {

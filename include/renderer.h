@@ -88,12 +88,12 @@ class IScreenEffect {
 
 // TODO: this must go to the effects header
 class ACESEffect : public IScreenEffect {
-	VFShader *colorGrader;
+	uint	  colorGrader;
 
    public:
 	DELETE_COPY_AND_ASSIGNMENT(ACESEffect)
 
-	ACESEffect();
+	ACESEffect(Renderer *renderer);
 	~ACESEffect();
 	void apply(FrameBuffer *front, FrameBuffer *back);
 };
@@ -139,11 +139,11 @@ class Renderer : public ygl::ISystem {
 	TextureCubemap defaultCubemap	   = TextureCubemap(1, 1);
 
 	FrameBuffer		  *shadowFrameBuffer;
-	OrthographicCamera shadowCamera = OrthographicCamera(30, 1., 0.1, 100);
-	uint shadowMapSize = 1024;
-	bool shadow = false;
+	OrthographicCamera shadowCamera	 = OrthographicCamera(60, 1., 0.1, 100);
+	uint			   shadowMapSize = 2048;
+	bool			   shadow		 = false;
 
-	Camera			  *mainCamera	= nullptr;
+	Camera *mainCamera = nullptr;
 
 	FrameBuffer *frontFrameBuffer;
 	FrameBuffer *backFrameBuffer;
@@ -214,12 +214,18 @@ class Renderer : public ygl::ISystem {
 	static GLuint loadMaterials(int count, Material *materials);
 	static GLuint loadLights(int count, Light *materials);
 
-	Window *getWindow() { return window; }
-	bool	hasSkybox();
-	bool	hasShadow();
+	Window		 *getWindow() { return window; }
+	AssetManager *getAssetManager() { return asman; }
+	bool		  hasSkybox();
+	bool		  hasShadow();
+
+	void drawGUI();
+	void drawMaterialEditor();
 
 	void write(std::ostream &out) override;
 	void read(std::istream &in) override;
+
+	friend class IScreenEffect;
 };
 
 std::ostream &operator<<(std::ostream &out, const ygl::RendererComponent &rhs);

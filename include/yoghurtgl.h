@@ -9,6 +9,8 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#define GLM_FORCE_SWIZZLE
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>

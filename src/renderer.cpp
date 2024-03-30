@@ -2,7 +2,6 @@
 
 #include <transformation.h>
 #include <assert.h>
-#include <iterator>
 #include <ostream>
 #include <string>
 #include <texture.h>
@@ -10,6 +9,8 @@
 #include <asset_manager.h>
 #include <material.h>
 #include <entities.h>
+
+#include <imgui.h>
 
 ygl::Light::Light(glm::mat4 transform, glm::vec3 color, float intensity, ygl::Light::Type type)
 	: transform(transform), color(color), intensity(intensity), type(type) {}
@@ -71,34 +72,47 @@ void ygl::FrameBuffer::resize(uint width, uint height) {
 
 void ygl::FrameBuffer::bindDefault() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 
-ygl::ACESEffect::ACESEffect() {
-	colorGrader = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/postProcessing/acesFilm.fs");
+ygl::ACESEffect::ACESEffect(ygl::Renderer *renderer) {
+	this->setRenderer(renderer);
+	auto sh		= new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/postProcessing/acesFilm.fs");
+	colorGrader = renderer->getAssetManager()->addShader(sh, "color grading shader");
 }
 
-ygl::ACESEffect::~ACESEffect() { delete colorGrader; }
+ygl::ACESEffect::~ACESEffect() {}
 
 void ygl::ACESEffect::apply(FrameBuffer *front, FrameBuffer *back) {
 	front->getColor()->bind(GL_TEXTURE7);
 	if (back) back->bind();
 	else FrameBuffer::bindDefault();
 
-	colorGrader->bind();
-	colorGrader->setUniform("doColorGrading", enabled);
-	colorGrader->setUniform("doGammaCorrection", enabled);
-	Renderer::drawObject(colorGrader, renderer->getScreenQuad());
+	VFShader *sh = (VFShader *)renderer->getAssetManager()->getShader(colorGrader);
+	sh->bind();
+	sh->setUniform("doColorGrading", enabled);
+	sh->setUniform("doGammaCorrection", enabled);
+	Renderer::drawObject(sh, renderer->getScreenQuad());
 	front->getColor()->unbind(GL_TEXTURE7);
 }
 
 ygl::BloomEffect::BloomEffect(Renderer *renderer) {
 	Window *window = renderer->getWindow();
-	tex1		   = new Texture2d(window->getWidth(), window->getHeight());
-	tex2		   = new Texture2d(window->getWidth(), window->getHeight());
+	tex1		   = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA32F, nullptr);
+	tex2		   = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA32F, nullptr);
+
+	window->addResizeCallback([this, window](GLFWwindow *, int, int) {
+		delete tex1;
+		delete tex2;
+		tex1		   = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA32F, nullptr);
+		tex2		   = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA32F, nullptr);
+		dbLog(ygl::LOG_DEBUG, "resizing textures!!");
+	});
+
+	dbLog(ygl::LOG_DEBUG, "window size: ", window->getWidth(), " ", window->getHeight());
 
 	blurShader	 = new ComputeShader("./shaders/postProcessing/blur.comp");
 	filterShader = new ComputeShader("./shaders/postProcessing/filter.comp");
 	filterShader->bind();
-	filterShader->setUniform("img_input", 1);
-	filterShader->setUniform("img_output", 0);
+	//filterShader->setUniform("img_input", 1);
+	//filterShader->setUniform("img_output", 0);
 	filterShader->unbind();
 
 	onScreen = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/ui/textureOnScreen.fs");
@@ -128,12 +142,18 @@ void ygl::BloomEffect::apply(FrameBuffer *front, FrameBuffer *back) {
 
 		return;
 	}
-	uint blurSize = 5;
+	uint blurSize = 10;
 	// first separate pixels that have to be blurred;
+	FrameBuffer::bindDefault();
 	front->getColor()->bindImage(1);
+	front->getColor()->unbind(GL_TEXTURE7);
 	tex1->bindImage(0);
-	filterShader->bind();
 	Window *window = renderer->getWindow();
+
+	filterShader->bind();
+	if(filterShader->hasUniform("img_input")) filterShader->setUniform("img_input", 1);
+	filterShader->setUniform("img_output", 0);
+	glTextureBarrier();
 	Renderer::compute(filterShader, window->getWidth(), window->getHeight(), 1);
 	tex2->bindImage(1);
 
@@ -207,19 +227,16 @@ void ygl::Renderer::init() {
 
 	uint16_t width = window->getWidth(), height = window->getHeight();
 	frontFrameBuffer =
-		new FrameBuffer(new Texture2d(width, height, TextureType::RGBA16F, nullptr), GL_COLOR_ATTACHMENT0,
-						new RenderBuffer(width, height, TextureType::DEPTH_STENCIL_32F_8),
-						GL_DEPTH_STENCIL_ATTACHMENT, "Front frameBuffer");
-	backFrameBuffer = new FrameBuffer(new Texture2d(width, height, TextureType::RGBA16F, nullptr), GL_COLOR_ATTACHMENT0,
+		new FrameBuffer(new Texture2d(width, height, TextureType::RGBA32F, nullptr), GL_COLOR_ATTACHMENT0,
+						new RenderBuffer(width, height, TextureType::DEPTH_STENCIL_32F_8), GL_DEPTH_STENCIL_ATTACHMENT,
+						"Front frameBuffer");
+	backFrameBuffer = new FrameBuffer(new Texture2d(width, height, TextureType::RGBA32F, nullptr), GL_COLOR_ATTACHMENT0,
 									  new RenderBuffer(width, height, TextureType::DEPTH_STENCIL_32F_8),
 									  GL_DEPTH_STENCIL_ATTACHMENT, "Back frameBuffer");
 	shadowFrameBuffer = new FrameBuffer(nullptr, GL_COLOR_ATTACHMENT0,
 										new Texture2d(shadowMapSize, shadowMapSize, TextureType::DEPTH_24, nullptr),
 										GL_DEPTH_ATTACHMENT, "Shadow Framebuffer");
 	dbLog(ygl::LOG_DEBUG, "shadow texture: ", shadowFrameBuffer->getDepthStencil()->getID());
-
-	// addScreenEffect(new BloomEffect(this));
-	addScreenEffect(new ACESEffect());
 
 	window->addResizeCallback([this](GLFWwindow *window, int width, int height) {
 		(void)window;
@@ -234,6 +251,8 @@ void ygl::Renderer::init() {
 	scene->registerSystemIfCan<ygl::AssetManager>();
 	asman = scene->getSystem<AssetManager>();
 
+	addScreenEffect(new BloomEffect(this));
+	addScreenEffect(new ACESEffect(this));
 	brdfTexture = asman->addTexture(createBRDFTexture(), "brdf_Texture", false);
 }
 
@@ -471,7 +490,7 @@ void ygl::Renderer::shadowPass() {
 	}
 	if (asman->getShadersCount() > prevShaderIndex)
 		asman->getShader(prevShaderIndex)->unbind();	 // unbind the last used shader
-	
+
 	for (auto f : drawFunctions) {
 		f();
 	}
@@ -545,10 +564,8 @@ void ygl::Renderer::drawObject(Transformation &transform, Shader *sh, Mesh *mesh
 	sh->bind();
 
 	mesh->bind();
-	if(sh->hasUniform("worldMatrix"))
-		sh->setUniform("worldMatrix", transform.getWorldMatrix());
-	if(sh->hasUniform("material_index"))
-		sh->setUniform("material_index", materialIndex);
+	if (sh->hasUniform("worldMatrix")) sh->setUniform("worldMatrix", transform.getWorldMatrix());
+	if (sh->hasUniform("material_index")) sh->setUniform("material_index", materialIndex);
 
 	glDrawElements(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0);
 	mesh->unbind();
@@ -599,6 +616,37 @@ GLuint ygl::Renderer::loadLights(int count, Light *lights) {
 bool ygl::Renderer::hasSkybox() { return skyboxTexture && irradianceTexture && prefilterTexture; }
 
 bool ygl::Renderer::hasShadow() { return shadow; }
+
+void ygl::Renderer::drawGUI() {
+	ImGui::Begin("Renderer Settings");
+
+	ImGui::InputInt("Render Mode", (int *)&renderMode);
+	ImGui::SeparatorText("Screen Effects");
+	for (uint i = 0; i < effects.size(); ++i) {
+		ImGui::Checkbox("Effect", &(effects[i]->enabled));
+	}
+
+	ImGui::SeparatorText("Texture Debug View");
+	static int textureViewIndex = 1;
+	ImGui::InputInt("Texture ID", &textureViewIndex);
+	ImGui::Image((void *)(std::size_t)textureViewIndex, ImVec2(256, 256));
+
+	ImGui::End();
+}
+
+void ygl::Renderer::drawMaterialEditor() {
+	static int materialIndex = 0;
+	ImGui::Begin("Material Editor");
+	ImGui::InputInt("material index", &materialIndex);
+
+	if (materialIndex < materials.size() && materialIndex > 0) {
+		getMaterial(materialIndex).drawImGui();
+	} else {
+		ImGui::Text("Invalid Material Index");
+	}
+
+	ImGui::End();
+}
 
 void ygl::Renderer::write(std::ostream &out) {
 	out.write((char *)&defaultShader, sizeof(defaultShader));

@@ -1,5 +1,7 @@
 #include <yoghurtgl.h>
 
+#include <iostream>
+
 #include <window.h>
 #include <mesh.h>
 #include <shader.h>
@@ -8,10 +10,7 @@
 #include <renderer.h>
 #include <effects.h>
 #include <entities.h>
-
-#include <iostream>
-#include "GLFW/glfw3.h"
-#include "animations.h"
+#include <animations.h>
 
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
@@ -19,6 +18,7 @@
 
 #include <ImGuizmo.h>
 #include <glm/gtx/string_cast.hpp>
+#include "GLFW/glfw3.h"
 
 using namespace ygl;
 using namespace std;
@@ -54,7 +54,7 @@ void run() {
 	uint	   groundMaterial = renderer->addMaterial(
 		  Material(glm::vec3(0, 0.1, 0), 0.02, glm::vec3(), 1.4, glm::vec3(0), 0, glm::vec3(0), 0, 0.8, 0));
 
-	int chunks = 3;
+	int chunks = 10;
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
 			Entity plane = scene.createEntity();
@@ -67,24 +67,34 @@ void run() {
 
 	Entity model = -1;
 	try {
-		ygl::addModels(scene, "./res/models/gnome/scene.gltf", [&](Entity e) {
+		ygl::addModels(scene, "./res/models/low_poly_fantasy_rune_stone/scene.gltf", [&](Entity e) {
 			Transformation &t = scene.getComponent<Transformation>(e);
-			t.scale *= 0.01;
-			t.position.y = 4;
+			t.scale *= 3;
+			t.rotation.x += -glm::pi<float>() / 2.;
+			t.position.y = 13;
 			t.position.x = 6;
 			t.updateWorldMatrix();
 		});
 	} catch (std::exception &e) { std::cerr << e.what() << std::endl; }
 
+	float characterScale = 5;
+
+	std::vector<Entity> character;
+	Transformation		characterTransform;
+	characterTransform.scale *= characterScale;
+	characterTransform.position.x = -9;
+	characterTransform.updateWorldMatrix();
+
+	bool cameraToggle = false;
+
 	try {
 		ygl::addModels(scene, "./res/models/medieval_knight_fixed/scene.gltf", [&](Entity e) {
 			Transformation &t = scene.getComponent<Transformation>(e);
-			// t.scale *= 0.05;
-			t.scale *= 5;
-			t.position.x = -9;
+			t				  = characterTransform;
 			t.updateWorldMatrix();
 			scene.getComponent<RendererComponent>(e).isAnimated = true;
 			model												= e;
+			character.push_back(e);
 		});
 	} catch (std::exception &e) { std::cerr << e.what() << std::endl; }
 
@@ -101,17 +111,18 @@ void run() {
 
 	auto	*meshToAnimate = (AnimatedMesh *)asman->getMesh(scene.getComponent<RendererComponent>(model).meshIndex);
 	Animator animator(meshToAnimate, &idle);
-	
+
 	AnimationFSM fsm(&animator, &idle);
 	fsm.addAnimation(&die);
 	fsm.addAnimation(&run);
 	fsm.addAnimation(&attack);
 
-	addSkybox(scene, "res/images/meadow_4k", ".hdr");
+	// addSkybox(scene, "res/images/meadow_4k", ".hdr");
+	addSkybox(scene, "res/images/kloppenheim_06_puresky_4k", ".hdr");
 	// addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
-	//  Entity skybox = addSkybox(scene, "./res/images/skybox/");
+	// Entity skybox = addSkybox(scene, "./res/images/skybox/");
 
-	renderer->addLight(Light(Transformation(glm::vec3(0, 20, 0), glm::vec3(-0.7, 0.8, 0), glm::vec3(1.)), glm::vec3(1.),
+	renderer->addLight(Light(Transformation(glm::vec3(0, 30, 0), glm::vec3(-0.7, 0.8, 0), glm::vec3(1.)), glm::vec3(1.),
 							 4, Light::DIRECTIONAL));
 
 	renderer->loadData();
@@ -123,27 +134,48 @@ void run() {
 
 	Keyboard::addKeyCallback([&](GLFWwindow *, int key, int, int action, int mods) {
 		if (key == GLFW_KEY_R && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL) { asman->reloadShaders(); }
+		if (key == GLFW_KEY_UP && action == GLFW_PRESS) { fsm.transition(2); }
+		if (key == GLFW_KEY_UP && action == GLFW_RELEASE) { fsm.transition(0); }
+		if (cameraToggle) {
+			if (key == GLFW_KEY_W && action == GLFW_PRESS) { fsm.transition(2); }
+			if (key == GLFW_KEY_W && action == GLFW_RELEASE) { fsm.transition(0); }
+		}
+
 		if (key == GLFW_KEY_H && action == GLFW_RELEASE) { fsm.transition(0); }
 		if (key == GLFW_KEY_J && action == GLFW_RELEASE) { fsm.transition(1); }
 		if (key == GLFW_KEY_K && action == GLFW_RELEASE) { fsm.transition(2); }
 		if (key == GLFW_KEY_L && action == GLFW_RELEASE) { fsm.transition(3); }
+
+		if (key == GLFW_KEY_O && action == GLFW_RELEASE) { cameraToggle = !cameraToggle; }
 	});
 
-
-	int				 textureViewIndex = 8;
-	ImGuiWindowFlags window_flags	  = 0;
+	ImGuiWindowFlags window_flags = 0;
 	window_flags |= ImGuiWindowFlags_NoBackground;
 
-	float animationBlendFactor = 0.0;
+	glm::vec3 camera_rotation = glm::vec3(0);
+	float	  distance		  = 13.;
 
 	renderer->setClearColor(glm::vec4(clearColor, 1.));
 	while (!window.shouldClose()) {
 		window.beginFrame();
 		mouse.update();
-		controller.update();
+		if (!cameraToggle) {
+			controller.update();
+		} else {
+			camera_rotation.y -= mouse.getDelta().x * window.deltaTime * 0.3;
+			camera_rotation.x -= mouse.getDelta().y * window.deltaTime * 0.3;
+
+			glm::mat4 rotationMat  = glm::mat4(1.);
+			rotationMat			   = glm::rotate(rotationMat, camera_rotation.z, glm::vec3(0, 0, 1));
+			rotationMat			   = glm::rotate(rotationMat, camera_rotation.y, glm::vec3(0, 1, 0));
+			rotationMat			   = glm::rotate(rotationMat, camera_rotation.x, glm::vec3(1, 0, 0));
+			glm::vec3 forward	   = (rotationMat * glm::vec4(0, 0, 1, 0)).xyz();
+			cam.transform.rotation = camera_rotation;
+			cam.transform.position = characterTransform.position + forward * distance + glm::vec3(0, 11, 0);
+			cam.transform.updateWorldMatrix();
+		}
 		cam.update();
 
-		//animator.UpdateAnimationBlended(window.deltaTime, animationBlendFactor);
 		fsm.update(window.deltaTime);
 
 		for (Entity e : grassSystem->entities) {
@@ -151,6 +183,36 @@ void run() {
 			GrassSystem::GrassHolder &holder	= scene.getComponent<GrassSystem::GrassHolder>(e);
 			float					  distance	= glm::length(transform.position - cam.transform.position);
 			holder.LOD							= distance / 120;
+		}
+
+		if (Keyboard::getKey(GLFW_KEY_UP) == GLFW_PRESS) {
+			glm::vec4 forward = characterTransform.getWorldMatrix() * glm::vec4(0, 0, 1, 0);
+			characterTransform.position +=
+				forward.xyz() * (float)window.deltaTime * 6.6f * (1.f - fsm.getBlendFactor());
+		}
+
+		if (Keyboard::getKey(GLFW_KEY_LEFT) == GLFW_PRESS) { characterTransform.rotation.y += window.deltaTime * 5; }
+		if (Keyboard::getKey(GLFW_KEY_RIGHT) == GLFW_PRESS) { characterTransform.rotation.y -= window.deltaTime * 5; }
+
+		if (cameraToggle) {
+			if (Keyboard::getKey(GLFW_KEY_W) == GLFW_PRESS) {
+				glm::vec4 forward = characterTransform.getWorldMatrix() * glm::vec4(0, 0, 1, 0);
+				characterTransform.position +=
+					forward.xyz() * (float)window.deltaTime * 6.6f * (1.f - fsm.getBlendFactor());
+			}
+			if (Keyboard::getKey(GLFW_KEY_A) == GLFW_PRESS) { characterTransform.rotation.y += window.deltaTime * 5; }
+			if (Keyboard::getKey(GLFW_KEY_D) == GLFW_PRESS) { characterTransform.rotation.y -= window.deltaTime * 5; }
+		}
+
+		if (Keyboard::getKey(GLFW_KEY_U) == GLFW_PRESS) { distance += window.deltaTime * 3; }
+		if (Keyboard::getKey(GLFW_KEY_Y) == GLFW_PRESS) { distance -= window.deltaTime * 3; }
+
+		characterTransform.updateWorldMatrix();
+
+		for (Entity e : character) {
+			Transformation &transform = scene.getComponent<Transformation>(e);
+			transform				  = characterTransform;
+			transform.updateWorldMatrix();
 		}
 
 		grassSystem->doWork();
@@ -162,7 +224,7 @@ void run() {
 		renderer->getLight(0).transform = transform.getWorldMatrix();
 		renderer->loadData();
 
-		if (grassSystem->getMaterial().drawImGui()) renderer->loadData();
+		renderer->drawMaterialEditor();
 
 		ImGui::Begin("Grass controls", nullptr, window_flags);
 		if (ImGui::SliderFloat("density", &(grassSystem->density), 1., 10.)) { grassSystem->reload(); }
@@ -178,16 +240,11 @@ void run() {
 			transform.updateWorldMatrix();
 		}
 
-		ImGui::InputInt("Render Mode", (int *)&renderer->renderMode);
-		ImGui::Checkbox("Alpha Correction", &(renderer->getScreenEffect(0)->enabled));
 		ImGui::InputInt("Selection", (int *)&model);
 
-		ImGui::InputInt("Texture ID", &textureViewIndex);
-		ImGui::Image((void *)(std::size_t)textureViewIndex, ImVec2(256, 256));
-
-		ImGui::SliderFloat("animation blend", &animationBlendFactor, 0, 1);
-
 		ImGui::End();
+
+		renderer->drawGUI();
 
 		ImGui::Begin("Profiler");
 		float time = window.deltaTime;

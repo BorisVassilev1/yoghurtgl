@@ -75,15 +75,15 @@ class Bone {
 
 	/* Gets the current index on mKeyPositions to interpolate to based on
 	the current animation time*/
-	int GetPositionIndex(float animationTime);
+	uint GetPositionIndex(float animationTime);
 
 	/* Gets the current index on mKeyRotations to interpolate to based on the
 	current animation time*/
-	int GetRotationIndex(float animationTime);
+	uint GetRotationIndex(float animationTime);
 
 	/* Gets the current index on mKeyScalings to interpolate to based on the
 	current animation time */
-	int GetScaleIndex(float animationTime);
+	uint GetScaleIndex(float animationTime);
 
    private:
 	/* Gets normalized value for Lerp & Slerp*/
@@ -346,6 +346,8 @@ class AnimationFSM {
 
 		animator->UpdateAnimationBlended(dt, blendFactor);
 	}
+
+	float getBlendFactor() {return blendFactor;}
 };
 
 };	   // namespace ygl
