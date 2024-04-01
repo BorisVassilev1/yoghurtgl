@@ -16,7 +16,6 @@ out vec3 vVertexPos;
 uniform mat4 worldMatrix;
 uniform float time;
 
-
 layout(location = 0) in vec4 bladeData0;
 layout(location = 1) in vec4 bladeData1;
 layout(location = 2) in uint bladeData2;
@@ -46,6 +45,7 @@ uniform float NORMAL_TERRAIN_BLEND_START = 40;
 uniform float NORMAL_TERRAIN_BLEND_END = 80;
 
 uniform uint blade_triangles;
+uniform uint LOD = 0;
 
 void main() {
 	uint seed = bladeData2;

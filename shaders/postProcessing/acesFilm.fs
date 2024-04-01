@@ -48,9 +48,11 @@ vec3 Uncharted2Tonemap(vec3 x)
 
 void main() {
 	vec4 color = texture(sampler_color, outTexCoord);
-	color.xyz = color.xyz * exposure;
 
-	if (doColorGrading) color.xyz = ACESFilm(color.xyz);
+	if (doColorGrading) {
+		color.xyz = color.xyz * exposure;
+		color.xyz = ACESFilm(color.xyz);
+	}
 	//if(doColorGrading) color.xyz = reinhardTone(color.xyz);
 	//if(doColorGrading) color.xyz = Uncharted2Tonemap(color.xyz);
 	//if (doGammaCorrection) color.xyz = pow(color.xyz, vec3(1.0 / 2.4));

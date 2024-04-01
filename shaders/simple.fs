@@ -31,7 +31,7 @@ void main() {
 	if (!gl_FrontFacing) finalNormal = -finalNormal;
 	color = calcAllLights(vVertexPos, finalNormal, finalNormal, vTexCoord);
 
-	// light = vec3(materials[material_index].albedo);
+	// color = vec3(materials[material_index].albedo);
 	// color = vVertexNormal;
 	// color = vVertexPos;
 	// color = vColor.xyz;

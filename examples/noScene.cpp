@@ -7,6 +7,7 @@
 #include <texture.h>
 
 #include <iostream>
+#include "GLFW/glfw3.h"
 
 using namespace ygl;
 
@@ -23,7 +24,13 @@ void run() {
 	}
 	Transformation bunnyTransform;
 
+	AssetManager asman(nullptr);
+	Keyboard::addKeyCallback([&asman](GLFWwindow *window, int key, int, int action, int mods) {
+		if(key == GLFW_KEY_R && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL) asman.reloadShaders();
+	});
+
 	VFShader		 *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
+	asman.addShader(shader, "shader");
 	PerspectiveCamera cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse		 mouse(window);
@@ -51,6 +58,7 @@ void run() {
 		controller.update();
 		cam.update();
 
+		shader = (VFShader *)asman.getShader(0);
 		Renderer::drawObject(bunnyTransform, shader, bunnyMesh, 0);
 
 		window.swapBuffers();

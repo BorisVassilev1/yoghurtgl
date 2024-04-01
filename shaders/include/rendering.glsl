@@ -2,6 +2,7 @@ const float PI	   = 3.14159265359;
 const float TWO_PI = 2. * PI;
 float eps = 0.002;
 
+#ifdef VERT
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 texCoord;
@@ -13,6 +14,7 @@ layout(location = 5) in flat ivec4 boneIds;
 layout(location = 5) in ivec4 boneIds;
 #endif
 layout(location = 6) in vec4 weights;
+#endif
 
 struct PointLight {
 	vec3  position;

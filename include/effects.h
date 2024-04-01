@@ -45,8 +45,8 @@ class GrassSystem : public ygl::ISystem {
 		void bind();
 	};
 
-	uint		   grassComputeIndex = -1;
-	uint		   grassShaderIndex	 = -1;
+	uint grassComputeIndex = -1;
+	uint grassShaderIndex  = -1;
 
 	unsigned int materialIndex = -1;
 
@@ -68,7 +68,8 @@ class GrassSystem : public ygl::ISystem {
 	};
 
 	glm::vec2	  size	  = glm::vec2(20, 20);
-	float		  density = 3;
+	float		  density = 2.0;
+	int			  bladeCount = 0;
 	Window		 *window;
 	Renderer	 *renderer;
 	AssetManager *assetManager;

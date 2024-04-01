@@ -151,6 +151,8 @@ ygl::TransformGuizmo::TransformGuizmo(ygl::Window *window, ygl::Camera *camera, 
 		if (key == GLFW_KEY_X && action == GLFW_RELEASE) { this->operation = ImGuizmo::OPERATION::ROTATE; }
 		if (key == GLFW_KEY_C && action == GLFW_RELEASE) { this->operation = ImGuizmo::OPERATION::SCALE; }
 		if (key == GLFW_KEY_V && action == GLFW_RELEASE) { this->enabled = !this->enabled; }
+		if (key == GLFW_KEY_B && action == GLFW_RELEASE) { this->mode = ImGuizmo::MODE::LOCAL; }
+		if (key == GLFW_KEY_N && action == GLFW_RELEASE) { this->mode = ImGuizmo::MODE::WORLD; }
 	});
 }
 
@@ -166,5 +168,5 @@ void ygl::TransformGuizmo::update(Transformation *transform) {
 	ImGuizmo::Manipulate(glm::value_ptr(camera->getViewMatrix()), glm::value_ptr(camera->getProjectionMatrix()),
 						 operation, mode, glm::value_ptr(transform->getWorldMatrix()), nullptr,
 						 snap ? snapVector : nullptr);
-	if (ImGuizmo::IsUsing()) transform->updateVectors();
+	//if (ImGuizmo::IsUsing()) transform->updateVectors();
 }

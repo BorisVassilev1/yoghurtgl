@@ -97,12 +97,14 @@ ygl::GrassSystem::~GrassSystem() {}
 
 void ygl::GrassSystem::update(float time) {
 	auto grassCompute = (ComputeShader *)assetManager->getShader(grassComputeIndex);
+	this->bladeCount = 0;
 	for (Entity e : entities) {
 		auto		 worldMatrix = scene->getComponent<Transformation>(e).getWorldMatrix();
 		GrassHolder &holder		 = scene->getComponent<GrassHolder>(e);
 		if (holder.LOD > 1) continue;
 		reload(holder);
 		GrassBladeMesh *mesh = (GrassBladeMesh *)assetManager->getMesh(holder.meshIndex);
+		this->bladeCount += mesh->bladeCount;
 
 		Shader::setSSBO(mesh->grassData, 1);
 		grassCompute->bind();
@@ -139,7 +141,7 @@ void ygl::GrassSystem::render(float time) {
 			if(grassShader->hasUniform("curvature")) grassShader->setUniform("curvature", curvature);
 			if(grassShader->hasUniform("facingOffset")) grassShader->setUniform("facingOffset", facingOffset);
 			if(grassShader->hasUniform("height")) grassShader->setUniform("height", height);
-			if(grassShader->hasUniform("width")) grassShader->setUniform("width", width);
+			if(grassShader->hasUniform("width")) grassShader->setUniform("width", width * (holder.LOD + 1));
 			if(grassShader->hasUniform("blade_triangles")) grassShader->setUniform("blade_triangles", (uint)mesh->getVerticesCount());
 
 			glDrawElementsInstanced(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0, mesh->bladeCount);

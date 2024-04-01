@@ -31,6 +31,7 @@ void run() {
 	PerspectiveCamera cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse			mouse(window);
+	mouse.disableMouseWhenLockedAndHidden = true;
 	FPController	controller(&window, &mouse, cam.transform);
 	TransformGuizmo guizmo(&window, &cam, (Transformation *)nullptr);
 
@@ -48,13 +49,13 @@ void run() {
 	renderer->setMainCamera(&cam);
 	renderer->setShadow(true);
 
-	glm::ivec2 size			  = glm::ivec2(30);
+	glm::ivec2 size			  = glm::ivec2(60);
 	Mesh	  *planeMesh	  = new PlaneMesh(size, glm::vec2(1, 1));
 	uint	   planeMeshIndex = asman->addMesh(planeMesh, "plane");
 	uint	   groundMaterial = renderer->addMaterial(
 		  Material(glm::vec3(0, 0.1, 0), 0.02, glm::vec3(), 1.4, glm::vec3(0), 0, glm::vec3(0), 0, 0.8, 0));
 
-	int chunks = 10;
+	int chunks = 5;
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
 			Entity plane = scene.createEntity();
@@ -69,15 +70,24 @@ void run() {
 	try {
 		ygl::addModels(scene, "./res/models/low_poly_fantasy_rune_stone/scene.gltf", [&](Entity e) {
 			Transformation &t = scene.getComponent<Transformation>(e);
-			t.scale *= 3;
+			t.scale *= 2;
 			t.rotation.x += -glm::pi<float>() / 2.;
-			t.position.y = 13;
+			t.position.y = 8;
 			t.position.x = 6;
 			t.updateWorldMatrix();
 		});
 	} catch (std::exception &e) { std::cerr << e.what() << std::endl; }
 
-	float characterScale = 5;
+	Entity sword = -1;
+	try {
+		ygl::addModels(scene, "/home/cdnomlqko/D/Boby/blender/sword/elemental_cleaver_v2_gltf/scene.gltf", [&](Entity e) {
+			Transformation &t = scene.getComponent<Transformation>(e);
+			t.updateWorldMatrix();
+			sword = e;
+		});
+	} catch (std::exception &e) { std::cerr << e.what() << std::endl; }
+
+	float characterScale = 3;
 
 	std::vector<Entity> character;
 	Transformation		characterTransform;
@@ -88,7 +98,7 @@ void run() {
 	bool cameraToggle = false;
 
 	try {
-		ygl::addModels(scene, "./res/models/medieval_knight_fixed/scene.gltf", [&](Entity e) {
+		ygl::addModels(scene, "./res/models/medieval_knight/scene.gltf", [&](Entity e) {
 			Transformation &t = scene.getComponent<Transformation>(e);
 			t				  = characterTransform;
 			t.updateWorldMatrix();
@@ -155,6 +165,8 @@ void run() {
 	glm::vec3 camera_rotation = glm::vec3(0);
 	float	  distance		  = 13.;
 
+	Transformation handOffset(glm::vec3(-1.04, 1.70, 0.32), glm::vec3(1.22, -0.45, 0.22), glm::vec3(0.5));
+
 	renderer->setClearColor(glm::vec4(clearColor, 1.));
 	while (!window.shouldClose()) {
 		window.beginFrame();
@@ -171,24 +183,24 @@ void run() {
 			rotationMat			   = glm::rotate(rotationMat, camera_rotation.x, glm::vec3(1, 0, 0));
 			glm::vec3 forward	   = (rotationMat * glm::vec4(0, 0, 1, 0)).xyz();
 			cam.transform.rotation = camera_rotation;
-			cam.transform.position = characterTransform.position + forward * distance + glm::vec3(0, 11, 0);
+			cam.transform.position = characterTransform.position + forward * distance + glm::vec3(0, 7, 0);
 			cam.transform.updateWorldMatrix();
 		}
 		cam.update();
 
 		fsm.update(window.deltaTime);
-
+		
 		for (Entity e : grassSystem->entities) {
 			Transformation			 &transform = scene.getComponent<Transformation>(e);
 			GrassSystem::GrassHolder &holder	= scene.getComponent<GrassSystem::GrassHolder>(e);
-			float					  distance	= glm::length(transform.position - cam.transform.position);
-			holder.LOD							= distance / 120;
+			float					  distance	= glm::length(transform.position - characterTransform.position);
+			holder.LOD							= distance / 80;
 		}
 
 		if (Keyboard::getKey(GLFW_KEY_UP) == GLFW_PRESS) {
 			glm::vec4 forward = characterTransform.getWorldMatrix() * glm::vec4(0, 0, 1, 0);
 			characterTransform.position +=
-				forward.xyz() * (float)window.deltaTime * 6.6f * (1.f - fsm.getBlendFactor());
+				forward.xyz() * (float)window.deltaTime * 2.f * characterScale * (1.f - fsm.getBlendFactor());
 		}
 
 		if (Keyboard::getKey(GLFW_KEY_LEFT) == GLFW_PRESS) { characterTransform.rotation.y += window.deltaTime * 5; }
@@ -198,7 +210,7 @@ void run() {
 			if (Keyboard::getKey(GLFW_KEY_W) == GLFW_PRESS) {
 				glm::vec4 forward = characterTransform.getWorldMatrix() * glm::vec4(0, 0, 1, 0);
 				characterTransform.position +=
-					forward.xyz() * (float)window.deltaTime * 6.6f * (1.f - fsm.getBlendFactor());
+					forward.xyz() * (float)window.deltaTime * 2.f * characterScale * (1.f - fsm.getBlendFactor());
 			}
 			if (Keyboard::getKey(GLFW_KEY_A) == GLFW_PRESS) { characterTransform.rotation.y += window.deltaTime * 5; }
 			if (Keyboard::getKey(GLFW_KEY_D) == GLFW_PRESS) { characterTransform.rotation.y -= window.deltaTime * 5; }
@@ -208,6 +220,10 @@ void run() {
 		if (Keyboard::getKey(GLFW_KEY_Y) == GLFW_PRESS) { distance -= window.deltaTime * 3; }
 
 		characterTransform.updateWorldMatrix();
+		
+		glm::mat4 handPosition = animator.GetFinalBoneMatrices()[meshToAnimate->getBoneInfoMap().find("mixamorig_RightHand")->second.id];
+		Transformation &swordTransform = scene.getComponent<Transformation>(sword);
+		swordTransform.getWorldMatrix() = characterTransform.getWorldMatrix() * handPosition * handOffset.getWorldMatrix();
 
 		for (Entity e : character) {
 			Transformation &transform = scene.getComponent<Transformation>(e);
@@ -232,6 +248,7 @@ void run() {
 		if (ImGui::SliderFloat("facingOffset", &grassSystem->facingOffset, 0, 2)) {}
 		if (ImGui::SliderFloat("height", &grassSystem->height, 0, 2)) {}
 		if (ImGui::SliderFloat("width", &grassSystem->width, 0, 1)) {}
+		ImGui::Text("Blade count: %d", grassSystem->bladeCount);
 
 		if (ImGui::SliderFloat3("ground rotation", (float *)&transform.rotation, -M_PI, M_PI)) {
 			transform.updateWorldMatrix();
