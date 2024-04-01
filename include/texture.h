@@ -137,6 +137,7 @@ class Texture2d : public ITexture {
 	uint8_t		components = 4;
 	TextureType type;
 	std::string fileName = "";
+	GLint internalFormat;
 
 	void init(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
 			  GLenum type, void *data);

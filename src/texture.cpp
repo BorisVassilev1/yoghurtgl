@@ -181,6 +181,7 @@ void ygl::Texture2d::init(GLsizei width, GLsizei height, GLint internalFormat, G
 	this->height	 = height;
 	this->pixelSize	 = pixelSize;
 	this->components = components;
+	this->internalFormat = internalFormat;
 
 	glGenTextures(1, &id);
 	glActiveTexture(GL_TEXTURE0);
@@ -339,8 +340,8 @@ void ygl::Texture2d::unbind(int textureUnit) const {
 
 void ygl::Texture2d::unbind() const { unbind(GL_TEXTURE0); }
 
-void ygl::Texture2d::bindImage(int unit) { glBindImageTexture(unit, id, 0, false, 0, GL_READ_WRITE, GL_RGBA32F); }
-void ygl::Texture2d::unbindImage(int unit) { glBindImageTexture(unit, 0, 0, false, 0, GL_READ_WRITE, GL_RGBA32F); }
+void ygl::Texture2d::bindImage(int unit) { glBindImageTexture(unit, id, 0, false, 0, GL_READ_WRITE, this->internalFormat); }
+void ygl::Texture2d::unbindImage(int unit) { glBindImageTexture(unit, 0, 0, false, 0, GL_READ_WRITE, this->internalFormat); }
 int	 ygl::Texture2d::getID() { return id; }
 ygl::Texture2d::~Texture2d() { glDeleteTextures(1, &id); }
 

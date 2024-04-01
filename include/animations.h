@@ -322,7 +322,7 @@ class AnimationFSM {
 	float					blendFactor		= 0.;
 	uint					currAnimation	= 0;
 	uint					nextAnimation	= 0;
-	float					transitionSpeed = 0.03;
+	float					transitionSpeed = 3;
 
    public:
 	AnimationFSM(Animator* animator, Animation* animation) : animator(animator) {
@@ -342,7 +342,7 @@ class AnimationFSM {
 	}
 
 	void update(float dt) {
-		blendFactor = glm::clamp<float>(blendFactor - transitionSpeed, 0, 1);
+		blendFactor = glm::clamp<float>(blendFactor - transitionSpeed * dt, 0, 1);
 
 		animator->UpdateAnimationBlended(dt, blendFactor);
 	}

@@ -95,14 +95,14 @@ void ygl::ACESEffect::apply(FrameBuffer *front, FrameBuffer *back) {
 
 ygl::BloomEffect::BloomEffect(Renderer *renderer) {
 	Window *window = renderer->getWindow();
-	tex1		   = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA32F, nullptr);
-	tex2		   = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA32F, nullptr);
+	tex1		   = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA16F, nullptr);
+	tex2		   = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA16F, nullptr);
 
 	window->addResizeCallback([this, window](GLFWwindow *, int, int) {
 		delete tex1;
 		delete tex2;
-		tex1		   = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA32F, nullptr);
-		tex2		   = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA32F, nullptr);
+		tex1		   = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA16F, nullptr);
+		tex2		   = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA16F, nullptr);
 		dbLog(ygl::LOG_DEBUG, "resizing textures!!");
 	});
 
@@ -142,7 +142,7 @@ void ygl::BloomEffect::apply(FrameBuffer *front, FrameBuffer *back) {
 
 		return;
 	}
-	uint blurSize = 10;
+	uint blurSize = 5;
 	// first separate pixels that have to be blurred;
 	FrameBuffer::bindDefault();
 	front->getColor()->bindImage(1);
@@ -227,10 +227,10 @@ void ygl::Renderer::init() {
 
 	uint16_t width = window->getWidth(), height = window->getHeight();
 	frontFrameBuffer =
-		new FrameBuffer(new Texture2d(width, height, TextureType::RGBA32F, nullptr), GL_COLOR_ATTACHMENT0,
+		new FrameBuffer(new Texture2d(width, height, TextureType::RGBA16F, nullptr), GL_COLOR_ATTACHMENT0,
 						new RenderBuffer(width, height, TextureType::DEPTH_STENCIL_32F_8), GL_DEPTH_STENCIL_ATTACHMENT,
 						"Front frameBuffer");
-	backFrameBuffer = new FrameBuffer(new Texture2d(width, height, TextureType::RGBA32F, nullptr), GL_COLOR_ATTACHMENT0,
+	backFrameBuffer = new FrameBuffer(new Texture2d(width, height, TextureType::RGBA16F, nullptr), GL_COLOR_ATTACHMENT0,
 									  new RenderBuffer(width, height, TextureType::DEPTH_STENCIL_32F_8),
 									  GL_DEPTH_STENCIL_ATTACHMENT, "Back frameBuffer");
 	shadowFrameBuffer = new FrameBuffer(nullptr, GL_COLOR_ATTACHMENT0,
@@ -251,7 +251,7 @@ void ygl::Renderer::init() {
 	scene->registerSystemIfCan<ygl::AssetManager>();
 	asman = scene->getSystem<AssetManager>();
 
-	addScreenEffect(new BloomEffect(this));
+	//addScreenEffect(new BloomEffect(this));
 	addScreenEffect(new ACESEffect(this));
 	brdfTexture = asman->addTexture(createBRDFTexture(), "brdf_Texture", false);
 }
