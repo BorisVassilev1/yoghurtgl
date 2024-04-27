@@ -196,7 +196,7 @@ void trace_bvh(in Ray ray, inout RayHit hit) {
 
 // test for intersections with everything in the scene
 void intersect_scene(in Ray ray, inout RayHit hit) {
-	intersectGroundPlane(ray, -0.5, hit);
+	//intersectGroundPlane(ray, -0.5, hit);
 
 	trace_bvh(ray, hit);
 }

@@ -27,7 +27,7 @@ uniform ivec2 resolution = ivec2(100, 100);
 uniform vec2 size = vec2(10, 10);
 uniform float time;
 
-uniform vec2 windDirection = normalize(vec2(1, 1));
+uniform vec2 windDirection = normalize(vec2(-1, -1));
 
 uniform mat4 anchorWorldMatrix; 
 uniform uint LOD = 0;
@@ -61,7 +61,7 @@ void main() {
     vec3 worldBladePosition = (anchorWorldMatrix * vec4(bladePosition, 1.0)).xyz;
 
     float noiseValue = snoise(worldBladePosition * .1 + time * vec3(-windDirection, 0.)) * 0.5 + 0.5;
-    vec2 windDir = vec2(
+    vec2 windDir = windDirection * 1.6 + vec2(
         snoise(worldBladePosition * .1 + time * vec3(-windDirection, 0.) + 10.),
         snoise(worldBladePosition * .1 + time * vec3(-windDirection, 0.) + 20.)
     );

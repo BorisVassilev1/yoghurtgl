@@ -65,6 +65,7 @@ void run() {
 			scene.addComponent(plane, GrassSystem::GrassHolder(size, 3., 1));
 		}
 	}
+	grassSystem->reload();
 
 	Entity model = -1;
 	try {
@@ -80,7 +81,7 @@ void run() {
 
 	Entity sword = -1;
 	try {
-		ygl::addModels(scene, "/home/cdnomlqko/D/Boby/blender/sword/elemental_cleaver_v2_gltf/scene.gltf", [&](Entity e) {
+		ygl::addModels(scene, "./res/models/elemental_cleaver_v2_gltf/scene.gltf", [&](Entity e) {
 			Transformation &t = scene.getComponent<Transformation>(e);
 			t.updateWorldMatrix();
 			sword = e;

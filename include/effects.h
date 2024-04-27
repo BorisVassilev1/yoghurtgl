@@ -68,15 +68,15 @@ class GrassSystem : public ygl::ISystem {
 	};
 
 	glm::vec2	  size	  = glm::vec2(20, 20);
-	float		  density = 2.0;
+	float		  density = 1.5;
 	int			  bladeCount = 0;
 	Window		 *window;
 	Renderer	 *renderer;
 	AssetManager *assetManager;
 
 	float curvature	   = 0.6;
-	float facingOffset = 0.4;
-	float height	   = 1.7;
+	float facingOffset = 0.8;
+	float height	   = 1.8;
 	float width		   = 0.15;
 
 	using ISystem::ISystem;

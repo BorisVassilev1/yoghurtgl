@@ -47,6 +47,8 @@ uniform float NORMAL_TERRAIN_BLEND_END = 80;
 uniform uint blade_triangles;
 uniform uint LOD = 0;
 
+uniform float WIDEN_BLADES = 0.04;
+
 void main() {
 	uint seed = bladeData2;
 	vec3 bladePosition = bladeData0.xyz;
@@ -102,7 +104,6 @@ void main() {
 
 	vPos = worldMatrix * vPos;
 
-	gl_Position = projectionMatrix * viewMatrix * vPos;
 	vec3 camPos = (cameraWorldMatrix * vec4(0, 0, 0, 1)).xyz;
 	float viewDistance = length(vPos.xyz - camPos);
 
@@ -115,5 +116,16 @@ void main() {
 
 	vTexCoord = vec2((leftOrRight + 1.) / 2., distanceAlongBlade);
 	vVertexNormal = normalize(worldMatrix * vec4(curveNormal, 0.0)).xyz;
+
+
+	vec3 viewSpaceVNormal = (viewMatrix * vec4(facing.x, 0, facing.y, 0.0)).xyz;
+	float normalCameraAngle = dot(viewSpaceVNormal, vec3(0, 0, 1));
+	float wideningCoef = (1. - smoothstep(0.1, 0.5, abs(normalCameraAngle)));
+	float dir = smoothstep(-0.3, 0.3, normalCameraAngle) * 2. - 1.;
+
     vVertexPos = vPos.xyz;
+
+	vec4 viewSpaceVPos = projectionMatrix * viewMatrix * vPos;
+	viewSpaceVPos.x += (1. + wideningCoef) * leftOrRight * dir * 0.04;
+	gl_Position = viewSpaceVPos;
 }

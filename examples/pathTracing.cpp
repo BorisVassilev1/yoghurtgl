@@ -257,7 +257,7 @@ void initPathTracer() {
 	skybox->bind(ygl::TexIndex::SKYBOX);
 
 	// initSpheres();
-	initBoxes();
+	// initBoxes();
 	bvh->addPrimitive(bunnyMesh, scene->getComponent<ygl::Transformation>(bunny));
 
 	bvh->build();

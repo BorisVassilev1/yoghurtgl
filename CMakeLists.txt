@@ -19,16 +19,16 @@ add_subdirectory(libs/)
 
 # YoghurtGL compilation
 
-set(COMPILE_ARGS
-	-fsanitize=address
-)
-set(LINK_ARGS
-	-fsanitize=address
-)
 
 if (MSVC)
 	set(COMPILE_ARGS ${COMPILE_ARGS} /Wall)
 else ()
+	set(COMPILE_ARGS
+		-fsanitize=address
+	)
+	set(LINK_ARGS
+		-fsanitize=address
+	)
 	set(COMPILE_ARGS ${COMPILE_ARGS} -Wall -Wextra -Wpedantic --pedantic-errors -g -O3)
 endif ()
 
