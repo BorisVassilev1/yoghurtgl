@@ -222,6 +222,7 @@ class TextureCubemap : public ITexture {
 	void unbindImage(int) override {assert(0);};
 #endif
 	int	 getID() override;
+	std::string &getPath() {return path;};
 
 	virtual ~TextureCubemap();
 

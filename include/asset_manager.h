@@ -88,6 +88,10 @@ class AssetArray : public AppendableSerializable {
 		std::vector<bool> check;
 		check.resize(size, false);
 
+		for(auto [name, index] : names) {
+			check[index] = true;
+		}
+
 		for (std::size_t i = 0; i < count; ++i) {
 			std::string name;
 			uint		index;
@@ -95,6 +99,9 @@ class AssetArray : public AppendableSerializable {
 			in.read((char *)&index, sizeof(uint));
 			dbLog(ygl::LOG_DEBUG, "loading: ", name, " ", index);
 			A *asset	  = dynamic_cast<A *>(ResourceFactory::fabricate(in));
+			if(check[index]) {
+				dbLog(ygl::LOG_ERROR, "asset index conflict.\nOld asset will be lost and will leak.");
+			}
 			assets[index] = std::make_pair(asset, true);
 			names[name]	  = index;
 			check[index]  = true;
@@ -102,7 +109,10 @@ class AssetArray : public AppendableSerializable {
 
 		holes = std::queue<uint>();
 		for (std::size_t i = 0; i < size; ++i) {
-			if (!check[i]) holes.push(i);
+			if (!check[i]) {
+				holes.push(i);
+				std::cout << "hole: " << holes.back() << std::endl;
+			}
 		}
 	}
 
@@ -174,8 +184,8 @@ class AssetManager : public ygl::ISystem {
 
 	template <typename T>
 		requires IsTexture<T>
-	T getTexture(uint i) {
-		return dynamic_cast<T>(getTexture(i));
+	T* getTexture(uint i) {
+		return dynamic_cast<T*>(getTexture(i));
 	}
 
 	void printTextures();

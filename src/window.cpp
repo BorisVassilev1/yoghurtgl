@@ -224,9 +224,12 @@ void ygl::Window::addResizeCallback(const std::function<void(GLFWwindow *, int, 
 }
 
 void ygl::Window::defaultFrameCallback(long draw_time, long frame_time) {
-	//std::cout << std::fixed << std::setprecision(2) << "\rdraw time: " << (draw_time / 1e6)
-	//		  << "ms, FPS: " << int(1e9 / frame_time) << "         " << std::flush;		//<< std::endl;
-	dbLog(ygl::LOG_INFO, std::fixed, std::setprecision(2), "\rdraw time: ", (draw_time / 1e6), "ms, FPS: ", int(1e9 / frame_time), "         ");
+#ifndef __EMSCRIPTEN__
+	std::cout << std::fixed << std::setprecision(2) << "\rdraw time: " << (draw_time / 1e6)
+			  << "ms, FPS: " << int(1e9 / frame_time) << "         " << std::flush;		//<< std::endl;
+#else
+	dbLog(ygl::LOG_INFO, std::fixed, std::setprecision(2), "draw time: ", (draw_time / 1e6), "ms, FPS: ", int(1e9 / frame_time), "         ");
+#endif
 }
 
 void ygl::Window::setFrameCallback(void (*callback)(long, long)) { frameCallback = callback; }

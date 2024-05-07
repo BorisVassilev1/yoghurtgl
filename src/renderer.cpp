@@ -75,7 +75,7 @@ void ygl::FrameBuffer::bindDefault() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 ygl::ACESEffect::ACESEffect(ygl::Renderer *renderer) {
 	this->setRenderer(renderer);
 	auto sh		= new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/postProcessing/acesFilm.fs");
-	colorGrader = renderer->getAssetManager()->addShader(sh, "color grading shader");
+	colorGrader = renderer->getAssetManager()->addShader(sh, "color grading shader", false);
 }
 
 ygl::ACESEffect::~ACESEffect() {}
@@ -101,8 +101,8 @@ ygl::BloomEffect::BloomEffect(Renderer *renderer) {
 	window->addResizeCallback([this, window](GLFWwindow *, int, int) {
 		delete tex1;
 		delete tex2;
-		tex1		   = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA16F, nullptr);
-		tex2		   = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA16F, nullptr);
+		tex1 = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA16F, nullptr);
+		tex2 = new Texture2d(window->getWidth(), window->getHeight(), TextureType::RGBA16F, nullptr);
 		dbLog(ygl::LOG_DEBUG, "resizing textures!!");
 	});
 
@@ -111,8 +111,8 @@ ygl::BloomEffect::BloomEffect(Renderer *renderer) {
 	blurShader	 = new ComputeShader("./shaders/postProcessing/blur.comp");
 	filterShader = new ComputeShader("./shaders/postProcessing/filter.comp");
 	filterShader->bind();
-	//filterShader->setUniform("img_input", 1);
-	//filterShader->setUniform("img_output", 0);
+	// filterShader->setUniform("img_input", 1);
+	// filterShader->setUniform("img_output", 0);
 	filterShader->unbind();
 
 	onScreen = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/ui/textureOnScreen.fs");
@@ -151,7 +151,7 @@ void ygl::BloomEffect::apply(FrameBuffer *front, FrameBuffer *back) {
 	Window *window = renderer->getWindow();
 
 	filterShader->bind();
-	if(filterShader->hasUniform("img_input")) filterShader->setUniform("img_input", 1);
+	if (filterShader->hasUniform("img_input")) filterShader->setUniform("img_input", 1);
 	filterShader->setUniform("img_output", 0);
 	glTextureBarrier();
 	Renderer::compute(filterShader, window->getWidth(), window->getHeight(), 1);
@@ -201,7 +201,7 @@ void ygl::RendererComponent::serialize(std::ostream &out) {
 	out.write((char *)(&this->materialIndex), sizeof(uint));
 	out.write((char *)(&this->meshIndex), sizeof(uint));
 	out.write((char *)(&this->shadowShaderIndex), sizeof(uint));
-	out.write((char *)(&this->isAnimated), sizeof(bool));
+	//out.write((char *)(&this->isAnimated), sizeof(bool));
 }
 
 void ygl::RendererComponent::deserialize(std::istream &in) {
@@ -209,7 +209,7 @@ void ygl::RendererComponent::deserialize(std::istream &in) {
 	in.read((char *)(&this->materialIndex), sizeof(uint));
 	in.read((char *)(&this->meshIndex), sizeof(uint));
 	in.read((char *)(&this->shadowShaderIndex), sizeof(uint));
-	in.read((char *)(&this->isAnimated), sizeof(bool));
+	//in.read((char *)(&this->isAnimated), sizeof(bool));
 }
 
 bool ygl::RendererComponent::operator==(const RendererComponent &other) {
@@ -251,7 +251,7 @@ void ygl::Renderer::init() {
 	scene->registerSystemIfCan<ygl::AssetManager>();
 	asman = scene->getSystem<AssetManager>();
 
-	//addScreenEffect(new BloomEffect(this));
+	// addScreenEffect(new BloomEffect(this));
 	addScreenEffect(new ACESEffect(this));
 	brdfTexture = asman->addTexture(createBRDFTexture(), "brdf_Texture", false);
 }
@@ -576,7 +576,7 @@ void ygl::Renderer::drawObject(Shader *sh, Mesh *mesh) {
 	sh->unbind();
 }
 
-#if !defined( YGL_NO_COMPUTE_SHADERS)
+#if !defined(YGL_NO_COMPUTE_SHADERS)
 void ygl::Renderer::compute(ComputeShader *shader, int domainX, int domainY, int domainZ) {
 	if (!shader->isBound()) shader->bind();
 	int groupsX = domainX / shader->groupSize.x + (domainX % shader->groupSize.x > 0);
@@ -648,6 +648,7 @@ void ygl::Renderer::drawMaterialEditor() {
 
 void ygl::Renderer::write(std::ostream &out) {
 	out.write((char *)&defaultShader, sizeof(defaultShader));
+	out.write((char *)&skyboxTexture, sizeof(skyboxTexture));
 
 	std::size_t materialsCount = materials.size();
 	out.write((char *)&materialsCount, sizeof(materialsCount));
@@ -664,6 +665,20 @@ void ygl::Renderer::write(std::ostream &out) {
 
 void ygl::Renderer::read(std::istream &in) {
 	in.read((char *)&defaultShader, sizeof(defaultShader));
+	in.read((char *)&skyboxTexture, sizeof(skyboxTexture));
+
+	if (skyboxTexture != 0) {
+		TextureCubemap *skybox = asman->getTexture<TextureCubemap>(skyboxTexture);
+		dbLog(ygl::LOG_DEBUG, "loading skybox texture: ", skybox->getPath());
+		std::string path = skybox->getPath();
+
+		ygl::TextureCubemap *irradianceMap = createIrradianceCubemap(skybox);
+		irradianceTexture				   = asman->addTexture(irradianceMap, path + "_irr", false);
+
+		ygl::TextureCubemap *prefilterMap = createPrefilterCubemap(skybox);
+		prefilterTexture				  = asman->addTexture(prefilterMap, path + "_pref", false);
+		dbLog(ygl::LOG_DEBUG, "skybox textures: ", skyboxTexture, " ", irradianceTexture, " ", prefilterTexture);
+	}
 
 	std::size_t materialsCount;
 	in.read((char *)&materialsCount, sizeof(materialsCount));

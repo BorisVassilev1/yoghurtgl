@@ -42,6 +42,9 @@ void run() {
 	for(Entity e : scene.entities) {
 		std::cout << scene.getComponent<Transformation>(e) << std::endl;
 		std::cout << scene.getComponent<RendererComponent>(e) << std::endl;
+		if(scene.hasComponent<GrassSystem::GrassHolder>(e))
+			std::cout << scene.getComponent<GrassSystem::GrassHolder>(e) << std::endl;
+		std::cout << std::endl;
 	}
 
 	int editMaterialIndex = 0;

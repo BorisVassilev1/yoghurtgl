@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include "asset_manager.h"
 
-#if !defined( YGL_NO_COMPUTE_SHADERS)
+#if !defined(YGL_NO_COMPUTE_SHADERS)
 uint ygl::GrassSystem::GrassBladeMesh::count = 0;
 
 ygl::GrassSystem::GrassBladeMesh::GrassBladeMesh(glm::ivec2 resolution, int LOD) {
@@ -67,9 +67,17 @@ void ygl::GrassSystem::GrassBladeMesh::bind() {
 }
 
 // TODO:
-void ygl::GrassSystem::GrassHolder::serialize(std::ostream &out) { static_cast<void>(out); }
+void ygl::GrassSystem::GrassHolder::serialize(std::ostream &out) {
+	out.write((char *)glm::value_ptr(size), sizeof(size));
+	out.write((char *)&density, sizeof(density));
+	out.write((char *)&LOD, sizeof(LOD));
+}
 
-void ygl::GrassSystem::GrassHolder::deserialize(std::istream &in) { static_cast<void>(in); }
+void ygl::GrassSystem::GrassHolder::deserialize(std::istream &in) { 
+	in.read((char *)glm::value_ptr(size), sizeof(size));
+	in.read((char *)&density, sizeof(density));
+	in.read((char *)&LOD, sizeof(LOD));
+}
 
 void ygl::GrassSystem::init() {
 	if (!scene->hasSystem<Renderer>()) THROW_RUNTIME_ERR("Renderer system must be registered in the scene.");
@@ -78,9 +86,9 @@ void ygl::GrassSystem::init() {
 	assetManager = scene->getSystem<AssetManager>();
 
 	auto grassCompute = new ComputeShader("./shaders/grass/grassCompute.comp");
-	grassComputeIndex = assetManager->addShader(grassCompute, "Grass Compute");
+	grassComputeIndex = assetManager->addShader(grassCompute, "Grass Compute", false);
 	auto grassShader  = new VFShader("./shaders/grass/grass.vs", "./shaders/grass/grass.fs");
-	grassShaderIndex  = assetManager->addShader(grassShader, "Grass Shader");
+	grassShaderIndex  = assetManager->addShader(grassShader, "Grass Shader", false);
 
 	materialIndex = scene->getSystem<Renderer>()->addMaterial(
 		Material(glm::vec3(0.1, 0.7, 0.1), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.8, 0.0));
@@ -98,7 +106,7 @@ ygl::GrassSystem::~GrassSystem() {}
 
 void ygl::GrassSystem::update(float time) {
 	auto grassCompute = (ComputeShader *)assetManager->getShader(grassComputeIndex);
-	this->bladeCount = 0;
+	this->bladeCount  = 0;
 	for (Entity e : entities) {
 		auto		 worldMatrix = scene->getComponent<Transformation>(e).getWorldMatrix();
 		GrassHolder &holder		 = scene->getComponent<GrassHolder>(e);
@@ -121,7 +129,7 @@ void ygl::GrassSystem::update(float time) {
 }
 
 void ygl::GrassSystem::render(float time) {
-	auto grassShader = (VFShader *) assetManager->getShader(grassShaderIndex);
+	auto grassShader = (VFShader *)assetManager->getShader(grassShaderIndex);
 	grassShader->bind();
 	if (grassShader->hasUniform("time")) grassShader->setUniform("time", time);
 	Renderer *renderer = scene->getSystem<Renderer>();
@@ -136,14 +144,15 @@ void ygl::GrassSystem::render(float time) {
 
 		mesh->bind();
 		{
-			if(grassShader->hasUniform("worldMatrix")) grassShader->setUniform("worldMatrix", worldMatrix);
-			if(grassShader->hasUniform("renderMode")) grassShader->setUniform("renderMode", renderer->renderMode);
-			if(grassShader->hasUniform("material_index")) grassShader->setUniform("material_index", materialIndex);
-			if(grassShader->hasUniform("curvature")) grassShader->setUniform("curvature", curvature);
-			if(grassShader->hasUniform("facingOffset")) grassShader->setUniform("facingOffset", facingOffset);
-			if(grassShader->hasUniform("height")) grassShader->setUniform("height", height);
-			if(grassShader->hasUniform("width")) grassShader->setUniform("width", width * (holder.LOD + 1));
-			if(grassShader->hasUniform("blade_triangles")) grassShader->setUniform("blade_triangles", (uint)mesh->getVerticesCount());
+			if (grassShader->hasUniform("worldMatrix")) grassShader->setUniform("worldMatrix", worldMatrix);
+			if (grassShader->hasUniform("renderMode")) grassShader->setUniform("renderMode", renderer->renderMode);
+			if (grassShader->hasUniform("material_index")) grassShader->setUniform("material_index", materialIndex);
+			if (grassShader->hasUniform("curvature")) grassShader->setUniform("curvature", curvature);
+			if (grassShader->hasUniform("facingOffset")) grassShader->setUniform("facingOffset", facingOffset);
+			if (grassShader->hasUniform("height")) grassShader->setUniform("height", height);
+			if (grassShader->hasUniform("width")) grassShader->setUniform("width", width * (holder.LOD + 1));
+			if (grassShader->hasUniform("blade_triangles"))
+				grassShader->setUniform("blade_triangles", (uint)mesh->getVerticesCount());
 
 			glDrawElementsInstanced(mesh->getDrawMode(), mesh->getIndicesCount(), GL_UNSIGNED_INT, 0, mesh->bladeCount);
 		}
@@ -182,7 +191,8 @@ uint ygl::GrassSystem::getMaterialIndex() { return materialIndex; }
 
 std::ostream &ygl::operator<<(std::ostream &out, const ygl::GrassSystem::GrassHolder &rhs) {
 	static_cast<void>(rhs);
-	return out << "GrassHolder";
+	return out << "size: (" << rhs.size.x << ", " << rhs.size.y << ") mesh: " << rhs.meshIndex
+			   << " density: " << rhs.density << " LOD: " << rhs.LOD;
 }
 
 const char *ygl::GrassSystem::name				= "ygl::GrassSystem";

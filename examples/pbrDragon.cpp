@@ -55,14 +55,6 @@ void run() {
 		tr.updateWorldMatrix();
 	});
 
-	addModels(scene, "./res/models/lamborghini_aventador/scene.gltf", [&scene](Entity model) {
-		Transformation &tr = scene.getComponent<Transformation>(model);
-		tr.position.x += 4;
-		tr.rotation.y += glm::pi<float>();
-		tr.updateWorldMatrix();
-		scene.getSystem<AssetManager>()->getMesh(scene.getComponent<RendererComponent>(model).meshIndex)->setCullFace(false);
-	});
-
 	// addSkybox(scene, "./res/images/skybox/");
 	//addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
 	//addSkybox(scene, "res/images/royal_esplanade_4k", ".hdr");
