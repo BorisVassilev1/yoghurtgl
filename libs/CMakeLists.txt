@@ -10,13 +10,20 @@ set(ASSIMP_BUILD_GLTF_IMPORTER ON)
 set(ASSIMP_BUILD_OBJ_IMPORTER ON)
 set(ASSIMP_BUILD_FBX_IMPORTER ON)
 set(ASSIMP_BUILD_COLLADA_IMPORTER ON)
+if(EMSCRIPTEN)
+	set(ASSIMP_BUILD_ZLIB ON)
+else ()
+	set(ASSIMP_BUILD_ZLIB OFF)
+endif ()
 
 add_subdirectory(glm)
 
 # glew gives errors when -O3
 # set(buildType ${CMAKE_BUILD_TYPE})
 # set(CMAKE_BUILD_TYPE Debug)
-add_subdirectory(glew-cmake)
+if (NOT EMSCRIPTEN)
+	add_subdirectory(glew-cmake)
+endif ()
 # set(CMAKE_BUILD_TYPE ${buildType})
 
 if (NOT ${YGL_STATIC})
@@ -30,7 +37,10 @@ endif (NOT ${YGL_STATIC})
 if (NOT ${YGL_NO_ASSIMP})
 	add_subdirectory(assimp/)
 endif ()
-add_subdirectory(glfw)
+
+if (NOT EMSCRIPTEN)
+	add_subdirectory(glfw)
+endif()
 
 # Set where the ImGui files are stored
 set(IMGUI_PATH  "./imgui")
@@ -78,5 +88,8 @@ set(DOCTEST_INCLUDE_DIR ./libs/doctest/doctest/ CACHE INTERNAL "Path to include 
 if (NOT ${YGL_NO_ASSIMP})
 	set_target_properties(assimp PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../../../)
 endif (NOT ${YGL_NO_ASSIMP})
-set_target_properties(glfw PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../../../)
-set_target_properties(libglew_shared PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../../)
+
+if (NOT ${EMSCRIPTEN})
+	set_target_properties(glfw PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../../../)
+	set_target_properties(libglew_shared PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../../../)
+endif ()

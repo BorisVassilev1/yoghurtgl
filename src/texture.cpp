@@ -112,7 +112,7 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 		}
 		case TextureType::R8: {
 			internalFormat = GL_R8;
-			format		   = GL_R;
+			format		   = GL_RED;
 			pixelSize	   = 1;
 			components	   = 1;
 			_type		   = GL_FLOAT;
@@ -195,7 +195,10 @@ void ygl::Texture2d::init(GLsizei width, GLsizei height, GLint internalFormat, G
 	glTexStorage2D(GL_TEXTURE_2D, 1, internalFormat, width, height);
 	if (data != nullptr) { glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, type, data); }
 
-	if (format != GL_STENCIL_INDEX) glGenerateMipmap(GL_TEXTURE_2D);
+#ifndef YGL_NO_COMPUTE_SHADERS
+	if (format != GL_STENCIL_INDEX) 
+#endif
+		glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -311,6 +314,7 @@ void ygl::Texture2d::resize(uint width, uint height) {
 	init(width, height, internalFormat, format, pixelSize, components, _type, nullptr);
 }
 
+#ifndef YGL_NO_COMPUTE_SHADERS
 void ygl::Texture2d::save(std::string fileName) {
 	uint8_t *buff = new uint8_t[width * height * pixelSize];
 
@@ -323,6 +327,7 @@ void ygl::Texture2d::save(std::string fileName) {
 	stbi_write_png(fileName.c_str(), width, height, 4, buff, 4 * width);
 	delete[] buff;
 }
+#endif
 
 void ygl::Texture2d::bind(int textureUnit) const {
 	glActiveTexture(textureUnit);
@@ -340,8 +345,10 @@ void ygl::Texture2d::unbind(int textureUnit) const {
 
 void ygl::Texture2d::unbind() const { unbind(GL_TEXTURE0); }
 
+#ifndef YGL_NO_COMPUTE_SHADERS
 void ygl::Texture2d::bindImage(int unit) { glBindImageTexture(unit, id, 0, false, 0, GL_READ_WRITE, this->internalFormat); }
 void ygl::Texture2d::unbindImage(int unit) { glBindImageTexture(unit, 0, 0, false, 0, GL_READ_WRITE, this->internalFormat); }
+#endif
 int	 ygl::Texture2d::getID() { return id; }
 ygl::Texture2d::~Texture2d() { glDeleteTextures(1, &id); }
 
@@ -464,6 +471,7 @@ void ygl::TextureCubemap::unbind(int textureUnit) const {
 
 void ygl::TextureCubemap::unbind() const { unbind(GL_TEXTURE0); }
 
+#ifndef YGL_NO_COMPUTE_SHADERS
 void ygl::TextureCubemap::bindImage(int textureUnit) {
 	glBindImageTexture(textureUnit, id, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
 }
@@ -471,6 +479,7 @@ void ygl::TextureCubemap::bindImage(int textureUnit) {
 void ygl::TextureCubemap::unbindImage(int textureUnit) {
 	glBindImageTexture(textureUnit, 0, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
 }
+#endif
 
 int ygl::TextureCubemap::getID() { return id; }
 ygl::TextureCubemap::~TextureCubemap() { glDeleteTextures(1, &id); }

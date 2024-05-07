@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <condition_variable>
 
-#if __linux__ != 0
+#if __linux__ != 0 || defined(__EMSCRIPTEN__)
 #include <time.h>
 
 static uint64_t timer_nsec() {

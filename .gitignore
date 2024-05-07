@@ -6,7 +6,9 @@
 !Makefile-manual
 !/libs/*
 
-/build/*
+/build/
+/build-win/
+/build-wasm/
 *.exe
 *.log
 

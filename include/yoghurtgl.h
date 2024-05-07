@@ -11,7 +11,25 @@
 
 #define GLM_FORCE_SWIZZLE
 
-#include <GL/glew.h>
+// Include the Emscripten library only if targetting WebAssembly
+#ifdef __EMSCRIPTEN__
+	#include <emscripten/emscripten.h>
+	#define GLFW_INCLUDE_ES3
+	#define GLFW_INCLUDE_GLEXT
+using GLdouble = double;
+using GLuint   = unsigned int;
+	  #define YGL_NO_COMPUTE_SHADERS
+	  #define GL_FILL					0
+	  #define GL_LINE					1
+	  #define glPolygonMode(a, b)		0
+	  #define glTextureBarrier()		0
+	  #define glObjectLabel(a, b, c, d) 0
+	  #define glUniform1d				glUniform1f
+	  #define GL_SRGB_ALPHA				GL_SRGB_ALPHA_EXT
+	  #define GL_UNIFORM_BLOCK			GL_UNIFORM_BLOCK_EXT
+#else
+	#include <GL/glew.h>
+#endif
 #include <GLFW/glfw3.h>
 #include <iostream>
 
@@ -124,11 +142,23 @@ bool inline f_dbLog(std::ostream &out, T arg, Types... args) {
 					std::stringstream s;                                                                  \
 					ygl::f_dbLog(s, __VA_ARGS__);                                                         \
 					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", s.str());    \
-					MessageBox(NULL, s.str().c_str(), "Title!", MB_ICONERROR | MB_OK);           \
+					MessageBox(NULL, s.str().c_str(), "Title!", MB_ICONERROR | MB_OK);                    \
 				} else if (severity >= YGL_LOG_LEVEL)                                                     \
 					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", __VA_ARGS__, \
 								 COLOR_RESET);                                                            \
 			};
+	#elif defined(__EMSCRIPTEN__)
+		#define dbLog(severity, ...)                                                                      \
+			{                                                                                             \
+				if (severity == ygl::LOG_ERROR) {                                                         \
+					std::stringstream s;                                                                  \
+					ygl::f_dbLog(s, __VA_ARGS__);                                                         \
+					ygl::f_dbLog(std::cout, ygl::log_colors[severity], "[", #severity, "] ", s.str());    \
+					EM_ASM(alert("[" + #severity + "]" + UTF8ToString($0)), s.str().c_str());             \
+				} else if (severity >= YGL_LOG_LEVEL)                                                     \
+					ygl::f_dbLog(std::cout, ygl::log_colors[severity], "[", #severity, "] ", __VA_ARGS__, \
+								 COLOR_RESET);                                                            \
+			}
 	#else
 		#define dbLog(severity, ...)                                                                                   \
 			severity >= YGL_LOG_LEVEL                                                                                  \

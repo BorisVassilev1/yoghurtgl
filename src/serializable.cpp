@@ -39,5 +39,7 @@ void ygl::ResourceFactory::init() {
 	registerResource<ygl::PlaneMesh>();
 	registerResource<ygl::QuadMesh>();
 	registerResource<ygl::VFShader>();
+#ifndef YGL_NO_COMPUTE_SHADERS
 	registerResource<ygl::ComputeShader>();
+#endif
 };

@@ -7,6 +7,7 @@
 #include <type_traits>
 #include <serializable.h>
 #include <stb_image.h>
+#include <cassert>
 
 /**
  * @file texture.h
@@ -159,13 +160,22 @@ class Texture2d : public ITexture {
 	Texture2d(std::string fileName);
 	Texture2d(std::istream &in);
 
-	void save(std::string filename) override;
+#ifndef YGL_NO_COMPUTE_SHADERS
+	void save(std::string fileName) override;
+#else
+	void save(std::string) override { assert(0); };
+#endif
 	void bind(int textureUnit) const override;
 	void bind() const override;
 	void unbind(int textureUnit) const override;
 	void unbind() const override;
-	void bindImage(int unit) override;
-	void unbindImage(int unit) override;
+#ifndef YGL_NO_COMPUTE_SHADERS
+	void bindImage(int textureUnit) override;
+	void unbindImage(int textureUnit) override;
+#else 
+	void bindImage(int) override {assert(0);};
+	void unbindImage(int) override {assert(0);};
+#endif
 	int	 getID() override;
 	virtual ~Texture2d();
 
@@ -204,8 +214,13 @@ class TextureCubemap : public ITexture {
 	void bind() const override;
 	void unbind(int textureUnit) const override;
 	void unbind() const override;
+#ifndef YGL_NO_COMPUTE_SHADERS
 	void bindImage(int textureUnit) override;
 	void unbindImage(int textureUnit) override;
+#else 
+	void bindImage(int) override {assert(0);};
+	void unbindImage(int) override {assert(0);};
+#endif
 	int	 getID() override;
 
 	virtual ~TextureCubemap();

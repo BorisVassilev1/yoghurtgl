@@ -218,6 +218,7 @@ AcceleratorPtr makeDefaultAccelerator() { return AcceleratorPtr(new BVHTree()); 
 
 void BVHTree::addPrimitive(Intersectable *prim) { allPrimitives.push_back(prim); }
 
+#if !defined(YGL_NO_COMPUTE_SHADERS)
 void BVHTree::addPrimitive(ygl::Mesh *mesh, ygl::Transformation &transform) {
 	glm::mat4x4 &mat		   = transform.getWorldMatrix();
 	std::size_t	 verticesCount = mesh->getVerticesCount();
@@ -250,6 +251,7 @@ void BVHTree::addPrimitive(ygl::Mesh *mesh, ygl::Transformation &transform) {
 	delete[] vertices;
 	delete[] indices;
 }
+#endif
 
 void BVHTree::clear(Node *node) {
 	if (node == nullptr) return;
@@ -432,6 +434,7 @@ void BVHTree::buildGPUTree_h(BVHTree::Node *node, unsigned long int parent, std:
 	buildGPUTree_h(node->right, currIndex, gpuNodes, primitives);
 }
 
+#if !defined( YGL_NO_COMPUTE_SHADERS)
 void BVHTree::buildGPUTree() {
 	gpuNodes.reserve(nodeCount);
 	std::vector<Intersectable *> orderedPrimitives;
@@ -467,7 +470,7 @@ void BVHTree::buildGPUTree() {
 	ygl::Shader::setSSBO(nodesBuff, 5);
 	delete[] buff;
 }
-
+#endif
 BVHTree::~BVHTree() {
 	clear();
 	clearConstructionTree();

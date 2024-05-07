@@ -212,8 +212,10 @@ void ygl::Shader::finishProgramCreation() {
 	}
 	deleteShaders();
 	detectUniforms();
+#ifndef YGL_NO_COMPUTE_SHADERS
 	detectBlockUniforms();
 	detectStorageBlocks();
+#endif
 }
 
 void ygl::Shader::bind() {
@@ -245,10 +247,20 @@ void ygl::Shader::detectUniforms() {
 	// glGetProgramInterfaceiv(program, GL_UNIFORM, GL_ACTIVE_RESOURCES, &numUniforms);
 	glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &numUniforms);
 
-	// dbLog(LOG_INFO, fileNames[0], " uniforms count: ", numUniforms);
+// dbLog(LOG_INFO, fileNames[0], " uniforms count: ", numUniforms);
+#ifndef YGL_NO_COMPUTE_SHADERS
 	GLenum properties[] = {GL_BLOCK_INDEX, GL_TYPE, GL_NAME_LENGTH, GL_LOCATION};
+#endif
 
 	for (int unif = 0; unif < numUniforms; ++unif) {
+#ifdef YGL_NO_COMPUTE_SHADERS
+		char   name[128];
+		int	   name_len;
+		int	   size;
+		GLenum type;
+		glGetActiveUniform(program, unif, 128, &name_len, &size, &type, name);
+		createUniform(name);
+#else
 		GLint values[4];
 		glGetProgramResourceiv(program, GL_UNIFORM, unif, 4, properties, 4, nullptr, values);
 
@@ -260,9 +272,11 @@ void ygl::Shader::detectUniforms() {
 		// dbLog(LOG_INFO, fileNames[0], " ", name);
 		createUniform(name);
 		delete[] name;
+#endif
 	}
 }
 
+#ifndef YGL_NO_COMPUTE_SHADERS
 void ygl::Shader::detectBlockUniforms() {
 	GLint numBlocks;
 	// glGetProgramInterfaceiv(program, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES, &numBlocks);
@@ -285,7 +299,9 @@ void ygl::Shader::detectBlockUniforms() {
 		delete[] blockName;
 	}
 }
+#endif
 
+#ifndef YGL_NO_COMPUTE_SHADERS
 void ygl::Shader::detectStorageBlocks() {
 	GLint numSSBOs;
 	glGetProgramInterfaceiv(program, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &numSSBOs);
@@ -304,6 +320,7 @@ void ygl::Shader::detectStorageBlocks() {
 		delete[] blockName;
 	}
 }
+#endif
 
 GLuint ygl::Shader::getUniformLocation(const std::string &uniformName) {
 	if (!hasUniform(uniformName)) {
@@ -333,6 +350,7 @@ void ygl::Shader::setUniform(GLuint location, GLfloat value) { glUniform1f(locat
 
 void ygl::Shader::setUniform(GLuint location, GLdouble value) { glUniform1d(location, value); }
 
+#ifndef YGL_NO_COMPUTE_SHADERS
 void ygl::Shader::createSSBO(std::string &name, GLuint binding) {
 	// https://www.geeks3d.com/20140704/tutorial-introduction-to-opengl-4-3-shader-storage-buffers-objects-ssbo-demo/
 	SSBOs.insert(std::pair(name, binding));
@@ -343,6 +361,7 @@ void ygl::Shader::createSSBO(std::string &name, GLuint binding) {
 	// Can be skipped if "layout (std430, binding=<something>)" is used
 	glShaderStorageBlockBinding(program, block_index, binding);
 }
+#endif
 
 void ygl::Shader::createUBO(std::string &name, GLuint binding) {
 	UBOs.insert(std::pair(name, binding));
@@ -352,17 +371,20 @@ void ygl::Shader::createUBO(std::string &name, GLuint binding) {
 	glUniformBlockBinding(program, block_index, binding);
 }
 
+#ifndef YGL_NO_COMPUTE_SHADERS
 void ygl::Shader::setSSBO(std::string &name, GLuint bufferId) {
 	// https://www.geeks3d.com/20140704/tutorial-introduction-to-opengl-4-3-shader-storage-buffers-objects-ssbo-demo/
 	GLuint binding_point_index = getSSBOBinding(name);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding_point_index, bufferId);
 }
+#endif
 
 void ygl::Shader::setUBO(std::string &name, GLuint bufferId) {
 	GLuint binding_point_index = getUBOBinding(name);
 	glBindBufferBase(GL_UNIFORM_BUFFER, binding_point_index, bufferId);
 }
 
+#ifndef YGL_NO_COMPUTE_SHADERS
 GLint ygl::Shader::getSSBOBinding(std::string &name) {
 	auto res = SSBOs.find(name);
 	if (res == SSBOs.end()) {
@@ -371,6 +393,7 @@ GLint ygl::Shader::getSSBOBinding(std::string &name) {
 	}
 	return res->second;
 }
+#endif
 
 GLint ygl::Shader::getUBOBinding(std::string &name) {
 	auto res = UBOs.find(name);
@@ -383,9 +406,11 @@ GLint ygl::Shader::getUBOBinding(std::string &name) {
 
 bool ygl::Shader::isBound() { return bound; }
 
+#ifndef YGL_NO_COMPUTE_SHADERS
 void ygl::Shader::setSSBO(GLuint bufferId, GLuint binding) {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, bufferId);
 }
+#endif
 
 void ygl::Shader::setUBO(GLuint bufferId, GLuint binding) { glBindBufferBase(GL_UNIFORM_BUFFER, binding, bufferId); }
 
@@ -410,6 +435,7 @@ void ygl::VFShader::serialize(std::ostream &out) {
 	Shader::serialize(out);
 }
 
+#if !defined(YGL_NO_COMPUTE_SHADERS)
 const char *ygl::ComputeShader::name = "ygl::ComputeShader";
 
 ygl::ComputeShader::ComputeShader(const char *source) : Shader({source}) {
@@ -429,3 +455,4 @@ void ygl::ComputeShader::serialize(std::ostream &out) {
 	out.write(name, std::strlen(name) + 1);
 	Shader::serialize(out);
 }
+#endif

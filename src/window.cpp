@@ -12,8 +12,13 @@
 
 #include <ImGuizmo.h>
 
-#define GL_CONTEXT_VERSION_MAJOR 4
-#define GL_CONTEXT_VERSION_MINOR 3
+#if defined(__EMSCRIPTEN__)
+	#define GL_CONTEXT_VERSION_MAJOR 3
+	#define GL_CONTEXT_VERSION_MINOR 0
+#else
+	#define GL_CONTEXT_VERSION_MAJOR 4
+	#define GL_CONTEXT_VERSION_MINOR 3
+#endif
 
 #define _CONCAT(x, y, z)   x##y##z
 #define CONCAT(x, y, z)	   _CONCAT(x, y, z)
@@ -84,11 +89,13 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 	ygl::gl_init = true;
 
 	glfwSwapInterval(vsync);
+#ifndef __EMSCRIPTEN__
 	if (glewInit() != GLEW_OK) {
 		std::cerr << "glewInit failed." << std::endl;
 		this->~Window();
 		THROW_RUNTIME_ERR("GLEW_INIT FAILED");
 	}
+#endif
 
 #ifndef YGL_NDEBUG
 	ygl::initDebug();
@@ -97,10 +104,12 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_PROGRAM_POINT_SIZE);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_STENCIL_TEST);
+#ifndef YGL_NO_COMPUTE_SHADERS
+	glEnable(GL_PROGRAM_POINT_SIZE);
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+#endif
 
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 	glStencilFunc(GL_ALWAYS, 1, 0xFF);
@@ -108,6 +117,7 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 
 	glDepthFunc(GL_LEQUAL);
 
+#ifndef __EMSCRIPTEN__
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -120,6 +130,7 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL(getHandle(), true);
 	ImGui_ImplOpenGL3_Init(STRING(GL_CONTEXT_VERSION));
+#endif
 }
 
 ygl::Window::Window(int width, int height, const char *name, bool vsync, bool resizable)
@@ -137,9 +148,11 @@ GLFWwindow *ygl::Window::getHandle() { return window; }
 bool ygl::Window::shouldClose() { return glfwWindowShouldClose(window); }
 
 void ygl::Window::swapBuffers() {
+#ifndef __EMSCRIPTEN__
 	// finish Dear ImGui frame
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#endif
 
 	glFinish();		// TODO: THIS IS VERY BAD!!
 
@@ -169,6 +182,7 @@ void ygl::Window::beginFrame() {
 	glViewport(0, 0, width, height);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+#ifndef __EMSCRIPTEN__
 	// Start the Dear ImGui frame
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -177,15 +191,18 @@ void ygl::Window::beginFrame() {
 	ImGuizmo::BeginFrame();
 	ImGuizmo::SetOrthographic(false);
 	ImGuizmo::SetRect(0, 0, getWidth(), getHeight());
+#endif
 }
 
 ygl::Window::~Window() {
 	if (!ygl::glfw_init) return;
 	if (window != nullptr) {
+#ifndef __EMSCRIPTEN__
 		// clean up all ImGui
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
+#endif
 
 		glfwDestroyWindow(window);
 		ygl::gl_init = false;
@@ -207,8 +224,9 @@ void ygl::Window::addResizeCallback(const std::function<void(GLFWwindow *, int, 
 }
 
 void ygl::Window::defaultFrameCallback(long draw_time, long frame_time) {
-	std::cout << std::fixed << std::setprecision(2) << "\rdraw time: " << (draw_time / 1e6)
-			  << "ms, FPS: " << int(1e9 / frame_time) << "         " << std::flush;		//<< std::endl;
+	//std::cout << std::fixed << std::setprecision(2) << "\rdraw time: " << (draw_time / 1e6)
+	//		  << "ms, FPS: " << int(1e9 / frame_time) << "         " << std::flush;		//<< std::endl;
+	dbLog(ygl::LOG_INFO, std::fixed, std::setprecision(2), "\rdraw time: ", (draw_time / 1e6), "ms, FPS: ", int(1e9 / frame_time), "         ");
 }
 
 void ygl::Window::setFrameCallback(void (*callback)(long, long)) { frameCallback = callback; }

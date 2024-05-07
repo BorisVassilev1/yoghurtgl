@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include "asset_manager.h"
 
+#if !defined( YGL_NO_COMPUTE_SHADERS)
 uint ygl::GrassSystem::GrassBladeMesh::count = 0;
 
 ygl::GrassSystem::GrassBladeMesh::GrassBladeMesh(glm::ivec2 resolution, int LOD) {
@@ -186,3 +187,4 @@ std::ostream &ygl::operator<<(std::ostream &out, const ygl::GrassSystem::GrassHo
 
 const char *ygl::GrassSystem::name				= "ygl::GrassSystem";
 const char *ygl::GrassSystem::GrassHolder::name = "ygl::GrassSystem::GrassHolder";
+#endif

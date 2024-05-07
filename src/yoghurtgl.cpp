@@ -53,6 +53,7 @@ int ygl::initDebug() {
 	const GLubyte* renderer = glGetString(GL_RENDERER); // Returns a hint to the model
 	dbLog(ygl::LOG_INFO, "running on: ", vendor, " ", renderer);
 
+	#ifndef YGL_NO_COMPUTE_SHADERS
 	int flags;
 	glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
 	if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
@@ -65,9 +66,11 @@ int ygl::initDebug() {
 		std::cerr << "GL debug context failed to initialize" << std::endl;
 		return 1;
 	}
+	#endif
 	return 0;
 }
 
+#ifndef YGL_NO_COMPUTE_SHADERS
 void GLAPIENTRY ygl::yglDebugMessageCallback(GLenum source, GLenum type, GLuint, GLenum severity, GLsizei,
 											 const GLchar *message, const void *) {
 	if(type == GL_DEBUG_TYPE_OTHER) return;
@@ -103,6 +106,7 @@ void GLAPIENTRY ygl::yglDebugMessageCallback(GLenum source, GLenum type, GLuint,
 	}
 	std::cerr << "\n\tMessage: " << message << std::endl;
 }
+#endif
 
 void ygl::glfwErrorCallback(int code, const char *err_msg) {
 	std::cerr << "GLFW Error " << code << " : \n\t" << err_msg << std::endl;

@@ -6,6 +6,13 @@ set(YGL_STATIC ON CACHE BOOL "link as static library")
 set(ASAN_DETECT_LEAKS ON CACHE BOOL "turn the leak sanitizer on or off")
 project(YoghurtGL)
 
+message("emscripten: " ${EMSCRIPTEN})
+if (EMSCRIPTEN)
+	message("using emscripten!!!!")
+else ()
+	message("no emscripten!!!!")
+endif ()
+
 if(WIN32)
 	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-O3")
 	set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "")
@@ -24,10 +31,10 @@ if (MSVC)
 	set(COMPILE_ARGS ${COMPILE_ARGS} /Wall)
 else ()
 	set(COMPILE_ARGS
-		-fsanitize=address
+		#-fsanitize=address
 	)
 	set(LINK_ARGS
-		-fsanitize=address
+		#-fsanitize=address
 	)
 	set(COMPILE_ARGS ${COMPILE_ARGS} -Wall -Wextra -Wpedantic --pedantic-errors -g -O3)
 endif ()
@@ -75,11 +82,14 @@ endif (NOT ${YGL_NO_ASSIMP})
 	target_link_directories(YoghurtGL PUBLIC libs/glfw/src)
 target_link_libraries(YoghurtGL PUBLIC ImGui)
 target_link_libraries(YoghurtGL PUBLIC ${LIBS})
-if (${YGL_STATIC})
-	target_link_libraries(YoghurtGL PUBLIC libglew_static)
-else (${YGL_STATIC})
-	target_link_libraries(YoghurtGL PUBLIC libglew_shared)
-endif (${YGL_STATIC})
+
+if (NOT EMSCRIPTEN)
+	if (${YGL_STATIC})
+		target_link_libraries(YoghurtGL PUBLIC libglew_static)
+	else (${YGL_STATIC})
+		target_link_libraries(YoghurtGL PUBLIC libglew_shared)
+	endif (${YGL_STATIC})
+endif ()
 target_link_libraries(YoghurtGL PUBLIC ImGuizmo)
 
 target_compile_options(YoghurtGL PRIVATE ${COMPILE_ARGS})
@@ -125,3 +135,17 @@ add_dependencies(testExec YoghurtGL)
 include(CTest)
 enable_testing()
 add_test(NAME allTests COMMAND "../testExec" --build-target=testExec)
+
+add_executable(wasm examples/noScene.cpp)
+set_target_properties(wasm PROPERTIES
+	SUFFIX ".html"
+	LINK_FLAGS "-Os -s USE_WEBGL2=1 -s FULL_ES3=1 -s USE_GLFW=3 -s WASM=1 -s GL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=1 -sFULL_ES3 --preload-file ../shaders@shaders/")
+#em_link_js_library(wasm ${libraryJsFiles})
+target_link_libraries(wasm PRIVATE YoghurtGL)
+
+#target_compile_options(wasm PRIVATE ${COMPILE_ARGS})
+#target_link_options(wasm PRIVATE ${COMPILE_ARGS})
+#target_link_options(wasm PRIVATE ${LINK_ARGS})
+
+#message(STATUS "CMAKE_TOOLCHAIN_FILE='${CMAKE_TOOLCHAIN_FILE}'")
+

@@ -33,7 +33,11 @@ void ygl::Mouse::hide() {
 	if (lock && disableMouseWhenLockedAndHidden) {
 		glfwSetInputMode(window.getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	} else {
+#ifndef __EMSCRIPTEN__
 		glfwSetInputMode(window.getHandle(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+#else
+		glfwSetInputMode(window.getHandle(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+#endif
 	}
 	visible = false;
 }
@@ -88,7 +92,7 @@ void ygl::FPController::update() {
 	if (mouse->getDelta().x != 0.0 || mouse->getDelta().y != 0.0) { changed = true; }
 
 	int realSpeed = speed;
-	if(Keyboard::getKey(GLFW_KEY_LEFT_CONTROL)) realSpeed *= 5;
+	if (Keyboard::getKey(GLFW_KEY_LEFT_CONTROL)) realSpeed *= 5;
 
 	transform.rotation.x -= mouse->getDelta().y / 500.;
 	transform.rotation.y -= mouse->getDelta().x / 500.;
@@ -113,7 +117,6 @@ void ygl::FPController::update() {
 	sideways.y		   = 0;
 	sideways		   = glm::normalize(sideways);
 	sideways *= window->deltaTime * realSpeed;
-	
 
 	if (Keyboard::getKey(GLFW_KEY_SPACE) == GLFW_PRESS) {
 		transform.position.y += realSpeed * window->deltaTime;
@@ -157,7 +160,7 @@ ygl::TransformGuizmo::TransformGuizmo(ygl::Window *window, ygl::Camera *camera, 
 }
 
 void ygl::TransformGuizmo::update(Transformation *transform) {
-	if(!this->enabled) return;
+	if (!this->enabled) return;
 
 	bool  snap		= Keyboard::getKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
 	float snapValue = 1.0f;
@@ -168,5 +171,5 @@ void ygl::TransformGuizmo::update(Transformation *transform) {
 	ImGuizmo::Manipulate(glm::value_ptr(camera->getViewMatrix()), glm::value_ptr(camera->getProjectionMatrix()),
 						 operation, mode, glm::value_ptr(transform->getWorldMatrix()), nullptr,
 						 snap ? snapVector : nullptr);
-	//if (ImGuizmo::IsUsing()) transform->updateVectors();
+	// if (ImGuizmo::IsUsing()) transform->updateVectors();
 }

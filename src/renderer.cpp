@@ -576,6 +576,7 @@ void ygl::Renderer::drawObject(Shader *sh, Mesh *mesh) {
 	sh->unbind();
 }
 
+#if !defined( YGL_NO_COMPUTE_SHADERS)
 void ygl::Renderer::compute(ComputeShader *shader, int domainX, int domainY, int domainZ) {
 	if (!shader->isBound()) shader->bind();
 	int groupsX = domainX / shader->groupSize.x + (domainX % shader->groupSize.x > 0);
@@ -586,6 +587,7 @@ void ygl::Renderer::compute(ComputeShader *shader, int domainX, int domainY, int
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	shader->unbind();
 }
+#endif
 
 GLuint ygl::Renderer::loadMaterials(int count, Material *materials) {
 	GLuint materialsBuffer;
