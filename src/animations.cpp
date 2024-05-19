@@ -1,4 +1,5 @@
 #include <animations.h>
+#if !defined( YGL_NO_ASSIMP)
 
 ygl::Bone::Bone(const std::string &name, int ID, const aiNodeAnim *channel, float duration, AnimationBehaviour behaviour)
 	: behaviour(behaviour), m_LocalTransform(1.0f), m_Name(name), m_ID(ID), m_Duration(duration) {
@@ -124,3 +125,4 @@ glm::vec3 ygl::Bone::InterpolateScaling(float animationTime) {
 	glm::vec3 finalScale  = glm::mix(m_Scales[p0Index].scale, m_Scales[p1Index].scale, scaleFactor);
 	return finalScale;
 }
+#endif

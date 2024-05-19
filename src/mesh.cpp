@@ -750,8 +750,6 @@ void ygl::MeshFromFile::serialize(std::ostream &out) {
 
 int ygl::MeshFromFile::import_flags = aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_GenNormals;
 
-#endif
-
 void ygl::fixMixamoBoneName(std::string &name) {
 	if (!name.starts_with("mixamorig")) return;
 
@@ -761,3 +759,4 @@ void ygl::fixMixamoBoneName(std::string &name) {
 	}
 	std::replace(name.begin(), name.end(), ':', '_');
 }
+#endif

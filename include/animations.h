@@ -1,4 +1,5 @@
 #pragma once
+#if !defined( YGL_NO_ASSIMP)
 #include <vector>
 
 #include <yoghurtgl.h>
@@ -351,3 +352,4 @@ class AnimationFSM {
 };
 
 };	   // namespace ygl
+#endif
