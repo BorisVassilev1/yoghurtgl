@@ -71,7 +71,7 @@ void ygl::Shader::createShader(GLenum type, GLuint target, const char *file) {
 	int	  sh = glCreateShader(type);
 	char *source;
 	int	  length;
-	loadSource(file, source, length);
+	loadSource(file, type, source, length);
 
 	glShaderSource(sh, 1, &source, &length);
 
@@ -140,8 +140,26 @@ bool ygl::Shader::checkCompileStatus(int target) {
 	return true;
 }
 
-void ygl::Shader::loadSource(const char *file, const char *includeDir, char *&source, int &length) {
+void ygl::Shader::loadSource(const char *file, GLenum type, const char *includeDir, char *&source, int &length) {
 	std::vector<std::string> lines;
+	lines.push_back(STRING(GL_CONTEXT_VERSION));
+	switch(type) {
+		case GL_VERTEX_SHADER:
+		case GL_VERTEX_SHADER_EXT:
+			lines.push_back("#define VERTEX_SHADER"); break;
+		case GL_FRAGMENT_SHADER:
+			lines.push_back("#define FRAGMENT_SHADER"); break;
+		case GL_COMPUTE_SHADER:
+			lines.push_back("#define COMPUTE_SHADER"); break;
+		case GL_GEOMETRY_SHADER:
+			lines.push_back("#define GEOMETRY_SHADER"); break;
+		case GL_TESS_CONTROL_SHADER:
+			lines.push_back("#define TESS_CONTROL_SHADER"); break;
+		case GL_TESS_EVALUATION_SHADER:
+			lines.push_back("#define TESS_EVALUATION_SHADER"); break;
+		case GL_MESH_SHADER_NV:
+			lines.push_back("#define MESH_SHADER"); break;
+	}
 	loadSourceRecursively(lines, file, includeDir, strlen(includeDir));
 
 	length = 0;
@@ -161,8 +179,8 @@ void ygl::Shader::loadSource(const char *file, const char *includeDir, char *&so
 	source[offset] = 0;
 }
 
-void ygl::Shader::loadSource(const char *file, char *&source, int &length) {
-	loadSource(file, ygl::Shader::DEFAULT_INCLUDE_DIRECTORY, source, length);
+void ygl::Shader::loadSource(const char *file, GLenum type, char *&source, int &length) {
+	loadSource(file, type, ygl::Shader::DEFAULT_INCLUDE_DIRECTORY, source, length);
 }
 
 void ygl::Shader::loadSourceRecursively(std::vector<std::string> &lines, const char *file, const char *includeDir,

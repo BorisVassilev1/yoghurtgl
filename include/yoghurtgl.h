@@ -18,15 +18,22 @@
 	#define GLFW_INCLUDE_GLEXT
 using GLdouble = double;
 using GLuint   = unsigned int;
-	  #define YGL_NO_COMPUTE_SHADERS
-	  #define GL_FILL					0
-	  #define GL_LINE					1
-	  #define glPolygonMode(a, b)		0
-	  #define glTextureBarrier()		0
-	  #define glObjectLabel(a, b, c, d) 0
-	  #define glUniform1d				glUniform1f
-	  #define GL_SRGB_ALPHA				GL_SRGB_ALPHA_EXT
-	  #define GL_UNIFORM_BLOCK			GL_UNIFORM_BLOCK_EXT
+
+	#define YGL_NO_COMPUTE_SHADERS
+	#define GL_FILL					  0
+	#define GL_LINE					  1
+	#define glPolygonMode(a, b)		  0
+	#define glTextureBarrier()		  0
+	#define glObjectLabel(a, b, c, d) 0
+	#define glUniform1d				  glUniform1f
+	#define GL_SRGB_ALPHA			  GL_SRGB_ALPHA_EXT
+	#define GL_UNIFORM_BLOCK		  GL_UNIFORM_BLOCK_EXT
+	#define GL_COMPUTE_SHADER		  0
+	#define GL_GEOMETRY_SHADER		  1
+	#define GL_TESS_CONTROL_SHADER	  2
+	#define GL_TESS_EVALUATION_SHADER 3
+	#define TESS_EVALUATION_SHADER	  4
+	#define GL_VERTEX_SHADER_EXT	  5
 #else
 	#include <GL/glew.h>
 #endif
@@ -194,3 +201,20 @@ extern "C"
 
 using uint	= unsigned int;
 using uchar = unsigned char;
+
+#if defined(__EMSCRIPTEN__)
+	#define GL_CONTEXT_VERSION_MAJOR 3
+	#define GL_CONTEXT_VERSION_MINOR 0
+	#define GL_CONTEXT_VERSION_TYPE	es
+#else
+	#define GL_CONTEXT_VERSION_MAJOR 4
+	#define GL_CONTEXT_VERSION_MINOR 3
+	#define GL_CONTEXT_VERSION_TYPE	core
+#endif
+
+#define _CONCAT(x, y, z) x##y##z
+#define CONCAT(x, y, z)	 _CONCAT(x, y, z)
+#define GL_CONTEXT_VERSION \
+	#version CONCAT(GL_CONTEXT_VERSION_MAJOR, GL_CONTEXT_VERSION_MINOR, 0) GL_CONTEXT_VERSION_TYPE
+#define _STRING(string) #string
+#define STRING(string)	_STRING(string)

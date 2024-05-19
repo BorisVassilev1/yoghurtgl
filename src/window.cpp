@@ -12,20 +12,6 @@
 
 #include <ImGuizmo.h>
 
-#if defined(__EMSCRIPTEN__)
-	#define GL_CONTEXT_VERSION_MAJOR 3
-	#define GL_CONTEXT_VERSION_MINOR 0
-#else
-	#define GL_CONTEXT_VERSION_MAJOR 4
-	#define GL_CONTEXT_VERSION_MINOR 3
-#endif
-
-#define _CONCAT(x, y, z)   x##y##z
-#define CONCAT(x, y, z)	   _CONCAT(x, y, z)
-#define GL_CONTEXT_VERSION #version CONCAT(GL_CONTEXT_VERSION_MAJOR, GL_CONTEXT_VERSION_MINOR, 0) core
-#define _STRING(string)	   #string
-#define STRING(string)	   _STRING(string)
-
 ygl::Window::Window(int width, int height, const char *name, bool vsync, bool resizable, GLFWmonitor *monitor)
 	: width(width), height(height) {
 	assert(glfwGetPrimaryMonitor() != NULL);
@@ -229,7 +215,7 @@ void ygl::Window::addResizeCallback(const std::function<void(GLFWwindow *, int, 
 void ygl::Window::defaultFrameCallback(long draw_time, long frame_time, long frames) {
 #ifndef __EMSCRIPTEN__
 	std::cout << std::fixed << std::setprecision(2) << "\rdraw time: " << (draw_time / 1e6)
-			  << "ms, FPS: " << int(1e9 / frame_time) << "         " << std::flush;		//<< std::endl;
+			  << "ms, FPS: " << frames << "         " << std::flush;		//<< std::endl;
 #else
 	dbLog(ygl::LOG_INFO, std::fixed, std::setprecision(2), "draw time: ", (draw_time / 1e6), "ms, FPS: ", frames,
 		  "         ");

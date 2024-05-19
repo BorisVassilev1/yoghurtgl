@@ -45,7 +45,7 @@ void run() {
 		exit(1);
 	}
 
-	Keyboard::addKeyCallback([](GLFWwindow *window, int key, int, int action, int mods) {
+	Keyboard::addKeyCallback([](GLFWwindow *, int key, int, int action, int mods) {
 		if(key == GLFW_KEY_R && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL) asman.reloadShaders();
 	});
 

@@ -140,6 +140,7 @@ if (EMSCRIPTEN)
 	add_executable(wasm examples/noScene.cpp)
 	set_target_properties(wasm PROPERTIES
 		SUFFIX ".html"
-		LINK_FLAGS "-Os -s USE_WEBGL2=1 -s FULL_ES3=1 -s USE_GLFW=3 -s WASM=1 -s GL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=1 -sFULL_ES3 --preload-file ../shaders@shaders/")
+		LINK_FLAGS "-s USE_WEBGL2=1 -s FULL_ES3 -s USE_GLFW=3 -s WASM=1 -s GL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=1 -Os --use-preload-plugins --preload-file ../shaders@shaders/"
+		)
 	target_link_libraries(wasm PRIVATE YoghurtGL)
 endif ()

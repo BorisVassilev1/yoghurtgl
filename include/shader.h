@@ -48,8 +48,8 @@ class Shader : public ISerializable {
 	bool checkValidateStatus();
 	bool checkCompileStatus(int target);
 
-	void loadSource(const char *file, const char *includeDir, char *&source, int &length);
-	void loadSource(const char *file, char *&source, int &length);
+	void loadSource(const char *file, GLenum type, const char *includeDir, char *&source, int &length);
+	void loadSource(const char *file, GLenum type, char *&source, int &length);
 
 	void finishProgramCreation();
 	void deleteShaders();
