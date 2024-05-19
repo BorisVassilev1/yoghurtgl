@@ -1,4 +1,3 @@
-#version 430
 layout(binding = 1) uniform samplerCube tex;
 
 in vec3 vTexCoord;

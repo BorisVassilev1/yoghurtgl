@@ -1,4 +1,3 @@
-#version 430
 #define FRAG
 
 #include <rendering.glsl>

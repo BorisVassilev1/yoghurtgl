@@ -1,3 +1,7 @@
+#ifdef GL_ES
+precision highp float;
+#endif
+
 const float PI	   = 3.14159265359;
 const float TWO_PI = 2. * PI;
 float eps = 0.002;

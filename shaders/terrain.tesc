@@ -1,4 +1,3 @@
-#version 430
 // Triangles
 layout(vertices = 3) out;
 

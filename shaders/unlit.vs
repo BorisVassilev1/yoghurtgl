@@ -1,5 +1,3 @@
-#version 430
-
 #include <rendering.glsl>
 
 out vec4 vColor;

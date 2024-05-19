@@ -1,4 +1,3 @@
-#version 430
 #define VERT
 #include <rendering.glsl>
 

@@ -1,5 +1,3 @@
-#version 430
-
 const float TWO_PI = 6.28318530718;
 
 layout(std140, binding = 0) uniform Matrices {

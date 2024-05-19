@@ -1,5 +1,3 @@
-#version 460
-
 in vec2 outTexCoord;
 
 out vec4 fragColor;

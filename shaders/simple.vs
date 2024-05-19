@@ -1,5 +1,5 @@
-#version 430
 #define VERT
+// askdjaskdjkasjdkasjd
 
 #include <rendering.glsl>
 

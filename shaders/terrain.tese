@@ -1,4 +1,3 @@
-#version 430
 // Triangles
 layout(triangles, fractional_even_spacing, ccw) in;
 
