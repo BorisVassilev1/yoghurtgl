@@ -17,15 +17,16 @@ namespace ygl {
 class Window {
 	GLFWwindow									  *window = nullptr;
 	int											   width = -1, height = -1;
-	std::chrono::high_resolution_clock::time_point lastSwapTime	 = std::chrono::high_resolution_clock::now();
-	double										   lastPrintTime = 0;
-	void (*frameCallback)(long, long)							 = &defaultFrameCallback;
+	std::chrono::high_resolution_clock::time_point lastSwapTime			= std::chrono::high_resolution_clock::now();
+	double										   lastPrintTime		= 0;
+	long										   frames_last_interval = 0;
+	void (*frameCallback)(long, long, long)								= &defaultFrameCallback;
 
 	inline static std::vector<std::function<void(GLFWwindow *, int, int)>> resizeCallbacks;
 
 	Window(){};
 	static void handleResize(GLFWwindow *, int, int);
-	static void defaultFrameCallback(long, long);
+	static void defaultFrameCallback(long, long, long);
 
    public:
 	// TODO: this cannot override mesh settings, but should
@@ -33,6 +34,7 @@ class Window {
 	bool   cullFace	  = true;	  ///< does not work
 	double deltaTime  = 0;		  ///< length of last frame
 	double globalTime = 0;		  ///< time passed from opening the window until the beginning of the current frame
+	long   fps;					  ///< frames that happened in the last second
 	Window(int width, int height, const char *name, bool vsync, bool resizable, GLFWmonitor *monitor);
 	Window(int width, int height, const char *name, bool vsync, bool resizable);
 	Window(int width, int height, const char *name, bool vsync);
@@ -53,7 +55,7 @@ class Window {
 	 *
 	 * @param callback - function to be called every frame
 	 */
-	void setFrameCallback(void (*callback)(long, long));
+	void setFrameCallback(void (*callback)(long, long, long));
 	/**
 	 * @brief Destroys and permanently invalidates the window. The destructor calls this.
 	 */

@@ -21,7 +21,7 @@ void main() {
 
 		normal = normalize(normal * 2. - 1.);
 
-		finalNormal = normalize(vTBN * normal);
+		finalNormal = normalize(mix(vVertexNormal, vTBN * normal, mat.use_normal_map));
 	} else {
 		finalNormal = normalizedVertexNormal;
 	}

@@ -656,6 +656,11 @@ ygl::Texture2d *ygl::createBRDFTexture() {
 
 	ygl::Texture2d *result = new Texture2d(width, height, TextureType::RG16F, nullptr);
 
+	result->bind();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	result->unbind();
+
 	ygl::FrameBuffer *fb = new FrameBuffer(nullptr, GL_COLOR_ATTACHMENT0,
 										   new RenderBuffer(width, height, TextureType::DEPTH_24), GL_DEPTH_ATTACHMENT);
 

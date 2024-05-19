@@ -30,7 +30,7 @@ void run() {
 	VFShader		 *shadowShader = new VFShader("./shaders/simple.vs", "./shaders/simple_shadow.fs");
 	PerspectiveCamera cam(glm::radians(70.f), window, 0.01, 1000);
 
-	Mouse			mouse(window);
+	Mouse mouse(window);
 	mouse.disableMouseWhenLockedAndHidden = true;
 	FPController	controller(&window, &mouse, cam.transform);
 	TransformGuizmo guizmo(&window, &cam, (Transformation *)nullptr);
@@ -128,13 +128,13 @@ void run() {
 	fsm.addAnimation(&run);
 	fsm.addAnimation(&attack);
 
-	// addSkybox(scene, "res/images/meadow_4k", ".hdr");
-	addSkybox(scene, "res/images/kloppenheim_06_puresky_4k", ".hdr");
-	// addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
-	// Entity skybox = addSkybox(scene, "./res/images/skybox/");
+	addSkybox(scene, "res/images/meadow_4k", ".hdr");
+	// addSkybox(scene, "res/images/kloppenheim_06_puresky_4k", ".hdr");
+	//  addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
+	//  Entity skybox = addSkybox(scene, "./res/images/skybox/");
 
-	renderer->addLight(Light(Transformation(glm::vec3(0, 30, 0), glm::vec3(-0.7, 0.8, 0), glm::vec3(1.)), glm::vec3(1.),
-							 4, Light::DIRECTIONAL));
+	Light &sun = renderer->addLight(Light(Transformation(glm::vec3(0, 30, 0), glm::vec3(-1.2, 0.8, 0), glm::vec3(1.)),
+										  glm::vec3(1.), 4, Light::DIRECTIONAL));
 
 	renderer->loadData();
 	// scene is initialized
@@ -167,6 +167,7 @@ void run() {
 	float	  distance		  = 13.;
 
 	Transformation handOffset(glm::vec3(-1.04, 1.70, 0.32), glm::vec3(1.22, -0.45, 0.22), glm::vec3(0.5));
+	std::vector<float> history;
 
 	renderer->setClearColor(glm::vec4(clearColor, 1.));
 	while (!window.shouldClose()) {
@@ -190,7 +191,7 @@ void run() {
 		cam.update();
 
 		fsm.update(window.deltaTime);
-		
+
 		for (Entity e : grassSystem->entities) {
 			Transformation			 &transform = scene.getComponent<Transformation>(e);
 			GrassSystem::GrassHolder &holder	= scene.getComponent<GrassSystem::GrassHolder>(e);
@@ -221,16 +222,24 @@ void run() {
 		if (Keyboard::getKey(GLFW_KEY_Y) == GLFW_PRESS) { distance -= window.deltaTime * 3; }
 
 		characterTransform.updateWorldMatrix();
-		
-		glm::mat4 handPosition = animator.GetFinalBoneMatrices()[meshToAnimate->getBoneInfoMap().find("mixamorig_RightHand")->second.id];
+
+		glm::mat4 handPosition =
+			animator.GetFinalBoneMatrices()[meshToAnimate->getBoneInfoMap().find("mixamorig_RightHand")->second.id];
 		Transformation &swordTransform = scene.getComponent<Transformation>(sword);
-		swordTransform.getWorldMatrix() = characterTransform.getWorldMatrix() * handPosition * handOffset.getWorldMatrix();
+		swordTransform.getWorldMatrix() =
+			characterTransform.getWorldMatrix() * handPosition * handOffset.getWorldMatrix();
 
 		for (Entity e : character) {
 			Transformation &transform = scene.getComponent<Transformation>(e);
 			transform				  = characterTransform;
 			transform.updateWorldMatrix();
 		}
+
+		glm::vec3 sun_position = characterTransform.position + 50.f * (sun.transform * glm::vec4(0, 0, 1, 0)).xyz();
+		sun.transform[3].x	   = sun_position.x;
+		sun.transform[3].y	   = sun_position.y;
+		sun.transform[3].z	   = sun_position.z;
+		renderer->loadData();
 
 		grassSystem->doWork();
 		renderer->doWork();
@@ -242,6 +251,7 @@ void run() {
 		renderer->loadData();
 
 		renderer->drawMaterialEditor();
+
 
 		ImGui::Begin("Grass controls", nullptr, window_flags);
 		if (ImGui::SliderFloat("density", &(grassSystem->density), 1., 10.)) { grassSystem->reload(); }
@@ -266,7 +276,11 @@ void run() {
 
 		ImGui::Begin("Profiler");
 		float time = window.deltaTime;
-		ImGui::PlotHistogram("frame time", &time, 1, 0, NULL, 0.0f, 0.1f, ImVec2(0, 80));
+		history.push_back(time);
+		if (history.size() > 150) history.erase(history.begin());
+		ImGui::PlotHistogram("frame time", history.data(), history.size(), 0, NULL, FLT_MAX, FLT_MAX, ImVec2(0, 80));
+		ImGui::Text("FPS: %ld", window.fps);
+
 		ImGui::End();
 
 		window.swapBuffers();

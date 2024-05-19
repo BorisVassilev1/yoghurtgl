@@ -167,10 +167,13 @@ void ygl::Window::swapBuffers() {
 	globalTime += deltaTime;
 
 	double logDelta = globalTime - lastPrintTime;
+	++frames_last_interval;
 
 	if (logDelta > 1.) {
-		frameCallback(delta, fullDelta);
-		lastPrintTime = globalTime;
+		frameCallback(delta, fullDelta, frames_last_interval);
+		lastPrintTime		 = globalTime;
+		fps					 = frames_last_interval;
+		frames_last_interval = 0;
 	}
 
 	lastSwapTime = timeNow;
@@ -223,13 +226,14 @@ void ygl::Window::addResizeCallback(const std::function<void(GLFWwindow *, int, 
 	resizeCallbacks.push_back(callback);
 }
 
-void ygl::Window::defaultFrameCallback(long draw_time, long frame_time) {
+void ygl::Window::defaultFrameCallback(long draw_time, long frame_time, long frames) {
 #ifndef __EMSCRIPTEN__
 	std::cout << std::fixed << std::setprecision(2) << "\rdraw time: " << (draw_time / 1e6)
 			  << "ms, FPS: " << int(1e9 / frame_time) << "         " << std::flush;		//<< std::endl;
 #else
-	dbLog(ygl::LOG_INFO, std::fixed, std::setprecision(2), "draw time: ", (draw_time / 1e6), "ms, FPS: ", int(1e9 / frame_time), "         ");
+	dbLog(ygl::LOG_INFO, std::fixed, std::setprecision(2), "draw time: ", (draw_time / 1e6), "ms, FPS: ", frames,
+		  "         ");
 #endif
 }
 
-void ygl::Window::setFrameCallback(void (*callback)(long, long)) { frameCallback = callback; }
+void ygl::Window::setFrameCallback(void (*callback)(long, long, long)) { frameCallback = callback; }

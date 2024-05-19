@@ -1,3 +1,4 @@
+#include <yoghurtgl.h>
 #include <transformation.h>
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/fwd.hpp>
@@ -119,6 +120,10 @@ void ygl::Transformation::deserialize(std::istream &in) {
 void ygl::Transformation::serialize(std::ostream &out) {
 	updateWorldMatrix();
 	out.write((char*)glm::value_ptr(this->worldMatrix), sizeof(glm::mat4x4));
+}
+
+glm::vec3 ygl::Transformation::forward() {
+	return (getWorldMatrix() * glm::vec4(0,0,1,0)).xyz();
 }
 
 const char *ygl::Transformation::name = "ygl::Transformation";

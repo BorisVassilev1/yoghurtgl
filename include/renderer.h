@@ -139,7 +139,7 @@ class Renderer : public ygl::ISystem {
 	TextureCubemap defaultCubemap	   = TextureCubemap(1, 1);
 
 	FrameBuffer		  *shadowFrameBuffer;
-	OrthographicCamera shadowCamera	 = OrthographicCamera(60, 1., 0.1, 100);
+	OrthographicCamera shadowCamera	 = OrthographicCamera(120, 1., 0.1, 100);
 	uint			   shadowMapSize = 2048;
 	bool			   shadow		 = false;
 

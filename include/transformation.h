@@ -41,6 +41,8 @@ class Transformation : public ygl::Serializable {
 
 	void serialize(std::ostream &out);
 	void deserialize(std::istream &in);
+
+	glm::vec3 forward();
 };
 
 }	  // namespace ygl

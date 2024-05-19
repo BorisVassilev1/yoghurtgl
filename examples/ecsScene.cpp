@@ -90,6 +90,10 @@ void run() {
 		}
 	}
 
+	Keyboard::addKeyCallback([&](GLFWwindow *, int key, int, int action, int mods) {
+		if (key == GLFW_KEY_R && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL) { asman->reloadShaders(); }
+	});
+
 	addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
 
 	renderer->loadData();
@@ -108,6 +112,7 @@ void run() {
 		cam.update();
 
 		renderer->doWork();
+		renderer->drawGUI();
 
 		ImGui::Begin("Material Properties");
 		ImGui::InputInt("Material ID", &editMaterialIndex);

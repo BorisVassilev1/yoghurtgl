@@ -637,7 +637,7 @@ void ygl::Renderer::drawMaterialEditor() {
 	ImGui::Begin("Material Editor");
 	ImGui::InputInt("material index", &materialIndex);
 
-	if (materialIndex < materials.size() && materialIndex > 0) {
+	if (materialIndex < (int)materials.size() && materialIndex >= 0) {
 		getMaterial(materialIndex).drawImGui();
 	} else {
 		ImGui::Text("Invalid Material Index");
