@@ -28,7 +28,7 @@ add_subdirectory(libs/)
 
 
 if (MSVC)
-	set(COMPILE_ARGS ${COMPILE_ARGS} /Wall)
+	set(COMPILE_ARGS /Wall)
 else ()
 	set(COMPILE_ARGS
 		#-fsanitize=address
@@ -36,7 +36,7 @@ else ()
 	set(LINK_ARGS
 		#-fsanitize=address
 	)
-	set(COMPILE_ARGS ${COMPILE_ARGS} -Wall -Wextra -Wpedantic --pedantic-errors -g -O3)
+	set(COMPILE_ARGS ${COMPILE_ARGS} -Wall -Wpedantic --pedantic-errors -g -O3)
 endif ()
 
 if (WIN32)

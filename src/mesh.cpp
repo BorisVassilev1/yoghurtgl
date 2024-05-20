@@ -4,15 +4,11 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#include <assimp/material.h>
-#include <assimp/version.h>
-
 #include <yoghurtgl.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <texture.h>
 #include <mesh.h>
 #include <asset_manager.h>
-#include <assimp_glm_helpers.h>
 
 GLuint ygl::IMesh::createVAO() {
 	glGenVertexArrays(1, &vao);
@@ -503,6 +499,9 @@ ygl::PlaneMesh::PlaneMesh(std::istream &in) : Mesh(in) {
 	#include <assimp/Importer.hpp>
 	#include <assimp/scene.h>
 	#include <assimp/postprocess.h>
+	#include <assimp/material.h>
+	#include <assimp/version.h>
+	#include <assimp_glm_helpers.h>
 
 Assimp::Importer *ygl::MeshFromFile::importer = nullptr;
 
