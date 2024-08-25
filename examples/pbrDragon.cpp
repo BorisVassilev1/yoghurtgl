@@ -66,7 +66,6 @@ void run() {
 
 	renderer->loadData();
 
-	int editMaterialIndex = 0;
 	int textureViewIndex = 6;
 
 	glClearColor(0, 0, 0, 1);
@@ -79,11 +78,8 @@ void run() {
 
 		renderer->doWork();
 
-		ImGui::Begin("Material Properties");
-		ImGui::InputInt("Material ID", &editMaterialIndex);
-		ImGui::End();
-		renderer->getMaterial(editMaterialIndex).drawImGui();
-		renderer->loadData();
+		renderer->drawMaterialEditor();
+		renderer->drawGUI();
 
 		ImGui::Begin("Texture View");
 		ImGui::InputInt("Material ID", &textureViewIndex);

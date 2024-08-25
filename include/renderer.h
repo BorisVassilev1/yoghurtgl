@@ -220,7 +220,7 @@ class Renderer : public ygl::ISystem {
 	bool		  hasShadow();
 
 	void drawGUI();
-	void drawMaterialEditor();
+	bool drawMaterialEditor();
 
 	void write(std::ostream &out) override;
 	void read(std::istream &in) override;

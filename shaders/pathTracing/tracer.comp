@@ -194,7 +194,7 @@ void trace_bvh(in Ray ray, inout RayHit hit) {
 
 // test for intersections with everything in the scene
 void intersect_scene(in Ray ray, inout RayHit hit) {
-	//intersectGroundPlane(ray, -0.5, hit);
+	intersectGroundPlane(ray, -0.5, hit);
 
 	trace_bvh(ray, hit);
 }
@@ -359,7 +359,7 @@ void main() {
 		// calculate whether we are going to do a diffuse, specular, or refractive ray
 		float doSpecular	= 0.0f;
 		float doRefraction	= 0.0f;
-		float doShadow  = 0.0f;
+		float doShadow		= 0.0f;
 		float raySelectRoll = randomFloat(random_seed_full);
 		if (specularChance > 0.0f && raySelectRoll < specularChance) { // specular reflection
 			doSpecular	   = 1.0f;
@@ -419,7 +419,7 @@ void main() {
 		// update the ray position
 		ray.origin = info.pos + ray.direction * phi;
 
-		attenuation /= rayProbability;
+		attenuation *= rayProbability;
 
 		// Russian Roulette
 		// As the throughput gets smaller, the ray is more likely to get terminated early.

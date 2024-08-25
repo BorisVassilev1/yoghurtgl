@@ -632,18 +632,20 @@ void ygl::Renderer::drawGUI() {
 	ImGui::End();
 }
 
-void ygl::Renderer::drawMaterialEditor() {
+bool ygl::Renderer::drawMaterialEditor() {
 	static int materialIndex = 0;
+	bool res = false;
 	ImGui::Begin("Material Editor");
 	ImGui::InputInt("material index", &materialIndex);
 
 	if (materialIndex < (int)materials.size() && materialIndex >= 0) {
-		getMaterial(materialIndex).drawImGui();
+		res = getMaterial(materialIndex).drawImGui();
 	} else {
 		ImGui::Text("Invalid Material Index");
 	}
 
 	ImGui::End();
+	return res;
 }
 
 void ygl::Renderer::write(std::ostream &out) {

@@ -9,9 +9,9 @@
 #include <ecs.h>
 #include <renderer.h>
 #include <texture.h>
-#include <entities.h>
 #include <bvh.h>
 #include <asset_manager.h>
+#include <entities.h>
 
 #include <iostream>
 #include <random>
@@ -108,8 +108,8 @@ void cleanup() {
 
 void initScene() {
 	try {
-		// bunnyMesh = new ygl::MeshFromFile("./res/models/dragon-gltf/scene.gltf", 2);
-		bunnyMesh = new ygl::MeshFromFile("./res/models/bunny.obj", 0);
+		bunnyMesh = new ygl::MeshFromFile("./res/models/dragon-gltf/scene.gltf", 2);
+		//bunnyMesh = new ygl::MeshFromFile("./res/models/dragon.obj", 0);
 	} catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		cleanup();
@@ -138,8 +138,8 @@ void initScene() {
 
 	bunny = scene->createEntity();
 	scene->addComponent<ygl::Transformation>(
-		bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(1.00f)));
-	// bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(-PI /2, 0, 0), glm::vec3(1.00f)));
+		//bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(1.00f)));
+		bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(-PI /2, 0, 0), glm::vec3(1.00f)));
 	ygl::RendererComponent bunnyRenderer;
 
 	unsigned int shaderIndex = asman->addShader(shader, "defaultShader");
@@ -290,7 +290,7 @@ int main() {
 
 	srand(time(NULL));
 
-	window = new ygl::Window(1280, 1000, "Test Window", true, false);
+	window = new ygl::Window(1000, 800, "Test Window", true, false);
 	mouse  = new ygl::Mouse(*window);
 
 	bool shouldReload = false;
@@ -358,7 +358,7 @@ int main() {
 				pathTracer->setUniform("resolution", glm::vec2(window->getWidth(), window->getHeight()));
 				pathTracer->setUniform("img_output", 1);
 				pathTracer->setUniform("fov", camera->getFov());
-				pathTracer->setUniform("max_bounces", 5);
+				pathTracer->setUniform("max_bounces", 12);
 				pathTracer->setUniform("fov", glm::radians(70.f));
 				pathTracer->setUniform("bvh_matrix", scene->getComponent<ygl::Transformation>(bunny).getWorldMatrix());
 
@@ -385,10 +385,7 @@ int main() {
 		ImGui::Image((void *)textureViewIndex, ImVec2(256, 256));
 		ImGui::End();
 
-		ImGui::Begin("Material Properties");
-		ImGui::InputInt("Material ID", &editMaterialIndex);
-		ImGui::End();
-		shouldReload = shouldReload || renderer->getMaterial(editMaterialIndex).drawImGui();
+		shouldReload = shouldReload || renderer->drawMaterialEditor();
 		renderer->loadData();
 
 		window->swapBuffers();

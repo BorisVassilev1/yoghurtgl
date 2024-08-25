@@ -32,6 +32,7 @@ class Camera {
 	Camera(const Transformation &transform) : transform(transform) {}
 	Camera(const Camera &other)			   = delete;
 	Camera &operator=(const Camera &other) = delete;
+	virtual ~Camera() = default;
 
 	glm::mat4x4 getProjectionMatrix();
 	glm::mat4x4 getViewMatrix();
