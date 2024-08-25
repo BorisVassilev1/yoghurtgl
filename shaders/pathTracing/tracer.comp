@@ -96,6 +96,10 @@ void getTriangle(in uint i, out Triangle tri) {
 	tri.t1 = vec3( tangents[indices[1] + 0], tangents[indices[1] + 1], tangents[indices[1] + 2]);
 	tri.t2 = vec3( tangents[indices[2] + 0], tangents[indices[2] + 1], tangents[indices[2] + 2]);
 
+	tri.t0 = (bvh_matrix * vec4(tri.t0, 0.0)).xyz;
+	tri.t1 = (bvh_matrix * vec4(tri.t1, 0.0)).xyz;
+	tri.t2 = (bvh_matrix * vec4(tri.t2, 0.0)).xyz;
+
 	tri.matIdx = primitives[i + 4];
 }
 
@@ -253,8 +257,20 @@ void computeHitInfo(out HitInfo info, in RayHit hit, in Ray ray) {
 
 		info.normal		 = normalize(uvw.x * tri.normal0 + uvw.y * tri.normal1 + uvw.z * tri.normal2);
 		info.texCoords	 = uvw.x * tri.tc0 + uvw.y * tri.tc1 + uvw.z * tri.tc2;
+
+		mat3 vTBN0 = mat3(tri.t0, cross(tri.t0, tri.normal0), tri.normal0);
+		mat3 vTBN1 = mat3(tri.t1, cross(tri.t1, tri.normal1), tri.normal1);
+		mat3 vTBN2 = mat3(tri.t2, cross(tri.t2, tri.normal2), tri.normal2);
+		mat3 vTBN = uvw.x * vTBN0 + uvw.y * vTBN1 + uvw.z * vTBN2;
+
+		vec3 normal = texture(normalMap, info.texCoords).xyz;
+		normal = normalize(normal * 2. - 1.);
+		normal = normalize(mix(info.normal, vTBN * normal, materials[1].use_normal_map));
+		
 		info.isFrontFace = step(dot(info.normal, ray.direction), 0.);
+		info.normal = normal;
 		info.normal		 = (info.isFrontFace * 2. - 1.) * info.normal;
+
 		info.matIdx		 = 1;
 		return;
 	}
@@ -277,9 +293,10 @@ void computeHitInfo(out HitInfo info, in RayHit hit, in Ray ray) {
 	}
 }
 
-uniform vec3 sun_direction = normalize(vec3(-1., 2., -1.));
-uniform float sun_size = 0.1; // in radians on the sky
+uniform vec3 sun_direction = normalize(vec3( 4.1, 1.15, 3.));
+uniform float sun_size = 0.01; // in radians on the sky
 uniform float shadow_ray_chance = 0.0;
+uniform float sun_intensity = 0;
 
 void main() {
 	vec4  pixel			 = vec4(0.0, 0.0, 0.0, 1.0);			// the pixel value
@@ -308,11 +325,11 @@ void main() {
 			pixel += vec4(get_sky_color(ray) * attenuation, 1.0f);
 			float edge = cos(sun_size);
 			pixel += vec4(
-					vec3(smoothstep(
+					vec3(step(
 							edge, 
-							cos(sun_size * 0.5), 
+							//cos(sun_size * 1.0), 
 							dot(sun_direction, ray.direction))
-						) * attenuation * 5.,
+						) * attenuation * sun_intensity,
 					1.0f);
 			break;
 		}
@@ -342,7 +359,7 @@ void main() {
 		float specularChance   = mat.specular_chance;
 		float refractionChance = mat.refraction_chance;
 		//float shadowChance = shadow_ray_chance; 
-		float shadowChance = shadow_ray_chance * dot(sun_direction, info.normal);
+		float shadowChance = shadow_ray_chance;//* dot(sun_direction, info.normal);
 
 		// take fresnel into account for specularChance and adjust other chances.
 		// specular takes priority.
@@ -363,15 +380,16 @@ void main() {
 		float raySelectRoll = randomFloat(random_seed_full);
 		if (specularChance > 0.0f && raySelectRoll < specularChance) { // specular reflection
 			doSpecular	   = 1.0f;
-			rayProbability = specularChance ;
+			rayProbability = specularChance;
 		} else if (refractionChance > 0.0f && raySelectRoll < specularChance + refractionChance) { // refraction
 			doRefraction   = 1.0f;
 			rayProbability = refractionChance;
-		} else if (shadow_ray_chance > 0.0f && raySelectRoll < specularChance + refractionChance + shadow_ray_chance) { // shadow ray
+		} else if (shadowChance > 0.0f && raySelectRoll < specularChance + refractionChance + shadowChance) { // shadow ray
 			doShadow = 1.0f;
-			rayProbability = shadow_ray_chance / sun_size ;
+			//rayProbability = sin(sun_size) * sun_size * 4 / PI;
+			rayProbability = (1-cos(sun_size));
 		} else { // lambertian disperse
-			rayProbability = 1.0f - (specularChance + refractionChance + shadow_ray_chance);
+			rayProbability = 1.0f - (specularChance + refractionChance);
 		}
 
 		// avoid numerical issues causing a divide by zero, or nearly so (more important later, when we add refraction)
@@ -401,7 +419,8 @@ void main() {
 		refractionRayDir =
 			normalize(mix(refractionRayDir, -diffuseRayDir, mat.refraction_roughness * mat.refraction_roughness));
 
-		vec3 shadowRayDir = normalize(sun_direction + sin(sun_size) * random_in_unit_sphere(random_seed_full));
+		vec3 shadowRayDir = normalize(sun_direction + 1. * sin(sun_size) * random_in_unit_sphere(random_seed_full));
+		//vec3 shadowRayDir = normalize(sun_direction);
 
 		ray.direction = mix(diffuseRayDir, specularRayDir, doSpecular);
 		ray.direction = mix(ray.direction, refractionRayDir, doRefraction);
