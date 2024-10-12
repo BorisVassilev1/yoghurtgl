@@ -39,6 +39,7 @@ using GLuint   = unsigned int;
 #endif
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <cxxabi.h>
 
 #ifdef _WIN32
 	#include <Windows.h>
@@ -218,3 +219,18 @@ using uchar = unsigned char;
 	#version CONCAT(GL_CONTEXT_VERSION_MAJOR, GL_CONTEXT_VERSION_MINOR, 0) GL_CONTEXT_VERSION_TYPE
 #define _STRING(string) #string
 #define STRING(string)	_STRING(string)
+
+template <class T>
+auto f_name() {
+	typedef typename std::remove_reference<T>::type TR;
+
+	std::unique_ptr<char, void (*)(void *)> own(abi::__cxa_demangle(typeid(TR).name(), nullptr, nullptr, nullptr),
+												std::free);
+
+	std::string r = own != nullptr ? own.get() : typeid(TR).name();
+	if (std::is_const<TR>::value) r += " const";
+	if (std::is_volatile<TR>::value) r += " volatile";
+	if (std::is_lvalue_reference<T>::value) r += "&";
+	else if (std::is_rvalue_reference<T>::value) r += "&&";
+	return r;
+}
