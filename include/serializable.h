@@ -78,9 +78,9 @@ class ISerializable {
  */
 template <class T>
 concept IsResource = std::is_base_of<ygl::ISerializable, T>::value && requires(T, std::istream &in) {
-																		  { T::name } -> std::same_as<const char *&>;
-																		  { new T(in) };
-																	  };
+	{ T::name } -> std::same_as<const char *&>;
+	{ new T(in) };
+};
 
 /**
  * @brief A Factory for Resources
