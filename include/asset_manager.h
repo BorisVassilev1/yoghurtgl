@@ -19,7 +19,7 @@
 
 namespace ygl {
 
-template <class A> requires IsResource<A>
+template <class A>
 class AssetArray : public AppendableSerializable {
 	std::unordered_map<std::string, uint> names;
 	std::vector<std::pair<A *, bool>>	  assets;
