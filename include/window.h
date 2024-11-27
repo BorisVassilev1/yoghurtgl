@@ -4,6 +4,7 @@
 #include <chrono>
 #include <vector>
 #include <functional>
+#include <glm/vec2.hpp>
 
 /**
  * @file window.h
@@ -24,7 +25,7 @@ class Window {
 
 	inline static std::vector<std::function<void(GLFWwindow *, int, int)>> resizeCallbacks;
 
-	Window(){};
+	Window() {};
 	static void handleResize(GLFWwindow *, int, int);
 	static void defaultFrameCallback(long, long, long);
 
@@ -46,8 +47,10 @@ class Window {
 
 	int			getWidth();
 	int			getHeight();
+	glm::ivec2	getPos();
 	GLFWwindow *getHandle();
 	bool		shouldClose();
+	void		setShouldClose(bool);
 	void		swapBuffers();
 	void		beginFrame();
 	/**

@@ -106,8 +106,10 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 #ifndef __EMSCRIPTEN__
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
+	ImGuiContext *ctx = ImGui::CreateContext();
+	ImGui::SetCurrentContext(ctx);
 	ImGuiIO &io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	(void)io;
 
 	// Setup Dear ImGui style
@@ -129,9 +131,17 @@ ygl::Window::Window(int width, int height, const char *name) : Window(width, hei
 int ygl::Window::getWidth() { return width; }
 int ygl::Window::getHeight() { return height; }
 
+glm::ivec2 ygl::Window::getPos() {
+	int x, y;
+	glfwGetWindowPos(window, &x, &y);
+	return glm::ivec2(x, y);
+}
+
 GLFWwindow *ygl::Window::getHandle() { return window; }
 
 bool ygl::Window::shouldClose() { return glfwWindowShouldClose(window); }
+
+void ygl::Window::setShouldClose(bool b) { glfwSetWindowShouldClose(window, b); }
 
 void ygl::Window::swapBuffers() {
 #ifndef __EMSCRIPTEN__
@@ -163,6 +173,9 @@ void ygl::Window::swapBuffers() {
 	}
 
 	lastSwapTime = timeNow;
+	ImGui::UpdatePlatformWindows();
+	ImGui::RenderPlatformWindowsDefault();
+	glfwMakeContextCurrent(getHandle());
 }
 
 void ygl::Window::beginFrame() {
@@ -214,8 +227,8 @@ void ygl::Window::addResizeCallback(const std::function<void(GLFWwindow *, int, 
 
 void ygl::Window::defaultFrameCallback(long draw_time, long frame_time, long frames) {
 #ifndef __EMSCRIPTEN__
-	std::cout << std::fixed << std::setprecision(2) << "\rdraw time: " << (draw_time / 1e6)
-			  << "ms, FPS: " << frames << "         " << std::flush;		//<< std::endl;
+	std::cout << std::fixed << std::setprecision(2) << "\rdraw time: " << (draw_time / 1e6) << "ms, FPS: " << frames
+			  << "         " << std::flush;		//<< std::endl;
 #else
 	dbLog(ygl::LOG_INFO, std::fixed, std::setprecision(2), "draw time: ", (draw_time / 1e6), "ms, FPS: ", frames,
 		  "         ");

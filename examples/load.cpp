@@ -6,6 +6,7 @@
 #include <renderer.h>
 #include <effects.h>
 #include <fstream>
+#include <thread>
 #include "asset_manager.h"
 #include "entities.h"
 #include "transformation.h"
@@ -39,16 +40,16 @@ void run() {
 
 	std::cout << "ENTITY COUNT: " << scene.entitiesCount() << std::endl;
 
-	for(Entity e : scene.entities) {
+	for (Entity e : scene.entities) {
 		std::cout << scene.getComponent<Transformation>(e) << std::endl;
 		std::cout << scene.getComponent<RendererComponent>(e) << std::endl;
-		if(scene.hasComponent<GrassSystem::GrassHolder>(e))
+		if (scene.hasComponent<GrassSystem::GrassHolder>(e))
 			std::cout << scene.getComponent<GrassSystem::GrassHolder>(e) << std::endl;
 		std::cout << std::endl;
 	}
 
 	int editMaterialIndex = 0;
-	int textureViewIndex = 6;
+	int textureViewIndex  = 6;
 
 	glClearColor(0, 0, 0, 1);
 	while (!window.shouldClose()) {
@@ -67,9 +68,8 @@ void run() {
 
 		ImGui::Begin("Texture View");
 		ImGui::InputInt("Material ID", &textureViewIndex);
-		ImGui::Image((void*)textureViewIndex, ImVec2(256, 256));
+		ImGui::Image((void *)textureViewIndex, ImVec2(256, 256));
 		ImGui::End();
-
 
 		window.swapBuffers();
 	}

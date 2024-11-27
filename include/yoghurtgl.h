@@ -45,6 +45,8 @@ using GLuint   = unsigned int;
 	#include <Windows.h>
 #endif
 
+#include <imgui.h>
+
 /**
  * @brief the Yoghurtgl namespace
  */
@@ -102,23 +104,13 @@ enum {
 static const char *log_colors[]{COLOR_RESET, COLOR_GREEN, COLOR_YELLOW, COLOR_RED};
 
 /**
- * @brief prints endline to std::cerr
- * @return 1
- */
-bool inline f_dbLog(std::ostream &out) {
-	out << std::endl;
-	return 1;
-}
-
-/**
  * @brief prints to std::cerr
  *
  * @return 1
  */
-template <class T, class... Types>
-bool inline f_dbLog(std::ostream &out, T arg, Types... args) {
-	out << arg;
-	f_dbLog(out, args...);
+template <class... Types>
+bool inline f_dbLog(std::ostream &out, Types... args) {
+	(out << ... << args) << std::endl;
 	return 1;
 }
 
@@ -206,11 +198,11 @@ using uchar = unsigned char;
 #if defined(__EMSCRIPTEN__)
 	#define GL_CONTEXT_VERSION_MAJOR 3
 	#define GL_CONTEXT_VERSION_MINOR 0
-	#define GL_CONTEXT_VERSION_TYPE	es
+	#define GL_CONTEXT_VERSION_TYPE	 es
 #else
 	#define GL_CONTEXT_VERSION_MAJOR 4
 	#define GL_CONTEXT_VERSION_MINOR 3
-	#define GL_CONTEXT_VERSION_TYPE	core
+	#define GL_CONTEXT_VERSION_TYPE	 core
 #endif
 
 #define _CONCAT(x, y, z) x##y##z

@@ -627,7 +627,7 @@ void ygl::Renderer::drawGUI() {
 	ImGui::SeparatorText("Texture Debug View");
 	static int textureViewIndex = 1;
 	ImGui::InputInt("Texture ID", &textureViewIndex);
-	ImGui::Image((void *)(std::size_t)textureViewIndex, ImVec2(256, 256));
+	ImGui::Image(textureViewIndex, ImVec2(256, 256));
 
 	ImGui::End();
 }
