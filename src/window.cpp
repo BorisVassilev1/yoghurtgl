@@ -111,7 +111,9 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 	ImGuiContext *ctx = ImGui::CreateContext();
 	ImGui::SetCurrentContext(ctx);
 	ImGuiIO &io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	if(resizable) { // TODO: this should be a setting
+		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	}
 	(void)io;
 
 	// Setup Dear ImGui style
