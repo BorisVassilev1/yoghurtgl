@@ -4,6 +4,7 @@
 #include <chrono>
 #include <vector>
 #include <functional>
+#include <glm/vec2.hpp>
 
 /**
  * @file window.h
@@ -46,9 +47,11 @@ class Window {
 
 	int			getWidth();
 	int			getHeight();
+	glm::ivec2	getPos();
 	GLFWwindow *getHandle();
 	bool		shouldClose();
 	void		close();
+	void		setShouldClose(bool);
 	void		swapBuffers();
 	void		beginFrame();
 	/**

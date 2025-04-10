@@ -3,6 +3,7 @@
 #include <vector>
 #include <unordered_map>
 #include <queue>
+#include <imgui.h>
 #include "yoghurtgl.h"
 
 #include <serializable.h>
@@ -46,7 +47,8 @@ class AssetArray : public AppendableSerializable {
 	}
 	inline A *get(uint index) {
 		if (index >= assets.size()) THROW_RUNTIME_ERR("Out of bounds access: " + std::to_string(index));
-		if(assets[index].first == nullptr) THROW_RUNTIME_ERR("Trying to access a non-existent texture: " + std::to_string(index)); 
+		if (assets[index].first == nullptr)
+			THROW_RUNTIME_ERR("Trying to access a non-existent texture: " + std::to_string(index));
 		return assets[index].first;
 	}
 	inline uint size() { return names.size(); }
@@ -65,7 +67,7 @@ class AssetArray : public AppendableSerializable {
 
 	void write(std::ostream &out) override {
 		auto count = std::count_if(assets.begin(), assets.end(), [](auto &p) { return p.second; });
-		auto size = assets.size();
+		auto size  = assets.size();
 		out.write((char *)&count, sizeof(count));
 		out.write((char *)&size, sizeof(size));
 		for (auto &[name, index] : names) {
@@ -79,7 +81,7 @@ class AssetArray : public AppendableSerializable {
 
 	void read(std::istream &in) override {
 		auto count = assets.size();
-		auto size = assets.size();
+		auto size  = assets.size();
 		in.read((char *)&count, sizeof(count));
 		in.read((char *)&size, sizeof(size));
 		std::cout << "count " << count << std::endl;
@@ -88,7 +90,7 @@ class AssetArray : public AppendableSerializable {
 		std::vector<bool> check;
 		check.resize(size, false);
 
-		for(auto [name, index] : names) {
+		for (auto [name, index] : names) {
 			check[index] = true;
 		}
 
@@ -98,8 +100,11 @@ class AssetArray : public AppendableSerializable {
 			std::getline(in, name, '\0');
 			in.read((char *)&index, sizeof(uint));
 			dbLog(ygl::LOG_DEBUG, "loading: ", name, " ", index);
-			A *asset	  = dynamic_cast<A *>(ResourceFactory::fabricate(in));
-			if(check[index]) {
+			A *asset = dynamic_cast<A *>(ResourceFactory::fabricate(in));
+			if (check[index]) {
+				if (names.find(name) != names.end()) {
+					dbLog(ygl::LOG_DEBUG, names.find(name)->second);
+				}	  // else dbLog(ygl::LOG_DEBUG, *assets[index].first);
 				dbLog(ygl::LOG_ERROR, "asset index conflict.\nOld asset will be lost and will leak.");
 			}
 			assets[index] = std::make_pair(asset, true);
@@ -184,12 +189,12 @@ class AssetManager : public ygl::ISystem {
 
 	template <typename T>
 		requires IsTexture<T>
-	T* getTexture(uint i) {
-		return dynamic_cast<T*>(getTexture(i));
+	T *getTexture(uint i) {
+		return dynamic_cast<T *>(getTexture(i));
 	}
 
 	void printTextures();
-	AssetManager(Scene *scene) : ISystem(scene){};
+	AssetManager(Scene *scene) : ISystem(scene) {};
 	~AssetManager();
 
 	void init() override {}

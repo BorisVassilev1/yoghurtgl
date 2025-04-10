@@ -381,7 +381,7 @@ int main() {
 
 		ImGui::Begin("Texture View");
 		ImGui::InputInt("Texture ID", &textureViewIndex);
-		ImGui::Image((void *)(std::size_t)textureViewIndex, ImVec2(256, 256));
+		ImGui::Image(textureViewIndex, ImVec2(256, 256));
 		ImGui::End();
 
 		shouldReload = shouldReload || renderer->drawMaterialEditor();

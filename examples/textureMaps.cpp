@@ -1,4 +1,9 @@
+#include <unistd.h>
+#include <sys/wait.h>
 #include <yoghurtgl.h>
+#include <thread>
+#include "GLFW/glfw3.h"
+#include "imgui.h"
 
 #include <window.h>
 #include <shader.h>
@@ -37,11 +42,13 @@ void run() {
 	Texture2d *roughness = new Texture2d("./res/images/cobble/chiseled-cobble_roughness.png", TextureType::ROUGHNESS);
 	Texture2d *ao		 = new Texture2d("./res/images/cobble/chiseled-cobble_ao.png", TextureType::AO);
 
-	// Mesh *modelMesh = new BoxMesh(glm::vec3(1, 1, 1), glm::vec3(20, 20, 20));
-	Mesh *modelMesh = new PlaneMesh(glm::vec2(1, 1));
+	Mesh *modelMesh = new BoxMesh(glm::vec3(1, 1, 1), glm::vec3(20, 20, 20));
+	modelMesh->setCullFace(false);
+	// Mesh *modelMesh = new PlaneMesh(glm::vec2(1, 1));
 
 	Entity model = scene.createEntity();
-	scene.addComponent<Transformation>(model, Transformation(glm::vec3(), glm::vec3(glm::pi<float>() / 2,0,0), glm::vec3(1)));
+	scene.addComponent<Transformation>(
+		model, Transformation(glm::vec3(), glm::vec3(glm::pi<float>() / 2, 0, 0), glm::vec3(1)));
 
 	Material modelMat(glm::vec3(1.0, 0.5, 0.0), 0.02, glm::vec3(0), 1.0, glm::vec3(1.0), 0.0, glm::vec3(1.0), 0.0, 0.4,
 					  0.0, 0.);
@@ -63,14 +70,18 @@ void run() {
 
 	addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
 
-	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(0, -glm::pi<float>(), 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 3,
-							 Light::Type::DIRECTIONAL));
+	renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(0, -glm::pi<float>(), 0), glm::vec3(1)),
+							 glm::vec3(1., 1., 1.), 3, Light::Type::DIRECTIONAL));
 	// renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
 
 	renderer->loadData();
 
-	controller.speed = 0.6;
+	controller.speed *= 0.6;
 	int editMaterialIndex = 0;
+
+	Keyboard::addKeyCallback([&](GLFWwindow *, int key, int, int action, int mods) {
+		if (key == GLFW_KEY_T && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL) {}
+	});
 
 	glClearColor(0, 0, 0, 1);
 	while (!window.shouldClose()) {
@@ -78,7 +89,7 @@ void run() {
 		mouse.update();
 
 		Transformation &transform = scene.getComponent<Transformation>(model);
-		// transform.rotation += glm::vec3(0.3 * window.deltaTime);
+		transform.rotation += glm::vec3(0.3 * window.deltaTime);
 		// transform.rotation.y += 0.3 * window.deltaTime;
 		transform.updateWorldMatrix();
 
@@ -92,6 +103,28 @@ void run() {
 		ImGui::End();
 		renderer->getMaterial(editMaterialIndex).drawImGui();
 		renderer->loadData();
+
+		if (ImGui::Button("ERROR WINDOW")) {
+			window.swapBuffers();
+			bool	 b	= true;
+			ImGuiIO &io = ImGui::GetIO();
+			dbLog(ygl::LOG_DEBUG, "Display size: ", io.DisplaySize.x, " ", io.DisplaySize.y);
+
+			glm::ivec2 parentPos = window.getPos();
+			ImVec2 pos = ImVec2(parentPos.x + io.DisplaySize.x * 0.5f, parentPos.y + io.DisplaySize.y * 0.5f);
+			while (b) {
+				window.beginFrame();
+
+				ImGui::SetNextWindowPos(pos, ImGuiCond_None, ImVec2(0.5f, 0.5f));
+				ImGui::SetNextWindowSize(ImVec2(200, 100), ImGuiCond_None);
+
+				ImGui::Begin("ERROR WINDOW");
+				b = !ImGui::Button("Contunue");
+				ImGui::End();
+				window.swapBuffers();
+			}
+			window.beginFrame();
+		}
 
 		window.swapBuffers();
 	}

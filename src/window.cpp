@@ -108,8 +108,10 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 #ifndef __EMSCRIPTEN__
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
+	ImGuiContext *ctx = ImGui::CreateContext();
+	ImGui::SetCurrentContext(ctx);
 	ImGuiIO &io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	(void)io;
 
 	// Setup Dear ImGui style
@@ -131,9 +133,17 @@ ygl::Window::Window(int width, int height, const char *name) : Window(width, hei
 int ygl::Window::getWidth() { return width; }
 int ygl::Window::getHeight() { return height; }
 
+glm::ivec2 ygl::Window::getPos() {
+	int x, y;
+	glfwGetWindowPos(window, &x, &y);
+	return glm::ivec2(x, y);
+}
+
 GLFWwindow *ygl::Window::getHandle() { return window; }
 
 bool ygl::Window::shouldClose() { return glfwWindowShouldClose(window); }
+
+void ygl::Window::setShouldClose(bool b) { glfwSetWindowShouldClose(window, b); }
 
 void ygl::Window::swapBuffers() {
 #ifndef __EMSCRIPTEN__
@@ -165,6 +175,9 @@ void ygl::Window::swapBuffers() {
 	}
 
 	lastSwapTime = timeNow;
+	ImGui::UpdatePlatformWindows();
+	ImGui::RenderPlatformWindowsDefault();
+	glfwMakeContextCurrent(getHandle());
 }
 
 void ygl::Window::beginFrame() {
