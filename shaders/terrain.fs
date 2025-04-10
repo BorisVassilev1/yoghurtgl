@@ -1,3 +1,4 @@
+#define FRAG
 #include <rendering.glsl>
 
 in vec4 teColor;

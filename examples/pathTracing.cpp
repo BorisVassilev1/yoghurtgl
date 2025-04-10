@@ -319,7 +319,6 @@ int main() {
 	// tex->bind();
 
 	int textureViewIndex  = 6;
-	int editMaterialIndex = 0;
 
 	// dbLog(ygl::LOG_INFO, rawTexture->getID());
 	// dbLog(ygl::LOG_INFO, renderTexture->getID());
@@ -382,7 +381,7 @@ int main() {
 
 		ImGui::Begin("Texture View");
 		ImGui::InputInt("Texture ID", &textureViewIndex);
-		ImGui::Image((void *)textureViewIndex, ImVec2(256, 256));
+		ImGui::Image((void *)(std::size_t)textureViewIndex, ImVec2(256, 256));
 		ImGui::End();
 
 		shouldReload = shouldReload || renderer->drawMaterialEditor();

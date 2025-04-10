@@ -77,7 +77,7 @@ class ISerializable {
  * @return [TODO:description]
  */
 template <class T>
-concept IsResource = std::is_base_of<ygl::ISerializable, T>::value && requires(T, std::istream &in) {
+concept IsResource = std::is_base_of<ISerializable, T>::value && requires(T, std::istream &in) {
 																		  { T::name } -> std::same_as<const char *&>;
 																		  { new T(in) };
 																	  };
@@ -86,7 +86,7 @@ concept IsResource = std::is_base_of<ygl::ISerializable, T>::value && requires(T
  * @brief A Factory for Resources
  */
 class ResourceFactory {
-	using ResourceConstructor = std::function<ygl::ISerializable *(std::istream &)>;
+	using ResourceConstructor = std::function<ISerializable *(std::istream &)>;
 
 	static std::map<std::string, ResourceConstructor> fabricators;
 
@@ -112,7 +112,7 @@ class ResourceFactory {
 	 * @tparam T - a type that satisfies ygl::IsResource<T>
 	 */
 	template <class T>
-		requires ygl::IsResource<T>
+		requires IsResource<T>
 	static void registerResource() {
 		registerResource(T::name, [](std::istream &in) { return new T(in); });
 	}

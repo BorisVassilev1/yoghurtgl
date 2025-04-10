@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include "GLFW/glfw3.h"
 #include <assert.h>
 
 #include <imgui.h>
@@ -15,6 +16,7 @@
 ygl::Window::Window(int width, int height, const char *name, bool vsync, bool resizable, GLFWmonitor *monitor)
 	: width(width), height(height) {
 	assert(glfwGetPrimaryMonitor() != NULL);
+
 	const GLFWvidmode *mode = glfwGetVideoMode(monitor ? monitor : glfwGetPrimaryMonitor());
 
 	glfwWindowHint(GLFW_RED_BITS, mode->redBits);
@@ -41,10 +43,10 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 
 	ygl::Keyboard::init(this);
 
-	glfwSetWindowCloseCallback(window, [](GLFWwindow *) { std::cerr << "closing window!"; });
+	glfwSetWindowCloseCallback(window, [](GLFWwindow *) {});
 	Keyboard::addKeyCallback([&](GLFWwindow *window, int key, int, int action, int) {
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-			glfwSetWindowShouldClose(window, GLFW_TRUE);
+			close();
 		}
 #ifndef YGL_NDEBUG
 		else if (key == GLFW_KEY_R && action == GLFW_RELEASE) {
@@ -183,6 +185,8 @@ void ygl::Window::beginFrame() {
 #endif
 }
 
+void ygl::Window::close() { glfwSetWindowShouldClose(window, GLFW_TRUE); }
+
 ygl::Window::~Window() {
 	if (!ygl::glfw_init) return;
 	if (window != nullptr) {
@@ -214,8 +218,8 @@ void ygl::Window::addResizeCallback(const std::function<void(GLFWwindow *, int, 
 
 void ygl::Window::defaultFrameCallback(long draw_time, long frame_time, long frames) {
 #ifndef __EMSCRIPTEN__
-	std::cout << std::fixed << std::setprecision(2) << "\rdraw time: " << (draw_time / 1e6)
-			  << "ms, FPS: " << frames << "         " << std::flush;		//<< std::endl;
+	std::cout << std::fixed << std::setprecision(2) << "\rdraw time: " << (draw_time / 1e6) << "ms, FPS: " << frames
+			  << "         " << std::flush;		//<< std::endl;
 #else
 	dbLog(ygl::LOG_INFO, std::fixed, std::setprecision(2), "draw time: ", (draw_time / 1e6), "ms, FPS: ", frames,
 		  "         ");

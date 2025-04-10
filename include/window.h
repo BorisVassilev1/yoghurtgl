@@ -24,7 +24,7 @@ class Window {
 
 	inline static std::vector<std::function<void(GLFWwindow *, int, int)>> resizeCallbacks;
 
-	Window(){};
+	Window() {};
 	static void handleResize(GLFWwindow *, int, int);
 	static void defaultFrameCallback(long, long, long);
 
@@ -48,6 +48,7 @@ class Window {
 	int			getHeight();
 	GLFWwindow *getHandle();
 	bool		shouldClose();
+	void		close();
 	void		swapBuffers();
 	void		beginFrame();
 	/**

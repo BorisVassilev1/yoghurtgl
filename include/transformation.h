@@ -14,7 +14,7 @@ namespace ygl {
 /**
  * @brief Position, Rotation and Scale in 3d space
  */
-class Transformation : public ygl::Serializable {
+class Transformation : public Serializable {
 	glm::mat4x4 worldMatrix;
 
    public:

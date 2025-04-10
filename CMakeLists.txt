@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.25.0)
 
 set(YGL_NO_ASSIMP OFF CACHE BOOL "Link Assimp as a dependency")
-set(CMAKE_CXX_STANDARD 20)
 set(YGL_STATIC ON CACHE BOOL "link as static library")
 set(ASAN_DETECT_LEAKS ON CACHE BOOL "turn the leak sanitizer on or off")
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 project(YoghurtGL)
 
 message("emscripten: " ${EMSCRIPTEN})
@@ -36,7 +38,7 @@ else ()
 	set(LINK_ARGS
 		#-fsanitize=address
 	)
-	set(COMPILE_ARGS ${COMPILE_ARGS} -Wall -Wpedantic --pedantic-errors -g -O3)
+	set(COMPILE_ARGS ${COMPILE_ARGS} -Wall -Wpedantic --pedantic-errors -g -O3 -std=c++2a)
 endif ()
 
 if (WIN32)
@@ -99,6 +101,7 @@ target_link_options(YoghurtGL PRIVATE ${COMPILE_ARGS})
 set_target_properties(YoghurtGL PROPERTIES PUBLIC_HEADER include/)
 set_target_properties(YoghurtGL PROPERTIES LIBRARY_OUTPUT_DIRECTORY ../)
 set_target_properties(YoghurtGL PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../)
+
 
 
 message("BUILD TYPE: " ${CMAKE_BUILD_TYPE})

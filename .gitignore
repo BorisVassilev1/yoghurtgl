@@ -30,3 +30,4 @@ doxygen_config.txt
 *.so
 *.dll
 *.sc
+*.out

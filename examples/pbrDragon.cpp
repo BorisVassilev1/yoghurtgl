@@ -34,10 +34,10 @@ void run() {
 	renderer->setMainCamera(&cam);
 	MeshFromFile::import_flags |= aiProcess_PreTransformVertices;
 
-	Entity sphere = addSphere(scene, glm::vec3(-3, 0, 0), glm::vec3(1));
-	Material &sphere_mat = renderer->getMaterial(scene.getComponent<RendererComponent>(sphere).materialIndex);
-	sphere_mat.albedo = glm::vec3(0);
-	sphere_mat.albedo_map = asman->addTexture(new Texture2d("./res/images/2k_earth_daymap.jpg"), "earth");
+	Entity	  sphere		  = addSphere(scene, glm::vec3(-3, 0, 0), glm::vec3(1));
+	Material &sphere_mat	  = renderer->getMaterial(scene.getComponent<RendererComponent>(sphere).materialIndex);
+	sphere_mat.albedo		  = glm::vec3(0);
+	sphere_mat.albedo_map	  = asman->addTexture(new Texture2d("./res/images/2k_earth_daymap.jpg"), "earth");
 	sphere_mat.use_albedo_map = 0.4;
 	sphere_mat.normal_map = asman->addTexture(new Texture2d("./res/images/earth_normals_lowres.jpg"), "earth_normal");
 	sphere_mat.use_normal_map = 1.0;
@@ -56,13 +56,9 @@ void run() {
 	});
 
 	// addSkybox(scene, "./res/images/skybox/");
-	//addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
-	//addSkybox(scene, "res/images/royal_esplanade_4k", ".hdr");
+	// addSkybox(scene, "res/images/blue_photo_studio_4k", ".hdr");
+	// addSkybox(scene, "res/images/royal_esplanade_4k", ".hdr");
 	addSkybox(scene, "res/images/meadow_4k", ".hdr");
-
-	//renderer->addLight(Light(Transformation(glm::vec3(0), glm::vec3(1, .3, 0), glm::vec3(1)), glm::vec3(1., 1., 1.), 5,
-	//						 Light::Type::DIRECTIONAL));
-	//renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.11, Light::Type::AMBIENT));
 
 	renderer->loadData();
 
@@ -83,7 +79,7 @@ void run() {
 
 		ImGui::Begin("Texture View");
 		ImGui::InputInt("Material ID", &textureViewIndex);
-		ImGui::Image((void*)textureViewIndex, ImVec2(256, 256));
+		ImGui::Image((void *)(std::size_t)textureViewIndex, ImVec2(256, 256));
 		ImGui::End();
 
 		window.swapBuffers();

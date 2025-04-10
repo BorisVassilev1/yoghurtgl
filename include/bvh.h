@@ -11,7 +11,7 @@
 #include <ostream>
 #include <vector>
 #include <memory>
-#include "transformation.h"
+#include <transformation.h>
 #include <timer.h>
 
 #include <material.h>
@@ -26,10 +26,10 @@ namespace bvh {
 ///
 /// Data for an intersection between a ray and scene primitive
 struct Intersection {
-	float		   t = -1.f;			   ///< Position of the intersection along the ray
-	glm::vec3	   p;					   ///< The intersection point
-	glm::vec3	   normal;				   ///< The normal at the intersection
-	ygl::Material *material = nullptr;	   ///< Material of the intersected primitive
+	float	  t = -1.f;				  ///< Position of the intersection along the ray
+	glm::vec3 p;					  ///< The intersection point
+	glm::vec3 normal;				  ///< The normal at the intersection
+	Material *material = nullptr;	  ///< Material of the intersected primitive
 };
 
 ///
@@ -151,7 +151,7 @@ struct Triangle : public Primitive {
 	uint matIdx;		 ///< material index for the Triangle
 	union {
 		glm::vec3 positions[3];
-		static struct {
+		struct {
 			glm::vec3 A, B, C;	   ///< the three points defining the Triangle
 		};
 	};
@@ -253,7 +253,7 @@ class BVHTree : public IntersectionAccelerator {
 		BBox box;
 		union {
 			Node *children[2];
-			static struct {
+			struct {
 				Node *left, *right;
 			};
 		};
@@ -313,15 +313,15 @@ class BVHTree : public IntersectionAccelerator {
 	// I guess SAH is too good
 	static constexpr int PERFECT_SPLIT_THRESHOLD = 20;
 
-	int		 depth			 = 0;						///< depth of the tree
-	int		 leafSize		 = 0;						///< size of the largest leaf
-	long int leavesCount	 = 0;						///< hOw MaNy LeAvEs
-	long int nodeCount		 = 0;						///< HoW mAnY nOdEs
-	long int primitivesCount = 0;						///< how many primitives are in the structure
+	int		 depth			 = 0;	  ///< depth of the tree
+	int		 leafSize		 = 0;	  ///< size of the largest leaf
+	long int leavesCount	 = 0;	  ///< hOw MaNy LeAvEs
+	long int nodeCount		 = 0;	  ///< HoW mAnY nOdEs
+	long int primitivesCount = 0;	  ///< how many primitives are in the structure
 
-	void clear(Node *node);								///< clears the entire CPU tree starting from \a node
-	void clearConstructionTree();						///< clears the entire CPU tree
-	void build(Node *node, int depth);					///< builds the CPU tree
+	void clear(Node *node);				   ///< clears the entire CPU tree starting from \a node
+	void clearConstructionTree();		   ///< clears the entire CPU tree
+	void build(Node *node, int depth);	   ///< builds the CPU tree
 
 	bool isBuilt() const override { return built; }		///< checks if the tree is built
 
@@ -346,7 +346,7 @@ class BVHTree : public IntersectionAccelerator {
 	 * @param mesh - the mesh to be added to the BVH
 	 * @param transform - a Transformation for the model
 	 */
-	void addPrimitive(ygl::Mesh *mesh, ygl::Transformation &transform);
+	void addPrimitive(Mesh *mesh, Transformation &transform);
 	void clear() override;
 	void build(Purpose purpose = Purpose::Generic) override;
 	~BVHTree();

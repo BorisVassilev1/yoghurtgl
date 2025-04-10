@@ -112,7 +112,7 @@ class MultiBufferMesh : public IMesh {
 
 // note that 'count' is the vertex count, not the length or size of the VBO
 template <class T>
-void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, T *data, GLenum type, GLuint count,
+void MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, T *data, GLenum type, GLuint count,
 								  GLuint indexDivisor) {
 	GLuint buff;
 	glGenBuffers(1, &buff);
@@ -122,7 +122,7 @@ void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, T *data
 }
 
 template <class T>
-void ygl::MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, T *data, GLenum type, GLuint count) {
+void MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, T *data, GLenum type, GLuint count) {
 	addVBO(attrLocation, coordSize, data, type, count, 0);
 }
 
@@ -140,11 +140,11 @@ class Mesh : public MultiBufferMesh {
    public:
 	Mesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
 		 GLfloat *tangents, GLuint indicesCount, GLuint *indices);
-	ygl::IMesh::VBO getVertices();
-	ygl::IMesh::VBO getNormals();
-	ygl::IMesh::VBO getTexCoords();
-	ygl::IMesh::VBO getColors();
-	ygl::IMesh::VBO getTangents();
+	IMesh::VBO getVertices();
+	IMesh::VBO getNormals();
+	IMesh::VBO getTexCoords();
+	IMesh::VBO getColors();
+	IMesh::VBO getTangents();
 };
 
 const int MAX_BONE_INFLUENCE = 4;
@@ -165,8 +165,8 @@ class AnimatedMesh : public Mesh {
 	AnimatedMesh(std::istream &in) : Mesh(in) {}
 	AnimatedMesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
 				 GLfloat *tangents, GLint *boneIDs, GLfloat *weights, GLuint indicesCount, GLuint *indices);
-	ygl::IMesh::VBO							   getBoneIds();
-	ygl::IMesh::VBO							   getWeights();
+	IMesh::VBO							   getBoneIds();
+	IMesh::VBO							   getWeights();
 	std::unordered_map<std::string, BoneInfo> &getBoneInfoMap() { return boneInfoMap; }
 	uint									  &getBoneCount() { return bonesCount; }
 };

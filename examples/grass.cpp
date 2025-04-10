@@ -274,7 +274,7 @@ void run() {
 
 		renderer->drawGUI();
 
-		ImGui::Begin("Profiler");
+		ImGui::Begin("Profiler", nullptr, window_flags);
 		float time = window.deltaTime;
 		history.push_back(time);
 		if (history.size() > 150) history.erase(history.begin());

@@ -1,3 +1,4 @@
+#define VERT
 #include <rendering.glsl>
 
 out vec4 vColor;

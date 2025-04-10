@@ -6,6 +6,7 @@
  */
 
 #include <sstream>
+#include <thread>
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -43,6 +44,8 @@ using GLuint   = unsigned int;
 #ifdef _WIN32
 	#include <Windows.h>
 #endif
+
+#include <msgBox.h>
 
 /**
  * @brief the Yoghurtgl namespace
@@ -126,33 +129,39 @@ bool inline f_dbLog(std::ostream &out, T arg, Types... args) {
  * If severity is greater than the definition YGL_LOG_LEVEL, prints all arguments to std::cerr
  */
 
+#ifndef YGL_WINDOW_ERROR
+	#define YGL_WINDOW_ERROR 1
+#endif
+
 #ifndef YGL_NDEBUG
 	#define YGL_DEBUG
-	#define YGL_LOG_LEVEL -1
+	#ifndef YGL_LOG_LEVEL
+		#define YGL_LOG_LEVEL -1
+	#endif
 	#ifdef __linux__
-		#define dbLog(severity, ...)                                                                      \
-			{                                                                                             \
-				if (severity == ygl::LOG_ERROR) {                                                         \
-					std::stringstream s;                                                                  \
-					ygl::f_dbLog(s, __VA_ARGS__);                                                         \
-					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", s.str());    \
-					std::string cmd = "LC_ALL=C xmessage -default ok \"" + s.str() + "\"";                \
-					system(cmd.c_str());                                                                  \
-				} else if (severity >= YGL_LOG_LEVEL)                                                     \
-					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", __VA_ARGS__, \
-								 COLOR_RESET);                                                            \
+		#define dbLog(severity, ...)                                                                                \
+			{                                                                                                       \
+				if (severity == ygl::LOG_ERROR) {                                                                   \
+					std::stringstream s;                                                                            \
+					ygl::f_dbLog(s, __VA_ARGS__);                                                                   \
+					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", s.str(), COLOR_RESET); \
+					std::string cmd = "LC_ALL=C xmessage -default ok \"" + s.str() + "\"";                          \
+					if constexpr (YGL_WINDOW_ERROR) ygl::createMessageBox("Error", s.str());                        \
+				} else if (severity >= YGL_LOG_LEVEL)                                                               \
+					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", __VA_ARGS__,           \
+								 COLOR_RESET);                                                                      \
 			};
 	#elif defined(_WIN32)
-		#define dbLog(severity, ...)                                                                      \
-			{                                                                                             \
-				if (severity == ygl::LOG_ERROR) {                                                         \
-					std::stringstream s;                                                                  \
-					ygl::f_dbLog(s, __VA_ARGS__);                                                         \
-					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", s.str());    \
-					MessageBox(NULL, s.str().c_str(), "Title!", MB_ICONERROR | MB_OK);                    \
-				} else if (severity >= YGL_LOG_LEVEL)                                                     \
-					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", __VA_ARGS__, \
-								 COLOR_RESET);                                                            \
+		#define dbLog(severity, ...)                                                                                   \
+			{                                                                                                          \
+				if (severity == ygl::LOG_ERROR) {                                                                      \
+					std::stringstream s;                                                                               \
+					ygl::f_dbLog(s, __VA_ARGS__);                                                                      \
+					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", s.str());                 \
+					if constexpr (YGL_WINDOW_ERROR) MessageBox(NULL, s.str().c_str(), "Title!", MB_ICONERROR | MB_OK); \
+				} else if (severity >= YGL_LOG_LEVEL)                                                                  \
+					ygl::f_dbLog(std::cerr, ygl::log_colors[severity], "[", #severity, "] ", __VA_ARGS__,              \
+								 COLOR_RESET);                                                                         \
 			};
 	#elif defined(__EMSCRIPTEN__)
 		#define dbLog(severity, ...)                                                                      \
@@ -173,7 +182,9 @@ bool inline f_dbLog(std::ostream &out, T arg, Types... args) {
 				: 0;
 	#endif
 #else
-	#define YGL_LOG_LEVEL		 3
+	#ifndef YGL_LOG_LEVEL
+		#define YGL_LOG_LEVEL 3
+	#endif
 	#define dbLog(severity, ...) ((void)0)
 #endif
 
@@ -205,11 +216,11 @@ using uchar = unsigned char;
 #if defined(__EMSCRIPTEN__)
 	#define GL_CONTEXT_VERSION_MAJOR 3
 	#define GL_CONTEXT_VERSION_MINOR 0
-	#define GL_CONTEXT_VERSION_TYPE	es
+	#define GL_CONTEXT_VERSION_TYPE	 es
 #else
 	#define GL_CONTEXT_VERSION_MAJOR 4
 	#define GL_CONTEXT_VERSION_MINOR 3
-	#define GL_CONTEXT_VERSION_TYPE	core
+	#define GL_CONTEXT_VERSION_TYPE	 core
 #endif
 
 #define _CONCAT(x, y, z) x##y##z

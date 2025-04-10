@@ -1,6 +1,6 @@
 #include <yoghurtgl.h>
 #include <iostream>
-#include "mesh.h"
+#include <mesh.h>
 #include <serializable.h>
 #include <assert.h>
 
