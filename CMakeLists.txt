@@ -63,6 +63,11 @@ else (${ASAN_DETECT_LEAKS})
 	set(COMPILE_ARGS ${COMPILE_ARGS} -DASAN_DETECT_LEAKS=0)
 endif (${ASAN_DETECT_LEAKS})
 
+message("BUILD TYPE: " ${CMAKE_BUILD_TYPE})
+if (${CMAKE_BUILD_TYPE} MATCHES "Release")
+	set(COMPILE_ARGS ${COMPILE_ARGS} -DYGL_NDEBUG)
+endif (${CMAKE_BUILD_TYPE} MATCHES "Release")
+
 file(GLOB_RECURSE YGL_SOURCES
 	./src/*.cpp
 )
@@ -101,13 +106,6 @@ target_link_options(YoghurtGL PRIVATE ${COMPILE_ARGS})
 set_target_properties(YoghurtGL PROPERTIES PUBLIC_HEADER include/)
 set_target_properties(YoghurtGL PROPERTIES LIBRARY_OUTPUT_DIRECTORY ../)
 set_target_properties(YoghurtGL PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../)
-
-
-
-message("BUILD TYPE: " ${CMAKE_BUILD_TYPE})
-if (${CMAKE_BUILD_TYPE} MATCHES "Release")
-	add_definitions(-DYGL_NDEBUG)
-endif (${CMAKE_BUILD_TYPE} MATCHES "Release")
 
 file(GLOB_RECURSE TARGET_FILES examples/*.cpp)
 
