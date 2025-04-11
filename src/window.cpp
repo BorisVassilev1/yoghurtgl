@@ -111,7 +111,7 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 	ImGuiContext *ctx = ImGui::CreateContext();
 	ImGui::SetCurrentContext(ctx);
 	ImGuiIO &io = ImGui::GetIO();
-	if(resizable) { // TODO: this should be a setting
+	if(enableViewports) {
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	}
 	(void)io;
@@ -147,6 +147,18 @@ bool ygl::Window::shouldClose() { return glfwWindowShouldClose(window); }
 
 void ygl::Window::setShouldClose(bool b) { glfwSetWindowShouldClose(window, b); }
 
+
+void ygl::Window::setEnableViewports(bool b) {
+	this->enableViewports = b;
+	#ifndef __EMSCRIPTEN__
+	if (b) {
+		ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	} else {
+		ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
+	}
+	#endif
+}
+
 void ygl::Window::swapBuffers() {
 #ifndef __EMSCRIPTEN__
 	// finish Dear ImGui frame
@@ -177,9 +189,11 @@ void ygl::Window::swapBuffers() {
 	}
 
 	lastSwapTime = timeNow;
-	ImGui::UpdatePlatformWindows();
-	ImGui::RenderPlatformWindowsDefault();
-	glfwMakeContextCurrent(getHandle());
+	if(enableViewports) {
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
+		glfwMakeContextCurrent(getHandle());
+	}
 }
 
 void ygl::Window::beginFrame() {

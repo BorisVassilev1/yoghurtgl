@@ -22,6 +22,7 @@ class Window {
 	double										   lastPrintTime		= 0;
 	long										   frames_last_interval = 0;
 	void (*frameCallback)(long, long, long)								= &defaultFrameCallback;
+	bool enableViewports												= false;
 
 	inline static std::vector<std::function<void(GLFWwindow *, int, int)>> resizeCallbacks;
 
@@ -52,6 +53,7 @@ class Window {
 	bool		shouldClose();
 	void		close();
 	void		setShouldClose(bool);
+	void		setEnableViewports(bool);
 	void		swapBuffers();
 	void		beginFrame();
 	/**
