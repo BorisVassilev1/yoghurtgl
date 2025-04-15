@@ -108,14 +108,14 @@ ygl::BloomEffect::BloomEffect(Renderer *renderer) {
 
 	dbLog(ygl::LOG_DEBUG, "window size: ", window->getWidth(), " ", window->getHeight());
 
-	blurShader	 = new ComputeShader("./shaders/postProcessing/blur.comp");
-	filterShader = new ComputeShader("./shaders/postProcessing/filter.comp");
+	blurShader	 = new ComputeShader(YGL_RELATIVE_PATH "./shaders/postProcessing/blur.comp");
+	filterShader = new ComputeShader(YGL_RELATIVE_PATH "./shaders/postProcessing/filter.comp");
 	filterShader->bind();
 	// filterShader->setUniform("img_input", 1);
 	// filterShader->setUniform("img_output", 0);
 	filterShader->unbind();
 
-	onScreen = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/ui/textureOnScreen.fs");
+	onScreen = new VFShader(YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.vs", YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.fs");
 	onScreen->bind();
 	onScreen->setUniform("sampler_color", 7);
 	onScreen->setUniform("sampler_depth", 7);
