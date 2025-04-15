@@ -274,7 +274,7 @@ void initPathTracer() {
 	renderTexture->bind(RENDER_TEXTURE_BINDING);
 	rawTexture->bind(RAW_TEXTURE_BINDING);
 
-	textureOnScreen = new ygl::VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/ui/textureOnScreen.fs");
+	textureOnScreen = new ygl::VFShader(YGL_RELATIVE_PATH"./shaders/ui/textureOnScreen.vs", YGL_RELATIVE_PATH"./shaders/ui/textureOnScreen.fs");
 	textureOnScreen->bind();
 	textureOnScreen->setUniform("sampler_color", 15);
 	textureOnScreen->setUniform("sampler_depth", 15);

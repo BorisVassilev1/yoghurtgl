@@ -668,7 +668,7 @@ ygl::Texture2d *ygl::createBRDFTexture() {
 	quad->setDepthFunc(GL_ALWAYS);
 	quad->setCullFace(false);
 
-	ygl::VFShader *sh = new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/BRDFPrecompute.fs");
+	ygl::VFShader *sh = new VFShader(YGL_RELATIVE_PATH"./shaders/ui/textureOnScreen.vs", YGL_RELATIVE_PATH"./shaders/BRDFPrecompute.fs");
 
 	glViewport(0, 0, width, height);
 	fb->bind();
