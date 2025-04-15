@@ -74,7 +74,7 @@ void ygl::FrameBuffer::bindDefault() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 
 ygl::ACESEffect::ACESEffect(ygl::Renderer *renderer) {
 	this->setRenderer(renderer);
-	auto sh		= new VFShader("./shaders/ui/textureOnScreen.vs", "./shaders/postProcessing/acesFilm.fs");
+	auto sh		= new VFShader(YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.vs", "./shaders/postProcessing/acesFilm.fs");
 	colorGrader = renderer->getAssetManager()->addShader(sh, "color grading shader", false);
 }
 

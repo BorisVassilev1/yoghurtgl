@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.25.0)
 set(YGL_NO_ASSIMP OFF CACHE BOOL "Link Assimp as a dependency")
 set(YGL_STATIC ON CACHE BOOL "link as static library")
 set(ASAN_DETECT_LEAKS ON CACHE BOOL "turn the leak sanitizer on or off")
+set(YGL_RELATIVE_PATH "." CACHE STRING "Relative path to the YoghurtGL directory")
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -62,6 +63,8 @@ if (${ASAN_DETECT_LEAKS})
 else (${ASAN_DETECT_LEAKS})
 	set(COMPILE_ARGS ${COMPILE_ARGS} -DASAN_DETECT_LEAKS=0)
 endif (${ASAN_DETECT_LEAKS})
+
+set(COMPILE_ARGS ${COMPILE_ARGS} -DYGL_RELATIVE_PATH="${YGL_RELATIVE_PATH}/")
 
 message("BUILD TYPE: " ${CMAKE_BUILD_TYPE})
 if (${CMAKE_BUILD_TYPE} MATCHES "Release")

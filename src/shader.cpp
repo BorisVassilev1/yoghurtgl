@@ -143,22 +143,15 @@ bool ygl::Shader::checkCompileStatus(int target) {
 void ygl::Shader::loadSource(const char *file, GLenum type, const char *includeDir, char *&source, int &length) {
 	std::vector<std::string> lines;
 	lines.push_back(STRING(GL_CONTEXT_VERSION));
-	switch(type) {
+	switch (type) {
 		case GL_VERTEX_SHADER:
-		case GL_VERTEX_SHADER_EXT:
-			lines.push_back("#define VERTEX_SHADER"); break;
-		case GL_FRAGMENT_SHADER:
-			lines.push_back("#define FRAGMENT_SHADER"); break;
-		case GL_COMPUTE_SHADER:
-			lines.push_back("#define COMPUTE_SHADER"); break;
-		case GL_GEOMETRY_SHADER:
-			lines.push_back("#define GEOMETRY_SHADER"); break;
-		case GL_TESS_CONTROL_SHADER:
-			lines.push_back("#define TESS_CONTROL_SHADER"); break;
-		case GL_TESS_EVALUATION_SHADER:
-			lines.push_back("#define TESS_EVALUATION_SHADER"); break;
-		case GL_MESH_SHADER_NV:
-			lines.push_back("#define MESH_SHADER"); break;
+		case GL_VERTEX_SHADER_EXT: lines.push_back("#define VERTEX_SHADER"); break;
+		case GL_FRAGMENT_SHADER: lines.push_back("#define FRAGMENT_SHADER"); break;
+		case GL_COMPUTE_SHADER: lines.push_back("#define COMPUTE_SHADER"); break;
+		case GL_GEOMETRY_SHADER: lines.push_back("#define GEOMETRY_SHADER"); break;
+		case GL_TESS_CONTROL_SHADER: lines.push_back("#define TESS_CONTROL_SHADER"); break;
+		case GL_TESS_EVALUATION_SHADER: lines.push_back("#define TESS_EVALUATION_SHADER"); break;
+		case GL_MESH_SHADER_NV: lines.push_back("#define MESH_SHADER"); break;
 	}
 	loadSourceRecursively(lines, file, includeDir, strlen(includeDir));
 
@@ -223,9 +216,13 @@ void ygl::Shader::finishProgramCreation() {
 	if (!success) {
 		dbLog(ygl::LOG_ERROR, "Shader failed to link");
 		detachShaders();
-		createShader(GL_VERTEX_SHADER, 0, "./shaders/error/error.vs");
-		createShader(GL_FRAGMENT_SHADER, 1, "./shaders/error/error.fs");
-		finishProgramCreation();
+		if (strcmp(fileNames[0], "./shaders/error/error.vs")) {
+			createShader(GL_VERTEX_SHADER, 0, "./shaders/error/error.vs");
+			createShader(GL_FRAGMENT_SHADER, 1, "./shaders/error/error.fs");
+			finishProgramCreation();
+		} else {
+			deleteShaders();
+		}
 		return;
 	}
 	deleteShaders();
