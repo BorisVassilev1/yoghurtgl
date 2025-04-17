@@ -9,6 +9,7 @@
 #include <asset_manager.h>
 #include <material.h>
 #include <entities.h>
+#include <effects.h>
 
 #include <imgui.h>
 
@@ -253,6 +254,7 @@ void ygl::Renderer::init() {
 
 	// addScreenEffect(new BloomEffect(this));
 	addScreenEffect(new ACESEffect(this));
+	addScreenEffect(new FXAAEffect(this));
 	brdfTexture = asman->addTexture(createBRDFTexture(), "brdf_Texture", false);
 }
 
@@ -621,7 +623,7 @@ void ygl::Renderer::drawGUI() {
 	ImGui::InputInt("Render Mode", (int *)&renderMode);
 	ImGui::SeparatorText("Screen Effects");
 	for (uint i = 0; i < effects.size(); ++i) {
-		ImGui::Checkbox("Effect", &(effects[i]->enabled));
+		ImGui::Checkbox(("Effect" + std::to_string(i)).c_str(), &(effects[i]->enabled));
 	}
 
 	ImGui::SeparatorText("Texture Debug View");

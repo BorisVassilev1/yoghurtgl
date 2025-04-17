@@ -67,8 +67,8 @@ class GrassSystem : public ygl::ISystem {
 		void deserialize(std::istream &in);
 	};
 
-	glm::vec2	  size	  = glm::vec2(20, 20);
-	float		  density = 1.5;
+	glm::vec2	  size		 = glm::vec2(20, 20);
+	float		  density	 = 1.5;
 	int			  bladeCount = 0;
 	Window		 *window;
 	Renderer	 *renderer;
@@ -98,5 +98,29 @@ class GrassSystem : public ygl::ISystem {
 };
 
 std::ostream &operator<<(std::ostream &out, const ygl::GrassSystem::GrassHolder &rhs);
+
+class FXAAEffect : public IScreenEffect {
+	Shader *fxaaShader = nullptr;
+
+   public:
+	FXAAEffect(Renderer *renderer) : IScreenEffect() {
+		setRenderer(renderer);
+		fxaaShader = new VFShader(YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.vs",
+								  YGL_RELATIVE_PATH "./shaders/postProcessing/fxaa.fs");
+		renderer->getAssetManager()->addShader(fxaaShader, "fxaaShader", false);
+	}
+	~FXAAEffect() { }
+	void apply(FrameBuffer *front, FrameBuffer *back) override {
+		front->getColor()->bind(GL_TEXTURE7);
+		if (back) back->bind();
+		else FrameBuffer::bindDefault();
+
+		fxaaShader->bind();
+		fxaaShader->setUniform("u_fxaaOn", enabled);
+		fxaaShader->setUniform("u_texelStep", glm::vec2(1.f / renderer->getWindow()->getWidth(), 1.f / renderer->getWindow()->getHeight()));
+		Renderer::drawObject(fxaaShader, renderer->getScreenQuad());
+		front->getColor()->unbind(GL_TEXTURE7);
+	}
+};
 
 }	  // namespace ygl

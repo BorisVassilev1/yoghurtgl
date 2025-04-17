@@ -26,8 +26,8 @@ using namespace std;
 void run() {
 	Window window = Window(1200, 800, "Grass Test", true);
 
-	VFShader		 *shader	   = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
-	VFShader		 *shadowShader = new VFShader("./shaders/simple.vs", "./shaders/simple_shadow.fs");
+	VFShader		 *shader	   = new VFShader(YGL_RELATIVE_PATH"./shaders/simple.vs", YGL_RELATIVE_PATH"./shaders/simple.fs");
+	VFShader		 *shadowShader = new VFShader(YGL_RELATIVE_PATH"./shaders/simple.vs", YGL_RELATIVE_PATH"./shaders/simple_shadow.fs");
 	PerspectiveCamera cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse mouse(window);
@@ -166,7 +166,7 @@ void run() {
 	glm::vec3 camera_rotation = glm::vec3(0);
 	float	  distance		  = 13.;
 
-	Transformation handOffset(glm::vec3(-1.04, 1.70, 0.32), glm::vec3(1.22, -0.45, 0.22), glm::vec3(0.5));
+	Transformation	   handOffset(glm::vec3(-1.04, 1.70, 0.32), glm::vec3(1.22, -0.45, 0.22), glm::vec3(0.5));
 	std::vector<float> history;
 
 	renderer->setClearColor(glm::vec4(clearColor, 1.));
@@ -251,7 +251,6 @@ void run() {
 		renderer->loadData();
 
 		renderer->drawMaterialEditor();
-
 
 		ImGui::Begin("Grass controls", nullptr, window_flags);
 		if (ImGui::SliderFloat("density", &(grassSystem->density), 1., 10.)) { grassSystem->reload(); }

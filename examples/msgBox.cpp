@@ -13,6 +13,7 @@ int main(int argc, char **argv) {
 
 	ygl::Window window = ygl::Window(200, 200, argv[1]);
 
+	glfwSetInputMode(window.getHandle(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	int result = 0;
 	while (!window.shouldClose()) {
 		window.beginFrame();
