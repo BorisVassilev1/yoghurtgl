@@ -32,7 +32,7 @@ class Shader : public ISerializable {
 	std::unordered_map<std::string, GLint> SSBOs;
 	std::unordered_map<std::string, GLint> UBOs;
 
-	static constexpr const char *DEFAULT_INCLUDE_DIRECTORY = "./shaders/include/";
+	static constexpr const char *DEFAULT_INCLUDE_DIRECTORY = YGL_RELATIVE_PATH "./shaders/include/";
 
 	void loadSourceRecursively(std::vector<std::string> &lines, const char *file, const char *includeDir,
 							   int includeDirLength);
