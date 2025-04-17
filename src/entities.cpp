@@ -26,7 +26,9 @@ ygl::Entity ygl::addSphere(Scene &scene, glm::vec3 position, glm::vec3 scale, gl
 	Renderer	 *renderer = scene.getSystem<Renderer>();
 	AssetManager *asman	   = scene.getSystem<AssetManager>();
 	if (canonicalSphereIndex == (uint)-1) {
-		canonicalSphereIndex = asman->addMesh(new SphereMesh(), "canonicalSphere");
+		auto mesh = new SphereMesh();
+		mesh->setCullFace(false);
+		canonicalSphereIndex = asman->addMesh(mesh, "canonicalSphere");
 	}
 	uint	  materialIndex = renderer->addMaterial(Material());
 	Material &mat			= renderer->getMaterial(materialIndex);
