@@ -117,7 +117,7 @@ class FXAAEffect : public IScreenEffect {
 
 		fxaaShader->bind();
 		fxaaShader->setUniform("u_fxaaOn", enabled);
-		fxaaShader->setUniform("u_texelStep", glm::vec2(1.f / renderer->getWindow()->getWidth(), 1.f / renderer->getWindow()->getHeight()));
+		fxaaShader->setUniform("u_texelStep", glm::vec2(1.f / renderer->getWindow()->getWidth(), 1.f / renderer->getWindow()->getHeight()) * 1.f);
 		Renderer::drawObject(fxaaShader, renderer->getScreenQuad());
 		front->getColor()->unbind(GL_TEXTURE7);
 	}

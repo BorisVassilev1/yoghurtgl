@@ -6,10 +6,10 @@ uniform vec2 u_texelStep = vec2(1./1000,1./800);
 uniform int u_showEdges = 0;
 uniform int u_fxaaOn = 1;
 
-uniform float u_lumaThreshold = .7;
-uniform float u_mulReduce = 1/8;
-uniform float u_minReduce = 1/8;
-uniform float u_maxSpan = 8.0;
+uniform float u_lumaThreshold = .6;
+uniform float u_mulReduce = 1/16;
+uniform float u_minReduce = 1/32;
+uniform float u_maxSpan = 1.0;
 
 in vec2 outTexCoord;
 
