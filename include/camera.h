@@ -78,12 +78,12 @@ class PerspectiveCamera : public Camera {
  * @brief A perspective camera
  */
 class OrthographicCamera : public Camera {
+   public:
 	float width;
 	float aspect;
 	float zNear;	 ///< near clip plane depth
 	float zFar;		 ///< far clip plane depth
 
-   public:
 	OrthographicCamera(float width, float aspect, float zNear, float zFar);
 	OrthographicCamera(float width, float aspect, float zNear, float zFar, ygl::Transformation transform);
 	OrthographicCamera(float width, ygl::Window &from_window, float zNear, float zFar);

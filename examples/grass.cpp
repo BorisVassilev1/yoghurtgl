@@ -48,14 +48,15 @@ void run() {
 	renderer->setDefaultShadowShader(shadowShaderIndex);
 	renderer->setMainCamera(&cam);
 	renderer->setShadow(true);
+	addEffects(renderer);
 
-	glm::ivec2 size			  = glm::ivec2(60);
+	glm::ivec2 size			  = glm::ivec2(40);
 	Mesh	  *planeMesh	  = new PlaneMesh(size, glm::vec2(1, 1));
 	uint	   planeMeshIndex = asman->addMesh(planeMesh, "plane");
 	uint	   groundMaterial = renderer->addMaterial(
 		  Material(glm::vec3(0, 0.1, 0), 0.02, glm::vec3(), 1.4, glm::vec3(0), 0, glm::vec3(0), 0, 0.8, 0));
 
-	int chunks = 5;
+	int chunks = 10;
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
 			Entity plane = scene.createEntity();

@@ -75,7 +75,8 @@ void ygl::FrameBuffer::bindDefault() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 
 ygl::ACESEffect::ACESEffect(ygl::Renderer *renderer) {
 	this->setRenderer(renderer);
-	auto sh		= new VFShader(YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.vs", YGL_RELATIVE_PATH "./shaders/postProcessing/acesFilm.fs");
+	auto sh		= new VFShader(YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.vs",
+							   YGL_RELATIVE_PATH "./shaders/postProcessing/acesFilm.fs");
 	colorGrader = renderer->getAssetManager()->addShader(sh, "color grading shader", false);
 }
 
@@ -116,7 +117,8 @@ ygl::BloomEffect::BloomEffect(Renderer *renderer) {
 	// filterShader->setUniform("img_output", 0);
 	filterShader->unbind();
 
-	onScreen = new VFShader(YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.vs", YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.fs");
+	onScreen = new VFShader(YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.vs",
+							YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.fs");
 	onScreen->bind();
 	onScreen->setUniform("sampler_color", 7);
 	onScreen->setUniform("sampler_depth", 7);
@@ -202,7 +204,7 @@ void ygl::RendererComponent::serialize(std::ostream &out) {
 	out.write((char *)(&this->materialIndex), sizeof(uint));
 	out.write((char *)(&this->meshIndex), sizeof(uint));
 	out.write((char *)(&this->shadowShaderIndex), sizeof(uint));
-	//out.write((char *)(&this->isAnimated), sizeof(bool));
+	// out.write((char *)(&this->isAnimated), sizeof(bool));
 }
 
 void ygl::RendererComponent::deserialize(std::istream &in) {
@@ -210,7 +212,7 @@ void ygl::RendererComponent::deserialize(std::istream &in) {
 	in.read((char *)(&this->materialIndex), sizeof(uint));
 	in.read((char *)(&this->meshIndex), sizeof(uint));
 	in.read((char *)(&this->shadowShaderIndex), sizeof(uint));
-	//in.read((char *)(&this->isAnimated), sizeof(bool));
+	// in.read((char *)(&this->isAnimated), sizeof(bool));
 }
 
 bool ygl::RendererComponent::operator==(const RendererComponent &other) {
@@ -252,9 +254,6 @@ void ygl::Renderer::init() {
 	scene->registerSystemIfCan<ygl::AssetManager>();
 	asman = scene->getSystem<AssetManager>();
 
-	// addScreenEffect(new BloomEffect(this));
-	addScreenEffect(new ACESEffect(this));
-	addScreenEffect(new FXAAEffect(this));
 	brdfTexture = asman->addTexture(createBRDFTexture(), "brdf_Texture", false);
 }
 
@@ -500,7 +499,9 @@ void ygl::Renderer::colorPass() {
 	assert(mainCamera && "must have a main camera");
 	mainCamera->enable();
 	if (shadow) shadowCamera.enable(4);
-	backFrameBuffer->bind();
+	if (this->effects.size()) backFrameBuffer->bind();
+	else FrameBuffer::bindDefault();
+
 	glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
 	backFrameBuffer->clear();
 	glEnable(GL_DEPTH_TEST);
@@ -526,7 +527,6 @@ void ygl::Renderer::effectsPass() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	int effectsCount = effects.size();
-	assert(effectsCount != 0);
 	for (int i = 0; i < effectsCount; ++i) {
 		auto effect = effects[i];
 		if (i == effectsCount - 1) {
@@ -636,7 +636,7 @@ void ygl::Renderer::drawGUI() {
 
 bool ygl::Renderer::drawMaterialEditor() {
 	static int materialIndex = 0;
-	bool res = false;
+	bool	   res			 = false;
 	ImGui::Begin("Material Editor");
 	ImGui::InputInt("material index", &materialIndex);
 
@@ -706,4 +706,9 @@ const char *ygl::RendererComponent::name = "ygl::RendererComponent";
 std::ostream &ygl::operator<<(std::ostream &out, const ygl::RendererComponent &rhs) {
 	return out << "shader: " << rhs.shaderIndex << " material: " << rhs.materialIndex << " mesh: " << rhs.meshIndex
 			   << "shadowShader: " << rhs.shadowShaderIndex;
+}
+
+void ygl::addEffects(Renderer *renderer) {
+	renderer->addScreenEffect(new ACESEffect(renderer));
+	renderer->addScreenEffect(new FXAAEffect(renderer));
 }

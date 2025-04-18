@@ -32,6 +32,7 @@ void run() {
 
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
 	renderer->setMainCamera(&cam);
+	addEffects(renderer);
 
 	Texture2d *tex		= new Texture2d("./res/models/bunny_uv/bunny_uv.jpg");
 	Mesh	  *cubeMesh = new SphereMesh();

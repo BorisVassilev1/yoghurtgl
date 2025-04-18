@@ -83,12 +83,12 @@ class IScreenEffect {
 	bool		 enabled = true;
 	void		 setRenderer(Renderer *renderer) { this->renderer = renderer; }
 	virtual void apply(FrameBuffer *front, FrameBuffer *back) = 0;
-	virtual ~IScreenEffect(){};
+	virtual ~IScreenEffect() {};
 };
 
 // TODO: this must go to the effects header
 class ACESEffect : public IScreenEffect {
-	uint	  colorGrader;
+	uint colorGrader;
 
    public:
 	DELETE_COPY_AND_ASSIGNMENT(ACESEffect)
@@ -230,4 +230,5 @@ class Renderer : public ygl::ISystem {
 
 std::ostream &operator<<(std::ostream &out, const ygl::RendererComponent &rhs);
 
+void addEffects(Renderer *renderer);
 }	  // namespace ygl

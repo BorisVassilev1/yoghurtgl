@@ -30,12 +30,12 @@ ygl::GrassSystem::GrassBladeMesh::GrassBladeMesh(glm::ivec2 resolution, int LOD)
 	this->ibo2			= this->ibo;
 	this->indicesCount2 = this->indicesCount;
 
-	glGenBuffers(1, &grassData);
-	setResolution(resolution);
+	calcBladeCount(resolution);
+	grassData		 = MutableBuffer(GL_ARRAY_BUFFER, this->bladeCount * sizeof(BladeData), GL_DYNAMIC_DRAW);
 
-	this->addVBO(0, 4, grassData, GL_FLOAT, 1, sizeof(BladeData), 0);
-	this->addVBO(1, 4, grassData, GL_FLOAT, 1, sizeof(BladeData), (const void *)(4 * sizeof(float)));
-	this->addVBO(2, 1, grassData, GL_UNSIGNED_INT, 1, sizeof(BladeData), (const void *)(8 * sizeof(float)));
+	this->addVBO(0, 4, grassData.getID(), GL_FLOAT, 1, sizeof(BladeData), 0);
+	this->addVBO(1, 4, grassData.getID(), GL_FLOAT, 1, sizeof(BladeData), (const void *)(4 * sizeof(float)));
+	this->addVBO(2, 1, grassData.getID(), GL_UNSIGNED_INT, 1, sizeof(BladeData), (const void *)(8 * sizeof(float)));
 	glBindVertexArray(0);
 
 	cullFace = false;
@@ -43,15 +43,17 @@ ygl::GrassSystem::GrassBladeMesh::GrassBladeMesh(glm::ivec2 resolution, int LOD)
 	this->index = count++;
 }
 
-void ygl::GrassSystem::GrassBladeMesh::setResolution(glm::ivec2 resolution) {
+void ygl::GrassSystem::GrassBladeMesh::calcBladeCount(glm::ivec2 resolution) {
 	this->resolution = resolution / (LOD + 1);
 	this->bladeCount = this->resolution.x * this->resolution.y;
-	glBindBuffer(GL_ARRAY_BUFFER, grassData);
-	glBufferData(GL_ARRAY_BUFFER, bladeCount * sizeof(BladeData), nullptr, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-ygl::GrassSystem::GrassBladeMesh::~GrassBladeMesh() { glDeleteBuffers(1, &grassData); }
+void ygl::GrassSystem::GrassBladeMesh::setResolution(glm::ivec2 resolution) {
+	calcBladeCount(resolution);
+	grassData.resize(bladeCount * sizeof(BladeData));
+}
+
+ygl::GrassSystem::GrassBladeMesh::~GrassBladeMesh() {}
 
 void ygl::GrassSystem::GrassBladeMesh::bind() {
 	if (LOD == 0) {
@@ -73,7 +75,7 @@ void ygl::GrassSystem::GrassHolder::serialize(std::ostream &out) {
 	out.write((char *)&LOD, sizeof(LOD));
 }
 
-void ygl::GrassSystem::GrassHolder::deserialize(std::istream &in) { 
+void ygl::GrassSystem::GrassHolder::deserialize(std::istream &in) {
 	in.read((char *)glm::value_ptr(size), sizeof(size));
 	in.read((char *)&density, sizeof(density));
 	in.read((char *)&LOD, sizeof(LOD));
@@ -115,7 +117,7 @@ void ygl::GrassSystem::update(float time) {
 		GrassBladeMesh *mesh = (GrassBladeMesh *)assetManager->getMesh(holder.meshIndex);
 		this->bladeCount += mesh->bladeCount;
 
-		Shader::setSSBO(mesh->grassData, 1);
+		Shader::setSSBO(mesh->grassData.getID(), 1);
 		grassCompute->bind();
 		grassCompute->setUniform("time", time);
 		grassCompute->setUniform("resolution", mesh->resolution);

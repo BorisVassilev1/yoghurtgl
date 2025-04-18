@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <istream>
 #include <ostream>
+#include "buffer.h"
 #include <mesh.h>
 #include <shader.h>
 #include <ecs.h>
@@ -27,10 +28,13 @@ class GrassSystem : public ygl::ISystem {
 		uint indicesCount1;
 		uint indicesCount2;
 
+		void calcBladeCount(glm::ivec2 resolution);
+
 	   public:
 		GLuint	   ibo1;
 		GLuint	   ibo2;
-		GLuint	   grassData  = -1;
+		//GLuint	   grassData;
+		MutableBuffer grassData;
 		GLuint	   bladeCount = -1;
 		glm::ivec2 resolution;
 		int		   LOD;
@@ -100,14 +104,14 @@ class GrassSystem : public ygl::ISystem {
 std::ostream &operator<<(std::ostream &out, const ygl::GrassSystem::GrassHolder &rhs);
 
 class FXAAEffect : public IScreenEffect {
-	Shader *fxaaShader = nullptr;
+	int fxaaShader;
 
    public:
 	FXAAEffect(Renderer *renderer) : IScreenEffect() {
 		setRenderer(renderer);
-		fxaaShader = new VFShader(YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.vs",
+		Shader* sh = new VFShader(YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.vs",
 								  YGL_RELATIVE_PATH "./shaders/postProcessing/fxaa.fs");
-		renderer->getAssetManager()->addShader(fxaaShader, "fxaaShader", false);
+		fxaaShader = renderer->getAssetManager()->addShader(sh, "fxaaShader", false);
 	}
 	~FXAAEffect() { }
 	void apply(FrameBuffer *front, FrameBuffer *back) override {
@@ -115,10 +119,11 @@ class FXAAEffect : public IScreenEffect {
 		if (back) back->bind();
 		else FrameBuffer::bindDefault();
 
-		fxaaShader->bind();
-		fxaaShader->setUniform("u_fxaaOn", enabled);
-		fxaaShader->setUniform("u_texelStep", glm::vec2(1.f / renderer->getWindow()->getWidth(), 1.f / renderer->getWindow()->getHeight()) * 1.f);
-		Renderer::drawObject(fxaaShader, renderer->getScreenQuad());
+		Shader* shader = renderer->getAssetManager()->getShader(fxaaShader);
+		shader->bind();
+		shader->setUniform("u_fxaaOn", enabled);
+		shader->setUniform("u_texelStep", glm::vec2(1.f / renderer->getWindow()->getWidth(), 1.f / renderer->getWindow()->getHeight()) * 1.f);
+		Renderer::drawObject(shader, renderer->getScreenQuad());
 		front->getColor()->unbind(GL_TEXTURE7);
 	}
 };
