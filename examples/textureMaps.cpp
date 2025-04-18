@@ -99,11 +99,7 @@ void run() {
 
 		renderer->doWork();
 
-		ImGui::Begin("Material Properties");
-		ImGui::InputInt("Material ID", &editMaterialIndex);
-		ImGui::End();
-		renderer->getMaterial(editMaterialIndex).drawImGui();
-		renderer->loadData();
+		renderer->drawMaterialEditor();
 
 		if (ImGui::Button("ERROR WINDOW")) {
 			window.swapBuffers();

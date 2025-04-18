@@ -39,7 +39,7 @@ class Bind {
 	Bind(Buffer *buffer);
 	~Bind();
 	Bind(const Bind &) = delete;
-	Bind(Bind &&other) ;
+	Bind(Bind &&other);
 	Bind &operator=(const Bind &) = delete;
 	Bind &operator=(Bind &&other);
 };
@@ -58,7 +58,7 @@ class MutableBuffer : public Buffer {
    public:
 	MutableBuffer() = default;
 	MutableBuffer(GLenum target, GLsizeiptr size, GLenum usage) : Buffer(target, size), usage(usage) {
-		if(size <= 0) dbLog(ygl::LOG_WARNING, "Buffer size is 0 or less: ", (int64_t)size);
+		if (size <= 0) dbLog(ygl::LOG_WARNING, "Buffer size is 0 or less: ", (int64_t)size);
 		Bind b(this);
 		glBufferData(target, size, nullptr, usage);
 	}
@@ -69,7 +69,8 @@ class MutableBuffer : public Buffer {
 		glBufferData(target, size, nullptr, usage);
 		this->size = size;
 	}
-	private:
+
+   private:
 	GLenum usage;
 };
 

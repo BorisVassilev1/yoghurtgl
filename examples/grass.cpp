@@ -26,8 +26,9 @@ using namespace std;
 void run() {
 	Window window = Window(1200, 800, "Grass Test", true);
 
-	VFShader		 *shader	   = new VFShader(YGL_RELATIVE_PATH"./shaders/simple.vs", YGL_RELATIVE_PATH"./shaders/simple.fs");
-	VFShader		 *shadowShader = new VFShader(YGL_RELATIVE_PATH"./shaders/simple.vs", YGL_RELATIVE_PATH"./shaders/simple_shadow.fs");
+	VFShader *shader = new VFShader(YGL_RELATIVE_PATH "./shaders/simple.vs", YGL_RELATIVE_PATH "./shaders/simple.fs");
+	VFShader *shadowShader =
+		new VFShader(YGL_RELATIVE_PATH "./shaders/simple.vs", YGL_RELATIVE_PATH "./shaders/simple_shadow.fs");
 	PerspectiveCamera cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse mouse(window);

@@ -31,13 +31,12 @@ class GrassSystem : public ygl::ISystem {
 		void calcBladeCount(glm::ivec2 resolution);
 
 	   public:
-		GLuint	   ibo1;
-		GLuint	   ibo2;
-		//GLuint	   grassData;
+		GLuint		  ibo1;
+		GLuint		  ibo2;
 		MutableBuffer grassData;
-		GLuint	   bladeCount = -1;
-		glm::ivec2 resolution;
-		int		   LOD;
+		GLuint		  bladeCount = -1;
+		glm::ivec2	  resolution;
+		int			  LOD;
 
 		uint		index;
 		static uint count;
@@ -59,8 +58,8 @@ class GrassSystem : public ygl::ISystem {
 	struct GrassHolder : public ygl::Serializable {
 		static const char *name;
 
-		uint	  meshIndex = -1;
 		glm::vec2 size;
+		uint	  meshIndex = -1;
 		float	  density;
 		int		  LOD;
 
@@ -109,20 +108,22 @@ class FXAAEffect : public IScreenEffect {
    public:
 	FXAAEffect(Renderer *renderer) : IScreenEffect() {
 		setRenderer(renderer);
-		Shader* sh = new VFShader(YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.vs",
+		Shader *sh = new VFShader(YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.vs",
 								  YGL_RELATIVE_PATH "./shaders/postProcessing/fxaa.fs");
 		fxaaShader = renderer->getAssetManager()->addShader(sh, "fxaaShader", false);
 	}
-	~FXAAEffect() { }
+	~FXAAEffect() {}
 	void apply(FrameBuffer *front, FrameBuffer *back) override {
 		front->getColor()->bind(GL_TEXTURE7);
 		if (back) back->bind();
 		else FrameBuffer::bindDefault();
 
-		Shader* shader = renderer->getAssetManager()->getShader(fxaaShader);
+		Shader *shader = renderer->getAssetManager()->getShader(fxaaShader);
 		shader->bind();
 		shader->setUniform("u_fxaaOn", enabled);
-		shader->setUniform("u_texelStep", glm::vec2(1.f / renderer->getWindow()->getWidth(), 1.f / renderer->getWindow()->getHeight()) * 1.f);
+		shader->setUniform(
+			"u_texelStep",
+			glm::vec2(1.f / renderer->getWindow()->getWidth(), 1.f / renderer->getWindow()->getHeight()) * 1.f);
 		Renderer::drawObject(shader, renderer->getScreenQuad());
 		front->getColor()->unbind(GL_TEXTURE7);
 	}

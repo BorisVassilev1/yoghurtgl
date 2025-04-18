@@ -386,7 +386,6 @@ int main() {
 		ImGui::End();
 
 		shouldReload = shouldReload || renderer->drawMaterialEditor();
-		renderer->loadData();
 
 		window->swapBuffers();
 	}
