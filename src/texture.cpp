@@ -177,10 +177,10 @@ void ygl::RenderBuffer::unbind() { glBindRenderbuffer(GL_RENDERBUFFER, 0); }
 
 void ygl::Texture2d::init(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize,
 						  uint8_t components, GLenum type, void *data) {
-	this->width		 = width;
-	this->height	 = height;
-	this->pixelSize	 = pixelSize;
-	this->components = components;
+	this->width			 = width;
+	this->height		 = height;
+	this->pixelSize		 = pixelSize;
+	this->components	 = components;
 	this->internalFormat = internalFormat;
 
 	glGenTextures(1, &id);
@@ -196,7 +196,7 @@ void ygl::Texture2d::init(GLsizei width, GLsizei height, GLint internalFormat, G
 	if (data != nullptr) { glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, type, data); }
 
 #ifndef YGL_NO_COMPUTE_SHADERS
-	if (format != GL_STENCIL_INDEX) 
+	if (format != GL_STENCIL_INDEX)
 #endif
 		glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -346,10 +346,14 @@ void ygl::Texture2d::unbind(int textureUnit) const {
 void ygl::Texture2d::unbind() const { unbind(GL_TEXTURE0); }
 
 #ifndef YGL_NO_COMPUTE_SHADERS
-void ygl::Texture2d::bindImage(int unit) { glBindImageTexture(unit, id, 0, false, 0, GL_READ_WRITE, this->internalFormat); }
-void ygl::Texture2d::unbindImage(int unit) { glBindImageTexture(unit, 0, 0, false, 0, GL_READ_WRITE, this->internalFormat); }
+void ygl::Texture2d::bindImage(int unit) {
+	glBindImageTexture(unit, id, 0, false, 0, GL_READ_WRITE, this->internalFormat);
+}
+void ygl::Texture2d::unbindImage(int unit) {
+	glBindImageTexture(unit, 0, 0, false, 0, GL_READ_WRITE, this->internalFormat);
+}
 #endif
-int	 ygl::Texture2d::getID() { return id; }
+int ygl::Texture2d::getID() { return id; }
 ygl::Texture2d::~Texture2d() { glDeleteTextures(1, &id); }
 
 ygl::TextureCubemap::TextureCubemap(uint32_t width, uint32_t height) : width(width), height(height) {
@@ -668,7 +672,8 @@ ygl::Texture2d *ygl::createBRDFTexture() {
 	quad->setDepthFunc(GL_ALWAYS);
 	quad->setCullFace(false);
 
-	ygl::VFShader *sh = new VFShader(YGL_RELATIVE_PATH"./shaders/ui/textureOnScreen.vs", YGL_RELATIVE_PATH"./shaders/BRDFPrecompute.fs");
+	ygl::VFShader *sh = new VFShader(YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.vs",
+									 YGL_RELATIVE_PATH "./shaders/BRDFPrecompute.fs");
 
 	glViewport(0, 0, width, height);
 	fb->bind();

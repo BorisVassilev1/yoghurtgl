@@ -90,8 +90,10 @@ class AssetArray : public AppendableSerializable {
 		std::vector<bool> check;
 		check.resize(size, false);
 
+		dbLog(ygl::LOG_DEBUG, "current assets size: ", assets.size());
 		for (auto [name, index] : names) {
 			check[index] = true;
+			dbLog(ygl::LOG_DEBUG, "\t name: ", name, " index: ", index);
 		}
 
 		for (std::size_t i = 0; i < count; ++i) {

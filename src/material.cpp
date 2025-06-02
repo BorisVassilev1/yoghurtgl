@@ -64,6 +64,7 @@ ygl::Material::Material(glm::vec3 albedo, float specular_chance, glm::vec3 emiss
 	  use_albedo_map(0),
 	  emission_map(0),
 	  use_emission_map(0),
+	  transparency_map(0),
 	  use_transparency_map(0) {}
 
 ygl::Material::Material(glm::vec3 albedo, float specular_chance, glm::vec3 emission, float ior,
@@ -94,7 +95,18 @@ ygl::Material::Material(glm::vec3 albedo, float specular_chance, glm::vec3 emiss
 	  transparency_map(0),
 	  use_transparency_map(texStrength) {}
 
-bool ygl::Material::drawImGui() {
+static bool drawTextureGui(ygl::Renderer *renderer, int &texture, float &use_texture, const char *name) {
+	bool res = false;
+	ImGui::InputInt(name, &texture);
+	if (texture > 0 || use_texture > 0) {
+		int index = renderer->getAssetManager()->getTexture(texture)->getID();
+		ImGui::Image(index, ImVec2(128, 128));
+		res = ImGui::SliderFloat((std::string("use_") + name).c_str(), (float *)&use_texture, 0., 1.);
+	}
+	return res;
+}
+
+bool ygl::Material::drawImGui(ygl::Renderer *renderer) {
 	ImGui::Begin("Material Controls");
 	bool res = false;
 
@@ -108,20 +120,13 @@ bool ygl::Material::drawImGui() {
 	res = res || ImGui::SliderFloat("refraction_roughness", &refraction_roughness, 0., 1.);
 	res = res || ImGui::SliderFloat("specular_roughness", &specular_roughness, 0., 1.);
 	res = res || ImGui::SliderFloat("metallic", &metallic, 0., 1.);
-	res = res || ImGui::InputInt("normal_map", &normal_map);
-	res = res || ImGui::SliderFloat("use_normal_map", &use_normal_map, 0., 1.);
-	res = res || ImGui::InputInt("roughness_map", &roughness_map);
-	res = res || ImGui::SliderFloat("use_roughness_map", &use_roughness_map, 0., 1.);
-	res = res || ImGui::InputInt("ao_map", &ao_map);
-	res = res || ImGui::SliderFloat("use_ao_map", &use_ao_map, 0., 1.);
-	res = res || ImGui::InputInt("metallic_map", &metallic_map);
-	res = res || ImGui::SliderFloat("use_metallic_map", &use_metallic_map, 0., 1.);
-	res = res || ImGui::InputInt("albedo_map", &albedo_map);
-	res = res || ImGui::SliderFloat("use_albedo_map", &use_albedo_map, 0., 1.);
-	res = res || ImGui::InputInt("emission_map", &emission_map);
-	res = res || ImGui::SliderFloat("use_emission_map", &use_emission_map, 0., 1.);
-	res = res || ImGui::InputInt("transparency_map", &transparency_map);
-	res = res || ImGui::SliderFloat("use_transparency_map", &use_transparency_map, 0., 1.);
+	res = res || drawTextureGui(renderer, normal_map, use_normal_map, "normal_map");
+	res = res || drawTextureGui(renderer, roughness_map, use_roughness_map, "roughness_map");
+	res = res || drawTextureGui(renderer, ao_map, use_ao_map, "ao_map");
+	res = res || drawTextureGui(renderer, metallic_map, use_metallic_map, "metallic_map");
+	res = res || drawTextureGui(renderer, albedo_map, use_albedo_map, "albedo_map");
+	res = res || drawTextureGui(renderer, emission_map, use_emission_map, "emission_map");
+	res = res || drawTextureGui(renderer, transparency_map, use_transparency_map, "transparency_map");
 
 	ImGui::End();
 	return res;

@@ -22,8 +22,6 @@ void run() {
 		std::cerr << e.what() << std::endl;
 		exit(1);
 	}
-	Mesh			 *cubeMesh = new SphereMesh();
-	VFShader		 *shader   = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
 	PerspectiveCamera cam(glm::radians(70.f), window, 0.01, 1000);
 
 	Mouse		 mouse(window);
@@ -34,8 +32,11 @@ void run() {
 
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
 	renderer->setMainCamera(&cam);
+	addEffects(renderer);
 
-	Texture2d *tex = new Texture2d("./res/models/bunny_uv/bunny_uv.jpg");
+	Texture2d *tex		= new Texture2d("./res/models/bunny_uv/bunny_uv.jpg");
+	Mesh	  *cubeMesh = new SphereMesh();
+	VFShader  *shader	= new VFShader(YGL_RELATIVE_PATH"./shaders/simple.vs", YGL_RELATIVE_PATH"./shaders/simple.fs");
 
 	Entity			bunny = scene.createEntity();
 	Transformation &transform =
@@ -64,14 +65,14 @@ void run() {
 							 Light::Type::DIRECTIONAL));
 	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
 
-	renderer->addLight(
-		Light(Transformation(glm::vec3(10, 10, 10), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 500, Light::Type::POINT));
-	renderer->addLight(
-		Light(Transformation(glm::vec3(-10, 10, 10), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 500, Light::Type::POINT));
-	renderer->addLight(
-		Light(Transformation(glm::vec3(10, 10, -10), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 500, Light::Type::POINT));
-	renderer->addLight(
-		Light(Transformation(glm::vec3(-10, 10, -10), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 500, Light::Type::POINT));
+	renderer->addLight(Light(Transformation(glm::vec3(10, 10, 10), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 500,
+							 Light::Type::POINT));
+	renderer->addLight(Light(Transformation(glm::vec3(-10, 10, 10), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 500,
+							 Light::Type::POINT));
+	renderer->addLight(Light(Transformation(glm::vec3(10, 10, -10), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 500,
+							 Light::Type::POINT));
+	renderer->addLight(Light(Transformation(glm::vec3(-10, 10, -10), glm::vec3(), glm::vec3(1)), glm::vec3(1.), 500,
+							 Light::Type::POINT));
 
 	for (int i = 0; i < 20; ++i) {
 		for (int j = 0; j < 20; ++j) {
@@ -79,12 +80,10 @@ void run() {
 
 			scene.addComponent<Transformation>(
 				curr, Transformation(glm::vec3(i * 2 - 20, -1, j * 2 - 20), glm::vec3(), glm::vec3(1)));
-			Material mat = Material(
-									 glm::vec3(1,0,0), .2,
-									 glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, i / 20., j / 20.);
+			Material mat = Material(glm::vec3(1, 0, 0), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.),
+									0.0, i / 20., j / 20.);
 
-			RendererComponent rc(shaderIndex, cubeMeshIndex,
-								 renderer->addMaterial(mat));
+			RendererComponent rc(shaderIndex, cubeMeshIndex, renderer->addMaterial(mat));
 
 			scene.addComponent<RendererComponent>(curr, rc);
 		}
@@ -99,7 +98,6 @@ void run() {
 	renderer->loadData();
 
 	glClearColor(0.07f, 0.13f, 0.17f, 1.0);
-	int editMaterialIndex = 0;
 	while (!window.shouldClose()) {
 		window.beginFrame();
 		mouse.update();
@@ -114,10 +112,7 @@ void run() {
 		renderer->doWork();
 		renderer->drawGUI();
 
-		ImGui::Begin("Material Properties");
-		ImGui::InputInt("Material ID", &editMaterialIndex);
-		renderer->getMaterial(editMaterialIndex).drawImGui();
-		ImGui::End();
+		renderer->drawMaterialEditor();
 		renderer->loadData();
 
 		window.swapBuffers();

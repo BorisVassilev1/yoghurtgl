@@ -48,7 +48,6 @@ void run() {
 		std::cout << std::endl;
 	}
 
-	int editMaterialIndex = 0;
 	int textureViewIndex  = 6;
 
 	glClearColor(0, 0, 0, 1);
@@ -60,11 +59,7 @@ void run() {
 		cam.update();
 
 		scene.doWork();
-		ImGui::Begin("Material Properties");
-		ImGui::InputInt("Material ID", &editMaterialIndex);
-		ImGui::End();
-		renderer->getMaterial(editMaterialIndex).drawImGui();
-		renderer->loadData();
+		renderer->drawMaterialEditor();
 
 		ImGui::Begin("Texture View");
 		ImGui::InputInt("Material ID", &textureViewIndex);

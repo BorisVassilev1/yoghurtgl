@@ -32,6 +32,7 @@ void run() {
 	uint shaderInd = asman->addShader(shader, "defaultShader");
 	renderer->setDefaultShader(shaderInd);
 	renderer->setMainCamera(&cam);
+	addEffects(renderer);
 	MeshFromFile::import_flags |= aiProcess_PreTransformVertices;
 
 	Entity	  sphere		  = addSphere(scene, glm::vec3(-3, 0, 0), glm::vec3(1));

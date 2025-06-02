@@ -32,6 +32,7 @@ void run() {
 
 	Renderer *renderer = scene.registerSystem<Renderer>(&window);
 	renderer->setMainCamera(&cam);
+	ygl::addEffects(renderer);
 	// Texture2d *color	 = new Texture2d("./res/images/stones/albedo.png", TextureType::DIFFUSE);
 	// Texture2d *normal	 = new Texture2d("./res/images/stones/normal.png", TextureType::NORMAL);
 	// Texture2d *roughness = new Texture2d("./res/images/stones/roughness.png", TextureType::ROUGHNESS);
@@ -98,11 +99,7 @@ void run() {
 
 		renderer->doWork();
 
-		ImGui::Begin("Material Properties");
-		ImGui::InputInt("Material ID", &editMaterialIndex);
-		ImGui::End();
-		renderer->getMaterial(editMaterialIndex).drawImGui();
-		renderer->loadData();
+		renderer->drawMaterialEditor();
 
 		if (ImGui::Button("ERROR WINDOW")) {
 			window.swapBuffers();

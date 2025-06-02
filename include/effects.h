@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <istream>
 #include <ostream>
+#include "buffer.h"
 #include <mesh.h>
 #include <shader.h>
 #include <ecs.h>
@@ -27,13 +28,15 @@ class GrassSystem : public ygl::ISystem {
 		uint indicesCount1;
 		uint indicesCount2;
 
+		void calcBladeCount(glm::ivec2 resolution);
+
 	   public:
-		GLuint	   ibo1;
-		GLuint	   ibo2;
-		GLuint	   grassData  = -1;
-		GLuint	   bladeCount = -1;
-		glm::ivec2 resolution;
-		int		   LOD;
+		GLuint		  ibo1;
+		GLuint		  ibo2;
+		MutableBuffer grassData;
+		GLuint		  bladeCount = -1;
+		glm::ivec2	  resolution;
+		int			  LOD;
 
 		uint		index;
 		static uint count;
@@ -55,8 +58,8 @@ class GrassSystem : public ygl::ISystem {
 	struct GrassHolder : public ygl::Serializable {
 		static const char *name;
 
-		uint	  meshIndex = -1;
 		glm::vec2 size;
+		uint	  meshIndex = -1;
 		float	  density;
 		int		  LOD;
 
@@ -67,8 +70,8 @@ class GrassSystem : public ygl::ISystem {
 		void deserialize(std::istream &in);
 	};
 
-	glm::vec2	  size	  = glm::vec2(20, 20);
-	float		  density = 1.5;
+	glm::vec2	  size		 = glm::vec2(20, 20);
+	float		  density	 = 1.5;
 	int			  bladeCount = 0;
 	Window		 *window;
 	Renderer	 *renderer;
@@ -98,5 +101,32 @@ class GrassSystem : public ygl::ISystem {
 };
 
 std::ostream &operator<<(std::ostream &out, const ygl::GrassSystem::GrassHolder &rhs);
+
+class FXAAEffect : public IScreenEffect {
+	int fxaaShader;
+
+   public:
+	FXAAEffect(Renderer *renderer) : IScreenEffect() {
+		setRenderer(renderer);
+		Shader *sh = new VFShader(YGL_RELATIVE_PATH "./shaders/ui/textureOnScreen.vs",
+								  YGL_RELATIVE_PATH "./shaders/postProcessing/fxaa.fs");
+		fxaaShader = renderer->getAssetManager()->addShader(sh, "fxaaShader", false);
+	}
+	~FXAAEffect() {}
+	void apply(FrameBuffer *front, FrameBuffer *back) override {
+		front->getColor()->bind(GL_TEXTURE7);
+		if (back) back->bind();
+		else FrameBuffer::bindDefault();
+
+		Shader *shader = renderer->getAssetManager()->getShader(fxaaShader);
+		shader->bind();
+		shader->setUniform("u_fxaaOn", enabled);
+		shader->setUniform(
+			"u_texelStep",
+			glm::vec2(1.f / renderer->getWindow()->getWidth(), 1.f / renderer->getWindow()->getHeight()) * 1.f);
+		Renderer::drawObject(shader, renderer->getScreenQuad());
+		front->getColor()->unbind(GL_TEXTURE7);
+	}
+};
 
 }	  // namespace ygl

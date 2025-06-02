@@ -8,7 +8,7 @@ layout(binding = 9) uniform usampler2D sampler_stencil;
 
 uniform bool doColorGrading	   = true;
 uniform bool doGammaCorrection = true;
-uniform float exposure = 0.9;
+uniform float exposure = 1.0;
 
 // ACES tone mapping curve fit to go from HDR to LDR
 // https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
