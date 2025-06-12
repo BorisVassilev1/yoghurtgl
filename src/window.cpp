@@ -31,6 +31,8 @@ ygl::Window::Window(int width, int height, const char *name, bool vsync, bool re
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, GL_CONTEXT_VERSION_MAJOR);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GL_CONTEXT_VERSION_MINOR);
 
+	glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+
 	if (resizable) glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 	else glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 

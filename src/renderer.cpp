@@ -585,6 +585,8 @@ void ygl::Renderer::compute(ComputeShader *shader, int domainX, int domainY, int
 	int groupsY = domainY / shader->groupSize.y + (domainY % shader->groupSize.y > 0);
 	int groupsZ = domainZ / shader->groupSize.z + (domainZ % shader->groupSize.z > 0);
 
+	//dbLog(ygl::LOG_DEBUG, "Dispatching compute shader with groups: ", groupsX, " ", groupsY, " ", groupsZ);
+
 	glDispatchCompute(groupsX, groupsY, groupsZ);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	shader->unbind();

@@ -32,11 +32,11 @@ void ygl::IMesh::bind() {
 
 	glBindVertexArray(vao);
 	enableVBOs();
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	if (ibo != -1) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 }
 
 void ygl::IMesh::unbind() {
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	if (ibo != -1) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	disableVBOs();
 	glBindVertexArray(0);
 }
@@ -522,7 +522,7 @@ const aiScene *ygl::MeshFromFile::loadScene(const std::string &file, unsigned in
 
 	const aiScene *scene = importer->ReadFile(file, flags);
 
-	if (!scene) { 
+	if (!scene) {
 		dbLog(ygl::LOG_ERROR, "[Assimp] ", importer->GetErrorString());
 		THROW_RUNTIME_ERR("[Assimp]" + importer->GetErrorString());
 	}

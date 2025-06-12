@@ -458,6 +458,23 @@ ygl::ComputeShader::ComputeShader(const char *source) : Shader({source}) {
 	finishProgramCreation();
 
 	glGetProgramiv(program, GL_COMPUTE_WORK_GROUP_SIZE, glm::value_ptr(groupSize));
+
+	glm::ivec3 maxGroupSize = glm::ivec3(0);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &maxGroupSize.x);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &maxGroupSize.y);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &maxGroupSize.z);
+
+	GLint maxInvocations = 0;
+	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &maxInvocations);
+
+	glm::i64vec3 maxGroupCount = glm::ivec3(0);
+	glGetInteger64i_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &maxGroupCount.x);
+	glGetInteger64i_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &maxGroupCount.y);
+	glGetInteger64i_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &maxGroupCount.z);
+
+	dbLog(LOG_INFO, "Max compute work group size: ", maxGroupSize.x, " ", maxGroupSize.y, " ", maxGroupSize.z);
+	dbLog(LOG_INFO, "Max compute work group invocations: ", maxInvocations);
+	dbLog(LOG_INFO, "Max compute work group count: ", maxGroupCount.x, " ", maxGroupCount.y, " ", maxGroupCount.z);
 }
 
 ygl::ComputeShader::ComputeShader(std::istream &in) : Shader(in) {
