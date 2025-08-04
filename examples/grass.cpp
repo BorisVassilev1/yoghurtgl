@@ -17,6 +17,7 @@
 #include <imgui_impl_glfw.h>
 
 #include <ImGuizmo.h>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 #include "GLFW/glfw3.h"
 

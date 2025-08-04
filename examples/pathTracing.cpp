@@ -108,8 +108,8 @@ void cleanup() {
 
 void initScene() {
 	try {
-		bunnyMesh = new ygl::MeshFromFile("./res/models/dragon-gltf/scene.gltf", 2);
-		//bunnyMesh = new ygl::MeshFromFile("./res/models/dragon.obj", 0);
+		//bunnyMesh = new ygl::MeshFromFile("./res/models/dragon-gltf/scene.gltf", 2);
+		bunnyMesh = new ygl::MeshFromFile("./res/models/Knight.obj", 0);
 	} catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		cleanup();
@@ -139,8 +139,8 @@ void initScene() {
 
 	bunny = scene->createEntity();
 	scene->addComponent<ygl::Transformation>(
-		//bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(1.00f)));
-		bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(-PI /2, 0, 0), glm::vec3(1.00f)));
+		bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(0, -PI / 2, 0), glm::vec3(0.01f)));
+		//bunny, ygl::Transformation(glm::vec3(-2, 1, 3), glm::vec3(-PI /2, 0, 0), glm::vec3(1.00f)));
 	ygl::RendererComponent bunnyRenderer;
 
 	unsigned int shaderIndex = asman->addShader(shader, "defaultShader");
@@ -257,8 +257,8 @@ void initPathTracer() {
 	// skybox = new ygl::TextureCubemap("./res/images/skybox", ".jpg");
 	skybox->bind(ygl::TexIndex::SKYBOX);
 
-	// initSpheres();
-	// initBoxes();
+	//initSpheres();
+	//initBoxes();
 	bvh->addPrimitive(bunnyMesh, scene->getComponent<ygl::Transformation>(bunny));
 
 	bvh->build();

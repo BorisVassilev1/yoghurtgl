@@ -1,5 +1,6 @@
 #include <yoghurtgl.h>
 #include <transformation.h>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/fwd.hpp>
 #include <glm/gtc/type_ptr.hpp>

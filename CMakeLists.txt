@@ -39,7 +39,7 @@ else ()
 	set(LINK_ARGS
 		#-fsanitize=address
 	)
-	set(COMPILE_ARGS ${COMPILE_ARGS} -Wall -Wpedantic --pedantic-errors -g -O3 -std=c++2a)
+	set(COMPILE_ARGS ${COMPILE_ARGS} -Wall -Wpedantic -g -O3 -std=c++2a)
 endif ()
 
 if (WIN32)

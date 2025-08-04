@@ -135,6 +135,7 @@ ygl::OrthographicCamera::OrthographicCamera(float width, ygl::Window &from_windo
 ygl::OrthographicCamera::OrthographicCamera(float width, ygl::Window &from_window, float zNear, float zFar)
 	: OrthographicCamera(width, from_window, zNear, zFar, ygl::Transformation()) {}
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
 void ygl::OrthographicCamera::updateProjectionMatrix() {

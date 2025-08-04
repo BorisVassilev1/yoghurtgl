@@ -401,7 +401,7 @@ void main() {
 		// Rough (glossy) specular lerps from the smooth specular to the rough diffuse by the material roughness squared
 		// Squaring the roughness is just a convention to make roughness feel more linear perceptually.
 		vec3 diffuseRayDir = cosWeightedHemissphereDir(info.normal, random_seed_full);
-		float rayProbabilityIfDiffuse = rayProbability * dot(diffuseRayDir, vec3(0, 1, 0)) * 2. * PI;
+		float rayProbabilityIfDiffuse = rayProbability * dot(diffuseRayDir, info.normal) * 2. * PI;
 
 		vec3 specularRayDir = reflect(ray.direction, info.normal);
 
