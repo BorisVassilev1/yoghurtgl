@@ -82,6 +82,11 @@ bool BBox::testIntersect(const Ray &ray) const {
 
 glm::vec3 BBox::center() const { return (min + max) / 2.f; }
 
+glm::vec3 BBox::size() const {
+	glm::vec3 size = max - min;
+	return glm::max(size, glm::vec3(0.0f)); // Ensure no negative sizes
+}
+
 float BBox::surfaceArea() const {
 	glm::vec3 size = max - min;
 	return (size.x * size.y + size.x * size.z + size.y * size.z);

@@ -86,6 +86,9 @@ struct BBox {
 	/// @brief get the center of the box
 	glm::vec3 center() const;
 
+	/// @brief get the size of the Box
+	glm::vec3 size() const;
+
 	/// @brief calculate the surface area of the BBox. Used for SAH
 	float surfaceArea() const;
 };

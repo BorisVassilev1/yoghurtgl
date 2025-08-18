@@ -5,6 +5,7 @@
 #include <vector>
 #include <functional>
 #include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
 
 /**
  * @file window.h
@@ -79,5 +80,7 @@ class Window {
 	 * @param callback - the function to be called.
 	 */
 	void addResizeCallback(const std::function<void(GLFWwindow *window, int width, int height)> &callback);
+
+	void setClearColor(const glm::vec4 &color) { glClearColor(color.r, color.g, color.b, color.a); }
 };
 }	  // namespace ygl

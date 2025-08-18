@@ -8,6 +8,9 @@
 ygl::Material::Material()
 	: Material(glm::vec3(1., 1., 1.), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.0), 0.0, 0.3, 0.) {}
 
+ygl::Material::Material(glm::vec3 albedo)
+	: Material(albedo, 0.2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.0), 0.0, 0.3, 0.) {}
+
 ygl::Material::Material(glm::vec3 albedo, float specular_chance, glm::vec3 emission, float ior,
 						glm::vec3 transparency_color, float refraction_chance, glm::vec3 specular_color,
 						float refraction_roughness, float specular_roughness, float metallic, int normal_map,

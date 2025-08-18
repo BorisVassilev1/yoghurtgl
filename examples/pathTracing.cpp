@@ -257,8 +257,8 @@ void initPathTracer() {
 	// skybox = new ygl::TextureCubemap("./res/images/skybox", ".jpg");
 	skybox->bind(ygl::TexIndex::SKYBOX);
 
-	//initSpheres();
-	//initBoxes();
+	initSpheres();
+	initBoxes();
 	bvh->addPrimitive(bunnyMesh, scene->getComponent<ygl::Transformation>(bunny));
 
 	bvh->build();

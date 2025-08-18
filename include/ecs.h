@@ -256,6 +256,8 @@ class ComponentArray : public IComponentArray {
 		return components[entityToIndexMap[e]];
 	}
 
+	T *data() { return components.data(); }
+
 	void		  writeComponent(Entity e, std::ostream &out) override { getComponent(e).serialize(out); }
 	Serializable &readComponent(Entity e, std::istream &in, Scene *scene) override;
 };
@@ -902,6 +904,11 @@ class Scene : public ygl::AppendableSerializable {
 	 * @return std::size_t
 	 */
 	std::size_t entitiesCount() { return entities.size(); }
+
+	template<class T>
+	ComponentArray<T> *getComponentArray() {
+		return componentManager.getComponentArray<T>();
+	}
 };
 
 // this definition is outside the class because it uses a method from Scene

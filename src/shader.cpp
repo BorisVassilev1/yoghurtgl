@@ -217,8 +217,8 @@ void ygl::Shader::finishProgramCreation() {
 		dbLog(ygl::LOG_ERROR, "Shader failed to link");
 		detachShaders();
 		if (strcmp(fileNames[0], "./shaders/error/error.vs")) {
-			createShader(GL_VERTEX_SHADER, 0, "./shaders/error/error.vs");
-			createShader(GL_FRAGMENT_SHADER, 1, "./shaders/error/error.fs");
+			createShader(GL_VERTEX_SHADER, 0, YGL_RELATIVE_PATH "./shaders/error/error.vs");
+			createShader(GL_FRAGMENT_SHADER, 1, YGL_RELATIVE_PATH "./shaders/error/error.fs");
 			finishProgramCreation();
 		} else {
 			deleteShaders();

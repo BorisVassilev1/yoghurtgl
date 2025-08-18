@@ -4,6 +4,10 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
+
 #include <yoghurtgl.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <texture.h>
@@ -32,11 +36,11 @@ void ygl::IMesh::bind() {
 
 	glBindVertexArray(vao);
 	enableVBOs();
-	if (ibo != -1) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	if (ibo != (GLuint)-1) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 }
 
 void ygl::IMesh::unbind() {
-	if (ibo != -1) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	if (ibo != (GLuint)-1) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	disableVBOs();
 	glBindVertexArray(0);
 }
@@ -44,19 +48,25 @@ void ygl::IMesh::unbind() {
 ygl::IMesh::~IMesh() {
 	glDeleteVertexArrays(1, &vao);
 	vao = -1;
-	glDeleteBuffers(1, &ibo);
+	if (ibo != (GLuint)-1) glDeleteBuffers(1, &ibo);
 	ibo = -1;
 }
 
-GLenum ygl::IMesh::getDrawMode() { return drawMode; }
+GLenum ygl::IMesh::getDrawMode() const { return drawMode; }
 
-GLuint ygl::IMesh::getIndicesCount() { return indicesCount; }
+bool ygl::IMesh::getCullFace() const { return cullFace; }
 
-GLuint ygl::IMesh::getVerticesCount() { return verticesCount; }
+GLuint ygl::IMesh::getIndicesCount() const { return indicesCount; }
 
-GLuint ygl::IMesh::getIBO() { return ibo; }
+GLuint ygl::IMesh::getVerticesCount() const { return verticesCount; }
 
-GLuint ygl::IMesh::getVAO() { return vao; }
+GLuint ygl::IMesh::getIBO() const { return ibo; }
+
+GLuint ygl::IMesh::getVAO() const { return vao; }
+
+GLenum ygl::IMesh::getDepthFunc() const { return depthfunc; }
+
+GLenum ygl::IMesh::getPolygonMode() const { return polygonMode; }
 
 void ygl::IMesh::setDrawMode(GLenum mode) { drawMode = mode; }
 
@@ -285,6 +295,7 @@ void ygl::SphereMesh::init(float radius, uint detailX, uint detailY) {
 	uint vertexCount = (detailX * 2 + 1) * detailY;
 
 	GLfloat *vertices = new GLfloat[vertexCount * 3];
+	memset(vertices, 0, vertexCount * 3 * sizeof(GLfloat));
 	GLfloat *normals  = new GLfloat[vertexCount * 3];
 	GLfloat *colors	  = new GLfloat[vertexCount * 4];
 	GLfloat *uvs	  = new GLfloat[vertexCount * 2];
@@ -305,9 +316,9 @@ void ygl::SphereMesh::init(float radius, uint detailX, uint detailY) {
 			normals[index * 3 + 1] = cos(lon);
 			normals[index * 3 + 2] = sin(lon) * sin(lat);
 
-			tangents[index * 3]		= sin(lon) * cos(lat + glm::pi<float>() / 2);
-			tangents[index * 3 + 1] = cos(lon);
-			tangents[index * 3 + 2] = sin(lon) * sin(lat + glm::pi<float>() / 2);
+			tangents[index * 3]		= cos(lat + glm::pi<float>() / 2);
+			tangents[index * 3 + 1] = 0;
+			tangents[index * 3 + 2] = sin(lat + glm::pi<float>() / 2);
 
 			colors[index * 4]	  = i / (float)detailX;
 			colors[index * 4 + 1] = j / (float)detailY / 2.;
@@ -322,6 +333,7 @@ void ygl::SphereMesh::init(float radius, uint detailX, uint detailY) {
 	uint faceCount = (detailX - 1) * (detailY * 2 + 1);
 
 	GLuint *indices = new GLuint[faceCount * 2 * 3];
+	memset(indices, 0, faceCount * 2 * 3 * sizeof(GLuint));
 
 	for (uint x = 0; x < detailX - 1; ++x) {
 		for (uint y = 0; y < detailY * 2; ++y) {
@@ -759,3 +771,57 @@ void ygl::fixMixamoBoneName(std::string &name) {
 	std::replace(name.begin(), name.end(), ':', '_');
 }
 #endif
+
+const char* ygl::LineBoxMesh::name = "ygl::LineBoxMesh";
+
+void ygl::LineBoxMesh::init(const glm::vec3 &size) {
+	setDrawMode(GL_LINES);
+	const auto s = size / 2.f;
+	
+	float vertices[] = {
+		-s.x, -s.y, -s.z, 
+		-s.x, -s.y,  s.z,
+		-s.x,  s.y, -s.z,
+		-s.x,  s.y,  s.z,
+		 s.x, -s.y, -s.z,
+		 s.x, -s.y,  s.z,
+		 s.x,  s.y, -s.z,
+		 s.x,  s.y,  s.z,
+	};
+
+	const float t = 1.f / 3.f;
+	float texCoords[] = {
+		0, 0,
+		t, t, 
+		t, t,
+		2.f*t, 2.f*t,
+		t, t,
+		2.f*t, 2.f*t,
+		2.f*t, 2.f*t,
+		1, 1
+	};
+
+	uint indices[] = {
+		0, 1, 2, 3, 4, 5, 6, 7,
+		0, 2, 4, 6, 1, 3, 5, 7,
+		0, 4, 1, 5, 2, 6, 3, 7
+	};
+
+	Mesh::init(8, vertices, nullptr, texCoords, nullptr, nullptr, 24, indices);
+
+}
+
+ygl::LineBoxMesh::LineBoxMesh(const glm::vec3 &size) : size(size) {
+	init(size);
+}
+
+ygl::LineBoxMesh::LineBoxMesh() : size(1.f) {
+	init(size);
+}
+
+void ygl::LineBoxMesh::serialize(std::ostream &out) {
+	out.write(name, std::strlen(name) + 1);
+	IMesh::serialize(out);
+	out.write((char *)glm::value_ptr(size), sizeof(size));
+}
+

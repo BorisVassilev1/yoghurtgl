@@ -51,6 +51,8 @@ struct alignas(16) Material {
 
    public:
 	Material();
+
+	Material(glm::vec3 albedo);
 	/**
 	 * @brief Constructor with all possible parameters.
 	 */

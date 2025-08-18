@@ -34,10 +34,10 @@ if (MSVC)
 	set(COMPILE_ARGS /Wall)
 else ()
 	set(COMPILE_ARGS
-		#-fsanitize=address
+		-fsanitize=address
 	)
 	set(LINK_ARGS
-		#-fsanitize=address
+		-fsanitize=address
 	)
 	set(COMPILE_ARGS ${COMPILE_ARGS} -Wall -Wpedantic -g -O3 -std=c++2a)
 endif ()

@@ -356,6 +356,39 @@ void ygl::Texture2d::unbindImage(int unit) {
 int ygl::Texture2d::getID() { return id; }
 ygl::Texture2d::~Texture2d() { glDeleteTextures(1, &id); }
 
+void ygl::Texture3d::init(const glm::ivec3 &dim, GLint internalFormat, GLenum format, uint8_t pixelSize,
+						  uint8_t components, GLenum type, void *data) {
+	assert(dim.x > 0 && dim.y > 0 && dim.z > 0);
+	this->pixelSize		 = pixelSize;
+	this->components	 = components;
+	this->internalFormat = internalFormat;
+	this->dimensions	 = dim;
+
+	glGenTextures(1, &id);
+	glBindTexture(GL_TEXTURE_3D, id);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	glTexStorage3D(GL_TEXTURE_3D, 1, internalFormat, dim.x, dim.y, dim.z);
+	if (data != nullptr) { glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, dim.x, dim.y, dim.z, format, type, data); }
+}
+
+ygl::Texture3d::Texture3d(const glm::ivec3 &dim, TextureType type, void *data) : dimensions(dim) {
+	GLint	internalFormat = 0;
+	GLenum	format		   = 0;
+	uint8_t pixelSize	   = 0;
+	uint8_t components	   = 0;
+	GLenum	_type		   = 0;
+
+	getTypeParameters(type, internalFormat, format, pixelSize, components, _type);
+
+	init(dim, internalFormat, format, pixelSize, components, _type, data);
+}
+
 ygl::TextureCubemap::TextureCubemap(uint32_t width, uint32_t height) : width(width), height(height) {
 	loadEmptyCubemap();
 }

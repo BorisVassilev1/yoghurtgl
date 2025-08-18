@@ -94,7 +94,6 @@ void ygl::GrassSystem::init() {
 
 	materialIndex = scene->getSystem<Renderer>()->addMaterial(
 		Material(glm::vec3(0.1, 0.7, 0.1), .2, glm::vec3(0.), 0.99, glm::vec3(0.1), 0.0, glm::vec3(1.), 0.0, 0.8, 0.0));
-	getMaterial().transparency_map = 0;
 	grassCompute->bind();
 	grassCompute->setUniform("time", 0.f);
 

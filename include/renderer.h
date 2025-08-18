@@ -178,8 +178,8 @@ class Renderer : public ygl::ISystem {
 	Shader	 *getShader(uint index);
 	Material &getMaterial(RendererComponent &);
 	Material &getMaterial(uint index);
-	Mesh	 *getMesh(RendererComponent &);
-	Mesh	 *getMesh(uint index);
+	IMesh	 *getMesh(RendererComponent &);
+	IMesh	 *getMesh(uint index);
 	Mesh	 *getScreenQuad();
 
 	unsigned int   addMaterial(const Material &);
@@ -221,6 +221,7 @@ class Renderer : public ygl::ISystem {
 
 	void drawGUI();
 	bool drawMaterialEditor();
+	void screenShot(const std::string &filename);
 
 	void write(std::ostream &out) override;
 	void read(std::istream &in) override;

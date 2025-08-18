@@ -268,9 +268,9 @@ ygl::Material &ygl::Renderer::getMaterial(uint index) {
 	return materials[index];
 }
 
-ygl::Mesh *ygl::Renderer::getMesh(RendererComponent &comp) { return getMesh(comp.meshIndex); }
+ygl::IMesh *ygl::Renderer::getMesh(RendererComponent &comp) { return getMesh(comp.meshIndex); }
 
-ygl::Mesh *ygl::Renderer::getMesh(uint index) { return asman->getMesh(index); }
+ygl::IMesh *ygl::Renderer::getMesh(uint index) { return asman->getMesh(index); }
 
 ygl::Mesh *ygl::Renderer::getScreenQuad() { return screenQuad; }
 
@@ -411,7 +411,7 @@ void ygl::Renderer::drawScene() {
 		if (sh->hasUniform("use_shadow")) { sh->setUniform<GLboolean>("use_shadow", shadow); }
 		if (shadow) shadowFrameBuffer->getDepthStencil()->bind(ygl::TexIndex::SHADOW_MAP);
 
-		Mesh *mesh = getMesh(ecr.meshIndex);
+		IMesh *mesh = getMesh(ecr.meshIndex);
 		mesh->bind();
 		// set uniforms
 		if (sh->hasUniform("worldMatrix")) sh->setUniform("worldMatrix", transform.getWorldMatrix());
@@ -478,7 +478,7 @@ void ygl::Renderer::shadowPass() {
 		}
 		// sh is never null and the current bound shader
 
-		Mesh *mesh = getMesh(ecr.meshIndex);
+		IMesh *mesh = getMesh(ecr.meshIndex);
 		mesh->bind();
 		// set uniforms
 		if (sh->hasUniform("worldMatrix")) sh->setUniform("worldMatrix", transform.getWorldMatrix());
@@ -651,6 +651,32 @@ bool ygl::Renderer::drawMaterialEditor() {
 
 	ImGui::End();
 	return res;
+}
+
+#include <stb_image_write.h>
+void ygl::Renderer::screenShot(const std::string &filename) {
+	GLint viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+	int width  = viewport[2];
+	int height = viewport[3];
+
+	std::vector<uint8_t> pixels(width * height * 4);
+	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+
+	// Flip the image vertically
+	for (int y = 0; y < height / 2; ++y) {
+		for (int x = 0; x < width; ++x) {
+			int topIndex	 = (y * width + x) * 4;
+			int bottomIndex = ((height - y - 1) * width + x) * 4;
+			std::swap_ranges(pixels.begin() + topIndex, pixels.begin() + topIndex + 4,
+							 pixels.begin() + bottomIndex);
+		}
+	}
+
+	stbi_set_flip_vertically_on_load(true);
+	stbi_write_png(filename.c_str(), width, height, 4, pixels.data(), width * 4);
+	stbi_write_jpg(filename.c_str(), width, height, 4, pixels.data(), 75);
+	dbLog(ygl::LOG_DEBUG, "Screenshot saved to: ", filename);
 }
 
 void ygl::Renderer::write(std::ostream &out) {

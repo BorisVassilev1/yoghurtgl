@@ -21,6 +21,7 @@ ygl::Buffer &ygl::Buffer::operator=(ygl::Buffer &&other) {
 }
 
 void ygl::Buffer::bind(GLenum target) {
+	assert(buffer != 0 && "please initialize the buffer");
 	this->target = target;
 	glBindBuffer(target, buffer);
 	bound = true;

@@ -1,5 +1,4 @@
 #include <msgBox.h>
-#include <execinfo.h>
 
 #define YGL_WINDOW_ERROR 0
 #include <yoghurtgl.h>
@@ -7,6 +6,10 @@
 #include <imgui.h>
 #include <cxxabi.h>
 #include <unistd.h>
+
+#ifdef __linux__
+#include <execinfo.h>
+#include <sys/wait.h>
 
 void ygl::createMessageBox(const std::string &msg, const std::string &desc) {
 	int pid = fork();
@@ -23,3 +26,4 @@ void ygl::createMessageBox(const std::string &msg, const std::string &desc) {
 		execl("./msgBox", "./msgBox", msg.c_str(), desc.c_str(), NULL);
 	}
 }
+#endif

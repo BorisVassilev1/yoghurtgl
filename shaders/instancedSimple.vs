@@ -17,6 +17,8 @@ layout(std140, binding=3) uniform mats{
 };
 uniform bool animate = false;
 
+layout(location = 5) in vec4 particleData0;
+
 void main() {
 
 	vec4 totalPosition = vec4(0.0f);
@@ -37,21 +39,21 @@ void main() {
 			totalNormal += localNormal * weights[i];
     	}
 	} else {
-		totalPosition = vec4(position, 1.0);
+		totalPosition = vec4(position, 1.0f);
 		totalNormal = normal;
 	}
 
-	vec4 vPos = worldMatrix * totalPosition;
+	vec4 vPos = worldMatrix * totalPosition + vec4(particleData0.xyz, 0);
 
-	gl_PointSize = 5.0;
+	gl_PointSize = 5.0f;
 	gl_Position = projectionMatrix * viewMatrix * vPos;
 	
 	vColor = color;
 	vTexCoord = texCoord;
-	vVertexNormal = normalize(worldMatrix * vec4(totalNormal, 0.0)).xyz;
+	vVertexNormal = normalize(worldMatrix * vec4(totalNormal, 0.0f)).xyz;
 	vVertexPos = vPos.xyz;
 
-	vec3 worldSpaceTangent = normalize(vec3(worldMatrix * vec4(tangent, 0.0)));
+	vec3 worldSpaceTangent = normalize(vec3(worldMatrix * vec4(tangent, 0.0f)));
 
 	// re-orthogonalize T with respect to N
 	worldSpaceTangent = normalize(worldSpaceTangent - dot(worldSpaceTangent, vVertexNormal) * vVertexNormal);

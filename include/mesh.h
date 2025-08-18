@@ -9,6 +9,7 @@
 
 #include <glm/glm.hpp>
 #include <string>
+#include <buffer.h>
 #include <material.h>
 #include <serializable.h>
 
@@ -44,7 +45,7 @@ class IMesh : public ISerializable {
 	GLuint createVAO();
 	GLuint createIBO(GLuint *data, int size);
 
-	IMesh(){};	   // protected constructor so that noone can instantiate this
+	IMesh() {};		// protected constructor so that noone can instantiate this
 	IMesh(std::istream &in);
 
 	IMesh(const IMesh &other)			 = delete;
@@ -59,11 +60,14 @@ class IMesh : public ISerializable {
 	virtual void enableVBOs()  = 0;
 	virtual void disableVBOs() = 0;
 
-	GLuint getIndicesCount();
-	GLuint getVerticesCount();
-	GLenum getDrawMode();
-	GLuint getVAO();
-	GLuint getIBO();
+	GLuint getIndicesCount() const;
+	GLuint getVerticesCount() const;
+	GLenum getDrawMode() const;
+	GLuint getVAO() const;
+	GLuint getIBO() const;
+	GLenum getDepthFunc() const;
+	GLenum getPolygonMode() const;
+	bool   getCullFace() const;
 
 	void setDrawMode(GLenum drawMode);
 	void setCullFace(bool cullFace);
@@ -105,6 +109,8 @@ class MultiBufferMesh : public IMesh {
 	template <class T>
 	void addVBO(GLuint location, GLuint coordSize, T *data, GLenum type, GLuint count);
 
+	auto getVBOs() const -> const std::vector<VBO> & { return vbos; }
+
 	virtual ~MultiBufferMesh();
 	void enableVBOs();
 	void disableVBOs();
@@ -113,7 +119,7 @@ class MultiBufferMesh : public IMesh {
 // note that 'count' is the vertex count, not the length or size of the VBO
 template <class T>
 void MultiBufferMesh::addVBO(GLuint attrLocation, GLuint coordSize, T *data, GLenum type, GLuint count,
-								  GLuint indexDivisor) {
+							 GLuint indexDivisor) {
 	GLuint buff;
 	glGenBuffers(1, &buff);
 	glBindBuffer(GL_ARRAY_BUFFER, buff);
@@ -161,12 +167,12 @@ class AnimatedMesh : public Mesh {
 			  GLfloat *tangents, GLint *boneIDs, GLfloat *weights, GLuint indicesCount, GLuint *indices);
 
    public:
-	AnimatedMesh(){};
+	AnimatedMesh() {};
 	AnimatedMesh(std::istream &in) : Mesh(in) {}
 	AnimatedMesh(GLuint vertexCount, GLfloat *vertices, GLfloat *normals, GLfloat *texCoords, GLfloat *colors,
 				 GLfloat *tangents, GLint *boneIDs, GLfloat *weights, GLuint indicesCount, GLuint *indices);
-	IMesh::VBO							   getBoneIds();
-	IMesh::VBO							   getWeights();
+	IMesh::VBO								   getBoneIds();
+	IMesh::VBO								   getWeights();
 	std::unordered_map<std::string, BoneInfo> &getBoneInfoMap() { return boneInfoMap; }
 	uint									  &getBoneCount() { return bonesCount; }
 };
@@ -280,4 +286,79 @@ class MeshFromFile : public AnimatedMesh {
 void fixMixamoBoneName(std::string &name);
 
 #endif
+
+class LineBoxMesh : public Mesh {
+	glm::vec3 size;
+
+   protected:
+	void init(const glm::vec3 &size);
+
+   public:
+	LineBoxMesh(const glm::vec3 &size);
+	LineBoxMesh();
+	LineBoxMesh(std::istream &in);
+
+	static const char *name;
+	void			   serialize(std::ostream &out) override;
+};
+
+template <class InstanceData>
+class InstancedMesh : public IMesh {
+	std::vector<VBO> vbos;
+
+   public:
+	MutableBuffer instanceData;
+
+	void init(const MultiBufferMesh &mesh) {
+		this->vao			= mesh.getVAO();
+		this->ibo			= mesh.getIBO();
+		this->drawMode		= mesh.getDrawMode();
+		this->indicesCount	= mesh.getIndicesCount();
+		this->verticesCount = mesh.getVerticesCount();
+		this->vbos			= mesh.getVBOs();
+		this->depthfunc		= mesh.getDepthFunc();
+		this->polygonMode	= mesh.getPolygonMode();
+		this->cullFace		= mesh.getCullFace();
+
+		int maxAttribLocation = 0;
+		for (const auto &vbo : vbos) {
+			maxAttribLocation = std::max(maxAttribLocation, (int)vbo.location);
+		}
+		int location	 = maxAttribLocation + 1;
+		int buffersCount = (sizeof(InstanceData) + 15) / 16;	  // assuming InstanceData is 16-byte aligned
+		instanceData.bind(GL_ARRAY_BUFFER);
+		glBindVertexArray(this->getVAO());
+		for (int i = 0; i < buffersCount; ++i) {
+			glVertexAttribPointer(location + i, 4, GL_FLOAT, GL_FALSE, sizeof(InstanceData),
+								  (void *)(i * 4 * sizeof(GLfloat)));
+			glVertexAttribDivisor(location + i, 1);		// each instance gets its own data
+			vbos.push_back(VBO(location + i, instanceData.getID(), 4));
+			dbLog(ygl::LOG_DEBUG, "InstancedMesh: added VBO with location ", location + i, " and buffer ID ",
+				  instanceData.getID(), " for InstanceData.");
+		}
+		glBindVertexArray(0);
+		instanceData.unbind();
+	};
+
+	InstancedMesh() {}
+
+	InstancedMesh(const MultiBufferMesh &mesh) { init(mesh); }
+
+	void enableVBOs() override {
+		for (VBO vbo : vbos) {
+			glEnableVertexAttribArray(vbo.location);
+		}
+	}
+	void disableVBOs() override {
+		for (VBO vbo : vbos) {
+			glDisableVertexAttribArray(vbo.location);
+		}
+	}
+
+	void draw() {
+		glDrawElementsInstanced(drawMode, indicesCount, GL_UNSIGNED_INT, 0,
+								instanceData.getSize() / sizeof(InstanceData));
+	}
+};
+
 }	  // namespace ygl

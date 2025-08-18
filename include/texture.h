@@ -8,6 +8,7 @@
 #include <serializable.h>
 #include <stb_image.h>
 #include <cassert>
+#include <glm/glm.hpp>
 
 /**
  * @file texture.h
@@ -41,7 +42,7 @@ class FrameBuffer;
 class FrameBufferAttachable {
    public:
 	virtual void BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) = 0;
-	virtual ~FrameBufferAttachable(){};
+	virtual ~FrameBufferAttachable() {};
 	virtual void resize(uint width, uint height) = 0;
 };
 
@@ -77,7 +78,7 @@ void getTypeParameters(TextureType type, GLint &internalFormat, GLenum &format, 
  */
 class ITexture : public ISerializable, public FrameBufferAttachable {
    public:
-	ITexture(){};
+	ITexture() {};
 	DELETE_COPY_AND_ASSIGNMENT(ITexture)
 	/**
 	 * @brief save texture to file
@@ -96,7 +97,7 @@ class ITexture : public ISerializable, public FrameBufferAttachable {
 	virtual void unbindImage(int unit) = 0;
 
 	virtual int getID() = 0;
-	virtual ~ITexture(){};
+	virtual ~ITexture() {};
 };
 
 class RenderBuffer : public FrameBufferAttachable {
@@ -138,7 +139,7 @@ class Texture2d : public ITexture {
 	uint8_t		components = 4;
 	TextureType type;
 	std::string fileName = "";
-	GLint internalFormat;
+	GLint		internalFormat;
 
 	void init(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
 			  GLenum type, void *data);
@@ -148,7 +149,7 @@ class Texture2d : public ITexture {
 
    public:
 	static const char *name;
-	Texture2d(){};
+	Texture2d() {};
 
 	Texture2d(GLsizei width, GLsizei height, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
 			  GLenum type, void *data);
@@ -172,17 +173,33 @@ class Texture2d : public ITexture {
 #ifndef YGL_NO_COMPUTE_SHADERS
 	void bindImage(int textureUnit) override;
 	void unbindImage(int textureUnit) override;
-#else 
-	void bindImage(int) override {assert(0);};
-	void unbindImage(int) override {assert(0);};
+#else
+	void bindImage(int) override { assert(0); };
+	void unbindImage(int) override { assert(0); };
 #endif
-	int	 getID() override;
+	int getID() override;
 	virtual ~Texture2d();
 
 	void serialize(std::ostream &out) override;
 	void BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) override;
 
 	void resize(uint width, uint height) override;
+};
+
+class Texture3d {
+	glm::ivec3	dimensions;
+	GLuint		id		   = -1;
+	uint8_t		pixelSize  = 16;
+	uint8_t		components = 4;
+	TextureType type;
+	std::string fileName = "";
+	GLint		internalFormat;
+
+   public:
+	void init(const glm::ivec3 &dim, GLint internalFormat, GLenum format, uint8_t pixelSize, uint8_t components,
+			  GLenum type, void *data);
+
+	Texture3d(const glm::ivec3 &dim, TextureType type, void *data);
 };
 
 /**
@@ -217,12 +234,12 @@ class TextureCubemap : public ITexture {
 #ifndef YGL_NO_COMPUTE_SHADERS
 	void bindImage(int textureUnit) override;
 	void unbindImage(int textureUnit) override;
-#else 
-	void bindImage(int) override {assert(0);};
-	void unbindImage(int) override {assert(0);};
+#else
+	void bindImage(int) override { assert(0); };
+	void unbindImage(int) override { assert(0); };
 #endif
-	int	 getID() override;
-	std::string &getPath() {return path;};
+	int			 getID() override;
+	std::string &getPath() { return path; };
 
 	virtual ~TextureCubemap();
 

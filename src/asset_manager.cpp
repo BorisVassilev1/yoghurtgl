@@ -10,7 +10,7 @@
 
 const char *ygl::AssetManager::name = "ygl::AssetManager";
 
-uint ygl::AssetManager::addMesh(Mesh *mesh, const std::string &name, bool persist) {
+uint ygl::AssetManager::addMesh(IMesh *mesh, const std::string &name, bool persist) {
 	return meshes.add(mesh, name, persist);
 }
 
@@ -28,7 +28,7 @@ uint ygl::AssetManager::getTextureIndex(const std::string &name) { return textur
 
 uint ygl::AssetManager::getShaderIndex(const std::string &name) { return shaders.getIndex(name); }
 
-ygl::Mesh *ygl::AssetManager::getMesh(uint i) { return meshes.get(i); }
+ygl::IMesh *ygl::AssetManager::getMesh(uint i) { return meshes.get(i); }
 
 ygl::ITexture *ygl::AssetManager::getTexture(uint i) { return textures.get(i); }
 

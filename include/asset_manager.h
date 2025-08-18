@@ -140,7 +140,7 @@ class AssetArray : public AppendableSerializable {
  * @brief A System that manages assets: meshes, textures, shaders
  */
 class AssetManager : public ygl::ISystem {
-	AssetArray<Mesh>	 meshes;
+	AssetArray<IMesh>	 meshes;
 	AssetArray<ITexture> textures;
 	AssetArray<Shader>	 shaders;
 
@@ -157,7 +157,7 @@ class AssetManager : public ygl::ISystem {
 	 * @param name - resource name
 	 * @return index in the asset array
 	 */
-	uint addMesh(Mesh *mesh, const std::string &name, bool persist = true);
+	uint addMesh(IMesh *mesh, const std::string &name, bool persist = true);
 	/**
 	 * @brief Adds a Texture to the list of assets.
 	 * @note Takes ownership of \a tex
@@ -185,7 +185,7 @@ class AssetManager : public ygl::ISystem {
 	std::size_t getTexturesCount();
 	std::size_t getShadersCount();
 
-	Mesh	 *getMesh(uint i);
+	IMesh	 *getMesh(uint i);
 	ITexture *getTexture(uint i);
 	Shader	 *getShader(uint i);
 
