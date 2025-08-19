@@ -34,6 +34,11 @@ void ygl::Buffer::set(void *data, GLsizeiptr size, GLsizeiptr offset) {
 	glBufferSubData(target, offset, size, data);
 }
 
+void ygl::Buffer::get(void *data, GLsizeiptr size, GLsizeiptr offset) {
+	Bind b(this);
+	glGetBufferSubData(target, offset, size, data);
+}
+
 ygl::Bind::Bind(ygl::Buffer &buffer) : buffer(&buffer) {
 	wasBound = buffer.isBound();
 	buffer.bind(buffer.getTarget());

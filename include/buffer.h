@@ -17,6 +17,7 @@ class Buffer {
 	void unbind();
 
 	void set(void *data, GLsizeiptr size, GLsizeiptr offset = 0);
+	void get(void *data, GLsizeiptr size, GLsizeiptr offset = 0);
 
 	GLuint	   getID() const { return buffer; }
 	GLenum	   getTarget() const { return target; }

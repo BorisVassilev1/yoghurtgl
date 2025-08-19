@@ -580,16 +580,17 @@ void ygl::Renderer::drawObject(Shader *sh, Mesh *mesh) {
 
 #if !defined(YGL_NO_COMPUTE_SHADERS)
 void ygl::Renderer::compute(ComputeShader *shader, int domainX, int domainY, int domainZ) {
-	if (!shader->isBound()) shader->bind();
+	bool b = shader->isBound();
+	if (!b) shader->bind();
 	int groupsX = domainX / shader->groupSize.x + (domainX % shader->groupSize.x > 0);
 	int groupsY = domainY / shader->groupSize.y + (domainY % shader->groupSize.y > 0);
 	int groupsZ = domainZ / shader->groupSize.z + (domainZ % shader->groupSize.z > 0);
 
-	//dbLog(ygl::LOG_DEBUG, "Dispatching compute shader with groups: ", groupsX, " ", groupsY, " ", groupsZ);
+	// dbLog(ygl::LOG_DEBUG, "Dispatching compute shader with groups: ", groupsX, " ", groupsY, " ", groupsZ);
 
 	glDispatchCompute(groupsX, groupsY, groupsZ);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-	shader->unbind();
+	if (!b) shader->unbind();
 }
 #endif
 
@@ -647,7 +648,7 @@ bool ygl::Renderer::drawMaterialEditor() {
 	} else {
 		ImGui::Text("Invalid Material Index");
 	}
-	if(res) loadData();
+	if (res) loadData();
 
 	ImGui::End();
 	return res;
@@ -666,10 +667,9 @@ void ygl::Renderer::screenShot(const std::string &filename) {
 	// Flip the image vertically
 	for (int y = 0; y < height / 2; ++y) {
 		for (int x = 0; x < width; ++x) {
-			int topIndex	 = (y * width + x) * 4;
+			int topIndex	= (y * width + x) * 4;
 			int bottomIndex = ((height - y - 1) * width + x) * 4;
-			std::swap_ranges(pixels.begin() + topIndex, pixels.begin() + topIndex + 4,
-							 pixels.begin() + bottomIndex);
+			std::swap_ranges(pixels.begin() + topIndex, pixels.begin() + topIndex + 4, pixels.begin() + bottomIndex);
 		}
 	}
 
