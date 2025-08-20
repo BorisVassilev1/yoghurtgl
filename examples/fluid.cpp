@@ -139,28 +139,42 @@ auto nextPowerOf2(uint32_t v) {
 
 void bitonicMergeSort(Buffer &vec) {
 	static ComputeShader bitonicMergeShader(YGL_RELATIVE_PATH "./shaders/fluid/bitonicMerge.comp");
+	static MutableBuffer stepsData(GL_SHADER_STORAGE_BUFFER, 10, GL_DYNAMIC_DRAW);
 
 	bitonicMergeShader.bind();
 	bitonicMergeShader.setSSBO(vec.getID(), 0);
 	uint N = vec.getSize() / sizeof(float);
 
-	std::vector<float> data(N);
 	dbLog(ygl::LOG_DEBUG, "Bitonic merge sort N: ", N);
 	if (bitonicMergeShader.hasUniform("N")) bitonicMergeShader.setUniform("N", N);
 
 	uint_fast32_t numPairs = nextPowerOf2(N) / 2;
 	dbLog(ygl::LOG_DEBUG, "Bitonic merge sort numPairs: ", numPairs);
 	uint_fast32_t numStages = uint_fast32_t(log2(numPairs * 2));
+
+	stepsData.resize(numStages * (numStages + 1) * 2 * sizeof(uint));
+
+	{
+		std::vector<uint> steps;
+		for (uint_fast32_t stageIndex = 0; stageIndex < numStages; ++stageIndex) {
+			uint subGroupSize = 1 << (stageIndex);
+			for (uint_fast32_t stepIndex = 0; stepIndex < stageIndex + 1; ++stepIndex) {
+				uint stepSize = 1 << (stageIndex - stepIndex);
+				steps.push_back(subGroupSize);
+				steps.push_back(stepSize);
+			}
+		}
+		stepsData.set(steps.data(), steps.size() * sizeof(uint));
+	}
+
+	bitonicMergeShader.setUBO(stepsData.getID(), bitonicMergeShader.getUBOBinding("StepData"));
+
+	uint I = 0;
 	for (uint_fast32_t stageIndex = 0; stageIndex < numStages; ++stageIndex) {
-		uint subGroupSize = 1 << (stageIndex);
-		if (bitonicMergeShader.hasUniform("subGroupSize")) bitonicMergeShader.setUniform("subGroupSize", subGroupSize);
-
 		for (uint_fast32_t stepIndex = 0; stepIndex < stageIndex + 1; ++stepIndex) {
-			uint stepSize = 1 << (stageIndex - stepIndex);
-			if (bitonicMergeShader.hasUniform("stepSize")) bitonicMergeShader.setUniform("stepSize", stepSize);
 
-			//dbLog(ygl::LOG_DEBUG, "Sorting stage: ", stageIndex, " step: ", stepIndex, " subGroupSize: ", subGroupSize,
-			//	  " stepSize: ", stepSize);
+			//if(bitonicMergeShader.hasUniform("I"))
+			bitonicMergeShader.setUniform("I", I++);
 
 			Renderer::compute(&bitonicMergeShader, numPairs, 1, 1);
 			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -197,16 +211,15 @@ int main() {
 
 	FluidSimulation sim(scene);
 
-	unsigned int N = 1024 * 1024 * 16;
+	unsigned int N = 1024 * 1024;
 	srand(time(0));
 	MutableBuffer	   b(GL_SHADER_STORAGE_BUFFER, N * sizeof(float), GL_DYNAMIC_DRAW);
 	std::vector<float> data;
 	{
 		for (unsigned int i = 0; i < N; ++i) {
-			data.push_back(rand());
+			data.push_back(rand() % 100 / 100.f);
 		}
 		b.set(data.data(), data.size() * sizeof(float));
-		dbLog(ygl::LOG_DEBUG, "Buffer size: %d", b.getSize());
 	}
 
 	//b.get(data.data(), data.size() * sizeof(float));
@@ -221,13 +234,21 @@ int main() {
 	glFinish();
 	auto end = std::chrono::high_resolution_clock::now();
 	dbLog(ygl::LOG_DEBUG, "Sorting took: ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count(),
-		   "ms");
+		  "ms");
 
-
-	//b.get(data.data(), data.size() * sizeof(float));
-	//for (unsigned int i = 0; i < N; ++i) {
-	//	std::cout << data[i] << " ";
-	//}
+	b.get(data.data(), data.size() * sizeof(float));
+	for (unsigned int i = 0; i < N; ++i) {
+		//if(i < N-1) {
+		//	if(data[i] > data[i + 1]) {
+		//		std::cout << COLOR_RED;
+		//	} else {
+		//		std::cout << COLOR_GREEN;
+		//	}
+		//}
+		//std::cout << data[i] << " ";
+	//	if(i < N - 1 && data[i] > data[i + 1])
+	//		std::cout << "Error: " << data[i] << " > " << data[i + 1] << std::endl;
+	}
 	std::cout << std::endl;
 
 	createBounds(scene, sim.bounds.size());

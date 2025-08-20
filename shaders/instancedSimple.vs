@@ -17,7 +17,7 @@ layout(std140, binding=3) uniform mats{
 };
 uniform bool animate = false;
 
-layout(location = 5) in vec4 particleData0;
+layout(location = 7) in vec4 particleData0;
 
 void main() {
 

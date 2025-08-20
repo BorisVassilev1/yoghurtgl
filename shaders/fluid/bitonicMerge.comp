@@ -4,14 +4,20 @@ layout(std430, binding = 0) coherent restrict buffer Buffer {
 	float data[];
 };
 
-uniform uint subGroupSize; // number of pairs in subgroup
-uniform uint stepSize; // distance between compared elements
+layout(binding = 5) uniform StepData {
+	uint stepData[1024];
+};
+
 uniform uint N;
+uniform uint I;
 
 void main() {
 	uvec3 invID = gl_GlobalInvocationID;
 
 	uint i = invID.x;
+
+	uint subGroupSize = stepData[2 * I];
+	uint stepSize = stepData[2 * I + 1];
 
 	uint groupDirection = (i / subGroupSize) % 2;
 

@@ -366,7 +366,7 @@ void ygl::Shader::setUniform(GLuint location, GLfloat value) { glUniform1f(locat
 void ygl::Shader::setUniform(GLuint location, GLdouble value) { glUniform1d(location, value); }
 
 #ifndef YGL_NO_COMPUTE_SHADERS
-void ygl::Shader::createSSBO(std::string &name, GLuint binding) {
+void ygl::Shader::createSSBO(const std::string &name, GLuint binding) {
 	// https://www.geeks3d.com/20140704/tutorial-introduction-to-opengl-4-3-shader-storage-buffers-objects-ssbo-demo/
 	SSBOs.insert(std::pair(name, binding));
 
@@ -378,7 +378,7 @@ void ygl::Shader::createSSBO(std::string &name, GLuint binding) {
 }
 #endif
 
-void ygl::Shader::createUBO(std::string &name, GLuint binding) {
+void ygl::Shader::createUBO(const std::string &name, GLuint binding) {
 	UBOs.insert(std::pair(name, binding));
 
 	GLuint block_index = glGetUniformBlockIndex(program, name.c_str());
@@ -387,20 +387,20 @@ void ygl::Shader::createUBO(std::string &name, GLuint binding) {
 }
 
 #ifndef YGL_NO_COMPUTE_SHADERS
-void ygl::Shader::setSSBO(std::string &name, GLuint bufferId) {
+void ygl::Shader::setSSBO(const std::string &name, GLuint bufferId) {
 	// https://www.geeks3d.com/20140704/tutorial-introduction-to-opengl-4-3-shader-storage-buffers-objects-ssbo-demo/
 	GLuint binding_point_index = getSSBOBinding(name);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding_point_index, bufferId);
 }
 #endif
 
-void ygl::Shader::setUBO(std::string &name, GLuint bufferId) {
+void ygl::Shader::setUBO(const std::string &name, GLuint bufferId) {
 	GLuint binding_point_index = getUBOBinding(name);
 	glBindBufferBase(GL_UNIFORM_BUFFER, binding_point_index, bufferId);
 }
 
 #ifndef YGL_NO_COMPUTE_SHADERS
-GLint ygl::Shader::getSSBOBinding(std::string &name) {
+GLint ygl::Shader::getSSBOBinding(const std::string &name) {
 	auto res = SSBOs.find(name);
 	if (res == SSBOs.end()) {
 		std::cerr << "This SSBO does not exist or has not been created: " << name << std::endl;
@@ -410,7 +410,7 @@ GLint ygl::Shader::getSSBOBinding(std::string &name) {
 }
 #endif
 
-GLint ygl::Shader::getUBOBinding(std::string &name) {
+GLint ygl::Shader::getUBOBinding(const std::string &name) {
 	auto res = UBOs.find(name);
 	if (res == UBOs.end()) {
 		std::cerr << "This UBO does not exist or has not been created: " << name << std::endl;
@@ -472,9 +472,9 @@ ygl::ComputeShader::ComputeShader(const char *source) : Shader({source}) {
 	glGetInteger64i_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &maxGroupCount.y);
 	glGetInteger64i_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &maxGroupCount.z);
 
-	dbLog(LOG_INFO, "Max compute work group size: ", maxGroupSize.x, " ", maxGroupSize.y, " ", maxGroupSize.z);
-	dbLog(LOG_INFO, "Max compute work group invocations: ", maxInvocations);
-	dbLog(LOG_INFO, "Max compute work group count: ", maxGroupCount.x, " ", maxGroupCount.y, " ", maxGroupCount.z);
+	//dbLog(LOG_INFO, "Max compute work group size: ", maxGroupSize.x, " ", maxGroupSize.y, " ", maxGroupSize.z);
+	//dbLog(LOG_INFO, "Max compute work group invocations: ", maxInvocations);
+	//dbLog(LOG_INFO, "Max compute work group count: ", maxGroupCount.x, " ", maxGroupCount.y, " ", maxGroupCount.z);
 }
 
 ygl::ComputeShader::ComputeShader(std::istream &in) : Shader(in) {

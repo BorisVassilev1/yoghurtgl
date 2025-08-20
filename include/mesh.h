@@ -324,7 +324,7 @@ class InstancedMesh : public IMesh {
 		for (const auto &vbo : vbos) {
 			maxAttribLocation = std::max(maxAttribLocation, (int)vbo.location);
 		}
-		int location	 = maxAttribLocation + 1;
+		int location	 = std::max(maxAttribLocation + 1, 7);
 		int buffersCount = (sizeof(InstanceData) + 15) / 16;	  // assuming InstanceData is 16-byte aligned
 		instanceData.bind(GL_ARRAY_BUFFER);
 		glBindVertexArray(this->getVAO());

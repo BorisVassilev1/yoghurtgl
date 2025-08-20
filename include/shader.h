@@ -90,12 +90,12 @@ class Shader : public ISerializable {
 	void setUniform(GLuint location, GLfloat value);
 	void setUniform(GLuint location, GLdouble value);
 
-	void  createSSBO(std::string &name, GLuint binding);
-	void  createUBO(std::string &name, GLuint binding);
-	void  setSSBO(std::string &name, GLuint bufferId);
-	void  setUBO(std::string &name, GLuint bufferId);
-	GLint getSSBOBinding(std::string &name);
-	GLint getUBOBinding(std::string &name);
+	void  createSSBO(const std::string &name, GLuint binding);
+	void  createUBO(const std::string &name, GLuint binding);
+	void  setSSBO(const std::string &name, GLuint bufferId);
+	void  setUBO(const std::string &name, GLuint bufferId);
+	GLint getSSBOBinding(const std::string &name);
+	GLint getUBOBinding(const std::string &name);
 
 	bool isBound();
 
