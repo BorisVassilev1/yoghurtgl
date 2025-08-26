@@ -1,8 +1,8 @@
-layout(local_size_x = 128) in;
+layout(local_size_x = 20, local_size_y = 20) in;
 
 #include <fluid.glsl>
 
-layout(std430, binding = 1) volatile readonly restrict buffer ParticleBuffer {
+layout(std430, binding = 1) volatile coherent restrict buffer ParticleBuffer {
 	Particle particleData[];
 };
 
@@ -14,25 +14,75 @@ layout(binding = 3) restrict readonly buffer lookupBuffer {
 	uint lookup[];
 };
 
-layout(rgba32f, binding = 0) uniform writeonly image3D volume;
+ivec3 offsets[] = {
+	ivec3(-1, -1, -1),
+	ivec3(-1, -1, 0),
+	ivec3(-1, -1, 1),
+	ivec3(-1, 0, -1),
+	ivec3(-1, 0, 0),
+	ivec3(-1, 0, 1),
+	ivec3(-1, 1, -1),
+	ivec3(-1, 1, 0),
+	ivec3(-1, 1, 1),
+	ivec3(0, -1, -1),
+	ivec3(0, -1, 0),
+	ivec3(0, -1, 1),
+	ivec3(0, 0, -1),
+	ivec3(0, 0, 0),
+	ivec3(0, 0, 1),
+	ivec3(0, 1, -1),
+	ivec3(0, 1, 0),
+	ivec3(0, 1, 1),
+	ivec3(1, -1, -1),
+	ivec3(1, -1, 0),
+	ivec3(1, -1, 1),
+	ivec3(1, 0, -1),
+	ivec3(1, 0, 0),
+	ivec3(1, 0, 1),
+	ivec3(1, 1, -1),
+	ivec3(1, 1, 0),
+	ivec3(1, 1, 1),
+};
 
 void main() {
 	uvec3 invID = gl_GlobalInvocationID;
 	uint id = invID.x;
 
-	uint startIndex = lookup[id];
-	uint currentHash = hashData[2 * startIndex];
+	Particle p1 = particleData[id];
 
-	for(uint i = startIndex; hashData[2 * i] = currentHash; i++) {
-		Particle p = particles[hashData[2 * i + 1]];
+	uint hash = spatialHash(p1.position);
 
-		ivec3 pos = ivec3(p.position / cellSize);
-		vec3 delta = p.position / cellSize;
+	//p1.velocity = vec3(0.0f, -0.9, 0.0f); // apply gravity
+	p1.velocity += vec3(0.0f, -0.9f, 0.0f) * 0.1f;
 
-		vec4 w14 = vec4(1.0f - delta.x, delta.x, 1.0f - delta.x,  delta.x) * vec4(1.0f - delta.y, 1.0f - delta.y, delta.y, delta.y) * delta.z;
-		vec4 w58 = vec4(1.0f - delta.x, delta.x, 1.0f - delta.x,  delta.x) * vec4(1.0f - delta.y, 1.0f - delta.y, delta.y, delta.y) * (1.0f - delta.z);
-			
-		// TODO
+	ivec3 cell = ivec3(p1.position / cellSize);
+	for (uint k = 0; k < 27; ++k) {
+		ivec3 localcell = cell + offsets[k];
+		uint localHash = spatialHash(localcell);
+		
+		uint lookupStart = lookup[localHash];
+		if(lookupStart == -1) continue;
+
+		for (uint i = lookupStart; hashData[2 * i] == localHash; ++i) {
+			uint particleHash = hashData[2 * i]; // not needed
+			uint particleId = hashData[2 * i + 1];
+
+			if (particleId == id) continue;
+
+			Particle p2 = particleData[particleId];
+			vec3 diff = p1.position - p2.position;
+			float dist = length(diff);
+			if (dist < 0.99f) {
+				vec3 dir = normalize(diff);
+				float force = 1.0f / (dist * dist + 0.01f); // repulsion force
+				p1.velocity += clamp(dir * force * 0.1f, -vec3(10), vec3(10)); // apply repulsion force
+			}
+
+		}
+
 	}
+	//p1.velocity = clamp(p1.velocity, -vec3(5.0f), vec3(5.0f)); // limit velocity
+	p1.velocity *= 0.98f; // apply damping
 
+	particleData[id] = p1;
 }
