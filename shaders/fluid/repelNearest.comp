@@ -1,0 +1,38 @@
+layout(local_size_x = 128) in;
+
+#include <fluid.glsl>
+
+layout(std430, binding = 1) volatile readonly restrict buffer ParticleBuffer {
+	Particle particleData[];
+};
+
+layout(binding = 2) restrict readonly buffer Hashes {
+	uint hashData[]; // assume sorted
+};
+
+layout(binding = 3) restrict readonly buffer lookupBuffer {
+	uint lookup[];
+};
+
+layout(rgba32f, binding = 0) uniform writeonly image3D volume;
+
+void main() {
+	uvec3 invID = gl_GlobalInvocationID;
+	uint id = invID.x;
+
+	uint startIndex = lookup[id];
+	uint currentHash = hashData[2 * startIndex];
+
+	for(uint i = startIndex; hashData[2 * i] = currentHash; i++) {
+		Particle p = particles[hashData[2 * i + 1]];
+
+		ivec3 pos = ivec3(p.position / cellSize);
+		vec3 delta = p.position / cellSize;
+
+		vec4 w14 = vec4(1.0f - delta.x, delta.x, 1.0f - delta.x,  delta.x) * vec4(1.0f - delta.y, 1.0f - delta.y, delta.y, delta.y) * delta.z;
+		vec4 w58 = vec4(1.0f - delta.x, delta.x, 1.0f - delta.x,  delta.x) * vec4(1.0f - delta.y, 1.0f - delta.y, delta.y, delta.y) * (1.0f - delta.z);
+			
+		// TODO
+	}
+
+}

@@ -75,20 +75,27 @@ class Shader : public ISerializable {
 	bool   hasUniform(const std::string &uniformName);
 
 	template <class T>
-	void setUniform(const std::string &uniformName, T value) {
-		setUniform(getUniformLocation(uniformName), value);
+	inline void setUniform(const std::string &uniformName, T &&value) {
+		setUniform(getUniformLocation(uniformName), std::forward<T>(value));
 	}
 
-	void setUniform(GLuint location, GLboolean value);
-	void setUniform(GLuint location, GLint value);
-	void setUniform(GLuint location, GLuint value);
-	void setUniform(GLuint location, glm::mat4x4 value);
-	void setUniform(GLuint location, glm::vec4 value);
-	void setUniform(GLuint location, glm::vec3 value);
-	void setUniform(GLuint location, glm::vec2 value);
-	void setUniform(GLuint location, glm::ivec2 value);
-	void setUniform(GLuint location, GLfloat value);
-	void setUniform(GLuint location, GLdouble value);
+	template <class T>
+	inline void setUniformCond(const std::string &uniformName, T &&value) {
+		if (hasUniform(uniformName)) setUniform(getUniformLocation(uniformName), std::forward<T>(value));
+	}
+
+	void setUniform(GLuint location, GLboolean value) { glUniform1i(location, value ? 1 : 0); }
+	void setUniform(GLuint location, GLint value) { glUniform1i(location, value); }
+	void setUniform(GLuint location, GLuint value) { glUniform1ui(location, value); }
+	void setUniform(GLuint location, glm::mat4x4 value) {
+		glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
+	}
+	void setUniform(GLuint location, glm::vec4 value) { glUniform4f(location, value.x, value.y, value.z, value.w); }
+	void setUniform(GLuint location, glm::vec3 value) { glUniform3f(location, value.x, value.y, value.z); }
+	void setUniform(GLuint location, glm::vec2 value) { glUniform2f(location, value.x, value.y); }
+	void setUniform(GLuint location, glm::ivec2 value) { glUniform2i(location, value.x, value.y); }
+	void setUniform(GLuint location, GLfloat value) { glUniform1f(location, value); }
+	void setUniform(GLuint location, GLdouble value) { glUniform1d(location, value); }
 
 	void  createSSBO(const std::string &name, GLuint binding);
 	void  createUBO(const std::string &name, GLuint binding);

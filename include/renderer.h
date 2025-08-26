@@ -182,6 +182,8 @@ class Renderer : public ygl::ISystem {
 	IMesh	 *getMesh(uint index);
 	Mesh	 *getScreenQuad();
 
+	void bindTexturesForMaterial(unsigned int materialIndex, Shader *shader);
+
 	unsigned int   addMaterial(const Material &);
 	Light		  &addLight(const Light &);
 	Light		  &getLight(uint index);

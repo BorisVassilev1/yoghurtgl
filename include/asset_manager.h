@@ -190,6 +190,15 @@ class AssetManager : public ygl::ISystem {
 	Shader	 *getShader(uint i);
 
 	template <typename T>
+	T *getMesh(uint i) { return (T *)getMesh(i); }
+
+	template <typename T>
+	T *getTexture(uint i) { return (T*)getTexture(i); }
+
+	template <typename T>
+	T *getShader(uint i) { return (T *)getShader(i); }
+
+	template <typename T>
 		requires IsTexture<T>
 	T *getTexture(uint i) {
 		return dynamic_cast<T *>(getTexture(i));

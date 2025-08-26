@@ -1,7 +1,7 @@
 layout(local_size_x = 128) in;
 
 layout(std430, binding = 0) coherent restrict buffer Buffer {
-	float data[];
+	uint data[];
 };
 
 layout(binding = 5) uniform StepData {
@@ -10,6 +10,21 @@ layout(binding = 5) uniform StepData {
 
 uniform uint N;
 uniform uint I;
+
+uniform uint elementSize = 1; 
+uniform uint keyOffset = 0;
+
+void swap(inout float a, inout float b) {
+	float temp = a;
+	a = b;
+	b = temp;
+}
+
+void swap(inout uint a, inout uint b) {
+	uint temp = a;
+	a = b;
+	b = temp;
+}
 
 void main() {
 	uvec3 invID = gl_GlobalInvocationID;
@@ -31,16 +46,16 @@ void main() {
 	uint indexLow = baseIndex + (groupDirection) * stepSize;
 	uint indexHigh = baseIndex + (1-groupDirection) * stepSize;
 
-	//data[indexLow] = i;
-	//data[indexHigh] = i;
-	
 	if(indexHigh >= N || indexLow >= N)
 		return;
 
-	if (data[indexLow] > data[indexHigh]) {
-		float temp = data[indexLow];
-		data[indexLow] = data[indexHigh];
-		data[indexHigh] = temp;
+	indexLow *= elementSize;
+	indexHigh *= elementSize;
+
+	if (data[indexLow + keyOffset] > data[indexHigh + keyOffset]) {
+		for (uint j = 0; j < elementSize; j++) {
+			swap(data[indexLow + j], data[indexHigh + j]);
+		}
 	}
 }
 

@@ -377,7 +377,7 @@ void ygl::Texture3d::init(const glm::ivec3 &dim, GLint internalFormat, GLenum fo
 	if (data != nullptr) { glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, dim.x, dim.y, dim.z, format, type, data); }
 }
 
-ygl::Texture3d::Texture3d(const glm::ivec3 &dim, TextureType type, void *data) : dimensions(dim) {
+ygl::Texture3d::Texture3d(const glm::ivec3 &dim, TextureType type, void *data) : dimensions(dim), type(type) {
 	GLint	internalFormat = 0;
 	GLenum	format		   = 0;
 	uint8_t pixelSize	   = 0;

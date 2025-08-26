@@ -274,6 +274,38 @@ ygl::IMesh *ygl::Renderer::getMesh(uint index) { return asman->getMesh(index); }
 
 ygl::Mesh *ygl::Renderer::getScreenQuad() { return screenQuad; }
 
+void ygl::Renderer::bindTexturesForMaterial(unsigned int materialIndex, Shader *sh) {
+	if (materials[materialIndex].use_albedo_map)
+		asman->getTexture(materials[materialIndex].albedo_map)->bind(ygl::TexIndex::COLOR);
+	if (materials[materialIndex].use_normal_map)
+		asman->getTexture(materials[materialIndex].normal_map)->bind(ygl::TexIndex::NORMAL);
+	if (materials[materialIndex].use_roughness_map)
+		asman->getTexture(materials[materialIndex].roughness_map)->bind(ygl::TexIndex::ROUGHNESS);
+	if (materials[materialIndex].use_ao_map)
+		asman->getTexture(materials[materialIndex].ao_map)->bind(ygl::TexIndex::AO);
+	if (materials[materialIndex].use_emission_map)
+		asman->getTexture(materials[materialIndex].emission_map)->bind(ygl::TexIndex::EMISSION);
+	if (materials[materialIndex].use_metallic_map)
+		asman->getTexture(materials[materialIndex].metallic_map)->bind(ygl::TexIndex::METALLIC);
+	if (materials[materialIndex].use_transparency_map)
+		asman->getTexture(materials[materialIndex].transparency_map)->bind(ygl::TexIndex::OPACITY);
+	if (skyboxTexture != 0) asman->getTexture(skyboxTexture)->bind(ygl::TexIndex::SKYBOX);
+
+	if (irradianceTexture != 0) asman->getTexture(irradianceTexture)->bind(ygl::TexIndex::IRRADIANCE_MAP);
+	else defaultCubemap.bind(ygl::TexIndex::IRRADIANCE_MAP);
+	if (prefilterTexture != 0) asman->getTexture(prefilterTexture)->bind(ygl::TexIndex::PREFILTER_MAP);
+	else defaultCubemap.bind(ygl::TexIndex::PREFILTER_MAP);
+
+	if (sh->hasUniform("use_skybox")) { sh->setUniform("use_skybox", this->hasSkybox()); }
+	if (sh->hasUniform("renderMode")) { sh->setUniform("renderMode", renderMode); }
+
+	asman->getTexture(brdfTexture)->bind(ygl::TexIndex::BDRF_MAP);
+
+	if (sh->hasUniform("use_shadow")) { sh->setUniform<GLboolean>("use_shadow", shadow); }
+	if (shadow) shadowFrameBuffer->getDepthStencil()->bind(ygl::TexIndex::SHADOW_MAP);
+}
+
+
 unsigned int ygl::Renderer::addMaterial(const Material &mat) {
 	materials.push_back(mat);
 	return materials.size() - 1;
@@ -382,34 +414,8 @@ void ygl::Renderer::drawScene() {
 		}
 		// sh is never null and the current bound shader
 
-		if (materials[ecr.materialIndex].use_albedo_map)
-			asman->getTexture(materials[ecr.materialIndex].albedo_map)->bind(ygl::TexIndex::COLOR);
-		if (materials[ecr.materialIndex].use_normal_map)
-			asman->getTexture(materials[ecr.materialIndex].normal_map)->bind(ygl::TexIndex::NORMAL);
-		if (materials[ecr.materialIndex].use_roughness_map)
-			asman->getTexture(materials[ecr.materialIndex].roughness_map)->bind(ygl::TexIndex::ROUGHNESS);
-		if (materials[ecr.materialIndex].use_ao_map)
-			asman->getTexture(materials[ecr.materialIndex].ao_map)->bind(ygl::TexIndex::AO);
-		if (materials[ecr.materialIndex].use_emission_map)
-			asman->getTexture(materials[ecr.materialIndex].emission_map)->bind(ygl::TexIndex::EMISSION);
-		if (materials[ecr.materialIndex].use_metallic_map)
-			asman->getTexture(materials[ecr.materialIndex].metallic_map)->bind(ygl::TexIndex::METALLIC);
-		if (materials[ecr.materialIndex].use_transparency_map)
-			asman->getTexture(materials[ecr.materialIndex].transparency_map)->bind(ygl::TexIndex::OPACITY);
-		if (skyboxTexture != 0) asman->getTexture(skyboxTexture)->bind(ygl::TexIndex::SKYBOX);
 
-		if (irradianceTexture != 0) asman->getTexture(irradianceTexture)->bind(ygl::TexIndex::IRRADIANCE_MAP);
-		else defaultCubemap.bind(ygl::TexIndex::IRRADIANCE_MAP);
-		if (prefilterTexture != 0) asman->getTexture(prefilterTexture)->bind(ygl::TexIndex::PREFILTER_MAP);
-		else defaultCubemap.bind(ygl::TexIndex::PREFILTER_MAP);
-
-		if (sh->hasUniform("use_skybox")) { sh->setUniform("use_skybox", this->hasSkybox()); }
-		if (sh->hasUniform("renderMode")) { sh->setUniform("renderMode", renderMode); }
-
-		asman->getTexture(brdfTexture)->bind(ygl::TexIndex::BDRF_MAP);
-
-		if (sh->hasUniform("use_shadow")) { sh->setUniform<GLboolean>("use_shadow", shadow); }
-		if (shadow) shadowFrameBuffer->getDepthStencil()->bind(ygl::TexIndex::SHADOW_MAP);
+		bindTexturesForMaterial(ecr.materialIndex, sh);
 
 		IMesh *mesh = getMesh(ecr.meshIndex);
 		mesh->bind();

@@ -1,0 +1,33 @@
+layout(local_size_x = 128) in;
+
+layout(binding = 2) restrict readonly buffer Hashes {
+	uint hashData[]; // assume sorted
+};
+
+layout(binding = 3) restrict writeonly buffer lookupBuffer {
+	uint lookup[];
+};
+
+uniform uint N;
+
+const uint PER_INVOCATATION = 128;
+
+void main() {
+	uvec3 invID = gl_GlobalInvocationID;
+	uint id = invID.x;
+
+	if (id * PER_INVOCATATION >= N) {
+		return;
+	}
+
+	for (uint i = int(id == 0); i < PER_INVOCATATION && id * PER_INVOCATATION + i < N; i++) {
+		uint particleId = id * PER_INVOCATATION + i;
+		
+		uint hash0 = hashData[2 * particleId];
+		uint hash1 = hashData[2 * particleId - 2];
+
+		if(hash0 != hash1) 
+			lookup[hash0] = particleId;
+	}
+
+}

@@ -1,14 +1,6 @@
-#ifdef GL_ES
-precision highp float;
-#endif
-
 layout(local_size_x = 20, local_size_y = 20) in;
 
-struct Particle {
-	vec3	position;
-	float	padding;
-	vec3	velocity;
-};
+#include <fluid.glsl>
 
 layout(std430, binding = 1) volatile coherent restrict buffer ParticleBuffer {
 	Particle particleData[];
@@ -19,7 +11,6 @@ uniform vec3 b_max;
 
 uniform float deltaTime = 0;
 uniform ivec2 resolution;
-const float EPS = 0.01f;
 
 void main() {
 	uvec3 invID = gl_GlobalInvocationID;
@@ -29,13 +20,13 @@ void main() {
 	Particle p1 = particleData[id];
 
 	if (p1.position.x < b_min.x || p1.position.x > b_max.x) {
-		p1.velocity.x *= -1.0;
+		p1.velocity.x *= -0.9;
 	}
 	if (p1.position.y < b_min.y || p1.position.y > b_max.y){
-		p1.velocity.y *= -1.0;
+		p1.velocity.y *= -0.9;
 	}
 	if (p1.position.z < b_min.z || p1.position.z > b_max.z) {
-		p1.velocity.z *= -1.0;
+		p1.velocity.z *= -0.9;
 	}
 
 	p1.position = clamp(p1.position, b_min + vec3(EPS), b_max - vec3(EPS));
