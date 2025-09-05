@@ -19,15 +19,17 @@ void main() {
 
 	Particle p1 = particleData[id];
 
-	if (p1.position.x < b_min.x || p1.position.x > b_max.x) {
-		p1.velocity.x *= -0.9;
-	}
-	if (p1.position.y < b_min.y || p1.position.y > b_max.y){
-		p1.velocity.y *= -0.9;
-	}
-	if (p1.position.z < b_min.z || p1.position.z > b_max.z) {
-		p1.velocity.z *= -0.9;
-	}
+	//p1.velocity += vec3(0.0f, -9.81f, 0.0f) * deltaTime * 0.3;
+
+	//if (p1.position.x < b_min.x || p1.position.x > b_max.x) {
+	//	p1.velocity.x *= -0.5;
+	//}
+	//if (p1.position.y < b_min.y || p1.position.y > b_max.y){
+	//	p1.velocity.y *= -0.5;
+	//}
+	//if (p1.position.z < b_min.z || p1.position.z > b_max.z) {
+	//	p1.velocity.z *= -0.5;
+	//}
 
 	p1.position = clamp(p1.position, b_min + vec3(EPS), b_max - vec3(EPS));
 	p1.position += p1.velocity * deltaTime;

@@ -325,7 +325,7 @@ class InstancedMesh : public IMesh {
 			maxAttribLocation = std::max(maxAttribLocation, (int)vbo.location);
 		}
 		int location	 = std::max(maxAttribLocation + 1, 7);
-		int buffersCount = (sizeof(InstanceData) + 15) / 16;	  // assuming InstanceData is 16-byte aligned
+		int buffersCount = (sizeof(InstanceData) + 15) / 16;	 // assuming InstanceData is 16-byte aligned
 		instanceData.bind(GL_ARRAY_BUFFER);
 		glBindVertexArray(this->getVAO());
 		for (int i = 0; i < buffersCount; ++i) {
@@ -355,10 +355,9 @@ class InstancedMesh : public IMesh {
 		}
 	}
 
-	void draw() {
-		glDrawElementsInstanced(drawMode, indicesCount, GL_UNSIGNED_INT, 0,
-								instanceData.getSize() / sizeof(InstanceData));
-	}
+	void draw(int instances) { glDrawElementsInstanced(drawMode, indicesCount, GL_UNSIGNED_INT, 0, instances); }
+
+	void draw() { draw(instanceData.getSize() / sizeof(InstanceData)); }
 };
 
 }	  // namespace ygl

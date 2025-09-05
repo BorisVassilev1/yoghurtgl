@@ -94,20 +94,26 @@ class FluidSimulation {
 	};
 
 	uint	  particleMeshIndex	  = -1;
+	uint	  gridMeshIndex		  = -1;
 	uint	  materialIndex		  = -1;
 	uint	  particleShaderIndex = -1;
+	uint	  gridShaderIndex	  = -1;
 	uint	  numParticles		  = 1000;
 	Texture3d volumeData		  = Texture3d(glm::ivec3(bounds.size() / resolution), TextureType::RGBA32F, nullptr);
 	using ParticleMesh			  = InstancedMesh<ParticleData>;
 	SphereMesh particle			  = SphereMesh(0.5f, 5, 5);
+	BoxMesh	   grid				  = BoxMesh(1.0f);
 	float	   particleSize		  = 1.0f;
 	Scene	  &scene;
 
 	uint updateParticlesShaderIndex;
 	uint hashParticlesShaderIndex;
 	uint genSpatialLookupShaderIndex;
+	uint solveGridShaderIndex;
+	uint GPTransferShaderIndex;
+	uint PGTransferShaderIndex;
+	uint repelParticlesShaderIndex;
 
-	uint		  updateVelocityShaderIndex;
 	MutableBuffer spatialHashBuffer;
 	MutableBuffer spatialLookupBuffer;
 
@@ -121,7 +127,9 @@ class FluidSimulation {
 				for (int z = 0; z < 10; ++z) {
 					ParticleData p;
 					p.position = glm::mix(glm::vec3(-5), glm::vec3(5), glm::vec3(x, y, z) / glm::vec3(10)) +
-								 rand() % 100 / 100000.f * glm::vec3(1, 1, 1);
+								 rand() % 100 / 10000.f * glm::vec3(1, 1, 1);
+					// p.velocity = glm::vec3(rand() % 100 / 100.f - 0.5f, rand() % 100 / 100.f - -0.5f, rand() % 100 /
+					// 100.f - 0.5f);
 					particleData.push_back(p);
 				}
 			}
@@ -132,11 +140,14 @@ class FluidSimulation {
 
 	FluidSimulation(Scene &scene)
 		: scene(scene),
-		  spatialHashBuffer(GL_SHADER_STORAGE_BUFFER, 1000 * 2 * sizeof(unsigned int), GL_DYNAMIC_DRAW),
+		  spatialHashBuffer(GL_SHADER_STORAGE_BUFFER, 1024 * 2 * sizeof(unsigned int), GL_DYNAMIC_DRAW),
 		  spatialLookupBuffer(GL_SHADER_STORAGE_BUFFER, 1000 * sizeof(unsigned int), GL_DYNAMIC_DRAW) {
 		InstancedMesh<ParticleData> *particleMesh = new InstancedMesh<ParticleData>();
 		particleMesh->instanceData =
 			MutableBuffer(GL_ARRAY_BUFFER, numParticles * sizeof(ParticleData), GL_DYNAMIC_DRAW);
+
+		InstancedMesh<int> *im = new InstancedMesh<int>();
+		im->instanceData	   = MutableBuffer(GL_ARRAY_BUFFER, 128, GL_DYNAMIC_DRAW);
 
 		renderer			= scene.getSystem<Renderer>();
 		asman				= scene.getSystem<AssetManager>();
@@ -147,6 +158,14 @@ class FluidSimulation {
 											   "particleShader");
 		reset();
 		particleMesh->init(particle);
+
+		gridMeshIndex	= asman->addMesh(im, "particleMesh", false);
+		gridShaderIndex = asman->addShader(
+			new ygl::VFShader(YGL_RELATIVE_PATH "./shaders/fluid/grid.vs", YGL_RELATIVE_PATH "./shaders/fluid/grid.fs"),
+			"gridShader");
+		grid.setCullFace(false);
+		im->init(grid);
+		im->setCullFace(false);
 
 		ComputeShader *updateParticlesShader =
 			new ComputeShader(YGL_RELATIVE_PATH "./shaders/fluid/updateParticles.comp");
@@ -159,39 +178,80 @@ class FluidSimulation {
 			new ComputeShader(YGL_RELATIVE_PATH "./shaders/fluid/genSpatialLookup.comp");
 		genSpatialLookupShaderIndex = asman->addShader(genSpatialLookupShader, "genSpatialLookup");
 
-		ComputeShader *updateVelocityShader = new ComputeShader(YGL_RELATIVE_PATH "./shaders/fluid/PGTransfer.comp");
-		updateVelocityShaderIndex			= asman->addShader(updateVelocityShader, "updateVelocity");
+		ComputeShader *PGTransferShader = new ComputeShader(YGL_RELATIVE_PATH "./shaders/fluid/PGTransfer.comp");
+		PGTransferShaderIndex			= asman->addShader(PGTransferShader, "updateVelocity");
+
+		ComputeShader *solveGridShader = new ComputeShader(YGL_RELATIVE_PATH "./shaders/fluid/solveGrid.comp");
+		solveGridShaderIndex		   = asman->addShader(solveGridShader, "solveGrid");
+
+		ComputeShader *GPTransferShader = new ComputeShader(YGL_RELATIVE_PATH "./shaders/fluid/GPTransfer.comp");
+		GPTransferShaderIndex			= asman->addShader(GPTransferShader, "GPTransfer");
+
+		ComputeShader *repelParticlesShader = new ComputeShader(YGL_RELATIVE_PATH "./shaders/fluid/repelNearest.comp");
+		repelParticlesShaderIndex			= asman->addShader(repelParticlesShader, "repelParticles");
 
 		Shader::setSSBO(particleMesh->instanceData.getID(), 1);
 		Shader::setSSBO(spatialHashBuffer.getID(), 2);
 		Shader::setSSBO(spatialLookupBuffer.getID(), 3);
 
+		dbLog(ygl::LOG_INFO, "particle data id: ", particleMesh->instanceData.getID());
+		dbLog(ygl::LOG_INFO, "spatial hash id: ", spatialHashBuffer.getID());
+		dbLog(ygl::LOG_INFO, "spatial lookup id: ", spatialLookupBuffer.getID());
+
 		renderer->addDrawFunction([this]() {
-			AssetManager  *asman  = this->scene.getSystem<AssetManager>();
-			ygl::VFShader *shader = (ygl::VFShader *)asman->getShader(particleShaderIndex);
-			shader->bind();
+			AssetManager *asman = this->scene.getSystem<AssetManager>();
+			{
+				ygl::VFShader *shader = (ygl::VFShader *)asman->getShader(particleShaderIndex);
+				shader->bind();
 
-			ParticleMesh *mesh = (ParticleMesh *)asman->getMesh(particleMeshIndex);
+				ParticleMesh *mesh = (ParticleMesh *)asman->getMesh(particleMeshIndex);
 
-			renderer->bindTexturesForMaterial(materialIndex, shader);
+				renderer->bindTexturesForMaterial(materialIndex, shader);
 
-			shader->setUniformCond("worldMatrix", glm::mat4(1));
-			shader->setUniformCond("material_index", materialIndex);
-			shader->setUniformCond("numParticles", (int)numParticles);
-			shader->setUniformCond("particleSize", (int)particleSize);
+				shader->setUniformCond("worldMatrix", glm::mat4(1));
+				shader->setUniformCond("material_index", materialIndex);
+				shader->setUniformCond("numParticles", (int)numParticles);
+				shader->setUniformCond("particleSize", (int)particleSize);
 
-			mesh->bind();
+				mesh->bind();
 
-			if(renderer->renderMode == 6) {glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);}
+				if (renderer->renderMode == 6) { glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); }
 
-			mesh->draw();
+				mesh->draw();
 
-			mesh->unbind();
-			shader->unbind();
+				mesh->unbind();
+				shader->unbind();
+			}
+			{
+				ygl::VFShader *shader = (ygl::VFShader *)asman->getShader(gridShaderIndex);
+				shader->bind();
+				InstancedMesh<int> *mesh = (InstancedMesh<int> *)asman->getMesh(gridMeshIndex);
+				renderer->bindTexturesForMaterial(materialIndex, shader);
+				shader->setUniformCond("worldMatrix", glm::mat4(1));
+				shader->setUniformCond("material_index", materialIndex);
+				shader->setUniformCond("numParticles", (int)numParticles);
+				shader->setUniformCond("particleSize", (int)particleSize);
+				volumeData.bindImage(17);
+				mesh->setCullFace(false);
+
+				glDepthMask(GL_FALSE);
+
+				mesh->bind();
+				if (renderer->renderMode == 6) { glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); }
+				mesh->draw(20 * 20 * 20);
+				mesh->unbind();
+				shader->unbind();
+
+				glDepthMask(GL_TRUE);
+			}
 		});
 	};
 
 	void update() {
+		InstancedMesh<ParticleData> *particleMesh = asman->getMesh<InstancedMesh<ParticleData>>(particleMeshIndex);
+		Shader::setSSBO(particleMesh->instanceData.getID(), 1);
+		Shader::setSSBO(spatialHashBuffer.getID(), 2);
+		Shader::setSSBO(spatialLookupBuffer.getID(), 3);
 		{
 			ComputeShader *updateParticlesShader = asman->getShader<ComputeShader>(updateParticlesShaderIndex);
 			updateParticlesShader->bind();
@@ -205,6 +265,12 @@ class FluidSimulation {
 		}
 
 		{
+			{
+				Bind b(spatialHashBuffer);
+				uint elem = -1;
+				glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT, &elem);
+			}
+
 			ComputeShader *hashParticlesShader = asman->getShader<ComputeShader>(hashParticlesShaderIndex);
 			hashParticlesShader->bind();
 			hashParticlesShader->setUniformCond("N", numParticles);
@@ -229,12 +295,44 @@ class FluidSimulation {
 		}
 
 		{
-			ComputeShader *updateVelocityShader = asman->getShader<ComputeShader>(updateVelocityShaderIndex);
-			updateVelocityShader->bind();
-			updateVelocityShader->setUniformCond("N", numParticles);
-			updateVelocityShader->setUniformCond("cellSize", 1.f);
+			ComputeShader *repelParticlesShader = asman->getShader<ComputeShader>(repelParticlesShaderIndex);
+			repelParticlesShader->bind();
+			repelParticlesShader->setUniformCond("N", numParticles);
+			repelParticlesShader->setUniformCond("cellSize", 1.f);
+			Renderer::compute(repelParticlesShader, numParticles, 1, 1);
+			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+		}
 
-			Renderer::compute(updateVelocityShader, numParticles, 1, 1);
+		{
+			ComputeShader *PGTransferShader = asman->getShader<ComputeShader>(PGTransferShaderIndex);
+			PGTransferShader->bind();
+			PGTransferShader->setUniformCond("N", numParticles);
+			PGTransferShader->setUniformCond("cellSize", 1.f);
+			volumeData.bindImage(0);
+
+			Renderer::compute(PGTransferShader, 20, 20, 20);
+			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+		}
+
+		{
+			for (int i = 0; i < 2; ++i) {
+				ComputeShader *solveGridShader = asman->getShader<ComputeShader>(solveGridShaderIndex);
+				solveGridShader->bind();
+				volumeData.bindImage(0);
+
+				Renderer::compute(solveGridShader, 20, 20, 20);
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+			}
+		}
+
+		{
+			ComputeShader *GPTransferShader = asman->getShader<ComputeShader>(GPTransferShaderIndex);
+			GPTransferShader->bind();
+			GPTransferShader->setUniformCond("N", numParticles);
+			GPTransferShader->setUniformCond("cellSize", 1.f);
+			volumeData.bindImage(0);
+
+			Renderer::compute(GPTransferShader, numParticles, 1, 1);
 			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 		}
 	}
@@ -252,7 +350,7 @@ void createBounds(ygl::Scene &scene, const glm::vec3 &box) {
 										 asman->addMesh(new LineBoxMesh(box), "boundsMesh"),
 										 renderer->addMaterial(Material(glm::vec3(1)))));
 
-	//addSphere(scene, glm::vec3(0, 0, 10), glm::vec3(1), glm::vec3(1, 0, 0));
+	// addSphere(scene, glm::vec3(0, 0, 10), glm::vec3(1), glm::vec3(1, 0, 0));
 }
 
 int main() {
@@ -279,9 +377,8 @@ int main() {
 							 Light::Type::DIRECTIONAL));
 	renderer->addLight(Light(Transformation(), glm::vec3(1., 1., 1.), 0.01, Light::Type::AMBIENT));
 
-	
-	VFShader *shader = new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
-	uint shaderInd = scene.getSystem<AssetManager>()->addShader(shader, "defaultShader");
+	VFShader *shader	= new VFShader("./shaders/simple.vs", "./shaders/simple.fs");
+	uint	  shaderInd = scene.getSystem<AssetManager>()->addShader(shader, "defaultShader");
 	renderer->setDefaultShader(shaderInd);
 	renderer->setMainCamera(&cam);
 	addEffects(renderer);
@@ -289,12 +386,16 @@ int main() {
 	FluidSimulation sim(scene);
 	createBounds(scene, sim.bounds.size());
 
-	//addSkybox(scene, YGL_RELATIVE_PATH "./res/images/meadow_4k", ".hdr");
+	addSkybox(scene, YGL_RELATIVE_PATH "./res/images/meadow_4k", ".hdr");
 
 	renderer->loadData();
 
+	bool running = true;
+
 	Keyboard::addKeyCallback([&](GLFWwindow *, int key, int, int action, int mods) {
 		if (key == GLFW_KEY_L && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL) { sim.reset(); }
+		if (key == GLFW_KEY_H && action == GLFW_RELEASE) { sim.update(); }
+		if (key == GLFW_KEY_P && action == GLFW_RELEASE) { running = !running; }
 	});
 
 	while (!window.shouldClose()) {
@@ -305,7 +406,7 @@ int main() {
 
 		renderer->drawGUI();
 
-		sim.update();
+		if (running) sim.update();
 
 		scene.doWork();
 

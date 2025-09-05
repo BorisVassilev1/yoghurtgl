@@ -186,7 +186,7 @@ class Texture2d : public ITexture {
 	void resize(uint width, uint height) override;
 };
 
-class Texture3d {
+class Texture3d : public ITexture {
 	glm::ivec3	dimensions;
 	GLuint		id		   = -1;
 	uint8_t		pixelSize  = 16;
@@ -200,6 +200,24 @@ class Texture3d {
 			  GLenum type, void *data);
 
 	Texture3d(const glm::ivec3 &dim, TextureType type, void *data);
+	void bindImage(int unit) override { glBindImageTexture(unit, id, 0, GL_TRUE, 0, GL_READ_WRITE, internalFormat); }
+	void unbindImage(int unit) override { glBindImageTexture(unit, 0, 0, GL_TRUE, 0, GL_READ_WRITE, internalFormat); }
+
+	void serialize(std::ostream &out) override { assert(0); }
+	void BindToFrameBuffer(const FrameBuffer &fb, GLenum attachment, uint image, uint level) override { assert(0); }
+	void resize(uint width, uint height) override { assert(0); }
+	void save(std::string) override { assert(0); };
+
+	void bind(int textureUnit) const override {
+		glActiveTexture(textureUnit);
+		glBindTexture(GL_TEXTURE_3D, id);
+	}
+	void unbind(int textureUnit) const override {
+		glActiveTexture(textureUnit);
+		glBindTexture(GL_TEXTURE_3D, 0);
+	}
+
+	int getID() override { return id; }
 };
 
 /**

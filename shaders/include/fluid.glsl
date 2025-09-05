@@ -15,7 +15,12 @@ uint spatialHash(in ivec3 cell) {
 	return hash % N;
 }
 
+ivec3 cellFromPosition(in vec3 position) {
+	return ivec3(position / cellSize);
+}
+
 uint spatialHash(in vec3 position) {
-	ivec3 cell = ivec3(position / cellSize);
+	ivec3 cell = cellFromPosition(position);
 	return spatialHash(cell);
 }
+

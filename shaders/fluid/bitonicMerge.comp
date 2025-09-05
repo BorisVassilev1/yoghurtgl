@@ -46,8 +46,8 @@ void main() {
 	uint indexLow = baseIndex + (groupDirection) * stepSize;
 	uint indexHigh = baseIndex + (1-groupDirection) * stepSize;
 
-	if(indexHigh >= N || indexLow >= N)
-		return;
+	//if(indexHigh >= N || indexLow >= N)
+	//	return;
 
 	indexLow *= elementSize;
 	indexHigh *= elementSize;

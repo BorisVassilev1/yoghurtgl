@@ -1,4 +1,4 @@
-layout(local_size_x = 128) in;
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
 #include <fluid.glsl>
 
@@ -16,23 +16,65 @@ layout(binding = 3) restrict readonly buffer lookupBuffer {
 
 layout(rgba32f, binding = 0) uniform writeonly image3D volume;
 
-void main() {
-	uvec3 invID = gl_GlobalInvocationID;
-	uint id = invID.x;
+ivec3 directions[] = {
+	ivec3(1, 0, 0),
+	ivec3(0, 1, 0),
+	ivec3(0, 0, 1)
+};
 
+vec3 offsets[3] = {
+	vec3(0.0f, 1, 1) / 2.0f,
+	vec3(1, 0.0f, 1) / 2.0f,
+	vec3(1, 1, 0.0f) / 2.0f
+};
+
+void sumParticles(in ivec3 cell, in ivec3 target, inout vec3 q, inout vec3 r, in uint coord) {
+	uint id = spatialHash(cell);
 	uint startIndex = lookup[id];
+	if(startIndex == -1) return;
 	uint currentHash = hashData[2 * startIndex];
 
-	for(uint i = startIndex; hashData[2 * i] = currentHash; i++) {
-		Particle p = particles[hashData[2 * i + 1]];
 
-		ivec3 pos = ivec3(p.position / cellSize);
-		vec3 delta = p.position / cellSize;
+	for(uint i = startIndex; hashData[2 * i] == currentHash; i++) {
+		Particle p = particleData[hashData[2 * i + 1]];
+		vec3 realCell = floor(p.position / cellSize);
+		//if(any(notEqual(ivec3(realCell), cell))) continue;
 
-		vec4 w14 = vec4(1.0f - delta.x, delta.x, 1.0f - delta.x,  delta.x) * vec4(1.0f - delta.y, 1.0f - delta.y, delta.y, delta.y) * delta.z;
-		vec4 w58 = vec4(1.0f - delta.x, delta.x, 1.0f - delta.x,  delta.x) * vec4(1.0f - delta.y, 1.0f - delta.y, delta.y, delta.y) * (1.0f - delta.z);
-			
-		// TODO
+		vec3 pposition = p.position + offsets[coord] * cellSize;
+
+		vec3 dist = abs(pposition - target) / cellSize;
+		
+		float weight = clamp((1.f - dist.x),0.f,1.f) * clamp((1.f - dist.y), 0.f, 1.f) * clamp((1.f - dist.z), 0.f, 1.f);
+		
+		q[coord] += p.velocity[coord] * weight;
+		r[coord] += weight;
 	}
+}
+
+void main() {
+	uvec3 invID = gl_GlobalInvocationID;
+
+	if(any(greaterThanEqual(invID, uvec3(20)))) return;
+	ivec3 mainCell = ivec3(invID.xyz) - ivec3(10);
+
+	vec3 q = vec3(0.0f);
+	vec3 r = vec3(0.0f);
+
+	for(uint coord = 0; coord < 3; ++coord) { // in the three directions
+
+		ivec3 neighborCell = mainCell + directions[coord];
+
+		sumParticles(mainCell, mainCell, q, r, coord);
+		sumParticles(neighborCell, mainCell, q, r, coord);
+	}
+	
+	//r /= 3.0f;
+	if(r.x > EPS) q.x /= r.x;
+	if(r.y > EPS) q.y /= r.y;
+	if(r.z > EPS) q.z /= r.z;
+
+	q.y -= 9.81f * 0.1f;
+
+	imageStore(volume, ivec3(invID.xyz), vec4(q, r));
 
 }

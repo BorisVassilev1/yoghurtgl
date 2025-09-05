@@ -15,6 +15,10 @@ void main() {
 	uvec3 invID = gl_GlobalInvocationID;
 	uint id = invID.x;
 
+	if(id >= N) {
+		return;
+	}
+
 	Particle p1 = particleData[id];
 
 	hashData[2 * id] = spatialHash(p1.position);

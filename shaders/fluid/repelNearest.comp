@@ -1,4 +1,4 @@
-layout(local_size_x = 20, local_size_y = 20) in;
+layout(local_size_x = 128) in;
 
 #include <fluid.glsl>
 
@@ -53,7 +53,6 @@ void main() {
 	uint hash = spatialHash(p1.position);
 
 	//p1.velocity = vec3(0.0f, -0.9, 0.0f); // apply gravity
-	p1.velocity += vec3(0.0f, -0.9f, 0.0f) * 0.1f;
 
 	ivec3 cell = ivec3(p1.position / cellSize);
 	for (uint k = 0; k < 27; ++k) {
@@ -75,14 +74,17 @@ void main() {
 			if (dist < 0.99f) {
 				vec3 dir = normalize(diff);
 				float force = 1.0f / (dist * dist + 0.01f); // repulsion force
-				p1.velocity += clamp(dir * force * 0.1f, -vec3(10), vec3(10)); // apply repulsion force
+				//p1.velocity += clamp(dir * force * 0.1f, -vec3(10), vec3(10)); // apply repulsion force
+				//p1.velocity += dir * force * 0.3f;
+				//p1.velocity -= min(0, dot(p1.velocity, dir)) * dir;
+				//p1.position += dir * (0.99f - dist) * 0.1f;
 			}
 
 		}
 
 	}
 	//p1.velocity = clamp(p1.velocity, -vec3(5.0f), vec3(5.0f)); // limit velocity
-	p1.velocity *= 0.98f; // apply damping
+	//p1.velocity *= 0.99f; // apply damping
 
 	particleData[id] = p1;
 }

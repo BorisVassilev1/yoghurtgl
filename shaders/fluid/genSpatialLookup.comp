@@ -16,9 +16,7 @@ void main() {
 	uvec3 invID = gl_GlobalInvocationID;
 	uint id = invID.x;
 
-	if (id * PER_INVOCATATION >= N) {
-		return;
-	}
+	if(id == 0) lookup[hashData[0]] = 0;
 
 	for (uint i = int(id == 0); i < PER_INVOCATATION && id * PER_INVOCATATION + i < N; i++) {
 		uint particleId = id * PER_INVOCATATION + i;
