@@ -16,12 +16,12 @@ bool isWall(ivec3 coord) {
 }
 
 ivec3 directions[] = {
-	ivec3(1, 0, 0),
 	ivec3(-1, 0, 0),
-	ivec3(0, 1, 0),
 	ivec3(0, -1, 0),
+	ivec3(0, 0, -1),
+	ivec3(1, 0, 0),
+	ivec3(0, 1, 0),
 	ivec3(0, 0, 1),
-	ivec3(0, 0, -1)
 };
 
 int surroundWalls(ivec3 coord) {
@@ -36,7 +36,12 @@ int surroundWalls(ivec3 coord) {
 void main() {
 	uvec3 invID = gl_GlobalInvocationID;
 
+
 	vec4 p111 = readVoxel(ivec3(invID) + ivec3(0, 0, 0));
+	if(p111.w < 0.01) {
+		return;
+	}
+
 	vec4 p211 = readVoxel(ivec3(invID) + ivec3(1, 0, 0));
 	vec4 p121 = readVoxel(ivec3(invID) + ivec3(0, 1, 0));
 	vec4 p112 = readVoxel(ivec3(invID) + ivec3(0, 0, 1));
@@ -51,6 +56,11 @@ void main() {
 	vec4 p201 = readVoxel(ivec3(invID) + ivec3(1, -1, 0));
 	vec4 p120 = readVoxel(ivec3(invID) + ivec3(0, 1, -1));
 	vec4 p210 = readVoxel(ivec3(invID) + ivec3(1, 0, -1));
+
+	for(int i = 0; i < 3; i++) {
+		if(isWall(ivec3(invID) + directions[i]))
+			p111[i] = 0.0;
+	}
 
 	float d111 = p211.x + p121.y + p112.z - p111.x - p111.y - p111.z;
 	float d011 = p111.x + p021.y + p012.z - p011.x - p011.y - p011.z;
@@ -67,18 +77,13 @@ void main() {
 	int s101 = int(isWall(ivec3(invID) + ivec3(0, -1, 0)));
 	int s110 = int(isWall(ivec3(invID) + ivec3(0, 0, -1)));
 	
-	float c = 1.0f;
+	float c = 0.1f;
 	p111.xyz += vec3(d111) * vec3(s011, s101, s110) / vec3(S111) * c;
 	p111.x -= d011 * float(s111) / float(S011) * c;
 	p111.y -= d101 * float(s111) / float(S101) * c;
 	p111.z -= d110 * float(s111) / float(S110) * c;
 	
-	float coef = 1.f / 8.f;
+	//float coef = 1.f / 8.f;
 
-	//p111.xyz += vec3(d111) * coef;
-	//p111.x -= d011 * coef;
-	//p111.y -= d101 * coef;
-	//p111.z -= d110 * coef;
-
-	imageStore(volume, ivec3(invID), p111);
+	//imageStore(volume, ivec3(invID), p111);
 }

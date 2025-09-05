@@ -14,6 +14,17 @@ uniform vec3 b_max;
 uniform float deltaTime = 0;
 uniform ivec2 resolution;
 
+ivec3 directions[] = {
+	ivec3(-1, -1, -1),
+	ivec3(-1, -1, 1),
+	ivec3(-1, 1, -1),
+	ivec3(-1, 1, 1),
+	ivec3(1, -1, -1),
+	ivec3(1, -1, 1),
+	ivec3(1, 1, -1),
+	ivec3(1, 1, 1),
+};
+
 void main() {
 	uvec3 invID = gl_GlobalInvocationID;
 	if(invID.x >= N) return;
@@ -21,7 +32,16 @@ void main() {
 
 	Particle p1 = particleData[id];
 
-	p1.velocity = imageLoad(volume, ivec3(p1.position) + ivec3(10)).xyz;
+	p1.velocity = vec3(0);
+	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[0] + ivec3(10)).xyz;
+	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[1] + ivec3(10)).xyz;
+	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[2] + ivec3(10)).xyz;
+	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[3] + ivec3(10)).xyz;
+	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[4] + ivec3(10)).xyz;
+	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[5] + ivec3(10)).xyz;
+	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[6] + ivec3(10)).xyz;
+	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[7] + ivec3(10)).xyz;
+	p1.velocity /= 8.0f;
 
 	particleData[id] = p1;
 }

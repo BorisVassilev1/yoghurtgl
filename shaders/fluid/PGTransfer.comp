@@ -34,15 +34,15 @@ void sumParticles(in ivec3 cell, in ivec3 target, inout vec3 q, inout vec3 r, in
 	if(startIndex == -1) return;
 	uint currentHash = hashData[2 * startIndex];
 
-
 	for(uint i = startIndex; hashData[2 * i] == currentHash; i++) {
 		Particle p = particleData[hashData[2 * i + 1]];
-		vec3 realCell = floor(p.position / cellSize);
+		//vec3 realCell = floor(p.position / cellSize);
 		//if(any(notEqual(ivec3(realCell), cell))) continue;
 
-		vec3 pposition = p.position + offsets[coord] * cellSize;
+		vec3 pposition = p.position - offsets[coord] * cellSize;
 
-		vec3 dist = abs(pposition - target) / cellSize;
+		vec3 dist = abs((pposition - target) / cellSize);
+		if(any(greaterThan(dist, vec3(1.0f)))) continue;
 		
 		float weight = clamp((1.f - dist.x),0.f,1.f) * clamp((1.f - dist.y), 0.f, 1.f) * clamp((1.f - dist.z), 0.f, 1.f);
 		
@@ -62,7 +62,7 @@ void main() {
 
 	for(uint coord = 0; coord < 3; ++coord) { // in the three directions
 
-		ivec3 neighborCell = mainCell + directions[coord];
+		ivec3 neighborCell = mainCell - directions[coord];
 
 		sumParticles(mainCell, mainCell, q, r, coord);
 		sumParticles(neighborCell, mainCell, q, r, coord);
@@ -73,8 +73,9 @@ void main() {
 	if(r.y > EPS) q.y /= r.y;
 	if(r.z > EPS) q.z /= r.z;
 
-	q.y -= 9.81f * 0.1f;
+	if(r.x + r.y + r.z > 0.0f)
+		q.y -= 9.81f * 0.1f;
 
-	imageStore(volume, ivec3(invID.xyz), vec4(q, r));
+	imageStore(volume, ivec3(invID.xyz), vec4(q,(r.x + r.y + r.z) / 3.0f));
 
 }

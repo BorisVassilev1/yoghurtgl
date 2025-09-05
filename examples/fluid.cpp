@@ -315,14 +315,14 @@ class FluidSimulation {
 		}
 
 		{
-			for (int i = 0; i < 2; ++i) {
-				ComputeShader *solveGridShader = asman->getShader<ComputeShader>(solveGridShaderIndex);
-				solveGridShader->bind();
-				volumeData.bindImage(0);
+			//for (int i = 0; i < 5; ++i) {
+			//	ComputeShader *solveGridShader = asman->getShader<ComputeShader>(solveGridShaderIndex);
+			//	solveGridShader->bind();
+			//	volumeData.bindImage(0);
 
-				Renderer::compute(solveGridShader, 20, 20, 20);
-				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-			}
+			//	Renderer::compute(solveGridShader, 20, 20, 20);
+			//	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+			//}
 		}
 
 		{
@@ -386,7 +386,7 @@ int main() {
 	FluidSimulation sim(scene);
 	createBounds(scene, sim.bounds.size());
 
-	addSkybox(scene, YGL_RELATIVE_PATH "./res/images/meadow_4k", ".hdr");
+	addSkybox(scene, YGL_RELATIVE_PATH "./res/images/kloppenheim_06_puresky_4k", ".hdr");
 
 	renderer->loadData();
 
