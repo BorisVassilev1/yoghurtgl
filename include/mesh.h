@@ -41,6 +41,7 @@ class IMesh : public ISerializable {
 	GLenum depthfunc   = GL_LESS;
 	GLenum polygonMode = GL_FILL;
 	bool   cullFace	   = true;
+	uint   lineWidth   = 1;
 
 	GLuint createVAO();
 	GLuint createIBO(GLuint *data, int size);
@@ -68,11 +69,13 @@ class IMesh : public ISerializable {
 	GLenum getDepthFunc() const;
 	GLenum getPolygonMode() const;
 	bool   getCullFace() const;
+	uint   getLineWidth() const;
 
 	void setDrawMode(GLenum drawMode);
 	void setCullFace(bool cullFace);
 	void setDepthFunc(GLenum depthFunc);
 	void setPolygonMode(GLenum polygonMode);
+	void setLineWidth(uint lineWidth);
 
 	void serialize(std::ostream &out) override;
 
@@ -300,6 +303,105 @@ class LineBoxMesh : public Mesh {
 
 	static const char *name;
 	void			   serialize(std::ostream &out) override;
+};
+
+class CoordArrowsMesh : public Mesh {
+   protected:
+	void init() {
+		setDrawMode(GL_LINES);
+
+		// clang-format off
+		float vertices[] = {
+			0, 0, 0,
+			0, 0, 0,
+			0, 0, 0,
+
+			1, 0, 0,
+			0, 1, 0,
+			0, 0, 1,
+
+			0.9, 0.1, 0,
+			0.9, -0.1, 0,
+			0.9, 0, 0.1,
+			0.9, 0, -0.1,
+
+			-0.1, 0.9, 0,
+			0, 0.9, 0.1,
+			0.1, 0.9, 0,
+			0, 0.9, -0.1,
+
+			0, 0.1, 0.9,
+			0, -0.1, 0.9,
+			0.1, 0, 0.9,
+			-0.1, 0, 0.9,
+		};
+
+		float texCoords[] = {
+			0, 0,
+			0, 0,
+			0, 0,
+			0, 1,
+			1, 0,
+			0, 1, 
+
+			0, 1,
+			0, 1,
+			0, 1,
+			0, 1,
+			1, 0,
+			1, 0,
+			1, 0,
+			1, 0,
+			0, 1, 
+			0, 1, 
+			0, 1, 
+			0, 1, 
+		};
+		float colors[] = {
+			1.0, 0.0, 0.0, 1.0,
+			0.0, 1.0, 0.0, 1.0,
+			0.0, 0.0, 1.0, 1.0,
+			1.0, 0.0, 0.0, 1.0,
+			0.0, 1.0, 0.0, 1.0,
+			0.0, 0.0, 1.0, 1.0,
+			
+
+			1.0, 0.0, 0.0, 1.0,
+			1.0, 0.0, 0.0, 1.0,
+			1.0, 0.0, 0.0, 1.0,
+			1.0, 0.0, 0.0, 1.0,
+
+			0.0, 1.0, 0.0, 1.0,
+			0.0, 1.0, 0.0, 1.0,
+			0.0, 1.0, 0.0, 1.0,
+			0.0, 1.0, 0.0, 1.0,
+
+			0.0, 0.0, 1.0, 1.0,
+			0.0, 0.0, 1.0, 1.0,
+			0.0, 0.0, 1.0, 1.0,
+			0.0, 0.0, 1.0, 1.0,
+		};
+
+		uint indices[] = {
+			0, 3,
+			1, 4,
+			2, 5,
+
+			3, 6, 3, 7, 3, 8, 3, 9,
+			4, 10, 4, 11, 4, 12, 4, 13,
+			5, 14, 5, 15, 5, 16, 5, 17,
+		};
+		// clang-format on
+
+		Mesh::init(18, vertices, nullptr, texCoords, colors, nullptr, 30, indices);
+	}
+
+   public:
+	CoordArrowsMesh() { init(); }
+	CoordArrowsMesh(std::istream &) { init(); }
+
+	static const char *name;
+	void			   serialize(std::ostream &) override {}
 };
 
 template <class InstanceData>

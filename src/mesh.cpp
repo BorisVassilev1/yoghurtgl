@@ -5,7 +5,7 @@
 #include <math.h>
 
 #ifndef M_PI
-    #define M_PI 3.14159265358979323846
+	#define M_PI 3.14159265358979323846
 #endif
 
 #include <yoghurtgl.h>
@@ -33,6 +33,7 @@ void ygl::IMesh::bind() {
 	else glDisable(GL_CULL_FACE);
 	glDepthFunc(depthfunc);
 	glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
+	glLineWidth(lineWidth);
 
 	glBindVertexArray(vao);
 	enableVBOs();
@@ -68,6 +69,8 @@ GLenum ygl::IMesh::getDepthFunc() const { return depthfunc; }
 
 GLenum ygl::IMesh::getPolygonMode() const { return polygonMode; }
 
+uint ygl::IMesh::getLineWidth() const { return lineWidth; }
+
 void ygl::IMesh::setDrawMode(GLenum mode) { drawMode = mode; }
 
 void ygl::IMesh::setCullFace(bool cullFace) { this->cullFace = cullFace; }
@@ -75,6 +78,8 @@ void ygl::IMesh::setCullFace(bool cullFace) { this->cullFace = cullFace; }
 void ygl::IMesh::setDepthFunc(GLenum depthFunc) { this->depthfunc = depthFunc; }
 
 void ygl::IMesh::setPolygonMode(GLenum polygonMode) { this->polygonMode = polygonMode; }
+
+void ygl::IMesh::setLineWidth(uint lineWidth) { this->lineWidth = lineWidth; }
 
 ygl::IMesh::IMesh(std::istream &in) {
 	in.read((char *)&drawMode, sizeof(drawMode));
@@ -772,56 +777,31 @@ void ygl::fixMixamoBoneName(std::string &name) {
 }
 #endif
 
-const char* ygl::LineBoxMesh::name = "ygl::LineBoxMesh";
+const char *ygl::LineBoxMesh::name = "ygl::LineBoxMesh";
 
 void ygl::LineBoxMesh::init(const glm::vec3 &size) {
 	setDrawMode(GL_LINES);
 	const auto s = size / 2.f;
-	
+
 	float vertices[] = {
-		-s.x, -s.y, -s.z, 
-		-s.x, -s.y,  s.z,
-		-s.x,  s.y, -s.z,
-		-s.x,  s.y,  s.z,
-		 s.x, -s.y, -s.z,
-		 s.x, -s.y,  s.z,
-		 s.x,  s.y, -s.z,
-		 s.x,  s.y,  s.z,
+		-s.x, -s.y, -s.z, -s.x, -s.y, s.z, -s.x, s.y, -s.z, -s.x, s.y, s.z,
+		s.x,  -s.y, -s.z, s.x,	-s.y, s.z, s.x,	 s.y, -s.z, s.x,  s.y, s.z,
 	};
 
-	const float t = 1.f / 3.f;
-	float texCoords[] = {
-		0, 0,
-		t, t, 
-		t, t,
-		2.f*t, 2.f*t,
-		t, t,
-		2.f*t, 2.f*t,
-		2.f*t, 2.f*t,
-		1, 1
-	};
+	const float t			= 1.f / 3.f;
+	float		texCoords[] = {0, 0, t, t, t, t, 2.f * t, 2.f * t, t, t, 2.f * t, 2.f * t, 2.f * t, 2.f * t, 1, 1};
 
-	uint indices[] = {
-		0, 1, 2, 3, 4, 5, 6, 7,
-		0, 2, 4, 6, 1, 3, 5, 7,
-		0, 4, 1, 5, 2, 6, 3, 7
-	};
+	uint indices[] = {0, 1, 2, 3, 4, 5, 6, 7, 0, 2, 4, 6, 1, 3, 5, 7, 0, 4, 1, 5, 2, 6, 3, 7};
 
 	Mesh::init(8, vertices, nullptr, texCoords, nullptr, nullptr, 24, indices);
-
 }
 
-ygl::LineBoxMesh::LineBoxMesh(const glm::vec3 &size) : size(size) {
-	init(size);
-}
+ygl::LineBoxMesh::LineBoxMesh(const glm::vec3 &size) : size(size) { init(size); }
 
-ygl::LineBoxMesh::LineBoxMesh() : size(1.f) {
-	init(size);
-}
+ygl::LineBoxMesh::LineBoxMesh() : size(1.f) { init(size); }
 
 void ygl::LineBoxMesh::serialize(std::ostream &out) {
 	out.write(name, std::strlen(name) + 1);
 	IMesh::serialize(out);
 	out.write((char *)glm::value_ptr(size), sizeof(size));
 }
-

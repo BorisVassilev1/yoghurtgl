@@ -28,7 +28,7 @@ vec3 offsets[3] = {
 	vec3(1, 1, 0.0f) / 2.0f
 };
 
-void sumParticles(in ivec3 cell, in ivec3 target, inout vec3 q, inout vec3 r, in uint coord) {
+void sumParticles(in ivec3 cell, in vec3 target, inout vec3 q, inout vec3 r, in uint coord) {
 	uint id = spatialHash(cell);
 	uint startIndex = lookup[id];
 	if(startIndex == -1) return;
@@ -36,15 +36,13 @@ void sumParticles(in ivec3 cell, in ivec3 target, inout vec3 q, inout vec3 r, in
 
 	for(uint i = startIndex; hashData[2 * i] == currentHash; i++) {
 		Particle p = particleData[hashData[2 * i + 1]];
-		//vec3 realCell = floor(p.position / cellSize);
-		//if(any(notEqual(ivec3(realCell), cell))) continue;
 
 		vec3 pposition = p.position - offsets[coord] * cellSize;
 
 		vec3 dist = abs((pposition - target) / cellSize);
 		if(any(greaterThan(dist, vec3(1.0f)))) continue;
 		
-		float weight = clamp((1.f - dist.x),0.f,1.f) * clamp((1.f - dist.y), 0.f, 1.f) * clamp((1.f - dist.z), 0.f, 1.f);
+		float weight = (1.f - dist.x) * (1.f - dist.y) * (1.f - dist.z);
 		
 		q[coord] += p.velocity[coord] * weight;
 		r[coord] += weight;
@@ -54,18 +52,29 @@ void sumParticles(in ivec3 cell, in ivec3 target, inout vec3 q, inout vec3 r, in
 void main() {
 	uvec3 invID = gl_GlobalInvocationID;
 
-	if(any(greaterThanEqual(invID, uvec3(20)))) return;
-	ivec3 mainCell = ivec3(invID.xyz) - ivec3(10);
+	if(any(greaterThanEqual(invID, uvec3(resolution)))) return;
+	ivec3 mainCell = ivec3(invID.xyz) - ivec3(20);
 
 	vec3 q = vec3(0.0f);
 	vec3 r = vec3(0.0f);
 
-	for(uint coord = 0; coord < 3; ++coord) { // in the three directions
+	vec3 target = mainCell * cellSize;
 
-		ivec3 neighborCell = mainCell - directions[coord];
+	for(uint coord0 = 0; coord0 < 3; ++coord0) { // in the three directions
 
-		sumParticles(mainCell, mainCell, q, r, coord);
-		sumParticles(neighborCell, mainCell, q, r, coord);
+		uint coord1 = (coord0 + 1) % 3;
+		uint coord2 = (coord0 + 2) % 3;
+		
+		for(int offset1 = -1; offset1 <= 1; ++offset1) {
+			for(int offset2 = -1; offset2 <= 1; ++offset2) {
+				ivec3 localCell = mainCell;
+				localCell[coord1] += offset1;
+				localCell[coord2] += offset2;
+
+				sumParticles(localCell, target, q, r, coord0);
+				sumParticles(localCell - directions[coord0], target, q, r, coord0);
+			}
+		}
 	}
 	
 	//r /= 3.0f;
@@ -73,8 +82,10 @@ void main() {
 	if(r.y > EPS) q.y /= r.y;
 	if(r.z > EPS) q.z /= r.z;
 
-	if(r.x + r.y + r.z > 0.0f)
-		q.y -= 9.81f * 0.1f;
+	if(r.x + r.y + r.z > 0.1f) {
+	//q += vec3(0, sin(time),cos(time)) * 0.1f;
+		//q.y -= 9.81f * 0.03f; 
+	}
 
 	imageStore(volume, ivec3(invID.xyz), vec4(q,(r.x + r.y + r.z) / 3.0f));
 

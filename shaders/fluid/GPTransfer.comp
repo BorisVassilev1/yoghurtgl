@@ -7,23 +7,58 @@ layout(std430, binding = 1) volatile coherent restrict buffer ParticleBuffer {
 };
 
 layout(rgba32f, binding = 0) uniform readonly image3D volume;
+layout(rgba32f, binding = 0) uniform readonly image3D volumeOld;
 
 uniform vec3 b_min;
 uniform vec3 b_max;
 
 uniform float deltaTime = 0;
-uniform ivec2 resolution;
 
 ivec3 directions[] = {
-	ivec3(-1, -1, -1),
-	ivec3(-1, -1, 1),
-	ivec3(-1, 1, -1),
-	ivec3(-1, 1, 1),
-	ivec3(1, -1, -1),
-	ivec3(1, -1, 1),
-	ivec3(1, 1, -1),
-	ivec3(1, 1, 1),
+	ivec3(0, 1, 1),
+	ivec3(1, 0, 1),
+	ivec3(1, 1, 0),
 };
+
+vec3 readVelocity(vec3 position, readonly image3D volume) {
+	vec3 result;
+	for (int i = 0; i < 3; i++) {
+		vec3 pos = position / cellSize - 0.5f * directions[i];
+
+		vec3 delta = fract(pos);
+		ivec3 edge000 = ivec3(floor(pos));
+
+		ivec3 edge111 = edge000 + ivec3(1);
+		ivec3 edge100 = edge000 + ivec3(1, 0, 0);
+		ivec3 edge010 = edge000 + ivec3(0, 1, 0);
+		ivec3 edge001 = edge000 + ivec3(0, 0, 1);
+		ivec3 edge110 = edge000 + ivec3(1, 1, 0);
+		ivec3 edge101 = edge000 + ivec3(1, 0, 1);
+		ivec3 edge011 = edge000 + ivec3(0, 1, 1);
+
+		vec4 p000 = imageLoad(volume, edge000 + ivec3(20));
+		vec4 p111 = imageLoad(volume, edge111 + ivec3(20));
+		vec4 p100 = imageLoad(volume, edge100 + ivec3(20));
+		vec4 p010 = imageLoad(volume, edge010 + ivec3(20));
+		vec4 p001 = imageLoad(volume, edge001 + ivec3(20));
+		vec4 p110 = imageLoad(volume, edge110 + ivec3(20));
+		vec4 p101 = imageLoad(volume, edge101 + ivec3(20));
+		vec4 p011 = imageLoad(volume, edge011 + ivec3(20));
+
+		float w000 = (1.0f - delta.x) * (1.0f - delta.y) * (1.0f - delta.z);
+		float w100 = (delta.x) * (1.0f - delta.y) * (1.0f - delta.z);
+		float w010 = (1.0f - delta.x) * (delta.y) * (1.0f - delta.z);
+		float w110 = (delta.x) * (delta.y) * (1.0f - delta.z);
+		float w001 = (1.0f - delta.x) * (1.0f - delta.y) * (delta.z);
+		float w101 = (delta.x) * (1.0f - delta.y) * (delta.z);
+		float w011 = (1.0f - delta.x) * (delta.y) * (delta.z);
+		float w111 = (delta.x) * (delta.y) * (delta.z);
+
+		result[i] = w000 * p000[i] + w100 * p100[i] + w010 * p010[i] + w001 * p001[i] +
+			w110 * p110[i] + w101 * p101[i] + w011 * p011[i] + w111 * p111[i];
+	}
+	return result;
+}
 
 void main() {
 	uvec3 invID = gl_GlobalInvocationID;
@@ -32,16 +67,12 @@ void main() {
 
 	Particle p1 = particleData[id];
 
-	p1.velocity = vec3(0);
-	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[0] + ivec3(10)).xyz;
-	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[1] + ivec3(10)).xyz;
-	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[2] + ivec3(10)).xyz;
-	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[3] + ivec3(10)).xyz;
-	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[4] + ivec3(10)).xyz;
-	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[5] + ivec3(10)).xyz;
-	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[6] + ivec3(10)).xyz;
-	p1.velocity += imageLoad(volume, ivec3(floor(p1.position)) + directions[7] + ivec3(10)).xyz;
-	p1.velocity /= 8.0f;
+	vec3 vel = readVelocity(p1.position, volume);
+	vec3 velOld = readVelocity(p1.position, volumeOld);
 
-	particleData[id] = p1;
+	// flip
+	vec3 difference = vel - velOld;
+
+	particleData[id].velocity = mix(p1.velocity + difference, vel, 0.9f);
+	//particleData[id].velocity += difference;
 }

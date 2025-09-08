@@ -94,6 +94,7 @@ class Shader : public ISerializable {
 	void setUniform(GLuint location, glm::vec3 value) { glUniform3f(location, value.x, value.y, value.z); }
 	void setUniform(GLuint location, glm::vec2 value) { glUniform2f(location, value.x, value.y); }
 	void setUniform(GLuint location, glm::ivec2 value) { glUniform2i(location, value.x, value.y); }
+	void setUniform(GLuint location, glm::ivec3 value) { glUniform3i(location, value.x, value.y, value.z); }
 	void setUniform(GLuint location, GLfloat value) { glUniform1f(location, value); }
 	void setUniform(GLuint location, GLdouble value) { glUniform1d(location, value); }
 

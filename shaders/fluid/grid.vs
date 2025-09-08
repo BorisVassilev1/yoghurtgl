@@ -16,6 +16,8 @@ layout(std140, binding=3) uniform mats{
 	mat4 finalBonesMatrices[MAX_BONES];
 };
 uniform bool animate = false;
+uniform ivec3 gridResolution;
+uniform float cellSize = 1.0f;
 
 layout(location = 7) in vec4 particleData0;
 layout(location = 8) in vec4 particleData1;
@@ -44,9 +46,12 @@ void main() {
 		totalNormal = normal;
 	}
 
-	ivec3 id = ivec3(gl_InstanceID % 20, (gl_InstanceID / 20) % 20, gl_InstanceID / 400);
+	ivec3 id = ivec3(
+			gl_InstanceID % gridResolution.z, 
+			(gl_InstanceID / gridResolution.z) % gridResolution.y, 
+			gl_InstanceID / (gridResolution.z * gridResolution.y));
 
-	vec4 vPos = worldMatrix * totalPosition + vec4(vec3(id) - vec3(10.5), 0);
+	vec4 vPos = worldMatrix * totalPosition + vec4(vec3(id) - vec3(19.5), 0) * cellSize;
 
 	gl_PointSize = 5.0f;
 	gl_Position = projectionMatrix * viewMatrix * vPos;

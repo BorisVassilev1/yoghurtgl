@@ -7,7 +7,9 @@ struct Particle {
 
 uniform uint N;
 uniform float cellSize = 1.0f;
+uniform float time;
 
+uniform ivec3 resolution;
 const float EPS = 0.01f;
 
 uint spatialHash(in ivec3 cell) {
@@ -16,7 +18,7 @@ uint spatialHash(in ivec3 cell) {
 }
 
 ivec3 cellFromPosition(in vec3 position) {
-	return ivec3(position / cellSize);
+	return ivec3(floor(position / cellSize));
 }
 
 uint spatialHash(in vec3 position) {

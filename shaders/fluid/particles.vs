@@ -19,6 +19,7 @@ layout(std140, binding=3) uniform mats{
 	mat4 finalBonesMatrices[MAX_BONES];
 };
 uniform bool animate = false;
+uniform float particleSize = 1.0f;
 
 layout(location = 7) in vec4 particleData0;
 layout(location = 8) in vec4 particleData1;
@@ -43,7 +44,7 @@ void main() {
 			totalNormal += localNormal * weights[i];
     	}
 	} else {
-		totalPosition = vec4(position, 1.0f);
+		totalPosition = vec4(position * particleSize, 1.0f);
 		totalNormal = normal;
 	}
 

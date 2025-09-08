@@ -1,0 +1,14 @@
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
+
+layout(rgba32f, binding = 0) uniform readonly image3D volume;
+layout(rgba32f, binding = 1) uniform writeonly image3D volumeOut;
+
+uniform ivec3 resolution;
+
+void main() {
+	uvec3 invID = gl_GlobalInvocationID;
+	if(any(greaterThanEqual(invID, uvec3(resolution)))) return;
+
+	vec4 p = imageLoad(volume, ivec3(gl_GlobalInvocationID.xyz));
+	imageStore(volumeOut, ivec3(gl_GlobalInvocationID.xyz), p);
+}

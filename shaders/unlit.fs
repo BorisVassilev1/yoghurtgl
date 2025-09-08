@@ -11,5 +11,6 @@ out vec4 fragColor;
 uniform sampler2D texture_sampler;
 
 void main() {
-	fragColor = vec4(materials[material_index].albedo, 1.0);
+	//fragColor = vec4(materials[material_index].albedo, 1.0);
+	fragColor = vec4(vColor);
 }

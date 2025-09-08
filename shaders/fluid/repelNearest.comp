@@ -14,6 +14,9 @@ layout(binding = 3) restrict readonly buffer lookupBuffer {
 	uint lookup[];
 };
 
+uniform vec3 b_min;
+uniform vec3 b_max;
+
 ivec3 offsets[] = {
 	ivec3(-1, -1, -1),
 	ivec3(-1, -1, 0),
@@ -48,13 +51,13 @@ void main() {
 	uvec3 invID = gl_GlobalInvocationID;
 	uint id = invID.x;
 
+	if(id >= N) return;
+
 	Particle p1 = particleData[id];
 
 	uint hash = spatialHash(p1.position);
 
-	//p1.velocity = vec3(0.0f, -0.9, 0.0f); // apply gravity
-
-	ivec3 cell = ivec3(p1.position / cellSize);
+	ivec3 cell = ivec3(floor(p1.position / cellSize));
 	for (uint k = 0; k < 27; ++k) {
 		ivec3 localcell = cell + offsets[k];
 		uint localHash = spatialHash(localcell);
@@ -71,20 +74,15 @@ void main() {
 			Particle p2 = particleData[particleId];
 			vec3 diff = p1.position - p2.position;
 			float dist = length(diff);
-			if (dist < 0.99f) {
+			if (dist < cellSize && dist > EPS) {
 				vec3 dir = normalize(diff);
-				float force = 1.0f / (dist * dist + 0.01f); // repulsion force
-				//p1.velocity += clamp(dir * force * 0.1f, -vec3(10), vec3(10)); // apply repulsion force
-				//p1.velocity += dir * force * 0.3f;
-				//p1.velocity -= min(0, dot(p1.velocity, dir)) * dir;
-				//p1.position += dir * (0.99f - dist) * 0.1f;
+				p1.position += dir * (cellSize - dist) * 0.1f;
 			}
 
 		}
 
 	}
-	//p1.velocity = clamp(p1.velocity, -vec3(5.0f), vec3(5.0f)); // limit velocity
-	//p1.velocity *= 0.99f; // apply damping
+	p1.position = clamp(p1.position, b_min + vec3(0.2)*cellSize, b_max - vec3(0.2)*cellSize);
 
 	particleData[id] = p1;
 }
