@@ -28,7 +28,7 @@ GLuint ygl::IMesh::createIBO(GLuint *data, int count) {
 	return ibo;
 }
 
-void ygl::IMesh::bind() {
+void ygl::IMesh::bind() const {
 	if (cullFace) glEnable(GL_CULL_FACE);
 	else glDisable(GL_CULL_FACE);
 	glDepthFunc(depthfunc);
@@ -40,7 +40,7 @@ void ygl::IMesh::bind() {
 	if (ibo != (GLuint)-1) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 }
 
-void ygl::IMesh::unbind() {
+void ygl::IMesh::unbind() const {
 	if (ibo != (GLuint)-1) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	disableVBOs();
 	glBindVertexArray(0);
@@ -122,12 +122,12 @@ ygl::MultiBufferMesh::~MultiBufferMesh() {
 		vbo.bufferId = -1;
 	}
 }
-void ygl::MultiBufferMesh::enableVBOs() {
+void ygl::MultiBufferMesh::enableVBOs() const {
 	for (VBO vbo : vbos) {
 		glEnableVertexAttribArray(vbo.location);
 	}
 }
-void ygl::MultiBufferMesh::disableVBOs() {
+void ygl::MultiBufferMesh::disableVBOs() const {
 	for (VBO vbo : vbos) {
 		glDisableVertexAttribArray(vbo.location);
 	}

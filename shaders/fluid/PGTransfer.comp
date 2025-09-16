@@ -15,6 +15,7 @@ layout(binding = 3) restrict readonly buffer lookupBuffer {
 };
 
 layout(rgba32f, binding = 0) uniform writeonly image3D volume;
+layout(r32ui, binding = 1) uniform writeonly uimage3D cellTypes;
 
 ivec3 directions[] = {
 	ivec3(1, 0, 0),
@@ -27,6 +28,26 @@ vec3 offsets[3] = {
 	vec3(1, 0.0f, 1) / 2.0f,
 	vec3(1, 1, 0.0f) / 2.0f
 };
+
+float calcMass(in ivec3 cell, inout bool hasParticle) {
+	uint id = spatialHash(cell);
+	uint startIndex = lookup[id];
+	if(startIndex == -1) return 0.0f;
+	uint currentHash = hashData[2 * startIndex];
+
+	float mass = 0.f;
+	for(uint i = startIndex; hashData[2 * i] == currentHash; i++) {
+		Particle p = particleData[hashData[2 * i + 1]];
+
+		vec3 dist = abs((p.position - cell * cellSize) / cellSize);
+		if(any(greaterThan(dist, vec3(1.0f)))) continue;
+		
+		float weight = (1.f - dist.x) * (1.f - dist.y) * (1.f - dist.z);
+		mass += weight;
+		hasParticle = true;
+	}
+	return mass;
+}
 
 void sumParticles(in ivec3 cell, in vec3 target, inout vec3 q, inout vec3 r, in uint coord) {
 	uint id = spatialHash(cell);
@@ -76,17 +97,33 @@ void main() {
 			}
 		}
 	}
-	
+
+	float m = 0;
+	bool hasParticle = false;
+	for(int c0 = -1; c0 <= 1; ++c0){
+		for(int c1 = -1; c1 <= 1; ++c1){
+			for(int c2 = -1; c2 <= 1; ++c2){
+				ivec3 localCell = mainCell + ivec3(c0, c1, c2);
+				bool _;
+				if(c0 == 0 && c1 == 0 && c2 == 0){
+					m += calcMass(localCell, hasParticle);
+				}else  {
+					m += calcMass(localCell, _);
+				}
+			}
+		}
+	}
+
 	//r /= 3.0f;
 	if(r.x > EPS) q.x /= r.x;
 	if(r.y > EPS) q.y /= r.y;
 	if(r.z > EPS) q.z /= r.z;
 
 	if(r.x + r.y + r.z > 0.1f) {
-	//q += vec3(0, sin(time),cos(time)) * 0.1f;
-		//q.y -= 9.81f * 0.03f; 
+		//q += vec3(0, sin(time),cos(time)) * 0.1f;
+		//q.y -= 9.81f ; 
 	}
 
-	imageStore(volume, ivec3(invID.xyz), vec4(q,(r.x + r.y + r.z) / 3.0f));
-
+	imageStore(volume, ivec3(invID.xyz), vec4(q, m));
+	imageStore(cellTypes, ivec3(invID.xyz), uvec4(hasParticle, 0,0,0));
 }

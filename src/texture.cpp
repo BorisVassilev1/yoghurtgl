@@ -117,6 +117,14 @@ void ygl::getTypeParameters(TextureType type, GLint &internalFormat, GLenum &for
 			components	   = 1;
 			_type		   = GL_FLOAT;
 		}
+		case ygl::TextureType::R32UI: {
+			internalFormat = GL_R32UI;
+			format		   = GL_RED_INTEGER;
+			pixelSize	   = 4;
+			components	   = 1;
+			_type		   = GL_UNSIGNED_INT;
+			break;
+		}
 		default: {
 			dbLog(ygl::LOG_WARNING, "unknown texture type ", type, ". default texture type will be RGBA32f");
 			internalFormat = GL_RGBA32F;

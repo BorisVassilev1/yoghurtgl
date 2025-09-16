@@ -53,8 +53,7 @@ ygl::Entity ygl::addModel(Scene &scene, Mesh *mesh, glm::vec3 position, glm::vec
 	return e;
 }
 
-ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path, const std::string& format) {
-	Entity	  e		   = scene.createEntity();
+ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path, const std::string& format, bool physical) {
 	Renderer *renderer = scene.getSystem<Renderer>();
 
 	Mesh *mesh = new BoxMesh(1.);
@@ -79,10 +78,13 @@ ygl::Entity ygl::addSkybox(Scene &scene, const std::string &path, const std::str
 	uint materialIndex = renderer->addMaterial(mat);
 	uint shaderIndex   = asman->addShader(new VFShader("./shaders/skybox.vs", "./shaders/skybox.fs"), "skyShader");
 
-	scene.addComponent(e, Transformation());
-	scene.addComponent(e, RendererComponent(shaderIndex, meshIndex, materialIndex));
-
-	return e;
+	if(physical) {
+		Entity	  e		   = scene.createEntity();
+		scene.addComponent(e, Transformation());
+		scene.addComponent(e, RendererComponent(shaderIndex, meshIndex, materialIndex));
+		return e;
+	}
+	return -1;
 }
 
 #ifndef YGL_NO_ASSIMP

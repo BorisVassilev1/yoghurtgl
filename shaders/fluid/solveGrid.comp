@@ -5,9 +5,12 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
 layout(rgba32f, binding = 0) uniform readonly image3D volume;
 layout(rgba32f, binding = 1) uniform writeonly image3D volumeOut;
+layout(r32ui, binding = 2) uniform readonly uimage3D cellTypes;
 
 bool isWall(ivec3 coord) {
-	return any(lessThan(coord, ivec3(0))) || any(greaterThanEqual(coord, resolution));
+	return any(lessThan(coord, ivec3(0))) || any(greaterThanEqual(coord, resolution)) 
+		//|| (all(greaterThanEqual(coord, ivec3(10, 0, 10))) && all(lessThan(coord, ivec3(30, 10, 30))))
+		;
 }
 
 vec4 readVoxel(ivec3 coord) {
@@ -38,7 +41,13 @@ void main() {
 	uvec3 invID = gl_GlobalInvocationID;
 
 	vec4 p111 = readVoxel(ivec3(invID) + ivec3(0, 0, 0));
-	if(p111.w < 0.0001) {
+	uint t111 = imageLoad(cellTypes, ivec3(invID) + ivec3(0, 0, 0)).x;
+	uint t011 = imageLoad(cellTypes, ivec3(invID) + ivec3(-1, 0, 0)).x;
+	uint t101 = imageLoad(cellTypes, ivec3(invID) + ivec3(0, -1, 0)).x;
+	uint t110 = imageLoad(cellTypes, ivec3(invID) + ivec3(0, 0, -1)).x;
+	if(t111 == 0 && t011 == 0 && t101 == 0 && t110 == 0) {
+	//if(t111 == 0) {
+		imageStore(volumeOut, ivec3(invID), p111);
 		return;
 	}
 
@@ -57,22 +66,28 @@ void main() {
 	vec4 p120 = readVoxel(ivec3(invID) + ivec3(0, 1, -1));
 	vec4 p210 = readVoxel(ivec3(invID) + ivec3(1, 0, -1));
 
-	float c = 1.5f;
-	float k = 1.5f;
+
+	int s111 = int(!isWall(ivec3(invID) + ivec3(0, 0, 0)));
+	int s011 = int(!isWall(ivec3(invID) + ivec3(-1, 0, 0)));
+	int s101 = int(!isWall(ivec3(invID) + ivec3(0, -1, 0)));
+	int s110 = int(!isWall(ivec3(invID) + ivec3(0, 0, -1)));
+
+	float c = 1.4f;
+	float k = 1.0f;
 	float d111 = (p211.x + p121.y + p112.z - p111.x - p111.y - p111.z) * c - k * min((p111.w - 1.0f), 0);
 	float d011 = (p111.x + p021.y + p012.z - p011.x - p011.y - p011.z) * c - k * min((p011.w - 1.0f), 0);
 	float d101 = (p201.x + p111.y + p102.z - p101.x - p101.y - p101.z) * c - k * min((p101.w - 1.0f), 0);
 	float d110 = (p210.x + p120.y + p111.z - p110.x - p110.y - p110.z) * c - k * min((p110.w - 1.0f), 0);
+
+	if(t111 == 0 && s111 != 0) d111 = 0;
+	if(t011 == 0 && s011 != 0) d011 = 0;
+	if(t101 == 0 && s101 != 0) d101 = 0;
+	if(t110 == 0 && s110 != 0) d110 = 0;
 	
 	int S111 = surroundWalls(ivec3(invID) + ivec3(0, 0, 0));
 	int S011 = surroundWalls(ivec3(invID) + ivec3(-1, 0, 0));
 	int S101 = surroundWalls(ivec3(invID) + ivec3(0, -1, 0));
 	int S110 = surroundWalls(ivec3(invID) + ivec3(0, 0, -1));
-	
-	int s111 = int(!isWall(ivec3(invID) + ivec3(0, 0, 0)));
-	int s011 = int(!isWall(ivec3(invID) + ivec3(-1, 0, 0)));
-	int s101 = int(!isWall(ivec3(invID) + ivec3(0, -1, 0)));
-	int s110 = int(!isWall(ivec3(invID) + ivec3(0, 0, -1)));
 	
 	p111.xyz += vec3(d111) * vec3(s011, s101, s110) / vec3(S111);
 	p111.x -= d011 * float(s111) / float(S011) ;

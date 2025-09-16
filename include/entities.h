@@ -69,7 +69,7 @@ Entity addModel(Scene &scene, Mesh *mesh, glm::vec3 position = glm::vec3(), glm:
  * @param path - path to the skybox image files
  * @return Entity - the generated Entity, added to \a scene
  */
-Entity addSkybox(Scene &scene, const std::string &path, const std::string& format = ".jpg");
+Entity addSkybox(Scene &scene, const std::string &path, const std::string& format = ".jpg", bool physical = true);
 
 #ifndef YGL_NO_ASSIMP
 /**

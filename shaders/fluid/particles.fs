@@ -40,7 +40,7 @@ void main() {
 		finalNormal = normalizedVertexNormal;
 	}
 
-	float temperature = length(vParticleData1.xyz) * 200.0;
+	float temperature = length(vParticleData1.xyz) * 300.0;
 	vec3 albedo = vec3(0.0, 0.5, 0.0);
 	Unity_Blackbody_float(temperature, albedo.xyz);
 

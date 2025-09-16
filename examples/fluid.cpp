@@ -93,16 +93,22 @@ class FluidSimulation {
 		float	  padding2 = 0;
 	};
 
-	uint	  particleMeshIndex	  = -1;
-	uint	  gridMeshIndex		  = -1;
+	InstancedMesh<ParticleData> particleMesh1;
+	InstancedMesh<ParticleData> particleMesh2;
+	InstancedMesh<int>			gridMesh;
+
+	InstancedMesh<ParticleData> *particleMeshFront = &particleMesh1;
+	InstancedMesh<ParticleData> *particleMeshBack  = &particleMesh2;
+
 	uint	  materialIndex		  = -1;
 	uint	  particleShaderIndex = -1;
 	uint	  gridShaderIndex	  = -1;
-	uint	  numParticles		  = 16000;
+	uint	  numParticles		  = 32000;
 	Texture3d volumeData0		  = Texture3d(glm::ivec3(bounds.size() / cellSize), TextureType::RGBA32F, nullptr);
 	Texture3d volumeData1		  = Texture3d(glm::ivec3(bounds.size() / cellSize), TextureType::RGBA32F, nullptr);
 
-	Texture3d copy = Texture3d(glm::ivec3(bounds.size() / cellSize), TextureType::RGBA32F, nullptr);
+	Texture3d copy		= Texture3d(glm::ivec3(bounds.size() / cellSize), TextureType::RGBA32F, nullptr);
+	Texture3d cellTypes = Texture3d(glm::ivec3(bounds.size() / cellSize), TextureType::R32UI, nullptr);
 
 	Texture3d *volumeFront = &volumeData0;
 	Texture3d *volumeBack  = &volumeData1;
@@ -133,19 +139,20 @@ class FluidSimulation {
 
 	void reset() {
 		std::vector<ParticleData> particleData;
-		for (int x = 0; x < 40; ++x) {
-			for (int y = 0; y < 20; ++y) {
-				for (int z = 0; z < 20; ++z) {
+		glm::ivec3				  res = glm::ivec3(40, 40, 20);
+		for (int x = 0; x < res.x; ++x) {
+			for (int y = 0; y < res.y; ++y) {
+				for (int z = 0; z < res.z; ++z) {
 					ParticleData p;
-					p.position = glm::mix(glm::vec3(-8), glm::vec3(4), glm::vec3(x, y, z) / glm::vec3(20));
+					p.position =
+						glm::mix(glm::vec3(-8, -4, -10), glm::vec3(8, 4, -2), glm::vec3(x, y, z) / glm::vec3(res));
 					p.position.y += 2;
 					particleData.push_back(p);
 				}
 			}
 		}
 
-		auto *particleMesh = asman->getMesh<InstancedMesh<ParticleData>>(particleMeshIndex);
-		particleMesh->instanceData.set(particleData.data(), particleData.size() * sizeof(ParticleData));
+		particleMeshFront->instanceData.set(particleData.data(), particleData.size() * sizeof(ParticleData));
 	}
 
 	FluidSimulation(Scene &scene)
@@ -153,30 +160,29 @@ class FluidSimulation {
 		  spatialHashBuffer(GL_SHADER_STORAGE_BUFFER, nextPowerOf2(numParticles) * 2 * sizeof(unsigned int),
 							GL_DYNAMIC_DRAW),
 		  spatialLookupBuffer(GL_SHADER_STORAGE_BUFFER, numParticles * sizeof(unsigned int), GL_DYNAMIC_DRAW) {
-		InstancedMesh<ParticleData> *particleMesh = new InstancedMesh<ParticleData>();
-		particleMesh->instanceData =
+		particleMesh1.instanceData =
+			MutableBuffer(GL_ARRAY_BUFFER, numParticles * sizeof(ParticleData), GL_DYNAMIC_DRAW);
+		particleMesh2.instanceData =
 			MutableBuffer(GL_ARRAY_BUFFER, numParticles * sizeof(ParticleData), GL_DYNAMIC_DRAW);
 
-		InstancedMesh<int> *im = new InstancedMesh<int>();
-		im->instanceData	   = MutableBuffer(GL_ARRAY_BUFFER, 128, GL_DYNAMIC_DRAW);
+		gridMesh.instanceData	   = MutableBuffer(GL_ARRAY_BUFFER, 128, GL_DYNAMIC_DRAW);
 
 		renderer			= scene.getSystem<Renderer>();
 		asman				= scene.getSystem<AssetManager>();
-		particleMeshIndex	= asman->addMesh(particleMesh, "particleMesh", false);
 		materialIndex		= renderer->addMaterial(Material(glm::vec4(.8)));
 		particleShaderIndex = asman->addShader(new ygl::VFShader(YGL_RELATIVE_PATH "./shaders/fluid/particles.vs",
 																 YGL_RELATIVE_PATH "./shaders/fluid/particles.fs"),
 											   "particleShader");
 		reset();
-		particleMesh->init(particle);
+		particleMesh1.init(particle);
+		particleMesh2.init(particle);
 
-		gridMeshIndex	= asman->addMesh(im, "particleMesh", false);
 		gridShaderIndex = asman->addShader(
 			new ygl::VFShader(YGL_RELATIVE_PATH "./shaders/fluid/grid.vs", YGL_RELATIVE_PATH "./shaders/fluid/grid.fs"),
 			"gridShader");
 		grid.setCullFace(false);
-		im->init(grid);
-		im->setCullFace(false);
+		gridMesh.init(grid);
+		gridMesh.setCullFace(false);
 
 		ComputeShader *updateParticlesShader =
 			new ComputeShader(YGL_RELATIVE_PATH "./shaders/fluid/updateParticles.comp");
@@ -201,11 +207,11 @@ class FluidSimulation {
 		ComputeShader *repelParticlesShader = new ComputeShader(YGL_RELATIVE_PATH "./shaders/fluid/repelNearest.comp");
 		repelParticlesShaderIndex			= asman->addShader(repelParticlesShader, "repelParticles");
 
-		Shader::setSSBO(particleMesh->instanceData.getID(), 1);
+		Shader::setSSBO(particleMesh1.instanceData.getID(), 1);
 		Shader::setSSBO(spatialHashBuffer.getID(), 2);
 		Shader::setSSBO(spatialLookupBuffer.getID(), 3);
 
-		dbLog(ygl::LOG_INFO, "particle data id: ", particleMesh->instanceData.getID());
+		dbLog(ygl::LOG_INFO, "particle data id: ", particleMesh1.instanceData.getID());
 		dbLog(ygl::LOG_INFO, "spatial hash id: ", spatialHashBuffer.getID());
 		dbLog(ygl::LOG_INFO, "spatial lookup id: ", spatialLookupBuffer.getID());
 
@@ -217,7 +223,7 @@ class FluidSimulation {
 				ygl::VFShader *shader = (ygl::VFShader *)asman->getShader(particleShaderIndex);
 				shader->bind();
 
-				ParticleMesh *mesh = (ParticleMesh *)asman->getMesh(particleMeshIndex);
+				const ParticleMesh *mesh = particleMeshFront;
 
 				renderer->bindTexturesForMaterial(materialIndex, shader);
 
@@ -238,7 +244,7 @@ class FluidSimulation {
 			if (drawGrid) {
 				ygl::VFShader *shader = (ygl::VFShader *)asman->getShader(gridShaderIndex);
 				shader->bind();
-				InstancedMesh<int> *mesh = (InstancedMesh<int> *)asman->getMesh(gridMeshIndex);
+				InstancedMesh<int> *mesh = &gridMesh;
 				renderer->bindTexturesForMaterial(materialIndex, shader);
 				shader->setUniformCond("worldMatrix", glm::mat4(1));
 				shader->setUniformCond("material_index", materialIndex);
@@ -247,6 +253,7 @@ class FluidSimulation {
 				shader->setUniformCond("cellSize", cellSize);
 				shader->setUniformCond("gridResolution", resolution);
 				copy.bindImage(17);
+				cellTypes.bindImage(18);
 				mesh->setCullFace(false);
 
 				glDepthMask(GL_FALSE);
@@ -294,14 +301,15 @@ class FluidSimulation {
 	}
 
 	void update() {
-		InstancedMesh<ParticleData> *particleMesh = asman->getMesh<InstancedMesh<ParticleData>>(particleMeshIndex);
-		Shader::setSSBO(particleMesh->instanceData.getID(), 1);
+		Shader::setSSBO(particleMeshFront->instanceData.getID(), 1);
 		Shader::setSSBO(spatialHashBuffer.getID(), 2);
 		Shader::setSSBO(spatialLookupBuffer.getID(), 3);
+		Shader::setSSBO(particleMeshBack->instanceData.getID(), 4);
 
 		glClearTexImage(volumeFront->getID(), 0, GL_RGBA, GL_FLOAT, nullptr);
 		glClearTexImage(volumeBack->getID(), 0, GL_RGBA, GL_FLOAT, nullptr);
-
+		glClearTexImage(cellTypes.getID(), 0, GL_RED_INTEGER, GL_UNSIGNED_INT, nullptr);
+		glClearTexImage(copy.getID(), 0, GL_RGBA, GL_FLOAT, nullptr);
 
 		{
 			ComputeShader *updateParticlesShader = asman->getShader<ComputeShader>(updateParticlesShaderIndex);
@@ -315,7 +323,7 @@ class FluidSimulation {
 			Renderer::compute(updateParticlesShader, _resolution.x, _resolution.y, 1);
 			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 		}
-		
+
 		{
 			ComputeShader *repelParticlesShader = asman->getShader<ComputeShader>(repelParticlesShaderIndex);
 			repelParticlesShader->bind();
@@ -324,12 +332,19 @@ class FluidSimulation {
 			repelParticlesShader->setUniformCond("resolution", resolution);
 			repelParticlesShader->setUniformCond("b_min", bounds.min);
 			repelParticlesShader->setUniformCond("b_max", bounds.max);
-			for (int i = 0; i < 5; ++i) {
+			for (int i = 0; i < 10; ++i) {
+
+				Shader::setSSBO(particleMeshFront->instanceData.getID(), 1);
+				Shader::setSSBO(particleMeshBack->instanceData.getID(), 4);
+
 				Renderer::compute(repelParticlesShader, numParticles, 1, 1);
 				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+				std::swap(particleMeshFront, particleMeshBack);
 			}
 		}
 
+		Shader::setSSBO(particleMeshFront->instanceData.getID(), 1);
 		generateSpatialHash();
 
 		{
@@ -339,19 +354,19 @@ class FluidSimulation {
 			PGTransferShader->setUniformCond("cellSize", cellSize);
 			PGTransferShader->setUniformCond("time", float(glfwGetTime()));
 			PGTransferShader->setUniformCond("resolution", resolution);
-			volumeBack->bindImage(0);
+			volumeBack->bindImage(0);	  // write velocities to 'back'
+			cellTypes.bindImage(1);
 
 			Renderer::compute(PGTransferShader, resolution.x, resolution.y, resolution.z);
 			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 		}
 
-
 		{
 			{
 				copyImage3dShader.bind();
 				copyImage3dShader.setUniformCond("resolution", resolution);
-				volumeBack->bindImage(0);
-				copy.bindImage(1);
+				volumeBack->bindImage(0);	  // copy from 'back'
+				copy.bindImage(1);			  // to copy texture
 
 				Renderer::compute(&copyImage3dShader, resolution.x, resolution.y, resolution.z);
 				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -363,8 +378,9 @@ class FluidSimulation {
 			solveGridShader->setUniformCond("resolution", resolution);
 
 			for (int i = 0; i < 5; ++i) {
-				volumeBack->bindImage(1);
-				volumeFront->bindImage(0);
+				volumeBack->bindImage(0);	   // read from 'back'
+				volumeFront->bindImage(1);	   // write to 'front'
+				cellTypes.bindImage(2);
 
 				Renderer::compute(solveGridShader, resolution.x, resolution.y, resolution.z);
 				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -431,7 +447,7 @@ int main() {
 
 	Window window = Window(800, 600, "Fluid Simulation", true, true);
 
-	// window.setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 0.0f));
+	window.setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 0.0f));
 
 	PerspectiveCamera cam(glm::radians(70.f), window, 0.01, 1000);
 
@@ -456,7 +472,7 @@ int main() {
 	FluidSimulation sim(scene);
 	createBounds(scene, sim.bounds.size());
 
-	addSkybox(scene, YGL_RELATIVE_PATH "./res/images/kloppenheim_06_puresky_4k", ".hdr");
+	addSkybox(scene, YGL_RELATIVE_PATH "./res/images/kloppenheim_06_puresky_4k", ".hdr", false);
 
 	renderer->loadData();
 

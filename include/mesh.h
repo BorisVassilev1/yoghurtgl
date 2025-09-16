@@ -55,11 +55,11 @@ class IMesh : public ISerializable {
    public:
 	virtual ~IMesh();
 
-	void bind();
-	void unbind();
+	void bind() const;
+	void unbind() const;
 
-	virtual void enableVBOs()  = 0;
-	virtual void disableVBOs() = 0;
+	virtual void enableVBOs() const = 0;
+	virtual void disableVBOs() const = 0;
 
 	GLuint getIndicesCount() const;
 	GLuint getVerticesCount() const;
@@ -115,8 +115,8 @@ class MultiBufferMesh : public IMesh {
 	auto getVBOs() const -> const std::vector<VBO> & { return vbos; }
 
 	virtual ~MultiBufferMesh();
-	void enableVBOs();
-	void disableVBOs();
+	void enableVBOs() const;
+	void disableVBOs() const;
 };
 
 // note that 'count' is the vertex count, not the length or size of the VBO
@@ -446,20 +446,20 @@ class InstancedMesh : public IMesh {
 
 	InstancedMesh(const MultiBufferMesh &mesh) { init(mesh); }
 
-	void enableVBOs() override {
+	void enableVBOs() const override {
 		for (VBO vbo : vbos) {
 			glEnableVertexAttribArray(vbo.location);
 		}
 	}
-	void disableVBOs() override {
+	void disableVBOs() const override {
 		for (VBO vbo : vbos) {
 			glDisableVertexAttribArray(vbo.location);
 		}
 	}
 
-	void draw(int instances) { glDrawElementsInstanced(drawMode, indicesCount, GL_UNSIGNED_INT, 0, instances); }
+	void draw(int instances) const { glDrawElementsInstanced(drawMode, indicesCount, GL_UNSIGNED_INT, 0, instances); }
 
-	void draw() { draw(instanceData.getSize() / sizeof(InstanceData)); }
+	void draw() const { draw(instanceData.getSize() / sizeof(InstanceData)); }
 };
 
 }	  // namespace ygl

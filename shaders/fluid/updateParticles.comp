@@ -20,8 +20,8 @@ void main() {
 	Particle p1 = particleData[id];
 
 	p1.velocity += vec3(0.0, -9.81, 0.0) * deltaTime; // gravity
-	//float t = time * 0.3;
-	//p1.velocity += vec3(0, cos(t), sin(t)) * deltaTime * 10.0;
+	//float t = time * 0.7;
+	//p1.velocity += vec3(0, cos(t), sin(t)) * deltaTime * 5.0;
 
 	p1.position += p1.velocity * deltaTime;
 	p1.position = clamp(p1.position, b_min + vec3(0.2)*cellSize, b_max - vec3(0.2)*cellSize);

@@ -2,8 +2,8 @@ layout(local_size_x = 128) in;
 
 #include <fluid.glsl>
 
-layout(std430, binding = 1) volatile coherent restrict buffer ParticleBuffer {
-	Particle particleData[];
+layout(std430, binding = 1) restrict readonly buffer ParticleBufferIn {
+	Particle particleDataIn[];
 };
 
 layout(binding = 2) restrict readonly buffer Hashes {
@@ -12,6 +12,10 @@ layout(binding = 2) restrict readonly buffer Hashes {
 
 layout(binding = 3) restrict readonly buffer lookupBuffer {
 	uint lookup[];
+};
+
+layout(std430, binding = 4) restrict writeonly buffer ParticleBufferOut {
+	Particle particleDataOut[];
 };
 
 uniform vec3 b_min;
@@ -53,11 +57,12 @@ void main() {
 
 	if(id >= N) return;
 
-	Particle p1 = particleData[id];
+	Particle p1 = particleDataIn[id];
 
 	uint hash = spatialHash(p1.position);
 
 	ivec3 cell = ivec3(floor(p1.position / cellSize));
+	vec3 move = vec3(0.0f);
 	for (uint k = 0; k < 27; ++k) {
 		ivec3 localcell = cell + offsets[k];
 		uint localHash = spatialHash(localcell);
@@ -71,18 +76,19 @@ void main() {
 
 			if (particleId == id) continue;
 
-			Particle p2 = particleData[particleId];
+			Particle p2 = particleDataIn[particleId];
 			vec3 diff = p1.position - p2.position;
 			float dist = length(diff);
 			if (dist < cellSize && dist > EPS) {
 				vec3 dir = normalize(diff);
-				p1.position += dir * (cellSize - dist) * 0.1f;
+				move += dir * (cellSize - dist) * 0.1f;
 			}
 
 		}
 
 	}
-	p1.position = clamp(p1.position, b_min + vec3(0.2)*cellSize, b_max - vec3(0.2)*cellSize);
+	p1.position += move;
+	p1.position = clamp(p1.position, b_min , b_max);
 
-	particleData[id] = p1;
+	particleDataOut[id] = p1;
 }

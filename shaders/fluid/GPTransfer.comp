@@ -7,7 +7,7 @@ layout(std430, binding = 1) volatile coherent restrict buffer ParticleBuffer {
 };
 
 layout(rgba32f, binding = 0) uniform readonly image3D volume;
-layout(rgba32f, binding = 0) uniform readonly image3D volumeOld;
+layout(rgba32f, binding = 1) uniform readonly image3D volumeOld;
 
 uniform vec3 b_min;
 uniform vec3 b_max;
@@ -54,8 +54,15 @@ vec3 readVelocity(vec3 position, readonly image3D volume) {
 		float w011 = (1.0f - delta.x) * (delta.y) * (delta.z);
 		float w111 = (delta.x) * (delta.y) * (delta.z);
 
-		result[i] = w000 * p000[i] + w100 * p100[i] + w010 * p010[i] + w001 * p001[i] +
-			w110 * p110[i] + w101 * p101[i] + w011 * p011[i] + w111 * p111[i];
+		result[i] = 
+			w000 * p000[i] + 
+			w100 * p100[i] + 
+			w010 * p010[i] + 
+			w001 * p001[i] +
+			w110 * p110[i] + 
+			w101 * p101[i] + 
+			w011 * p011[i] + 
+			w111 * p111[i];
 	}
 	return result;
 }
@@ -73,6 +80,7 @@ void main() {
 	// flip
 	vec3 difference = vel - velOld;
 
-	particleData[id].velocity = mix(p1.velocity + difference, vel, 0.9f);
+	particleData[id].velocity = mix(p1.velocity + difference, vel, 0.05f);
+	//particleData[id].velocity = vel;
 	//particleData[id].velocity += difference;
 }

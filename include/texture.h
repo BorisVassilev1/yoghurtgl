@@ -61,6 +61,7 @@ enum TextureType {
 	HDR_CUBEMAP,
 	RG16F,
 	R8,
+	R32UI,
 	DIFFUSE	  = SRGBA8,
 	NORMAL	  = RGB16F,
 	ROUGHNESS = SRGB8,

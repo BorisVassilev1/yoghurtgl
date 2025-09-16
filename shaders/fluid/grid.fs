@@ -11,6 +11,7 @@ in mat3 vTBN;
 out vec4 fragColor;
 
 layout(rgba32f, binding = 17) uniform readonly image3D volume;
+layout(r32ui, binding = 18) uniform readonly uimage3D cellTypes;
 uniform float cellSize = 1.0f;
 
 void Unity_Blackbody_float(float Temperature, out vec3 Out)
@@ -44,6 +45,7 @@ void main() {
 	vec3 albedo = vec3(0.0, 0.5, 0.0);
 	//Unity_Blackbody_float(temperature, albedo.xyz);
 	vec4 vol = imageLoad(volume, ivec3(floor(vVertexPos / cellSize) + vec3(20)));
+	uvec4 type = imageLoad(cellTypes, ivec3(floor(vVertexPos / cellSize) + vec3(20)));
 
 	albedo = clamp(vol.xyz + 0.5f, 0.0f, 1.0f);
 
@@ -53,7 +55,8 @@ void main() {
 	//color = calcAllLights(vVertexPos, finalNormal, finalNormal, vTexCoord);
 	//color = calcAllLightsCustom(vVertexPos, finalNormal, albedo, 0.4f, 0.0f, 1.0f, vec3(0.0f), 1.0f);
 
-	fragColor = vec4(color, clamp(vol.w * 5 * abs(dot(vVertexNormal, normalize(vol.xyz))), 0.0, 1.0));
+	fragColor = vec4(color, clamp(vol.w * abs(dot(vVertexNormal, normalize(vol.xyz))), 0.0, 1.0));
+	//fragColor =	vec4(color, float(type.x == 1u)); 
 	//fragColor = vec4(color, clamp(vol.w * 5, 0.1, 1.0));
 	//fragColor = vec4(color, 0.4);
 }
