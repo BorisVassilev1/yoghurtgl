@@ -148,6 +148,9 @@ void run() {
 
 	Keyboard::addKeyCallback([&](GLFWwindow *, int key, int, int action, int mods) {
 		if (key == GLFW_KEY_R && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL) { asman->reloadShaders(); }
+		if (key == GLFW_KEY_S && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL) {
+			renderer->screenShot(YGL_RELATIVE_PATH "screenshot.png");
+		}
 		if (key == GLFW_KEY_UP && action == GLFW_PRESS) { fsm.transition(2); }
 		if (key == GLFW_KEY_UP && action == GLFW_RELEASE) { fsm.transition(0); }
 		if (cameraToggle) {
